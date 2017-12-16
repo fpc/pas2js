@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="4">
+    <Name Value="pas2js_rtl"/>
+    <Type Value="RunTimeOnly"/>
+    <Author Value="Mattias Gaertner"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="."/>
+      </SearchPaths>
+      <Parsing>
+        <SyntaxOptions>
+          <AllowLabel Value="False"/>
+        </SyntaxOptions>
+      </Parsing>
+      <Linking>
+        <Debugging>
+          <GenerateDebugInfo Value="False"/>
+        </Debugging>
+      </Linking>
+      <Other>
+        <CustomOptions Value="-dPas2js"/>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(pas2js) -O- pas2js_rtl.pas"/>
+          <ScanForFPCMsgs Value="True"/>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Description Value="pas2js RTL - Run Time Library"/>
+    <License Value="Modified LGPL2 as the FPC packages."/>
+    <Version Major="1"/>
+    <Files Count="18">
+      <Item1>
+        <HasRegisterProc Value="True"/>
+      </Item1>
+      <Item2>
+        <Filename Value="classes.pas"/>
+        <UnitName Value="Classes"/>
+      </Item2>
+      <Item3>
+        <Filename Value="js.pas"/>
+        <UnitName Value="JS"/>
+      </Item3>
+      <Item4>
+        <Filename Value="math.pas"/>
+        <UnitName Value="Math"/>
+      </Item4>
+      <Item5>
+        <Filename Value="nodejs.pas"/>
+        <UnitName Value="NodeJS"/>
+      </Item5>
+      <Item6>
+        <Filename Value="objpas.pas"/>
+        <UnitName Value="ObjPas"/>
+      </Item6>
+      <Item7>
+        <Filename Value="rtl.js"/>
+        <Type Value="Text"/>
+      </Item7>
+      <Item8>
+        <Filename Value="rtlconsts.pas"/>
+        <UnitName Value="RTLConsts"/>
+      </Item8>
+      <Item9>
+        <Filename Value="system.pas"/>
+        <AddToUsesPkgSection Value="False"/>
+        <UnitName Value="System"/>
+      </Item9>
+      <Item10>
+        <Filename Value="sysutils.pas"/>
+        <UnitName Value="SysUtils"/>
+      </Item10>
+      <Item11>
+        <Filename Value="types.pas"/>
+        <UnitName Value="Types"/>
+      </Item11>
+      <Item12>
+        <Filename Value="typinfo.pas"/>
+        <UnitName Value="TypInfo"/>
+      </Item12>
+      <Item13>
+        <Filename Value="web.pas"/>
+        <UnitName Value="Web"/>
+      </Item13>
+      <Item14>
+        <Filename Value="hotreloadclient.pas"/>
+        <UnitName Value="hotreloadclient"/>
+      </Item14>
+      <Item15>
+        <Filename Value="dateutils.pas"/>
+        <UnitName Value="DateUtils"/>
+      </Item15>
+      <Item16>
+        <Filename Value="strutils.pas"/>
+        <UnitName Value="strutils"/>
+      </Item16>
+      <Item17>
+        <Filename Value="contnrs.pas"/>
+        <UnitName Value="contnrs"/>
+      </Item17>
+      <Item18>
+        <Filename Value="browserconsole.pas"/>
+        <UnitName Value="browserconsole"/>
+      </Item18>
+    </Files>
+    <UsageOptions>
+      <CustomOptions Value="-dPas2js"/>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

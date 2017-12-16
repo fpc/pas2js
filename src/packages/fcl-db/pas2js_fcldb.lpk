@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <Package Version="4">
+    <Name Value="pas2js_fcldb"/>
+    <Type Value="RunTimeOnly"/>
+    <AutoUpdate Value="Manually"/>
+    <CompilerOptions>
+      <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="."/>
+      </SearchPaths>
+      <Other>
+        <ExecuteBefore>
+          <Command Value="$MakeExe(pas2js) -O- pas2js_fcldb.pas"/>
+          <ScanForFPCMsgs Value="True"/>
+        </ExecuteBefore>
+      </Other>
+      <SkipCompiler Value="True"/>
+    </CompilerOptions>
+    <Files Count="4">
+      <Item1>
+        <Filename Value="db.pas"/>
+        <UnitName Value="db"/>
+      </Item1>
+      <Item2>
+        <Filename Value="dbconst.pas"/>
+        <UnitName Value="dbconst"/>
+      </Item2>
+      <Item3>
+        <Filename Value="jsondataset.pas"/>
+        <UnitName Value="jsondataset"/>
+      </Item3>
+      <Item4>
+        <Filename Value="restconnection.pas"/>
+        <UnitName Value="restconnection"/>
+      </Item4>
+    </Files>
+    <RequiredPkgs Count="2">
+      <Item1>
+        <PackageName Value="pas2js_rtl"/>
+      </Item1>
+      <Item2>
+        <PackageName Value="FCL"/>
+      </Item2>
+    </RequiredPkgs>
+    <UsageOptions>
+      <UnitPath Value="$(PkgOutDir)"/>
+    </UsageOptions>
+    <PublishOptions>
+      <Version Value="2"/>
+    </PublishOptions>
+  </Package>
+</CONFIG>

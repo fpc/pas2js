@@ -314,7 +314,12 @@ Type
                             Date and time
 *****************************************************************************}
 Type
+  
   TDateTime = double;
+  
+  TTime = TDateTime;
+  TDate = TDateTime;
+  
   TSystemTime = record
      Year, Month, Day, DayOfWeek: word;
      Hour, Minute, Second, MilliSecond: word;

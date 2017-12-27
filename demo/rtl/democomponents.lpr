@@ -36,6 +36,7 @@ end;
 Var
   P : TMyParentComponent;
   C : TMyChildComponent;
+  Ci : TComponent;
 
 begin
   P:=TMyParentComponent.Create(Nil);
@@ -51,6 +52,14 @@ begin
     C:=TMyChildComponent.Create(P);
     C.Name:='Child3';
     C.MyProperty:=Second;
+    Writeln('Components for loop');
+    For CI in P do
+      begin
+      Write(CI.Name,', is child : ',C is TMyChildComponent,' ');
+      If C is TMyChildComponent then
+        Write('My property : ',TMyChildComponent(C).MyProperty);
+      Writeln('');
+      end;
   finally
     P.Destroy;
   end;

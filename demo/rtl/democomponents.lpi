@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
@@ -13,6 +13,12 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
+    <CustomData Count="4">
+      <Item0 Name="PJSProjectHTMLFile" Value="democomponents.html"/>
+      <Item1 Name="PasJSPort" Value="0"/>
+      <Item2 Name="PasJSURL"/>
+      <Item3 Name="PasJSWebBrowserProject" Value="1"/>
+    </CustomData>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
     </BuildModes>
@@ -21,8 +27,16 @@
     </PublishOptions>
     <RunParams>
       <local>
-        <FormatVersion Value="1"/>
+        <LaunchingApplication Use="True" PathPlusParams="$(Pas2JSBrowser) $(Pas2JSProjectURL)"/>
       </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default">
+          <local>
+            <LaunchingApplication Use="True" PathPlusParams="$(Pas2JSBrowser) $(Pas2JSProjectURL)"/>
+          </local>
+        </Mode0>
+      </Modes>
     </RunParams>
     <RequiredPackages Count="1">
       <Item1>
@@ -46,7 +60,7 @@
     </SearchPaths>
     <Other>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tnodejs -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile))"/>
+        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tbrowser -Jc -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
       </ExecuteBefore>
     </Other>

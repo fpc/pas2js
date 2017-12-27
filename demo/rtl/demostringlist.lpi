@@ -6,10 +6,12 @@
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
+        <MainUnitHasScaledStatement Value="False"/>
+        <Runnable Value="False"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
-      <Title Value="democollection"/>
+      <Title Value="demostringlist"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
@@ -17,7 +19,7 @@
       <Item0 Name="PasJSPort" Value="0"/>
       <Item1 Name="PasJSURL"/>
       <Item2 Name="PasJSWebBrowserProject" Value="1"/>
-      <Item3 Name="PJSProjectHTMLFile" Value="democollection.html"/>
+      <Item3 Name="PJSProjectHTMLFile" Value="demostringlist.html"/>
     </CustomData>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
@@ -27,35 +29,38 @@
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="1">
-        <Mode0 Name="default"/>
-      </Modes>
+      <Modes Count="0"/>
     </RunParams>
     <RequiredPackages Count="1">
       <Item1>
         <PackageName Value="pas2js_rtl"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="1">
+    <Units Count="2">
       <Unit0>
-        <Filename Value="democollection.pas"/>
+        <Filename Value="demostringlist.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
+      <Unit1>
+        <Filename Value="demostringlist.html"/>
+        <IsPartOfProject Value="True"/>
+      </Unit1>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="democollection"/>
+      <Filename Value="demostringlist"/>
     </Target>
     <SearchPaths>
-      <IncludeFiles Value="$(ProjOutDir)"/>
-      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+      <UnitOutputDirectory Value="js"/>
     </SearchPaths>
     <Other>
+      <CompilerPath Value=""/>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Jc -Jirtl.js -Tbrowser -o$NameOnly($(ProjFile)).js $Name($(ProjFile))"/>
+        <Command Value="&quot;$MakeExe(IDE,pas2js)&quot; -Jirtl.js -Jc -Jminclude -Tbrowser &quot;-Fu$(ProjUnitPath)&quot; $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
+        <ScanForMakeMsgs Value="True"/>
       </ExecuteBefore>
     </Other>
     <CompileReasons Compile="False" Build="False" Run="False"/>

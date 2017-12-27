@@ -58,6 +58,23 @@ begin
   Writeln('Fruit collection: ',s);
 end;
 
+Procedure DumpCollection2(C : TMyCollectionItems);
+
+Var
+  S : String;
+  Itm : TCollectionItem;
+
+begin
+  S:='';
+  For Itm in C do
+    begin
+    If S<>'' then
+      S:=S+', ';
+    S:=S+'['+IntToStr(Itm.Index)+'] : '+TMyCollectionItem(Itm).MyName;
+    end;
+  Writeln('Fruit collection: ',s);
+end;
+
 {
   Const
   MyNames : Array [1..10] of string
@@ -102,9 +119,9 @@ begin
   DumpCollection(MyC);
   Writeln('Prefer banana over pear');
   MyC.Exchange(1,2);
-  DumpCollection(MyC);
+  DumpCollection2(MyC);
   Writeln('Indigestion, no more fruit');
   MyC.Clear;
-  DumpCollection(MyC);
+  DumpCollection2(MyC);
 end.
 

@@ -1,12 +1,13 @@
 {$mode objfpc}
 {$H+}
-uses sysutils,classes;
+uses browserconsole,sysutils,classes;
 
 Var
   L : TStringList;
   I : Integer;
   //S : TJSString;
-  
+  S : String;
+
 begin
   L:=TStringList.Create;
   for I:=0 to 10 do
@@ -28,5 +29,8 @@ begin
   Writeln('After sort : ',L.CommaText);
   //S:=TJSString.new('abc');
   //Writeln(S.toUpperCase);
+  Writeln('For in loop:');
+  for S in L do
+    Writeln(S);
   
 end.  

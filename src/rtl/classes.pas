@@ -36,6 +36,20 @@ type
   TListStaticCallback = Types.TListStaticCallback;
   TAlignment = (taLeftJustify, taRightJustify, taCenter);
 
+  { TFPListEnumerator }
+  TFPList = Class;
+
+  TFPListEnumerator = class
+  private
+    FList: TFPList;
+    FPosition: Integer;
+  public
+    constructor Create(AList: TFPList);
+    function GetCurrent: JSValue;
+    function MoveNext: Boolean;
+    property Current: JSValue read GetCurrent;
+  end;
+
   { TFPList }
 
   TFPList = class(TObject)
@@ -70,7 +84,7 @@ type
     function Expand: TFPList; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
     function Extract(Item: JSValue): JSValue;
     function First: JSValue;
-    //function GetEnumerator: TFPListEnumerator;
+    function GetEnumerator: TFPListEnumerator;
     function IndexOf(Item: JSValue): Integer;
     function IndexOfItem(Item: JSValue; Direction: TDirection): Integer;
     procedure Insert(Index: Integer; Item: JSValue); {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
@@ -89,6 +103,20 @@ type
   end;
 
   TListNotification = (lnAdded, lnExtracted, lnDeleted);
+  TList = class;
+
+  { TListEnumerator }
+
+  TListEnumerator = class
+  private
+    FList: TList;
+    FPosition: Integer;
+  public
+    constructor Create(AList: TList);
+    function GetCurrent: JSValue;
+    function MoveNext: Boolean;
+    property Current: JSValue read GetCurrent;
+  end;
 
   { TList }
 
@@ -125,7 +153,7 @@ type
     function Expand: TList;
     function Extract(Item: JSValue): JSValue;
     function First: JSValue;
-    //function GetEnumerator: TListEnumerator;
+    function GetEnumerator: TListEnumerator;
     function IndexOf(Item: JSValue): Integer;
     procedure Insert(Index: Integer; Item: JSValue);
     function Last: JSValue;
@@ -459,6 +487,19 @@ type
 
   TComponentName = string;
 
+  { TComponentEnumerator }
+
+  TComponentEnumerator = class
+  private
+    FComponent: TComponent;
+    FPosition: Integer;
+  public
+    constructor Create(AComponent: TComponent);
+    function GetCurrent: TComponent;
+    function MoveNext: Boolean;
+    property Current: TComponent read GetCurrent;
+  end;
+
   TComponent = class(TPersistent)
   private
     FOwner: TComponent;
@@ -514,6 +555,7 @@ type
     procedure InsertComponent(AComponent: TComponent);
     procedure RemoveComponent(AComponent: TComponent);
     procedure SetSubComponent(ASubComponent: Boolean);
+    function GetEnumerator: TComponentEnumerator;
 //    function UpdateAction(Action: TBasicAction): Boolean; dynamic;
     property Components[Index: Integer]: TComponent read GetComponent;
     property ComponentCount: Integer read GetComponentCount;
@@ -534,6 +576,66 @@ Function GetClass(AClassName : string) : TPersistentClass;
 implementation
 
 uses JS;
+
+{ TComponentEnumerator }
+
+constructor TComponentEnumerator.Create(AComponent: TComponent);
+begin
+  inherited Create;
+  FComponent := AComponent;
+  FPosition := -1;
+end;
+
+function TComponentEnumerator.GetCurrent: TComponent;
+begin
+  Result := FComponent.Components[FPosition];
+end;
+
+function TComponentEnumerator.MoveNext: Boolean;
+begin
+  Inc(FPosition);
+  Result := FPosition < FComponent.ComponentCount;
+end;
+
+{ TListEnumerator }
+
+constructor TListEnumerator.Create(AList: TList);
+begin
+  inherited Create;
+  FList := AList;
+  FPosition := -1;
+end;
+
+function TListEnumerator.GetCurrent: JSValue;
+begin
+  Result := FList[FPosition];
+end;
+
+function TListEnumerator.MoveNext: Boolean;
+begin
+  Inc(FPosition);
+  Result := FPosition < FList.Count;
+end;
+
+{ TFPListEnumerator }
+
+constructor TFPListEnumerator.Create(AList: TFPList);
+begin
+  inherited Create;
+  FList := AList;
+  FPosition := -1;
+end;
+
+function TFPListEnumerator.GetCurrent: JSValue;
+begin
+  Result := FList[FPosition];
+end;
+
+function TFPListEnumerator.MoveNext: Boolean;
+begin
+  Inc(FPosition);
+  Result := FPosition < FList.Count;
+end;
 
 { TFPList }
 
@@ -802,6 +904,11 @@ begin
     Result := Nil
   else
     Result := Items[0];
+end;
+
+function TFPList.GetEnumerator: TFPListEnumerator;
+begin
+  Result:=TFPListEnumerator.Create(Self);
 end;
 
 function TFPList.IndexOf(Item: JSValue): Integer;
@@ -1236,6 +1343,11 @@ end;
 function TList.First: JSValue;
 begin
   Result := FList.First;
+end;
+
+function TList.GetEnumerator: TListEnumerator;
+begin
+  Result:=TListEnumerator.Create(Self);
 end;
 
 function TList.IndexOf(Item: JSValue): Integer;
@@ -3506,6 +3618,11 @@ begin
     Include(FComponentStyle, csSubComponent)
   else
     Exclude(FComponentStyle, csSubComponent);
+end;
+
+function TComponent.GetEnumerator: TComponentEnumerator;
+begin
+  Result:=TComponentEnumerator.Create(Self);
 end;
 
 

@@ -113,7 +113,6 @@ end;
 
 Var
   P : TPackage;
-  PT,T : TTarget;
   UnitDir,DemoDir,BD : String;
 
 begin
@@ -138,17 +137,40 @@ begin
     Defaults.Options.Add('-Sc');
     P.Targets.AddProgram('pas2js.pp');
     P.Targets.AddLibrary('pas2jslib.pp');
-    if Installer.RunMode in [rmInstall,rmArchive,rmZipInstall] then
+    P.Targets.AddImplicitUnit('fpjson',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('fppas2js',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('fppjssrcmap',False);
+    P.Targets.AddImplicitUnit('jsbase',False);
+    P.Targets.AddImplicitUnit('jsonparser',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('jsonreader',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('jsonscanner',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('jssrcmap',False);
+    P.Targets.AddImplicitUnit('jstoken',False);
+    P.Targets.AddImplicitUnit('jstree',False);
+    P.Targets.AddImplicitUnit('jswriter',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('pas2jscompiler',False);
+    P.Targets.AddImplicitUnit('pas2jsfilecache',False);
+    P.Targets.AddImplicitUnit('pas2jsfileutils',False);
+    P.Targets.AddImplicitUnit('pas2jslibcompiler',False);
+    P.Targets.AddImplicitUnit('pas2jslogger',False);
+    P.Targets.AddImplicitUnit('pas2jspparser',False);
+    P.Targets.AddImplicitUnit('pasresolveeval',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('pasresolver',False);
+    P.Targets.AddImplicitUnit('pastree',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('pasuseanalyzer',False);
+    P.Targets.AddImplicitUnit('pparser',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('pscanner',False).ResourceStrings:=True;
+    // Determine unit files location
+    BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));
+    UnitDir:=ExcludeTrailingPathDelimiter(Defaults.UnitInstallDir);
+    UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
+    UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
+    UnitDir:=ExtractFilePath(UnitDir);
+    UnitDir:=UnitDir+'pas2js'+PathDelim;
+    Case Installer.RunMode of
+    rmInstall,rmArchive,rmZipInstall:
       begin
       // Config file
-      BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));
-      // Determine unit files location
-      UnitDir:=ExcludeTrailingPathDelimiter(Defaults.UnitInstallDir);
-      UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
-      UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
-      UnitDir:=ExtractFilePath(UnitDir);
-      UnitDir:=UnitDir+'pas2js'+PathDelim;
-
       // Create config file
       CreateConfigFile(BD+'pas2js.cfg',ExtractRelativePath(IncludeTrailingPathDelimiter(Defaults.BinInstallDir),IncludeTrailingPathDelimiter(UnitDir)));
       P.InstallFiles.Add(BD+'pas2js.cfg',Defaults.BinInstallDir);
@@ -166,6 +188,10 @@ begin
       AddDemoFiles(P.InstallFiles,'hotreload',DemoDir);
       AddDemoFiles(P.InstallFiles,'jquery',DemoDir);
       end;
+    rmClean:
+      if FileExists(BD+'pas2js.cfg') then
+        P.CleanFiles.Add(BD+'pas2js.cfg');
+    end;
     Run;
     end;
 end.

@@ -25,13 +25,13 @@ begin
 
     P.Directory:=ADirectory;
     P.Version:='3.1.1';
-    P.SourcePath.Add('compiler/pas2js');
-    P.UnitPath.Add('compiler/pas2js');
-    P.UnitPath.Add('compiler/pastojs/src');
-    P.UnitPath.Add('compiler/fcl-passrc/src');
-    P.UnitPath.Add('compiler/fcl-js/src');
-    P.UnitPath.Add('compiler/fcl-json/src');
-    P.IncludePath.Add('compiler/pastojs/src');
+    P.SourcePath.Add('compiler/utils/pas2js');
+    P.UnitPath.Add('compiler/utils/pas2js');
+    P.UnitPath.Add('compiler/packages/pastojs/src');
+    P.UnitPath.Add('compiler/packages/fcl-passrc/src');
+    P.UnitPath.Add('compiler/packages/fcl-js/src');
+    P.UnitPath.Add('compiler/packages/fcl-json/src');
+    P.IncludePath.Add('compiler/packages/pastojs/src');
     Defaults.Options.Add('-Sc');
     PT:=P.Targets.AddProgram('pas2js.pp');
     PT:=P.Targets.AddLibrary('pas2jslib.pp');

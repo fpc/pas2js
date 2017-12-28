@@ -1525,10 +1525,12 @@ examples:
 shared:
 sourceinstall: fpc_sourceinstall
 exampleinstall: fpc_exampleinstall
+zipinstall: fpc_zipinstall
+zipsourceinstall: fpc_zipsourceinstall
 zipexampleinstall: fpc_zipexampleinstall
-info: fpc_info
+zipdistinstall: fpc_zipdistinstall
 makefiles: fpc_makefiles
-.PHONY: units examples shared sourceinstall exampleinstall zipexampleinstall info makefiles
+.PHONY: units examples shared sourceinstall exampleinstall zipinstall zipsourceinstall zipexampleinstall zipdistinstall makefiles
 ifneq ($(wildcard fpcmake.loc),)
 include fpcmake.loc
 endif
@@ -1585,13 +1587,62 @@ ifdef UNIXHier
 else
 	$(LOCALFPMAKE) install $(FPMAKE_OPT) --prefix=$(INSTALL_BASEDIR) --baseinstalldir=$(INSTALL_BASEDIR) --unitinstalldir=$(INSTALL_UNITDIR) -ie -fsp 0
 endif
-zipinstall:	fpmake$(SRCEXEEXT)
-	$(LOCALFPMAKE) zipinstall $(FPMAKE_OPT) --zipprefix=$(DIST_DESTDIR)/$(ZIPPREFIX)
-zipdistinstall:	fpmake$(SRCEXEEXT)
-	$(LOCALFPMAKE) zipinstall $(FPMAKE_OPT) --zipprefix=$(DIST_DESTDIR)/$(ZIPPREFIX) -ie -fsp 0
-zipsourceinstall:	fpmake$(SRCEXEEXT)
-ifdef UNIXHier
-	$(LOCALFPMAKE) archive $(FPMAKE_OPT) --zipprefix=$(DIST_DESTDIR)/$(ZIPPREFIX) --prefix=share/src/fpc-\$$\(PACKAGEVERSION\)/$(INSTALL_FPCSUBDIR)/\$$\(PACKAGEDIRECTORY\)
-else
-	$(LOCALFPMAKE) archive $(FPMAKE_OPT) --zipprefix=$(DIST_DESTDIR)/$(ZIPPREFIX) --prefix=source\\$(INSTALL_FPCSUBDIR)\\\$$\(PACKAGEDIRECTORY\)
-endif
+PAS2JSVERSION:=$(shell pas2js -iV)
+RTLFILES=$(wildcard src/rtl/*.pas)
+RTLFILES+=rtl/rtl.js rtl/pas2js_rtl.lpk
+PACKAGEFILES=$(wildcard packages/*/*.pas)
+PACKAGEFILES+=$(wildcard packages/*/*.pp)
+PACKAGEFILES+=$(wildcard packages/*/*.lpk)
+DEMOFILES=$(wildcard demo/rtl/*.html)
+DEMOFILES+=$(wildcard demo/rtl/*.pas)
+DEMOFILES+=$(wildcard demo/rtl/*.lpi)
+DEMOFILES+=$(wildcard demo/rtl/*.lpr)
+DEMOFILES+=demo/rtl/countries.json
+DEMOFILES+=$(wildcard demo/jquery/*.lpr)
+DEMOFILES+=$(wildcard demo/jquery/*.lpi)
+DEMOFILES+=$(wildcard demo/jquery/*.pas)
+DEMOFILES+=$(wildcard demo/jquery/*.html)
+DEMOFILES+=$(wildcard demo/fpreport/*.html)
+DEMOFILES+=$(wildcard demo/fpreport/*.lpi)
+DEMOFILES+=$(wildcard demo/fpreport/*.lpr)
+DEMOFILES+=$(wildcard demo/fpreport/*.pp)
+DEMOFILES+=$(wildcard demo/fpreport/*.md)
+DEMOFILES+=$(wildcard demo/hotreload/*.html)
+DEMOFILES+=$(wildcard demo/hotreload/*.lpr)
+DEMOFILES+=$(wildcard demo/hotreload/*.lpi)
+DEMOFILES+=$(wildcard demo/hotreload/*.pas)
+DEMOFILES+=$(wildcard demo/fpcunit/*.html)
+DEMOFILES+=$(wildcard demo/fpcunit/*.lpr)
+DEMOFILES+=$(wildcard demo/fpcunit/*.lpi)
+DEMOFILES+=$(wildcard demo/fpcunit/*.pas)
+DEMOFILES+=$(wildcard demo/fcldb/*.html)
+DEMOFILES+=$(wildcard demo/fcldb/*.lpr)
+DEMOFILES+=$(wildcard demo/fcldb/*.lpi)
+DEMOFILES+=$(wildcard demo/fcldb/*.pas)
+DEMOFILES+=$(wildcard demo/fcldb/*.json)
+DEMOFILES+=demo/rtl/README.md
+DOCFILES=README.md
+DOCFILES+=docs/translation.html
+ZIPFILE=pas2js-demo-$(PAS2JSVERSION).zip
+COMPILERS=$(wildcard bin/$(PAS2JSVERSION)/pas2js*)
+COMPILERS+=$(wildcard bin/$(PAS2JSVERSION)/libpas2js*)
+URL=http://www.freepascal.org/~michael/pas2js/
+CFGFILE=bin/$(PAS2JSVERSION)/pas2js.cfg
+info:
+	@echo "Detected pas2js version: $(PAS2JSVERSION)"
+	@echo "Supported targets:"
+	@echo "all               compile for current platform"
+	@echo "info              this info"
+	@echo "zip               zip file with demo executables"
+	@echo "upload            upload zip to $(URL)$(ZIPFILE)"
+	@echo "config            create config file in bin dir"
+	@echo "URL for $(PAS2JSVERSION): $(URL)$(ZIPFILE)"
+config:
+	./createconfig.sh $(CFGFILE) ../..
+zip: config
+	@echo Version: $(PAS2JSVERSION)
+	rm -f $(ZIPFILE)
+	zip $(ZIPFILE) $(COMPILERS) $(RTLFILES) $(PACKAGEFILES) $(DOCFILES) $(DEMOFILES) $(CFGFILE)
+upload: zip
+	scp $(ZIPFILE) idefix.freepascal.org:public_html/pas2js
+	@echo URL: $(URL)$(ZIPFILE)

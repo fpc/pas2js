@@ -1529,8 +1529,9 @@ zipinstall: fpc_zipinstall
 zipsourceinstall: fpc_zipsourceinstall
 zipexampleinstall: fpc_zipexampleinstall
 zipdistinstall: fpc_zipdistinstall
+info: fpc_info
 makefiles: fpc_makefiles
-.PHONY: units examples shared sourceinstall exampleinstall zipinstall zipsourceinstall zipexampleinstall zipdistinstall makefiles
+.PHONY: units examples shared sourceinstall exampleinstall zipinstall zipsourceinstall zipexampleinstall zipdistinstall info makefiles
 ifneq ($(wildcard fpcmake.loc),)
 include fpcmake.loc
 endif
@@ -1540,8 +1541,6 @@ override FPCOPT:=$(filter-out $(addprefix -Fu,$(COMPILER_UNITDIR)),$(FPCOPT))# C
 ifdef FPMAKEOPT
 FPMAKE_OPT+=$(FPMAKEOPT)
 endif
-FPMAKE_OPT+=--localunitdir=../..
-FPMAKE_OPT+=--globalunitdir=../../packages
 FPMAKE_OPT+=$(FPC_TARGETOPT)
 FPMAKE_OPT+=$(addprefix -o ,$(FPCOPT))
 FPMAKE_OPT+=--compiler=$(FPC)
@@ -1587,10 +1586,12 @@ ifdef UNIXHier
 else
 	$(LOCALFPMAKE) install $(FPMAKE_OPT) --prefix=$(INSTALL_BASEDIR) --baseinstalldir=$(INSTALL_BASEDIR) --unitinstalldir=$(INSTALL_UNITDIR) -ie -fsp 0
 endif
-PAS2JSVERSION:=$(shell pas2js -iV)
-RTLFILES=$(wildcard src/rtl/*.pas)
-RTLFILES+=rtl/rtl.js rtl/pas2js_rtl.lpk
-PACKAGEFILES=$(wildcard packages/*/*.pas)
+ifndef PAS2JS
+PAS2JS=pas2js
+endif
+PAS2JSVERSION:=$(shell $(PAS2JS) -iV)
+PACKAGEFILES=packages/rtl/rtl.js
+PACKAGEFILES+=$(wildcard packages/*/*.pas)
 PACKAGEFILES+=$(wildcard packages/*/*.pp)
 PACKAGEFILES+=$(wildcard packages/*/*.lpk)
 DEMOFILES=$(wildcard demo/rtl/*.html)
@@ -1621,14 +1622,14 @@ DEMOFILES+=$(wildcard demo/fcldb/*.lpi)
 DEMOFILES+=$(wildcard demo/fcldb/*.pas)
 DEMOFILES+=$(wildcard demo/fcldb/*.json)
 DEMOFILES+=demo/rtl/README.md
-DOCFILES=README.md
 DOCFILES+=docs/translation.html
-ZIPFILE=pas2js-demo-$(PAS2JSVERSION).zip
-COMPILERS=$(wildcard bin/$(PAS2JSVERSION)/pas2js*)
-COMPILERS+=$(wildcard bin/$(PAS2JSVERSION)/libpas2js*)
+ZIPFILE=pas2js-$(PAS2JSVERSION).zip
+BINDIR=bin/$(CPU_TARGET)-$(OS_TARGET)
+COMPILERS=$(wildcard $BINDIR/*$(EXEEXT))
+COMPILERS+=$(wildcard $BINDIR/*$(SHAREDLIBEXT))
 URL=http://www.freepascal.org/~michael/pas2js/
-CFGFILE=bin/$(PAS2JSVERSION)/pas2js.cfg
-info:
+CFGFILE=bin/$(CPU_TARGET)-$(OS_TARGET)/pas2js.cfg
+demoinfo:
 	@echo "Detected pas2js version: $(PAS2JSVERSION)"
 	@echo "Supported targets:"
 	@echo "all               compile for current platform"
@@ -1637,12 +1638,15 @@ info:
 	@echo "upload            upload zip to $(URL)$(ZIPFILE)"
 	@echo "config            create config file in bin dir"
 	@echo "URL for $(PAS2JSVERSION): $(URL)$(ZIPFILE)"
-config:
-	./createconfig.sh $(CFGFILE) ../..
-zip: config
+utils/createconfig$(SRCEXEEXT): utils/createconfig.pp
+	$(FPC) utils/createconfig.pp
+democonfig: utils/createconfig$(SRCEXEEXT)
+	utils/createconfig$(SRCEXEEXT) $(CFGFILE) ../..
+demozip: democonfig
 	@echo Version: $(PAS2JSVERSION)
 	rm -f $(ZIPFILE)
+	cp compiler/utils/pas2js/dist/rtl.js packages/rtl
 	zip $(ZIPFILE) $(COMPILERS) $(RTLFILES) $(PACKAGEFILES) $(DOCFILES) $(DEMOFILES) $(CFGFILE)
-upload: zip
+demoupload: zip
 	scp $(ZIPFILE) idefix.freepascal.org:public_html/pas2js
 	@echo URL: $(URL)$(ZIPFILE)

@@ -1586,6 +1586,7 @@ ifdef UNIXHier
 else
 	$(LOCALFPMAKE) install $(FPMAKE_OPT) --prefix=$(INSTALL_BASEDIR) --baseinstalldir=$(INSTALL_BASEDIR) --unitinstalldir=$(INSTALL_UNITDIR) -ie -fsp 0
 endif
+.PHONY: democonfig demozip help demoupload
 ifndef PAS2JS
 PAS2JS=pas2js
 endif
@@ -1608,7 +1609,7 @@ DEMOFILES+=$(wildcard demo/fpreport/*.lpi)
 DEMOFILES+=$(wildcard demo/fpreport/*.lpr)
 DEMOFILES+=$(wildcard demo/fpreport/*.pp)
 DEMOFILES+=$(wildcard demo/fpreport/*.md)
-DEMOFILES+=$(wildcard demo/hotreload/*.html)
+DEMOFILdemoinfES+=$(wildcard demo/hotreload/*.html)
 DEMOFILES+=$(wildcard demo/hotreload/*.lpr)
 DEMOFILES+=$(wildcard demo/hotreload/*.lpi)
 DEMOFILES+=$(wildcard demo/hotreload/*.pas)
@@ -1629,15 +1630,18 @@ COMPILERS=$(wildcard $BINDIR/*$(EXEEXT))
 COMPILERS+=$(wildcard $BINDIR/*$(SHAREDLIBEXT))
 URL=http://www.freepascal.org/~michael/pas2js/
 CFGFILE=bin/$(CPU_TARGET)-$(OS_TARGET)/pas2js.cfg
-demoinfo:
+help:
 	@echo "Detected pas2js version: $(PAS2JSVERSION)"
 	@echo "Supported targets:"
+	@echo "help              this info"
 	@echo "all               compile for current platform"
-	@echo "info              this info"
-	@echo "zip               zip file with demo executables"
-	@echo "upload            upload zip to $(URL)$(ZIPFILE)"
-	@echo "config            create config file in bin dir"
-	@echo "URL for $(PAS2JSVERSION): $(URL)$(ZIPFILE)"
+	@echo "install           install in an existing FPC installation"
+	@echo "clean             clear files left over by compilation"
+	@echo "distclean         clean + remove build files"
+	@echo "info              show all used variables"
+	@echo "zipinstall        create zip file which can be installed in a FPC installation."
+	@echo "democonfig        create config file in bin dir"
+	@echo "demozip           create alternate demo zip file (deprecated)"
 utils/createconfig$(SRCEXEEXT): utils/createconfig.pp
 	$(FPC) utils/createconfig.pp
 democonfig: utils/createconfig$(SRCEXEEXT)
@@ -1647,6 +1651,6 @@ demozip: democonfig
 	rm -f $(ZIPFILE)
 	cp compiler/utils/pas2js/dist/rtl.js packages/rtl
 	zip $(ZIPFILE) $(COMPILERS) $(RTLFILES) $(PACKAGEFILES) $(DOCFILES) $(DEMOFILES) $(CFGFILE)
-demoupload: zip
+demoupload: demozip
 	scp $(ZIPFILE) idefix.freepascal.org:public_html/pas2js
 	@echo URL: $(URL)$(ZIPFILE)

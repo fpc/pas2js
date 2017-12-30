@@ -90,9 +90,15 @@ endif
 #
 .PHONY: democonfig demozip help demoupload
 ifndef PAS2JS
-PAS2JS=pas2js
+PAS2JS=bin/$(CPU_TARGET)-$(OS_TARGET)/pas2js$(EXEEXT)
+endif
+ifeq (,$(wildcard $(PAS2JS)))  
+PAS2JS=pas2js$(EXEEXT)
 endif
 PAS2JSVERSION:=$(shell $(PAS2JS) -iV)
+#
+# Demo zip
+#
 PACKAGEFILES=packages/rtl/rtl.js
 PACKAGEFILES+=$(wildcard packages/*/*.pas)
 PACKAGEFILES+=$(wildcard packages/*/*.pp)
@@ -126,12 +132,31 @@ DEMOFILES+=$(wildcard demo/fcldb/*.pas)
 DEMOFILES+=$(wildcard demo/fcldb/*.json)
 DEMOFILES+=demo/rtl/README.md
 DOCFILES+=docs/translation.html
-ZIPFILE=pas2js-$(PAS2JSVERSION).zip
+DEMOZIPFILE=pas2js-demo-$(PAS2JSVERSION).zip
 BINDIR=bin/$(CPU_TARGET)-$(OS_TARGET)
 COMPILERS=$(wildcard $BINDIR/*$(EXEEXT))
 COMPILERS+=$(wildcard $BINDIR/*$(SHAREDLIBEXT))
-URL=http://www.freepascal.org/~michael/pas2js/
 CFGFILE=bin/$(CPU_TARGET)-$(OS_TARGET)/pas2js.cfg
+#
+# End of demo zip
+#
+#
+# Upload
+#
+SSHUPLOAD=fpc@ftpmaster.freepascal.org
+SSHUPLOABASEDIR=ftp/contrib/pas2js
+SSHUPLOADVERSION=$(SSHUPLOABASEDIR)/$(PAS2JSVERSION)
+BASEURL=ftp://ftpmaster.freepascal.org/fpc/contrib/pas2js/
+#
+# Dist zipfile filename
+#
+ifeq (1,$(UNIXHier))
+ZIPEXT=.tar.gz
+else
+ZIPEXT=.zip
+endif
+DISTZIPFILE=$(FULLZIPNAME)$(ZIPEXT)
+#
 
 help:
 	@echo "Detected pas2js version: $(PAS2JSVERSION)"
@@ -143,8 +168,13 @@ help:
 	@echo "distclean         clean + remove build files"
 	@echo "info              show all used variables"
 	@echo "zipinstall        create zip file which can be installed in a FPC installation."
+	@echo "upload            upload ZIP file created by zipinstall to FPC FTP site"
 	@echo "democonfig        create config file in bin dir"
 	@echo "demozip           create alternate demo zip file (deprecated)"
+	@echo "demoupload        upload alternate demo zip file (deprecated)"
+	@echo ""
+	@echo "Demo URL          $(BASEURL)$(DEMOZIPFILE)"
+	@echo "Distribution URL  $(BASEURL)$(PAS2JSVERSION)/$(DISTZIPFILE)"
 
 utils/createconfig$(SRCEXEEXT): utils/createconfig.pp
 	$(FPC) utils/createconfig.pp
@@ -152,13 +182,24 @@ utils/createconfig$(SRCEXEEXT): utils/createconfig.pp
 democonfig: utils/createconfig$(SRCEXEEXT)
 	utils/createconfig$(SRCEXEEXT) $(CFGFILE) ../..
 
-demozip: democonfig
+demozip: democonfig $(DEMOZIPFILE)
 	@echo Version: $(PAS2JSVERSION)
-	rm -f $(ZIPFILE)
+	rm -f $(DEMOZIPFILE)
         cp compiler/utils/pas2js/dist/rtl.js packages/rtl
-	zip $(ZIPFILE) $(COMPILERS) $(RTLFILES) $(PACKAGEFILES) $(DOCFILES) $(DEMOFILES) $(CFGFILE)
+	zip $(DEMOZIPFILE) $(COMPILERS) $(RTLFILES) $(PACKAGEFILES) $(DOCFILES) $(DEMOFILES) $(CFGFILE)
 
 demoupload: demozip
-	scp $(ZIPFILE) idefix.freepascal.org:public_html/pas2js
-	@echo URL: $(URL)$(ZIPFILE)
+	ssh $(SSHUPLOAD) mkdir -p $(SSHUPLOADBASEDIR)
+	scp $(DEMOZIPFILE) $(SSHUPLOAD):$(SSHUPLOADBASEDIR)
+	@echo "Demo URL          $(BASEURL)$(DEMOZIPFILE)"
+
+$(DISTZIPFILE): zipinstall
+
+upload: $(DISTZIPFILE)
+	ssh $(SSHUPLOAD) mkdir -p $(SSHUPLOADVERSION)
+	scp $(DISTZIPFILE) $(SSHUPLOAD):$(SSHUPLOADVERSION)
+	@echo "Distribution URL  $(BASEURL)$(PAS2JSVERSION)/$(DISTZIPFILE)"
+
+
+
 

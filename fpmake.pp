@@ -37,10 +37,9 @@ begin
   Addln('#');
   Addln('# Minimal config file for pas2js compiler');
   Addln('#');
-  Addln('');
   Addln('# not yet implemented: -d is the same as #DEFINE');
   Addln('# not yet implemented: -u is the same as #UNDEF');
-  Addln('');
+  Addln('#');
   Addln('# Write always a nice logo ;)');
   Addln('-l');
   Addln('');
@@ -59,11 +58,7 @@ begin
   Addln('#ENDIF');
   Addln('');
   Addln('# end.');
-  Addln('EOCF');
-  Addln('');
-  Addln('# end');
   Close(F);
-
 end;
 
 Procedure AddInstallFiles(Files : TConditionalDestStrings; ADir,AllowedExt,APrefix : String);
@@ -95,7 +90,7 @@ end;
 Procedure AddPackageFiles(Files : TConditionalDestStrings; ADir,APrefix : String);
 
 Const
-  PackExt = '.pas.inc.lpk';
+  PackExt = '.pp.pas.inc.lpk';
 
 begin
   AddInstallFiles(Files,'packages'+PathDelim+ADir,packExt,aPrefix);
@@ -105,7 +100,7 @@ end;
 Procedure AddDemoFiles(Files : TConditionalDestStrings; ADir,APrefix : String);
 
 Const
-  DemoExt = '.pas.inc.lpr.lpi.html.md';
+  DemoExt = '.pp.pas.inc.lpr.lpi.html.md';
 
 begin
   AddInstallFiles(Files,'demo'+PathDelim+ADir,demoExt,APrefix);

@@ -331,16 +331,16 @@ Type
 
 
 Var
-  TimeSeparator : char;
-  DateSeparator : char;
-  ShortDateFormat : string;
-  LongDateFormat : string;
-  ShortTimeFormat : string;
-  LongTimeFormat : string;
-  DecimalSeparator : string;
+  TimeSeparator : char = ':';
+  DateSeparator : char = '-';
+  ShortDateFormat : string = 'yyyy-mm-dd';
+  LongDateFormat : string = 'ddd, yyyy-mm-dd';
+  ShortTimeFormat : string = 'hh:nn';
+  LongTimeFormat : string = 'hh:nn:ss';
+  DecimalSeparator : string = '.';
   ThousandSeparator : string;
-  TimeAMString : string;
-  TimePMString : string;
+  TimeAMString : string = 'AM';
+  TimePMString : string = 'PM';
 
 const
 
@@ -364,13 +364,54 @@ const
 
 Var
   MonthDays : array [Boolean] of TDayTable;
-  ShortMonthNames : TMonthNames;
-  LongMonthNames : TMonthNames;
-  ShortDayNames : TDayNames;
-  LongDayNames : TDayNames;
+   // ((31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31),
+   //  (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31));
+  ShortMonthNames : TMonthNames = (
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec');
+  LongMonthNames : TMonthNames = (
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December');
+  ShortDayNames : TDayNames = (
+    'Sun',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat');
+
+  LongDayNames : TDayNames = (
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday');
 
 var
-  TwoDigitYearCenturyWindow : word ;
+  TwoDigitYearCenturyWindow : word = 50;
                              { Threshold to be subtracted from year before age-detection.}
 
 
@@ -2331,7 +2372,7 @@ end ;
 {   DateTimeToStr returns a string representation of DateTime using LongDateTimeFormat   }
 
 Var
-  DateTimeToStrFormat : Array[Boolean] of string ;
+  DateTimeToStrFormat : Array[Boolean] of string = ('c','f');
 
 function DateTimeToStr(DateTime: TDateTime; ForceTimeIfZero : Boolean = False): string;
 begin
@@ -3436,44 +3477,6 @@ end;
 
 
 initialization
-  LongDayNames[0]:='Sunday';
-  LongDayNames[1]:='Monday';
-  LongDayNames[2]:='Tuesday';
-  LongDayNames[3]:='Wednesday';
-  LongDayNames[4]:='Thursday';
-  LongDayNames[5]:='Friday';
-  LongDayNames[6]:='Saturday';
-  ShortDayNames[0]:='Sun';
-  ShortDayNames[1]:='Mon';
-  ShortDayNames[2]:='Tue';
-  ShortDayNames[3]:='Wed';
-  ShortDayNames[4]:='Thu';
-  ShortDayNames[5]:='Fri';
-  ShortDayNames[6]:='Sat';
-  ShortMonthNames[1]:='Jan';
-  ShortMonthNames[2]:='Feb';
-  ShortMonthNames[3]:='Mar';
-  ShortMonthNames[4]:='Apr';
-  ShortMonthNames[5]:='May';
-  ShortMonthNames[6]:='Jun';
-  ShortMonthNames[7]:='Jul';
-  ShortMonthNames[8]:='Aug';
-  ShortMonthNames[9]:='Sep';
-  ShortMonthNames[10]:='Oct';
-  ShortMonthNames[11]:='Nov';
-  ShortMonthNames[12]:='Dec';
-  LongMonthNames[1]:='January';
-  LongMonthNames[2]:='February';
-  LongMonthNames[3]:='March';
-  LongMonthNames[4]:='April';
-  LongMonthNames[5]:='May';
-  LongMonthNames[6]:='June';
-  LongMonthNames[7]:='July';
-  LongMonthNames[8]:='August';
-  LongMonthNames[9]:='September';
-  LongMonthNames[10]:='October';
-  LongMonthNames[11]:='November';
-  LongMonthNames[12]:='December';
   MonthDays[True][1]:=31;
   MonthDays[True][2]:=29;
   MonthDays[True][3]:=31;
@@ -3498,19 +3501,7 @@ initialization
   MonthDays[False][10]:=31;
   MonthDays[False][11]:=30;
   MonthDays[False][12]:=31;
-  DateTimeToStrFormat[False]:='c';
-  DateTimeToStrFormat[True]:='f';
   RTLEInvalidCast:=EInvalidCast;
-  DateSeparator:='-';
-  TimeSeparator:=':';
-  ShortDateFormat:='yyyy-mm-dd';
-  LongDateFormat:='ddd, yyyy-mm-dd';
-  ShortTimeFormat:='hh:nn';
-  LongTimeFormat:='hh:nn:ss';
-  DecimalSeparator:='.';
-  TimeAMString := 'AM';
-  TimePMString := 'PM';
-  TwoDigitYearCenturyWindow:=50;
 
 end.
 

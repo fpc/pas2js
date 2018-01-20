@@ -374,8 +374,8 @@ procedure TBaseJSONDataSet.FreeData;
 begin
   If FOwnsData then
     begin
-    FreeAndNil(FRows);
-    FreeAndNil(FMetaData);
+    FRows:=Nil
+    FMetaData:=Nil;
     end;
   if (FCurrentList<>FDefaultList) then
     FreeAndNil(FCurrentList)

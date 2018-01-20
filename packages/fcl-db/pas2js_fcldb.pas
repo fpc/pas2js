@@ -8,7 +8,7 @@ unit pas2js_fcldb;
 interface
 
 uses
-  db, dbconst, jsondataset;
+  DB, DBConst, JSONDataset, RestConnection, extjsdataset;
 
 implementation
 

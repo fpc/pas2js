@@ -17,31 +17,32 @@
       </Other>
       <SkipCompiler Value="True"/>
     </CompilerOptions>
-    <Files Count="4">
+    <Files Count="5">
       <Item1>
         <Filename Value="db.pas"/>
-        <UnitName Value="db"/>
+        <UnitName Value="DB"/>
       </Item1>
       <Item2>
         <Filename Value="dbconst.pas"/>
-        <UnitName Value="dbconst"/>
+        <UnitName Value="DBConst"/>
       </Item2>
       <Item3>
         <Filename Value="jsondataset.pas"/>
-        <UnitName Value="jsondataset"/>
+        <UnitName Value="JSONDataset"/>
       </Item3>
       <Item4>
         <Filename Value="restconnection.pas"/>
-        <UnitName Value="restconnection"/>
+        <UnitName Value="RestConnection"/>
       </Item4>
+      <Item5>
+        <Filename Value="extjsdataset.pp"/>
+        <UnitName Value="extjsdataset"/>
+      </Item5>
     </Files>
-    <RequiredPkgs Count="2">
+    <RequiredPkgs Count="1">
       <Item1>
         <PackageName Value="pas2js_rtl"/>
       </Item1>
-      <Item2>
-        <PackageName Value="FCL"/>
-      </Item2>
     </RequiredPkgs>
     <UsageOptions>
       <UnitPath Value="$(PkgOutDir)"/>

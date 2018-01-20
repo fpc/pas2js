@@ -35,7 +35,7 @@
         <UnitName Value="RestConnection"/>
       </Item4>
       <Item5>
-        <Filename Value="extjsdataset.pp"/>
+        <Filename Value="extjsdataset.pas"/>
         <UnitName Value="extjsdataset"/>
       </Item5>
     </Files>

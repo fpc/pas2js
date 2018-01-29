@@ -554,7 +554,7 @@ begin
     O:=TObject(FList[Index]);
     FList[Index]:=Nil;
     O.Free;
-    end
+    end;
   FList.Delete(Index);
 end;
 

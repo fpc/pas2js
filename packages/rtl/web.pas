@@ -1693,6 +1693,8 @@ Type
     touchend : TJSTouchEventHandler;
     touchmove : TJSTouchEventHandler;
     touchcancel : TJSTouchEventHandler;
+    procedure addEventListener(aname : string; aListener : TJSEventHandler);
+    procedure addEventListener(aname : string; aListener : JSValue);
     Procedure alert(Const Msg : String);
     Function atob(Const aValue : string) : string;
     procedure blur;
@@ -1714,6 +1716,8 @@ Type
     procedure print;
     function prompt(const aMessage : String) : String; overload;
     function prompt(const aMessage,aDefault : String) : String; overload;
+    procedure removeEventListener(aname : string; aListener : TJSEventHandler);
+    procedure removeEventListener(aname : string; aListener : JSValue);
     procedure resizeBy(aWidth,aHeight : NativeInt);
     procedure resizeTo(aWidth,aHeight : NativeInt);
     procedure scrollBy(x,y : NativeInt);

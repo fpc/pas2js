@@ -151,7 +151,7 @@ function Sin(const A: Double): Double; external name 'Math.sin';
 function Sqr(const A: Integer): Integer; assembler; overload;
 function Sqr(const A: Double): Double; assembler; overload;
 function sqrt(const A: Double): Double; external name 'Math.sqrt';
-function Trunc(const A: Double): NativeInt; external name 'Math.trunc'; // not on IE
+function Trunc(const A: Double): NativeInt;
 
 {*****************************************************************************
                           String functions
@@ -241,6 +241,19 @@ end;
 function Sqr(const A: Double): Double; assembler;
 asm
   return A*A;
+end;
+
+function Trunc(const A: Double): NativeInt; assembler;
+asm
+  if (!Math.trunc) {
+    Math.trunc = function(v) {
+      v = +v;
+      if (!isFinite(v)) return v;
+      return (v - v % 1) || (v < 0 ? -0 : v === 0 ? v : 0);
+    };
+  }
+  $mod.Trunc = Math.trunc;
+  return Math.trunc(A);
 end;
 
 function Copy(const S: string; Index, Size: Integer): String; assembler;

@@ -30,19 +30,15 @@
         <PackageName Value="pas2js_rtl"/>
       </Item1>
     </RequiredPackages>
-    <Units Count="3">
+    <Units Count="2">
       <Unit0>
         <Filename Value="demorouter2.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit0>
       <Unit1>
-        <Filename Value="webscroll.pp"/>
-        <IsPartOfProject Value="True"/>
-      </Unit1>
-      <Unit2>
         <Filename Value="frmdemo.pp"/>
         <IsPartOfProject Value="True"/>
-      </Unit2>
+      </Unit1>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

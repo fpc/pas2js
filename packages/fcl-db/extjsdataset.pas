@@ -195,7 +195,7 @@ begin
   else
     Exit(False);
   if Not isArray(O[Root]) then
-    exit(False)
+    exit(False);
   A:=TJSArray(O[Root]);
   If A.Length=1 then
     begin

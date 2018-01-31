@@ -4656,7 +4656,7 @@ begin
 {$ifdef dsdebug}
       Writeln ('Trying to do it');
 {$endif dsdebug}
-      P;
+      P();
       exit;
     except
       On E : EDatabaseError do
@@ -4708,7 +4708,7 @@ begin
   If AValue=FDataProxy then
     exit;
   if Assigned(FDataProxy) then
-    FDataProxy.RemoveFreeNotification(Self)
+    FDataProxy.RemoveFreeNotification(Self);
   FDataProxy:=AValue;
   if Assigned(FDataProxy) then
     FDataProxy.FreeNotification(Self)

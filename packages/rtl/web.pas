@@ -1004,22 +1004,6 @@ Type
     procedure warn(Obj1 : JSValue); varargs;
   end;
 
-  TPromiseResolverFunc = Procedure (aValue : JSValue);
-  TPromiseResolverMethod = Procedure (aValue : JSValue);
-  TJSPromiseExecutorFunc = procedure (resolve,reject : TPromiseResolverFunc);
-  TJSPromiseExecutorMethod = procedure (resolve,reject : TPromiseResolverFunc) of object;
-  
-  TJSPromise = class external name 'Promise'
-    constructor new(Executor : TJSPromiseExecutorFunc);
-    constructor new(Executor : TJSPromiseExecutorMethod);
-    class function reject(reason : JSValue) : TJSPromise;
-    class function resolve(value : JSValue): TJSPromise;
-    function catch (onRejected : TPromiseResolverFunc) : TJSPromise;
-    function catch (onRejected : TPromiseResolverMethod) : TJSPromise;
-    function _then (onRejected : TPromiseResolverFunc) : TJSPromise;
-    function _then (onRejected : TPromiseResolverMethod) : TJSPromise;
-  end;
-  
   { TJSCryptoKey }
 
   TJSCryptoKey = class external name 'CryptoKey'
@@ -1724,6 +1708,7 @@ Type
     procedure scrollTo(x,y : NativeInt);
     Function setInterval(ahandler : TJSTimerCallBack; aInterval : NativeUInt) : NativeInt; varargs;
     Function setTimeout(ahandler : TJSTimerCallBack; aTimeout : NativeUInt) : NativeInt; varargs;
+    Function setTimeout(ahandler : TJSTimerCallBack) : NativeInt;
     procedure stop;
 
     property console : TJSConsole Read FConsole;
@@ -1769,7 +1754,6 @@ Type
   private
     FLength: NativeInt; external name 'length';
     FParentRule: TJSCSSRule; external name 'parentRule';
-
   public
     cssText : string;
     function item(aIndex : Integer) : string;

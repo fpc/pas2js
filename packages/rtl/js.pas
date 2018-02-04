@@ -275,13 +275,15 @@ type
 
   TJSArray = Class;
   
-  TJSArrayCallBack = function (element : JSValue; index: NativeInt; anArray : TJSArray) : Boolean;
-  TJSArrayEvent = function (element : JSValue; index: NativeInt; anArray : TJSArray) : Boolean of object;
-  TJSArrayMapCallBack = function (element : JSValue; index: NativeInt; anArray : TJSArray) : JSValue;
-  TJSArrayMapEvent = function (element : JSValue; index: NativeInt; anArray : TJSArray) : JSValue of object;
-  TJSArrayReduceCallBack = function (accumulator, currentValue : JSValue; currentIndex : NativeInt; anArray : TJSArray) : JSValue;
-  TJSArrayCompareCallBack = function (a,b : JSValue) : NativeInt; 
-    
+  TJSArrayEvent = reference to function (element : JSValue; index: NativeInt; anArray : TJSArray) : Boolean;
+  TJSArrayMapEvent = reference to function (element : JSValue; index: NativeInt; anArray : TJSArray) : JSValue;
+  TJSArrayReduceEvent = reference to function (accumulator, currentValue : JSValue; currentIndex : NativeInt; anArray : TJSArray) : JSValue;
+  TJSArrayCompareEvent = reference to function (a,b : JSValue) : NativeInt;
+  TJSArrayCallback = TJSArrayEvent;
+  TJSArrayMapCallback = TJSArrayMapEvent;
+  TJSArrayReduceCallBack = TJSArrayReduceEvent;
+  TJSArrayCompareCallBack = TJSArrayCompareEvent;
+
   { TJSArray }
 
   TJSArray = Class external name 'Array'
@@ -313,7 +315,7 @@ type
     Function find(const aCallBack : TJSArrayEvent; aThis : TObject) : JSValue; overload;
     Function findIndex(const aCallBack : TJSArrayCallBack) : NativeInt; overload;
     Function findIndex(const aCallBack : TJSArrayEvent; aThis : TObject) : NativeInt; overload;
-    procedure forEach(const aCallBack : TJSArrayCallBack); overload;
+    procedure forEach(const aCallBack : TJSArrayEvent); overload;
     procedure forEach(const aCallBack : TJSArrayEvent; aThis : TObject); overload;
     function includes(aElement : JSValue) : Boolean; overload;
     function includes(aElement : JSValue; FromIndex : NativeInt) : Boolean; overload;
@@ -323,8 +325,8 @@ type
     function join (aSeparator : string) : String; overload;
     function lastIndexOf(aElement : JSValue) : NativeInt; overload;
     function lastIndexOf(aElement : JSValue; FromIndex : NativeInt) : NativeInt; overload;
-    Function map(const aCallBack : TJSArrayCallBack) : TJSArray; overload;
-    Function map(const aCallBack : TJSArrayEvent; aThis : TObject) : TJSArray; overload;
+    Function map(const aCallBack : TJSArrayMapCallBack) : TJSArray; overload;
+    Function map(const aCallBack : TJSArrayMapEvent; aThis : TObject) : TJSArray; overload;
     function pop : JSValue; 
     function push(aElement : JSValue) : NativeInt; varargs;
     function reduce(const aCallBack : TJSArrayReduceCallBack) : JSValue; overload;
@@ -571,6 +573,43 @@ type
     class function stringify(aValue,aReplacer : JSValue; space:  NativeInt) : string;
     class function stringify(aValue,aReplacer : JSValue; space:  String) : string;
   end;
+
+  { TJSError }
+
+  TJSError = CLass external name 'Error'
+  private
+    FMessage: String; external name 'message';
+  Public
+    Constructor new;
+    Constructor new(Const aMessage : string);
+    Constructor new(Const aMessage,aFileName : string);
+    Constructor new(Const aMessage,aFileName : string; aLineNumber : NativeInt);
+    Property Message : String Read FMessage;
+  end;
+
+
+  TJSPromiseResolver = reference to function (aValue : JSValue) : JSValue;
+  TJSPromiseExecutor = reference to procedure (resolve,reject : TJSPromiseResolver);
+  TJSPromiseFinallyHandler = reference to procedure;
+  TJSPromise = Class;
+  TJSPromiseArray = array of TJSPromise;
+
+  TJSPromise = class external name 'Promise'
+    constructor new(Executor : TJSPromiseExecutor);
+    class function all(arg : Array of JSValue) : TJSPromise; overload;
+    class function all(arg : JSValue) : TJSPromise; overload;
+    class function all(arg : TJSPromiseArray) : TJSPromise; overload;
+    class function race(arg : Array of JSValue) : TJSPromise; overload;
+    class function race(arg : JSValue) : TJSPromise; overload;
+    class function race(arg : TJSPromiseArray) : TJSPromise; overload;
+    class function reject(reason : JSValue) : TJSPromise;
+    class function resolve(value : JSValue): TJSPromise; overload;
+    class function resolve : TJSPromise; overload;
+    function _then (onAccepted : TJSPromiseResolver) : TJSPromise; external name 'then';
+    function catch (onRejected : TJSPromiseResolver) : TJSPromise;
+    function _finally(value : TJSPromiseFinallyHandler): TJSPromise;
+  end;
+
 
 var
   // This can be used in procedures/functions to provide access to the 'arguments' array.

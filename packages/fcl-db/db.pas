@@ -3553,7 +3553,7 @@ Var
   B : TBookmark;
 
 begin
-  O:=TJSJSON.parse(Value);
+  O:=TJSJSON.parseObject(Value);
   B.Flag:=TBookmarkFlag(O.Properties['flag']);
   B.Data:=O.Properties['Index'];
   GotoBookMark(B)

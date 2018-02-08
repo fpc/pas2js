@@ -567,7 +567,9 @@ type
 
   TJSJSON = class external name 'JSON' (TJSObject)
   Public
-    class function parse(aJSON : String) : TJSObject;
+    class function parse(aJSON : String) : JSValue;
+    // Use this only when you are sure you will get an object, no checking is done.
+    class function parseObject(aJSON : String) : TJSObject; external name 'parse';
     class function stringify(aValue : JSValue) : string;
     class function stringify(aValue,aReplacer : JSValue) : string;
     class function stringify(aValue,aReplacer : JSValue; space:  NativeInt) : string;

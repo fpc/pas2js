@@ -1,6 +1,6 @@
 program demorest;
 
-uses sysutils, classes, js, web, db, jsondataset, restconnection;
+uses sysutils, classes, js, web, db, extjsdataset, jsondataset, restconnection;
 
 Type
 

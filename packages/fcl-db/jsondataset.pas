@@ -79,15 +79,12 @@ type
     function AllocRecordBuffer: TDataRecord; override;
     procedure FreeRecordBuffer(var Buffer: TDataRecord); override;
     procedure InternalInitRecord(var Buffer: TDataRecord); override;
-    procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); override;
-    function GetBookmarkFlag(Buffer: TDataRecord): TBookmarkFlag; override;
     function GetRecord(Var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult; override;
     function GetRecordSize: Word; override;
     procedure AddToRows(AValue: TJSArray);
     procedure InternalClose; override;
     procedure InternalDelete; override;
     procedure InternalFirst; override;
-    procedure InternalGotoBookmark(ABookmark: TBookmark); override;
     procedure InternalLast; override;
     procedure InternalOpen; override;
     procedure InternalPost; override;
@@ -98,6 +95,10 @@ type
     procedure InternalSetToRecord(Buffer: TDataRecord); override;
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; override;
     function IsCursorOpen: Boolean; override;
+    // Bookmark operations
+    procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); override;
+    function GetBookmarkFlag(Buffer: TDataRecord): TBookmarkFlag; override;
+    procedure InternalGotoBookmark(ABookmark: TBookmark); override;
     procedure SetBookmarkFlag(Var Buffer: TDataRecord; Value: TBookmarkFlag); override;
     procedure SetBookmarkData(Var Buffer: TDataRecord; Data: TBookmark); override;
     function GetRecordCount: Integer; override;
@@ -135,6 +136,7 @@ type
     destructor Destroy; override;
     function GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;  override;
     procedure SetFieldData(Field: TField; var Buffer: TDatarecord; AValue : JSValue);  override;
+    function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Longint; override;
   published
     Property FieldDefs;
     // redeclared data set properties
@@ -408,7 +410,7 @@ begin
   FCurrentList.Delete(FCurrent);
   if (FCurrent>=FCurrentList.Count) then
     Dec(FCurrent);
-  FRows:=FRows.Splice(FCurrent,1);
+  FRows.Splice(FCurrent,1);
 end;
 
 procedure TBaseJSONDataSet.InternalFirst;
@@ -618,6 +620,24 @@ procedure TBaseJSONDataSet.SetBookmarkFlag(var Buffer: TDataRecord; Value: TBook
 begin
   Buffer.BookmarkFlag := Value;
 end;
+
+function TBaseJSONDataSet.CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Longint;
+
+begin
+  if isNumber(Bookmark1.Data) and isNumber(Bookmark2.Data) then
+    Result := Integer(Bookmark2.Data) - Integer(Bookmark1.Data)
+  else
+  begin
+    if isNumber(Bookmark1.Data) then
+      Result := -1
+    else
+    if isNumber(Bookmark2.Data) then
+      Result := 1
+    else
+      Result := 0;
+  end;
+end;
+
 
 procedure TBaseJSONDataSet.SetRecNo(Value: Integer);
 begin

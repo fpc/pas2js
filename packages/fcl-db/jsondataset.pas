@@ -448,7 +448,7 @@ end;
 
 procedure TBaseJSONDataSet.InternalCancel;
 begin
-
+  FEditRow:=Nil;
 end;
 
 procedure TBaseJSONDataSet.InternalLast;

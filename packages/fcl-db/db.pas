@@ -2797,6 +2797,7 @@ Var
   I : Integer;
 
 begin
+  Result:=Nil;
   if Not Assigned(FChangeList) then
     Exit;
   B:=GetBookmark;

@@ -249,7 +249,7 @@ begin
   if Options.log then
     console.warn('Status received');
   try
-    Data:=TJSJSON.parse(FLastReq.responseText);
+    Data:=TJSJSON.parseObject(FLastReq.responseText);
     HandleMessage(Data);
   except
     console.error('Error parsing JSON status text: '+FLastReq.responseText);

@@ -654,11 +654,11 @@ function jsInstanceOf(const aFunction, aFunctionWithPrototype: JSValue): String;
 function jsTypeOf(const v: JSValue): String; external name 'typeof';
 function jsIsNaN(const v: JSValue): boolean; external name 'isNaN';// true if value cannot be converted to a number. e.g. True on NaN, undefined, {}, '123'. False on true, null, '', ' ', '1A'
 function toNumber(const v: JSValue): double; assembler; // if not possible, returns NaN
-function toInteger(const v: JSValue): NativeInt; // if not possible, returns NaN
-function toObject(Value: JSValue): TJSObject; // If not possible, returns Nil
-function toArray(Value: JSValue): TJSArray; // If not possible, returns Nil
-function toBoolean(Value: JSValue): Boolean; // If not possible, returns False
-function toString(Value: JSValue): String; // If not possible, returns ''
+function toInteger(const v: JSValue): NativeInt; // if v is not an integer, returns 0
+function toObject(Value: JSValue): TJSObject; // If Value is not a Javascript object, returns Nil
+function toArray(Value: JSValue): TJSArray; // If Value is not a Javascript array, returns Nil
+function toBoolean(Value: JSValue): Boolean; // If Value is not a Boolean, returns False
+function toString(Value: JSValue): String; // If Value is not a string, returns ''
 
 Type
   TJSValueType = (jvtNull,jvtBoolean,jvtInteger,jvtFloat,jvtString,jvtObject,jvtArray);
@@ -792,9 +792,7 @@ begin
   if IsInteger(v) then
     Result:=NativeInt(v)
   else
-    asm
-    return NaN
-    end;
+    Result:=0;
 end;
 
 function toObject(Value: JSValue): TJSObject;

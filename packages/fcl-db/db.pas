@@ -3973,7 +3973,8 @@ begin
     R:=AddToChangeList(usDeleted);
     If Not TryDoing(@InternalDelete,OnDeleteError) then
       begin
-      RemoveFromChangeList(R);
+      if Assigned(R) then
+        RemoveFromChangeList(R);
       exit;
       end;
 {$ifdef dsdebug}
@@ -4533,7 +4534,8 @@ begin
     Resync([]);
     // We get the new values here, since the bookmark should now be correct to find the record later on when doing applyupdates.
     R:=AddToChangeList(UpdateStates[wasInsert]);
-    R.FBookmark:=BookMark;
+    if Assigned(R) then
+      R.FBookmark:=BookMark;
 {$ifdef dsdebug}
     writeln ('Post: Browse mode set');
 {$endif}

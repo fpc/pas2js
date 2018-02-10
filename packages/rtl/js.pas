@@ -654,6 +654,11 @@ function jsInstanceOf(const aFunction, aFunctionWithPrototype: JSValue): String;
 function jsTypeOf(const v: JSValue): String; external name 'typeof';
 function jsIsNaN(const v: JSValue): boolean; external name 'isNaN';// true if value cannot be converted to a number. e.g. True on NaN, undefined, {}, '123'. False on true, null, '', ' ', '1A'
 function toNumber(const v: JSValue): double; assembler; // if not possible, returns NaN
+function toInteger(const v: JSValue): NativeInt; // if not possible, returns NaN
+function toObject(Value: JSValue): TJSObject; // If not possible, returns Nil
+function toArray(Value: JSValue): TJSArray; // If not possible, returns Nil
+function toBoolean(Value: JSValue): Boolean; // If not possible, returns False
+function toString(Value: JSValue): String; // If not possible, returns ''
 
 Type
   TJSValueType = (jvtNull,jvtBoolean,jvtInteger,jvtFloat,jvtString,jvtObject,jvtArray);
@@ -780,6 +785,52 @@ end;
 function toNumber(const v: JSValue): double; assembler;
 asm
   return v-0;
+end;
+
+function toInteger(const v: JSValue): NativeInt;
+begin
+  if IsInteger(v) then
+    Result:=NativeInt(v)
+  else
+    asm
+    return NaN
+    end;
+end;
+
+function toObject(Value: JSValue): TJSObject;
+
+begin
+  if IsObject(Value) then
+    Result:=TJSObject(Value)
+  else
+    Result:=Nil;
+end;
+
+function toArray(Value: JSValue): TJSArray; // If not possible, returns Nil
+
+begin
+  if IsArray(Value) then
+    Result:=TJSArray(Value)
+  else
+    Result:=Nil;
+end;
+
+function toBoolean(Value: JSValue): Boolean; // If not possible, returns False
+
+begin
+  if isBoolean(Value) then
+    Result:=Boolean(Value)
+  else
+    Result:=False;
+end;
+
+function toString(Value: JSValue): String; // If not possible, returns ''
+
+begin
+  if IsString(Value) then
+    Result:=String(Value)
+  else
+    Result:='';
 end;
 
 { EJS }

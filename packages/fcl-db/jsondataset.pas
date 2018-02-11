@@ -57,18 +57,66 @@ type
 
   { TBaseJSONDataSet }
 
+  { TJSONIndex }
+
+  TJSONIndex = Class
+    FList : TJSArray; // Indexes of elements in FRows.
+    FRows : TJSArray;
+    FDataset : TDataset;
+  private
+    function GetRecordIndex(aListIndex : Integer): NativeInt;
+  protected
+    Function GetCount: Integer; virtual;
+    Procedure CreateIndex; Virtual; abstract;
+    Property List : TJSArray Read FList;
+    Property Rows : TJSArray Read FRows;
+    Property Dataset : TDataset Read FDataset;
+  Public
+    Constructor Create(aDataset: TDataset; aRows : TJSArray);
+    // Append remainder of FRows to FList.
+    Procedure AppendToIndex; virtual; abstract;
+    // Delete aListIndex from list, not from row. Return Recordindex of deleted record.
+    Function Delete(aListIndex : Integer) : Integer; virtual;
+    // Append aRecordIndex to list. Return ListIndex of appended record.
+    Function Append(aRecordIndex : Integer) : Integer; virtual; abstract;
+    // Insert record into list. By default, this does an append. Return ListIndex of inserted record
+    Function Insert(aCurrentIndex, aRecordIndex : Integer) : Integer; virtual;
+    // Record at index aCurrentIndex has changed. Update index and return new listindex.
+    Function Update(aCurrentIndex, aRecordIndex : Integer) : Integer; virtual; abstract;
+    // Find list index for Record at index aCurrentIndex. Return -1 if not found.
+    Function FindRecord(aRecordIndex : Integer) : Integer; virtual; abstract;
+    // index of record in FRows based on aListIndex in List.
+    Property RecordIndex[aListIndex : Integer] : NativeInt Read GetRecordIndex;
+    // Number of records in index. This can differ from FRows, e.g. when filtering.
+    Property Count : Integer Read GetCount;
+  end;
+
+  { TDefaultJSONIndex }
+
+  TDefaultJSONIndex = Class(TJSONIndex)
+  public
+    Procedure CreateIndex; override;
+    Procedure AppendToIndex; override;
+    Function Append(aRecordIndex : Integer) : Integer; override;
+    Function Insert(aCurrentIndex, aRecordIndex : Integer) : Integer; override;
+    Function FindRecord(aRecordIndex : Integer) : Integer; override;
+    Function Update(aCurrentIndex, aRecordIndex : Integer) : Integer; override;
+  end;
+
   // basic JSON dataset. Does nothing ExtJS specific.
   TBaseJSONDataSet = class (TDataSet)
   private
     FMUS: Boolean;
     FOwnsData : Boolean;
-    FDefaultList : TFPList;
-    FCurrentList: TFPList;
-    FCurrent: Integer;
+    FDefaultIndex : TJSONIndex; // Default index, built from array
+    FCurrentIndex : TJSONIndex; // Currently active index.
+    FCurrent: Integer; // Record Index in the current IndexList
     // Possible metadata to configure fields from.
     FMetaData : TJSObject;
     // This will contain the rows.
     FRows : TJSArray;
+    // Deleted rows
+    FDeletedRows : TJSArray;
     FFieldMapper : TJSONFieldMapper;
     // When editing, this object is edited.
     FEditRow : JSValue;
@@ -109,8 +157,8 @@ type
     // Called when dataset is closed. If OwnsData is true, metadata and rows are freed.
     Procedure FreeData; virtual;
     // Fill default list.
-    procedure AddToList; virtual;
-    Procedure FillList; virtual;
+    procedure AppendToIndexes; virtual;
+    Procedure CreateIndexes; virtual;
     // Convert MetaData object to FieldDefs.
     Procedure MetaDataToFieldDefs; virtual; abstract;
     // Initialize Date/Time info in all date/time fields. Called during InternalOpen
@@ -189,6 +237,95 @@ implementation
 
 uses DateUtils;
 
+{ TDefaultJSONIndex }
+
+procedure TDefaultJSONIndex.CreateIndex;
+
+Var
+  I : Integer;
+
+begin
+  For I:=0 to FRows.length-1 do
+    FList[i]:=I;
+end;
+
+procedure TDefaultJSONIndex.AppendToIndex;
+
+Var
+  I,L : Integer;
+
+begin
+  L:=FList.Length;
+  FList.Length:=FRows.Length;
+  For I:=L to FRows.Length-1 do
+    FList[i]:=I;
+end;
+
+function TDefaultJSONIndex.Append(aRecordIndex: Integer): Integer;
+begin
+  Result:=FList.Push(aRecordIndex)-1;
+end;
+
+function TDefaultJSONIndex.Insert(aCurrentIndex, aRecordIndex: Integer
+  ): Integer;
+begin
+  Result:=inherited Insert(aCurrentIndex, aRecordIndex);
+end;
+
+function TDefaultJSONIndex.FindRecord(aRecordIndex: Integer): Integer;
+begin
+  Result:=FList.indexOf(aRecordIndex);
+end;
+
+function TDefaultJSONIndex.Update(aCurrentIndex, aRecordIndex: Integer
+  ): Integer;
+begin
+  If RecordIndex[aCurrentIndex]<>aRecordIndex then
+    DatabaseErrorFmt('Inconsistent record index in default index, expected %d, got %d.',[aCurrentIndex,RecordIndex[aCurrentIndex]],Dataset);
+end;
+
+{ TJSONIndex }
+
+constructor TJSONIndex.Create(aDataset: TDataset; aRows: TJSArray);
+begin
+  FRows:=aRows;
+  FList:=TJSArray.New(FRows.length);
+  FDataset:=aDataset;
+  CreateIndex;
+end;
+
+function TJSONIndex.Delete(aListIndex: Integer): Integer;
+
+Var
+  a : TJSArray;
+
+begin
+  A:=FList.Splice(aListIndex,1);
+  If a.Length>0 then
+    Result:=Integer(A[0])
+  else
+    Result:=-1;
+end;
+
+function TJSONIndex.Insert(aCurrentIndex, aRecordIndex: Integer): Integer;
+begin
+  Result:=Append(aRecordIndex);
+end;
+
+function TJSONIndex.GetCount: Integer;
+begin
+  Result:=FList.Length;
+end;
+
+function TJSONIndex.GetRecordIndex(aListIndex : Integer): NativeInt;
+begin
+  if isUndefined(FList[aListIndex]) then
+    Result:=-1
+  else
+    Result:=NativeInt(FList[aListIndex]);
+end;
+
+
 
 { TJSONFieldMapper }
 
@@ -257,7 +394,7 @@ begin
   else
     begin
     FRows:=FRows.Concat(AValue);
-    AddToList;
+    AppendToIndexes;
     end;
 end;
 
@@ -324,42 +461,40 @@ begin
     FRows:=Nil;
     FMetaData:=Nil;
     end;
-  if (FCurrentList<>FDefaultList) then
-    FreeAndNil(FCurrentList)
+  if (FCurrentIndex<>FDefaultIndex) then
+    FreeAndNil(FCurrentIndex)
   else
-    FCurrentList:=Nil;
-  FreeAndNil(FDefaultList);
+    FCurrentIndex:=Nil;
+  FreeAndNil(FDefaultindex);
   FreeAndNil(FFieldMapper);
-  FCurrentList:=Nil;
+  FCurrentIndex:=Nil;
+  FDeletedRows:=Nil;
 end;
 
-procedure TBaseJSONDataSet.AddToList;
-
-Var
-  I : Integer;
+procedure TBaseJSONDataSet.AppendToIndexes;
 
 begin
-  For I:=FDefaultList.Count to FRows.Length-1 do
-    FDefaultList.Add(FRows[i]);
+  FDefaultIndex.AppendToIndex;
 end;
 
-procedure TBaseJSONDataSet.FillList;
-
+procedure TBaseJSONDataSet.CreateIndexes;
 
 begin
-  FDefaultList:=TFPList.Create;
-  AddToList;
-  FCurrentList:=FDefaultList;
+  FDefaultIndex:=TDefaultJSONIndex.Create(Self,FRows);
+  AppendToIndexes;
+  FCurrentIndex:=FDefaultIndex;
 end;
-
-
 
 function TBaseJSONDataSet.GetRecord(Var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult;
+
+Var
+  BkmIdx : Integer;
+
 begin
   Result := grOK; // default
   case GetMode of
     gmNext: // move on
-      if fCurrent < fCurrentList.Count - 1 then
+      if fCurrent < fCurrentIndex.Count - 1 then
         Inc (fCurrent)
       else
         Result := grEOF; // end of file
@@ -369,20 +504,21 @@ begin
       else
         Result := grBOF; // begin of file
     gmCurrent: // check if empty
-      if fCurrent >= fCurrentList.Count then
+      if fCurrent >= fCurrentIndex.Count then
         Result := grEOF;
   end;
   if Result = grOK then // read the data
     begin
-    Buffer.Data:=FRows[FCurrent];
+    BkmIdx:=FCurrentIndex.RecordIndex[FCurrent];
+    Buffer.Data:=FRows[bkmIdx];
     Buffer.BookmarkFlag := bfCurrent;
-    Buffer.Bookmark:=fCurrent;
+    Buffer.Bookmark:=BkmIdx;
     end;
 end;
 
 function TBaseJSONDataSet.GetRecordCount: Integer;
 begin
-  Result := FCurrentList.Count;
+  Result:=FCurrentIndex.Count;
 end;
 
 function TBaseJSONDataSet.GetRecordSize: Word;
@@ -403,14 +539,21 @@ end;
 procedure TBaseJSONDataSet.InternalDelete;
 
 Var
-  R : JSValue;
+  Idx : Integer;
 
 begin
-  R:=JSValue(FCurrentList[FCurrent]);
-  FCurrentList.Delete(FCurrent);
-  if (FCurrent>=FCurrentList.Count) then
-    Dec(FCurrent);
-  FRows.Splice(FCurrent,1);
+  Idx:=FCurrentIndex.Delete(FCurrent);
+  if (Idx<>-1) then
+    begin
+    // Add code here to Delete from other indexes as well.
+    // ...
+    // Add to array of deleted records.
+    if Not Assigned(FDeletedRows) then
+      FDeletedRows:=TJSArray.New(FRows[idx])
+    else
+      FDeletedRows.Push(FRows[Idx]);
+    FRows[Idx]:=Undefined;
+    end;
 end;
 
 procedure TBaseJSONDataSet.InternalFirst;
@@ -421,7 +564,7 @@ end;
 procedure TBaseJSONDataSet.InternalGotoBookmark(ABookmark: TBookmark);
 begin
   if isNumber(ABookmark.Data) then
-    FCurrent:=Integer(ABookmark.Data);
+    FCurrent:=FCurrentIndex.FindRecord(Integer(ABookmark.Data));
 //  Writeln('Fcurrent', FCurrent,' from ',ABookmark.Data);
 end;
 
@@ -456,7 +599,7 @@ end;
 procedure TBaseJSONDataSet.InternalLast;
 begin
   // The first thing that will happen is a GetPrior Record.
-  FCurrent:=FCurrentList.Count;
+  FCurrent:=FCurrentIndex.Count;
 end;
 
 procedure TBaseJSONDataSet.InitDateTimeFields;
@@ -474,7 +617,7 @@ begin
     FRows:=TJSArray.New;
     OwnsData:=True;
     end;
-  FillList;
+  CreateIndexes;
   InternalInitFieldDefs;
   if DefaultFields then
     CreateFields;
@@ -486,44 +629,49 @@ end;
 procedure TBaseJSONDataSet.InternalPost;
 
 Var
-  RI,I : integer;
+  Idx : integer;
   B : TBookmark;
 
 begin
   GetBookMarkData(ActiveBuffer,B);
   if (State=dsInsert) then
     begin // Insert or Append
-    FRows.push(FEditRow);
+    Idx:=FRows.push(FEditRow)-1;
     if GetBookMarkFlag(ActiveBuffer)=bfEOF then
       begin // Append
-      FDefaultList.Add(FEditRow);
-      if (FCurrentList<>FDefaultList) then
-        FCurrentList.Add(FEditRow);
+      FDefaultIndex.Append(Idx);
+      // Must replace this by updating all indexes
+      if (FCurrentIndex<>FDefaultIndex) then
+        FCurrentIndex.Append(Idx);
       end
     else  // insert
       begin
-      FCurrentList.Insert(FCurrent,FEditRow);
-      if (FCurrentList<>FDefaultList) then
-        FDefaultList.Add(FEditRow);
+      FDefaultIndex.Insert(FCurrent,Idx);
+      // Must replace this by updating all indexes.
+      // Note that this will change current index.
+      if (FCurrentIndex<>FDefaultIndex) then
+        FCurrent:=FCurrentIndex.Insert(FCurrent,Idx);
       end;
     end
   else
     begin // Edit
-    RI:=FRows.IndexOf(JSValue(FCurrentList[FCurrent]));
-    if (RI<>-1) then
-      FRows[RI]:=FEditRow
-    else
-      FRows.push(FEditRow);
-    FCurrentList[FCurrent]:=FEditRow;
-    if (FCurrentList<>FDefaultList) then
-      FDefaultList[FCurrent]:=FEditRow;
+    Idx:=FCurrentIndex.RecordIndex[FCurrent];
+    if (Idx=-1) then
+      DatabaseErrorFmt('Failed to retrieve record index for record %d',[FCurrent]);
+    // Update source record
+    FRows[Idx]:=FEditRow;
+    FDefaultIndex.Update(FCurrent,Idx);
+    // Must replace this by updating all indexes.
+    // Note that this will change current index.
+    if (FCurrentIndex<>FDefaultIndex) then
+      FCurrentIndex.Update(FCurrent,Idx);
     end;
   FEditRow:=Nil;
 end;
 
 procedure TBaseJSONDataSet.InternalSetToRecord(Buffer: TDataRecord);
 begin
-  FCurrent := Integer(Bookmark.Data);
+  FCurrent:=FCurrentIndex.FindRecord(Integer(Buffer.Bookmark));
 end;
 
 function TBaseJSONDataSet.GetFieldClass(FieldType: TFieldType): TFieldClass;
@@ -539,7 +687,7 @@ end;
 
 function TBaseJSONDataSet.IsCursorOpen: Boolean;
 begin
-  Result := Assigned(FDefaultList);
+  Result := Assigned(FDefaultIndex);
 end;
 
 procedure TBaseJSONDataSet.SetBookmarkData(var Buffer: TDataRecord;  Data: TBookmark);
@@ -641,8 +789,8 @@ end;
 
 procedure TBaseJSONDataSet.SetRecNo(Value: Integer);
 begin
-  if (Value < 0) or (Value > FCurrentList.Count) then
-    raise EJSONDataset.CreateFmt('SetRecNo: index %d out of range',[Value]);
+  if (Value < 0) or (Value > FCurrentIndex.Count) then
+    raise EJSONDataset.CreateFmt('%s: SetRecNo: index %d out of range',[Name,Value]);
   FCurrent := Value - 1;
   Resync([]); 
   DoAfterScroll;

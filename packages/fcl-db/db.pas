@@ -4335,14 +4335,14 @@ begin
   DoBeforeScroll;
   ClearBuffers;
   try
-    Writeln('FActiveRecord before last',FActiveRecord);
+    // Writeln('FActiveRecord before last',FActiveRecord);
     InternalLast;
-    Writeln('FActiveRecord after last',FActiveRecord);
+    // Writeln('FActiveRecord after last',FActiveRecord);
     GetPriorRecords;
-    Writeln('FRecordCount: ',FRecordCount);
+    // Writeln('FRecordCount: ',FRecordCount);
     if FRecordCount>0 then
       FActiveRecord:=FRecordCount-1;
-    Writeln('FActiveRecord ',FActiveRecord);
+    // Writeln('FActiveRecord ',FActiveRecord);
   finally
     FEOF:=true;
     DataEvent(deDataSetChange, 0);

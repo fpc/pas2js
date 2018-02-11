@@ -185,6 +185,9 @@ type
     function GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;  override;
     procedure SetFieldData(Field: TField; var Buffer: TDatarecord; AValue : JSValue);  override;
     function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Longint; override;
+  end;
+
+  TJSONDataset = Class(TBaseJSONDataset)
   published
     Property FieldDefs;
     // redeclared data set properties

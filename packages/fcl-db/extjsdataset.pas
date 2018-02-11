@@ -36,6 +36,32 @@ type
     property Root : String Read FRoot Write FRoot;
     // property IDField
     property IDField : String Read FIDField Write FIDField;
+  published
+    Property FieldDefs;
+    // redeclared data set properties
+    property Active;
+    property BeforeOpen;
+    property AfterOpen;
+    property BeforeClose;
+    property AfterClose;
+    property BeforeInsert;
+    property AfterInsert;
+    property BeforeEdit;
+    property AfterEdit;
+    property BeforePost;
+    property AfterPost;
+    property BeforeCancel;
+    property AfterCancel;
+    property BeforeDelete;
+    property AfterDelete;
+    property BeforeScroll;
+    property AfterScroll;
+    property OnCalcFields;
+    property OnDeleteError;
+    property OnEditError;
+    property OnFilterRecord;
+    property OnNewRecord;
+    property OnPostError;
   end;
 
   { TExtJSJSONObjectDataSet }

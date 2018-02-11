@@ -28,6 +28,7 @@ type
     function StringToFieldType(S: String): TFieldType;virtual;
     function GetStringFieldLength(F: TJSObject; AName: String; AIndex: Integer): integer; virtual;
   Public
+    Constructor Create(AOwner : TComponent); override;
     // Can be set directly if the dataset is closed.
     Property MetaData;
     // Can be set directly if the dataset is closed. If metadata is set, it must match the data.
@@ -82,7 +83,7 @@ implementation
 
 { TExtJSJSONDataSet }
 
-Function  TExtJSJSONDataSet.StringToFieldType(S : String) : TFieldType;
+function TExtJSJSONDataSet.StringToFieldType(S: String): TFieldType;
 
 begin
   if (s='int') then
@@ -102,7 +103,8 @@ begin
       Raise EJSONDataset.CreateFmt('Unknown JSON data type : %s',[s]);
 end;
 
-Function  TExtJSJSONDataSet.GetStringFieldLength(F : TJSObject; AName : String; AIndex : Integer) : integer;
+function TExtJSJSONDataSet.GetStringFieldLength(F: TJSObject; AName: String;
+  AIndex: Integer): integer;
 
 Var
   I,L : Integer;
@@ -132,6 +134,12 @@ begin
     end;
   if (Result=0) then
     Result:=20;
+end;
+
+constructor TExtJSJSONDataSet.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  UseDateTimeFormatFields:=True;
 end;
 
 procedure TExtJSJSONDataSet.MetaDataToFieldDefs;
@@ -314,7 +322,7 @@ begin
   Result.Properties['root']:='rows';
 end;
 
-Function TExtJSJSONDataSet.ConvertDateFormat(S : String) : String;
+function TExtJSJSONDataSet.ConvertDateFormat(S: String): String;
 
 { Not handled: N S w z W t L o O P T Z c U MS }
 

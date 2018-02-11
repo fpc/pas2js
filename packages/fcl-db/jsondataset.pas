@@ -120,6 +120,7 @@ type
     FFieldMapper : TJSONFieldMapper;
     // When editing, this object is edited.
     FEditRow : JSValue;
+    FUseDateTimeFormatFields: Boolean;
     procedure SetMetaData(AValue: TJSObject);
     procedure SetRows(AValue: TJSArray);
   protected
@@ -179,6 +180,8 @@ type
     Property Rows : TJSArray Read FRows Write SetRows;
     // Fieldmapper
     Property FieldMapper : TJSONFieldMapper Read FFieldMapper;
+    // FieldClass
+    Property UseDateTimeFormatFields : Boolean Read FUseDateTimeFormatFields Write FUseDateTimeFormatFields;
   public
     constructor Create (AOwner: TComponent); override;
     destructor Destroy; override;
@@ -524,6 +527,11 @@ begin
   Result:=FCurrentIndex.Count;
 end;
 
+procedure TBaseJSONDataSet.SetRecNo(Value: Integer);
+begin
+  inherited SetRecNo(Value);
+end;
+
 function TBaseJSONDataSet.GetRecordSize: Word;
 begin
   Result := 0; // actual data without house-keeping
@@ -571,6 +579,18 @@ begin
 //  Writeln('Fcurrent', FCurrent,' from ',ABookmark.Data);
 end;
 
+procedure TBaseJSONDataSet.SetBookmarkFlag(Var Buffer: TDataRecord;
+  Value: TBookmarkFlag);
+begin
+  inherited SetBookmarkFlag(Buffer, Value);
+end;
+
+procedure TBaseJSONDataSet.SetBookmarkData(Var Buffer: TDataRecord;
+  Data: TBookmark);
+begin
+  inherited SetBookmarkData(Buffer, Data);
+end;
+
 procedure TBaseJSONDataSet.InternalInsert;
 
 Var
@@ -609,6 +629,44 @@ procedure TBaseJSONDataSet.InitDateTimeFields;
 
 begin
   // Do nothing
+end;
+
+function TBaseJSONDataSet.ConvertDateTimeField(S: String; F: TField): TDateTime;
+begin
+
+end;
+
+function TBaseJSONDataSet.FormatDateTimeField(DT: TDateTime; F: TField): String;
+begin
+
+end;
+
+constructor TBaseJSONDataSet.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+end;
+
+destructor TBaseJSONDataSet.Destroy;
+begin
+  inherited Destroy;
+end;
+
+function TBaseJSONDataSet.GetFieldData(Field: TField; Buffer: TDatarecord
+  ): JSValue;
+begin
+  Result:=inherited GetFieldData(Field, Buffer);
+end;
+
+procedure TBaseJSONDataSet.SetFieldData(Field: TField; var Buffer: TDatarecord;
+  AValue: JSValue);
+begin
+  inherited SetFieldData(Field, Buffer, AValue);
+end;
+
+function TBaseJSONDataSet.CompareBookmarks(Bookmark1, Bookmark2: TBookmark
+  ): Longint;
+begin
+  Result:=inherited CompareBookmarks(Bookmark1, Bookmark2);
 end;
 
 procedure TBaseJSONDataSet.InternalOpen;
@@ -679,13 +737,14 @@ end;
 
 function TBaseJSONDataSet.GetFieldClass(FieldType: TFieldType): TFieldClass;
 begin
-  case FieldType of
-    ftDate : Result:=TJSONDateField;
-    ftDateTime : Result:=TJSONDateTimeField;
-    ftTime : Result:=TJSONTimeField;
+  If UseDateTimeFormatFields and (FieldType in [ftDate,ftDateTime,ftTime]) then
+    case FieldType of
+      ftDate : Result:=TJSONDateField;
+      ftDateTime : Result:=TJSONDateTimeField;
+      ftTime : Result:=TJSONTimeField;
+    end
   else
     Result:=inherited GetFieldClass(FieldType);
-  end;
 end;
 
 function TBaseJSONDataSet.IsCursorOpen: Boolean;
@@ -803,6 +862,7 @@ constructor TBaseJSONDataSet.Create(AOwner: TComponent);
 begin
   inherited;
   FownsData:=True;
+  UseDateTimeFormatFields:=False;
 end;
 
 destructor TBaseJSONDataSet.Destroy;

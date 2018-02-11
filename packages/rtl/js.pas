@@ -349,7 +349,7 @@ type
     function toLocaleString(locales : string; const Options : TLocaleCompareOptions) : String; overload;
     function toString : String;
     function unshift : NativeInt; varargs; 
-    Property Length : Integer Read FLength;
+    Property Length : Integer Read FLength Write FLength;
     property Elements[Index: NativeInt]: JSValue read GetElements write SetElements; default;
   end;
 

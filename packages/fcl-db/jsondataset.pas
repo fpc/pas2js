@@ -275,7 +275,8 @@ end;
 function TDefaultJSONIndex.Insert(aCurrentIndex, aRecordIndex: Integer
   ): Integer;
 begin
-  Result:=inherited Insert(aCurrentIndex, aRecordIndex);
+  FList.splice(aCurrentIndex, 0, aRecordIndex);
+  Result:=aCurrentIndex;
 end;
 
 function TDefaultJSONIndex.FindRecord(aRecordIndex: Integer): Integer;
@@ -653,7 +654,7 @@ begin
       end
     else  // insert
       begin
-      FDefaultIndex.Insert(FCurrent,Idx);
+      FCurrent:=FDefaultIndex.Insert(FCurrent,Idx);
       // Must replace this by updating all indexes.
       // Note that this will change current index.
       if (FCurrentIndex<>FDefaultIndex) then

@@ -527,11 +527,6 @@ begin
   Result:=FCurrentIndex.Count;
 end;
 
-procedure TBaseJSONDataSet.SetRecNo(Value: Integer);
-begin
-  inherited SetRecNo(Value);
-end;
-
 function TBaseJSONDataSet.GetRecordSize: Word;
 begin
   Result := 0; // actual data without house-keeping
@@ -579,17 +574,6 @@ begin
 //  Writeln('Fcurrent', FCurrent,' from ',ABookmark.Data);
 end;
 
-procedure TBaseJSONDataSet.SetBookmarkFlag(Var Buffer: TDataRecord;
-  Value: TBookmarkFlag);
-begin
-  inherited SetBookmarkFlag(Buffer, Value);
-end;
-
-procedure TBaseJSONDataSet.SetBookmarkData(Var Buffer: TDataRecord;
-  Data: TBookmark);
-begin
-  inherited SetBookmarkData(Buffer, Data);
-end;
 
 procedure TBaseJSONDataSet.InternalInsert;
 
@@ -629,44 +613,6 @@ procedure TBaseJSONDataSet.InitDateTimeFields;
 
 begin
   // Do nothing
-end;
-
-function TBaseJSONDataSet.ConvertDateTimeField(S: String; F: TField): TDateTime;
-begin
-
-end;
-
-function TBaseJSONDataSet.FormatDateTimeField(DT: TDateTime; F: TField): String;
-begin
-
-end;
-
-constructor TBaseJSONDataSet.Create(AOwner: TComponent);
-begin
-  inherited Create(AOwner);
-end;
-
-destructor TBaseJSONDataSet.Destroy;
-begin
-  inherited Destroy;
-end;
-
-function TBaseJSONDataSet.GetFieldData(Field: TField; Buffer: TDatarecord
-  ): JSValue;
-begin
-  Result:=inherited GetFieldData(Field, Buffer);
-end;
-
-procedure TBaseJSONDataSet.SetFieldData(Field: TField; var Buffer: TDatarecord;
-  AValue: JSValue);
-begin
-  inherited SetFieldData(Field, Buffer, AValue);
-end;
-
-function TBaseJSONDataSet.CompareBookmarks(Bookmark1, Bookmark2: TBookmark
-  ): Longint;
-begin
-  Result:=inherited CompareBookmarks(Bookmark1, Bookmark2);
 end;
 
 procedure TBaseJSONDataSet.InternalOpen;

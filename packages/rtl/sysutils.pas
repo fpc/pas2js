@@ -410,7 +410,61 @@ Var
     'Friday',
     'Saturday');
 
-var
+type
+  // Stub, for easier porting of FPC/Delphi code.
+  // Reading/Writing the properties will actually set the global variables
+
+  { TFormatSettings }
+
+  TFormatSettings = class(TObject)
+  private
+    function GetDateSeparator: char;
+    function GetDecimalSeparator: string;
+    function GetLongDateFormat: string;
+    function GetLongDayNames: TDayNames;
+    function GetLongMonthNames: TMonthNames;
+    function GetLongTimeFormat: string;
+    function GetShortDateFormat: string;
+    function GetShortDayNames: TDayNames;
+    function GetShortMonthNames: TMonthNames;
+    function GetShortTimeFormat: string;
+    function GetThousandSeparator: string;
+    function GetTimeAMString: string;
+    function GetTimePMString: string;
+    function GetTimeSeparator: char;
+    procedure SetDateSeparator(const Value: char);
+    procedure SetDecimalSeparator(const Value: string);
+    procedure SetLongDateFormat(const Value: string);
+    procedure SetLongDayNames(AValue: TDayNames);
+    procedure SetLongMonthNames(AValue: TMonthNames);
+    procedure SetLongTimeFormat(const Value: string);
+    procedure SetShortDateFormat(const Value: string);
+    procedure SetShortDayNames(AValue: TDayNames);
+    procedure SetShortMonthNames(AValue: TMonthNames);
+    procedure SetShortTimeFormat(const Value: string);
+    procedure SetThousandSeparator(const Value: string);
+    procedure SetTimeAMString(const Value: string);
+    procedure SetTimePMString(const Value: string);
+    procedure SetTimeSeparator(const Value: char);
+  public
+    Property ShortMonthNames : TMonthNames Read GetShortMonthNames Write SetShortMonthNames;
+    Property LongMonthNames : TMonthNames Read GetLongMonthNames Write SetLongMonthNames;
+    Property ShortDayNames : TDayNames Read GetShortDayNames Write SetShortDayNames;
+    Property LongDayNames : TDayNames Read GetLongDayNames Write SetLongDayNames;
+    property TimeSeparator : char read GetTimeSeparator write SetTimeSeparator;
+    property DateSeparator : char read GetDateSeparator write SetDateSeparator;
+    property ShortDateFormat : string read GetShortDateFormat write SetShortDateFormat;
+    property LongDateFormat : string read GetLongDateFormat write SetLongDateFormat;
+    property ShortTimeFormat : string read GetShortTimeFormat write SetShortTimeFormat;
+    property LongTimeFormat : string read GetLongTimeFormat write SetLongTimeFormat;
+    property DecimalSeparator : string read GetDecimalSeparator write SetDecimalSeparator;
+    property ThousandSeparator : string read GetThousandSeparator write SetThousandSeparator;
+    property TimeAMString : string read GetTimeAMString write SetTimeAMString;
+    property TimePMString : string read GetTimePMString write SetTimePMString;
+  end;
+
+Var
+  FormatSettings: TFormatSettings;
   TwoDigitYearCenturyWindow : word = 50;
                              { Threshold to be subtracted from year before age-detection.}
 
@@ -3475,8 +3529,151 @@ begin
    Result:='0'+Result;
 end;
 
+{ TFormatSettings }
+
+function TFormatSettings.GetDateSeparator: char;
+begin
+  Result := SysUtils.DateSeparator;
+end;
+
+function TFormatSettings.GetDecimalSeparator: string;
+begin
+  Result := SysUtils.DecimalSeparator;
+end;
+
+function TFormatSettings.GetLongDateFormat: string;
+begin
+  Result := SysUtils.LongDateFormat;
+end;
+
+function TFormatSettings.GetLongDayNames: TDayNames;
+begin
+  Result:=Sysutils.LongDayNames;
+end;
+
+function TFormatSettings.GetLongMonthNames: TMonthNames;
+begin
+ Result:=Sysutils.LongMonthNames;
+end;
+
+function TFormatSettings.GetLongTimeFormat: string;
+begin
+  Result := SysUtils.LongTimeFormat;
+end;
+
+function TFormatSettings.GetShortDateFormat: string;
+begin
+  Result := SysUtils.ShortDateFormat;
+end;
+
+function TFormatSettings.GetShortDayNames: TDayNames;
+begin
+ Result:=Sysutils.ShortDayNames;
+end;
+
+function TFormatSettings.GetShortMonthNames: TMonthNames;
+begin
+ Result:=Sysutils.ShortMonthNames;
+end;
+
+function TFormatSettings.GetShortTimeFormat: string;
+begin
+  Result := SysUtils.ShortTimeFormat;
+end;
+
+function TFormatSettings.GetThousandSeparator: string;
+begin
+  Result := SysUtils.ThousandSeparator;
+end;
+
+function TFormatSettings.GetTimeAMString: string;
+begin
+  Result := SysUtils.TimeAMString;
+end;
+
+function TFormatSettings.GetTimePMString: string;
+begin
+  Result := SysUtils.TimePMString;
+end;
+
+function TFormatSettings.GetTimeSeparator: char;
+begin
+  Result := SysUtils.TimeSeparator;
+end;
+
+procedure TFormatSettings.SetDateSeparator(const Value: char);
+begin
+  SysUtils.DateSeparator := Value;
+end;
+
+procedure TFormatSettings.SetDecimalSeparator(const Value: string);
+begin
+  SysUtils.DecimalSeparator := Value;
+end;
+
+procedure TFormatSettings.SetLongDateFormat(const Value: string);
+begin
+  SysUtils.LongDateFormat := Value;
+end;
+
+procedure TFormatSettings.SetLongDayNames(AValue: TDayNames);
+begin
+  SysUtils.LongDayNames:=AValue;
+end;
+
+procedure TFormatSettings.SetLongMonthNames(AValue: TMonthNames);
+begin
+  SysUtils.LongMonthNames:=AValue;
+end;
+
+procedure TFormatSettings.SetLongTimeFormat(const Value: string);
+begin
+  SysUtils.LongTimeFormat := Value;
+end;
+
+procedure TFormatSettings.SetShortDateFormat(const Value: string);
+begin
+  SysUtils.ShortDateFormat := Value;
+end;
+
+procedure TFormatSettings.SetShortDayNames(AValue: TDayNames);
+begin
+  SysUtils.ShortDayNames:=AValue;
+end;
+
+procedure TFormatSettings.SetShortMonthNames(AValue: TMonthNames);
+begin
+  SysUtils.ShortMonthNames:=AValue;
+end;
+
+procedure TFormatSettings.SetShortTimeFormat(const Value: string);
+begin
+  SysUtils.ShortTimeFormat := Value;
+end;
+
+procedure TFormatSettings.SetThousandSeparator(const Value: string);
+begin
+  SysUtils.ThousandSeparator := Value;
+end;
+
+procedure TFormatSettings.SetTimeAMString(const Value: string);
+begin
+  SysUtils.TimeAMString := Value;
+end;
+
+procedure TFormatSettings.SetTimePMString(const Value: string);
+begin
+  SysUtils.TimePMString := Value;
+end;
+
+procedure TFormatSettings.SetTimeSeparator(const Value: char);
+begin
+  SysUtils.TimeSeparator := Value;
+end;
+
 
 initialization
+  FormatSettings := TFormatSettings.Create;
   MonthDays[True][1]:=31;
   MonthDays[True][2]:=29;
   MonthDays[True][3]:=31;

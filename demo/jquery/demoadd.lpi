@@ -1,13 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
         <MainUnitHasScaledStatement Value="False"/>
-        <UseDefaultCompilerOptions Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
@@ -15,9 +14,6 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <VersionInfo>
-      <StringTable ProductVersion=""/>
-    </VersionInfo>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
     </BuildModes>
@@ -25,9 +21,10 @@
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default"/>
+      </Modes>
     </RunParams>
     <RequiredPackages Count="1">
       <Item1>
@@ -51,7 +48,7 @@
     </SearchPaths>
     <Other>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tnodejs -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile)) -O-"/>
+        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tbrowser -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile)) -O-"/>
         <ScanForFPCMsgs Value="True"/>
       </ExecuteBefore>
     </Other>

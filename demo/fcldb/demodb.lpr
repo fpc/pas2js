@@ -1,6 +1,6 @@
 program demoxhr;
 
-uses SysUtils, JS, Web, DB, JSonDataset, DBConst;
+uses SysUtils, JS, Web, DB, JSonDataset, ExtJSDataset, DBConst;
 
 Type
 
@@ -71,7 +71,7 @@ begin
     PanelContent.removeChild(PanelContent.childNodes.item(PanelContent.childNodes.length-1));}
   if (xhr.status = 200) then
     begin
-    J:=TJSJSON.parse(xhr.responseText);
+    J:=TJSJSON.parseObject(xhr.responseText);
     DS.Metadata:=TJSObject(J.Properties['metaData']);
     DS.Rows:=TJSArray(J.Properties['Data']);
     DS.Open;

@@ -1,6 +1,6 @@
 program demoload;
 
-uses SysUtils, Classes, JS, Web, DB, JSONDataset, RestConnection;
+uses SysUtils, Classes, JS, Web, DB, JSONDataset, ExtJSDataset, RestConnection;
 
 Type
 

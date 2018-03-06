@@ -33,7 +33,6 @@ Type
   TJSIDBObjectStore = Class;
   TIDBDatabase = class;
   TJSIDBRequest = class;
-  TJSIDBRequest = class;
   TJSEventTarget = class;
   TJSMouseEvent = Class;
   TJSWheelEvent = Class;

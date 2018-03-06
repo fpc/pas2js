@@ -27,7 +27,7 @@ begin
   Result:=True;
   console.warn('Compile request response received');
   try
-     Data:=TJSJSON.parse(FLastReq.responseText);
+     Data:=TJSJSON.parseObject(FLastReq.responseText);
      if data['success'] then
        begin
        if isInteger(data['compileID']) then

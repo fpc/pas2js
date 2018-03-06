@@ -609,7 +609,7 @@ begin
   console.log('Result of call ',xhr.Status);
   if (xhr.status = 200) then
     begin
-    J:=TJSJSON.parse(xhr.responseText);
+    J:=TJSJSON.parseObject(xhr.responseText);
     A:=TJSObjectDynArray(J.Properties['data']);
     for I:=0 to Length(A)-1 do
       begin

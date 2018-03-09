@@ -90,7 +90,7 @@ type
 
 
   { integer math exceptions }
-  EInterror    = Class(EExternal);
+  EIntError    = Class(EExternal);
   EDivByZero   = Class(EIntError);
   ERangeError  = Class(EIntError);
   EIntOverflow = Class(EIntError);
@@ -363,9 +363,9 @@ const
   { True=Leapyear }
 
 Var
-  MonthDays : array [Boolean] of TDayTable;
-   // ((31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31),
-   //  (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31));
+  MonthDays : array [Boolean] of TDayTable =
+    ((31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31),
+     (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31));
   ShortMonthNames : TMonthNames = (
     'Jan',
     'Feb',
@@ -3674,30 +3674,6 @@ end;
 
 initialization
   FormatSettings := TFormatSettings.Create;
-  MonthDays[True][1]:=31;
-  MonthDays[True][2]:=29;
-  MonthDays[True][3]:=31;
-  MonthDays[True][4]:=30;
-  MonthDays[True][5]:=31;
-  MonthDays[True][6]:=30;
-  MonthDays[True][7]:=31;
-  MonthDays[True][8]:=31;
-  MonthDays[True][9]:=30;
-  MonthDays[True][10]:=31;
-  MonthDays[True][11]:=30;
-  MonthDays[True][12]:=31;
-  MonthDays[False][1]:=31;
-  MonthDays[False][2]:=28;
-  MonthDays[False][3]:=31;
-  MonthDays[False][4]:=30;
-  MonthDays[False][5]:=31;
-  MonthDays[False][6]:=30;
-  MonthDays[False][7]:=31;
-  MonthDays[False][8]:=31;
-  MonthDays[False][9]:=30;
-  MonthDays[False][10]:=31;
-  MonthDays[False][11]:=30;
-  MonthDays[False][12]:=31;
   RTLEInvalidCast:=EInvalidCast;
 
 end.

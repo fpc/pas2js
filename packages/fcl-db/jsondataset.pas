@@ -145,6 +145,7 @@ type
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; override;
     function IsCursorOpen: Boolean; override;
     // Bookmark operations
+    function BookmarkValid(ABookmark: TBookmark): Boolean; override;
     procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); override;
     function GetBookmarkFlag(Buffer: TDataRecord): TBookmarkFlag; override;
     procedure InternalGotoBookmark(ABookmark: TBookmark); override;
@@ -697,6 +698,11 @@ end;
 function TBaseJSONDataSet.IsCursorOpen: Boolean;
 begin
   Result := Assigned(FDefaultIndex);
+end;
+
+function TBaseJSONDataSet.BookmarkValid(ABookmark: TBookmark): Boolean;
+begin
+  Result:=isNumber(ABookmark.Data);
 end;
 
 procedure TBaseJSONDataSet.SetBookmarkData(var Buffer: TDataRecord;  Data: TBookmark);

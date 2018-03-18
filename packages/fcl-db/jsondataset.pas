@@ -119,6 +119,7 @@ type
     FDeletedRows : TJSArray;
     FFieldMapper : TJSONFieldMapper;
     // When editing, this object is edited.
+    FEditIdx : Integer;
     FEditRow : JSValue;
     FUseDateTimeFormatFields: Boolean;
     procedure SetMetaData(AValue: TJSObject);
@@ -594,14 +595,20 @@ begin
 end;
 
 procedure TBaseJSONDataSet.InternalEdit;
+
 begin
 //  Writeln('TBaseJSONDataSet.InternalEdit:  ');
-  FEditRow:=TJSJSON.parse(TJSJSON.stringify(FRows[FCurrent]));
+  FEditIdx:=FCurrentIndex.RecordIndex[FCurrent];
+  if not isUndefined(Rows[FEditIdx]) then
+    FEditRow:=TJSJSON.parse(TJSJSON.stringify(Rows[FEditIdx]))
+  else
+    FEditRow:=TJSObject.new;
 //  Writeln('TBaseJSONDataSet.InternalEdit: ',FEditRow);
 end;
 
 procedure TBaseJSONDataSet.InternalCancel;
 begin
+  FEditIdx:=-1;
   FEditRow:=Nil;
 end;
 
@@ -664,10 +671,10 @@ begin
     end
   else
     begin // Edit
-    Idx:=FCurrentIndex.RecordIndex[FCurrent];
-    if (Idx=-1) then
+    if (FEditIdx=-1) then
       DatabaseErrorFmt('Failed to retrieve record index for record %d',[FCurrent]);
     // Update source record
+    Idx:=FEditIdx;
     FRows[Idx]:=FEditRow;
     FDefaultIndex.Update(FCurrent,Idx);
     // Must replace this by updating all indexes.
@@ -675,6 +682,7 @@ begin
     if (FCurrentIndex<>FDefaultIndex) then
       FCurrentIndex.Update(FCurrent,Idx);
     end;
+  FEditIdx:=-1;
   FEditRow:=Nil;
 end;
 
@@ -763,8 +771,7 @@ var
   R : JSValue;
 
 begin
-//  Writeln('Getting data for field ',Field.FieldName,'Buffer  ',Buffer);
-  if (FEditRow<>Nil) then
+  if (FEditIdx=Buffer.Bookmark) then
     R:=FEditRow
   else
     R:=Buffer.data;
@@ -816,10 +823,12 @@ begin
   inherited;
   FownsData:=True;
   UseDateTimeFormatFields:=False;
+  FEditIdx:=-1;
 end;
 
 destructor TBaseJSONDataSet.Destroy;
 begin
+  FEditIdx:=-1;
   FreeData;
   inherited;
 end;

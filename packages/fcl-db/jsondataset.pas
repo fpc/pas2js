@@ -782,6 +782,7 @@ procedure TBaseJSONDataSet.SetFieldData(Field: TField; var Buffer: TDatarecord; 
 
 begin
   FFieldMapper.SetJSONDataForField(Field,FEditRow,AValue);
+  SetModified(True);
 //  FFieldMapper.SetJSONDataForField(Field,Buffer.Data,AValue);
 end;
 

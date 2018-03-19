@@ -2615,12 +2615,6 @@ begin
   result := StrToDate(S,ShortDateFormat,#0);
 end;
 
-
-function StrToDate(const S: String): TDateTime;
-begin
-  result := StrToDate(S,ShortDateFormat,#0);
-end;
-
 {   StrToTime converts the string S to a TDateTime value
     if S does not represent a valid time value an
     EConvertError will be raised   }
@@ -3187,7 +3181,13 @@ end;
 
 function TryStrToDate(const S: String; out Value: TDateTime): Boolean;
 begin
-    result := TryStrToDate(S, Value, #0);
+  Result:=TryStrToDate(S,Value,ShortDateFormat,#0);
+end;
+
+function TryStrToDate(const S: String; out Value: TDateTime; separator : char): Boolean;
+
+begin
+  Result:=TryStrToDate(S,Value,ShortDateFormat,Separator);
 end;
 
 function TryStrToDate(const S: String; out Value: TDateTime;
@@ -3206,16 +3206,7 @@ begin
 end;
 
 
-function TryStrToDate(const S: String; out Value: TDateTime): Boolean;
-begin
-  Result:=TryStrToDate(S,Value,ShortDateFormat,#0);
-end;
 
-function TryStrToDate(const S: String; out Value: TDateTime; separator : char): Boolean;
-
-begin
-  Result:=TryStrToDate(S,Value,ShortDateFormat,Separator);
-end;
 
 function TryStrToTime(const S: String; out Value: TDateTime; separator : char): Boolean;
 Var

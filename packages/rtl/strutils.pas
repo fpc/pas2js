@@ -44,8 +44,8 @@ Function AnsiEndsStr(const ASubText, AText: string): Boolean;
 Function AnsiReplaceStr(const AText, AFromText, AToText: string): string;
 Function AnsiMatchStr(const AText: string; const AValues: array of string): Boolean;
 Function AnsiIndexStr(const AText: string; const AValues: array of string): Integer;
-Function MatchStr(const AText: UnicodeString; const AValues: array of UnicodeString): Boolean;
-Function IndexStr(const AText: UnicodeString; const AValues: array of UnicodeString): Integer;
+Function MatchStr(const AText: String; const AValues: array of String): Boolean;
+Function IndexStr(const AText: String; const AValues: array of String): Integer;
 
 { ---------------------------------------------------------------------
     Miscellaneous
@@ -357,13 +357,13 @@ begin
 end;
 
 
-Function MatchStr(const AText: UnicodeString; const AValues: array of UnicodeString): Boolean;
+Function MatchStr(const AText: String; const AValues: array of String): Boolean;
 begin
   Result := IndexStr(AText,AValues) <> -1;
 end;
 
 
-Function IndexStr(const AText: UnicodeString; const AValues: array of UnicodeString): Integer;
+Function IndexStr(const AText: String; const AValues: array of String): Integer;
 var
   i: longint;
 begin
@@ -660,29 +660,6 @@ end;
 
 
 Function AnsiMidStr(const AText: String; const AStart, ACount: SizeInt): String;
-begin
-  Result:=Copy(AText,AStart,ACount);
-end;
-
-
-Function LeftStr(const AText: WideString; const ACount: SizeInt): WideString;
-begin
-  Result:=Copy(AText,1,ACount);
-end;
-
-
-Function RightStr(const AText: WideString; const ACount: SizeInt): WideString;
-var
-  j,l:SizeInt;
-begin
-  l:=length(atext);
-  j:=ACount;
-  if j>l then j:=l;
-  Result:=Copy(AText,l-j+1,j);
-end;
-
-
-Function MidStr(const AText: WideString; const AStart, ACount: SizeInt): WideString;
 begin
   Result:=Copy(AText,AStart,ACount);
 end;

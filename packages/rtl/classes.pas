@@ -265,6 +265,8 @@ type
     procedure AddStrings(TheStrings: TStrings; ClearFirst : Boolean); overload;
     procedure AddStrings(const TheStrings: array of string); overload; virtual;
     procedure AddStrings(const TheStrings: array of string; ClearFirst : Boolean); overload;
+    function AddPair(const AName, AValue: string): TStrings; overload;
+    function AddPair(const AName, AValue: string; AObject: TObject): TStrings; overload;
     Procedure AddText(Const S : String); virtual;
     procedure Assign(Source: TPersistent); override;
     procedure BeginUpdate;
@@ -2093,8 +2095,8 @@ begin
     self.Add(Thestrings[Runner]);
 end;
 
-Procedure TStrings.AddStrings(const TheStrings: array of string; ClearFirst : Boolean);
 
+Procedure TStrings.AddStrings(const TheStrings: array of string; ClearFirst : Boolean);
 
 begin
   beginupdate;
@@ -2106,6 +2108,21 @@ begin
     EndUpdate;
   end;
 end;
+
+
+function TStrings.AddPair(const AName, AValue: string): TStrings;
+
+begin
+  Result:=AddPair(AName,AValue,Nil);
+end;
+
+function TStrings.AddPair(const AName, AValue: string; AObject: TObject): TStrings;
+
+begin
+  Result := Self;
+  AddObject(AName+NameValueSeparator+AValue, AObject);
+end;
+
 
 Procedure TStrings.Assign(Source: TPersistent);
 

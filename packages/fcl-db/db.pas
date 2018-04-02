@@ -3527,7 +3527,6 @@ begin
 {$ifdef dsdebug}
   Writeln('Setting buffer list size');
 {$endif}
-
   SetBufListSize(ABufferCount);
 {$ifdef dsdebug}
   Writeln('Getting next buffers');
@@ -3562,14 +3561,26 @@ end;
 
 procedure TDataSet.SetBufListSize(Value: Longint);
 
+Var
+  I : Integer;
+
 begin
   if Value < 0 then Value := 0;
   If Value=FBufferCount Then
     exit;
+  // Less buffers, shift buffers.
+  if value<BufferCount then
+    if (value>=0) and (FActiveRecord>Value-1) then
+      begin
+      for i := 0 to (FActiveRecord-Value) do
+        ShiftBuffersBackward;
+      FActiveRecord := Value -1;
+      end;
   SetLength(FBuffers,Value+1); // FBuffers[FBufferCount] is used as a temp buffer
   FBufferCount:=Value;
   if FRecordCount > FBufferCount then
     FRecordCount := FBufferCount;
+
 end;
 
 procedure TDataSet.SetChildOrder(Child: TComponent; Order: Longint);
@@ -7363,7 +7374,6 @@ begin
   If aMax < 0 then aMax:= 0;
 
   If aMax>DataSet.FActiveRecord Then aMax:=DataSet.FActiveRecord;
-
   If FFirstRecord < aMin Then FFirstRecord:= aMin;
   If FFirstrecord > aMax Then FFirstRecord:= aMax;
 

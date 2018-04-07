@@ -49,6 +49,9 @@ const
   SErrInvalidDayOfWeekInMonth   = 'Year %d Month %d NDow %d DOW %d is not a valid date';
   SInvalidJulianDate            = '%f Julian cannot be represented as a DateTime';
   SErrInvalidHourMinuteSecMsec  = '%d:%d:%d.%d is not a valid time specification';
+
+  SInvalidGUID                  = '"%s" is not a valid GUID value';
+
 implementation
 
 end.

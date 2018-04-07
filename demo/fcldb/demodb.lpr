@@ -1,6 +1,6 @@
 program demoxhr;
 
-uses SysUtils, JS, Web, DB, JSonDataset, ExtJSDataset, DBConst;
+uses SysUtils, JS, Web, DB, JSonDataset, ExtJSDataset, strutils, DBConst;
 
 Type
 

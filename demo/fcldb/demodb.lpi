@@ -53,7 +53,7 @@
     </SearchPaths>
     <Other>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Tbrowser -Jirtl.js -Jc $Name($(ProjFile))"/>
+        <Command Value="$MakeExe(pas2js) -Tbrowser -Jirtl.js -Jc -O- $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
       </ExecuteBefore>
     </Other>

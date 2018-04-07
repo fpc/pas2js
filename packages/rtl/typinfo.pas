@@ -26,7 +26,7 @@ type
   TTypeKind = (
     tkUnknown,  // 0
     tkInteger,  // 1
-    tkChar,     // 2
+    tkChar,     // 2 in Delphi/FPC tkWChar, tkUChar
     tkString,   // 3 in Delphi/FPC tkSString, tkWString or tkUString
     tkEnumeration, // 4
     tkSet,      // 5
@@ -41,8 +41,8 @@ type
     tkClassRef, // 14
     tkPointer,  // 15
     tkJSValue,  // 16
-    tkRefToProcVar  // 17
-    //tkInterface,
+    tkRefToProcVar, // 17
+    tkInterface // 18
     //tkObject,
     //tkSString,tkLString,tkAString,tkWString,
     //tkVariant,
@@ -327,6 +327,14 @@ type
     RefType: TTypeInfo external name 'reftype'; // can be null
   end;
 
+  { TTypeInfoInterface - Kind = tkInterface }
+
+  TTypeInfoInterface = class external name 'rtl.tTypeInfoInterface'(TTypeInfoStruct)
+  public
+    InterfaceType: TJSObject external name 'interface';
+    Ancestor: TTypeInfoInterface external name 'ancestor';
+  end;
+
   EPropertyError  = class(Exception);
 
 function GetClassMembers(aTIClass: TTypeInfoClass): TTypeMemberDynArray;
@@ -334,6 +342,10 @@ function GetClassMember(aTIClass: TTypeInfoClass; const aName: String): TTypeMem
 function GetInstanceMethod(Instance: TObject; const aName: String): Pointer;
 function GetClassMethods(aTIClass: TTypeInfoClass): TTypeMemberMethodDynArray;
 function CreateMethod(Instance: TObject; FuncName: String): Pointer; external name 'rtl.createCallback';
+
+function GetInterfaceMembers(aTIInterface: TTypeInfoInterface): TTypeMemberDynArray;
+function GetInterfaceMember(aTIInterface: TTypeInfoInterface; const aName: String): TTypeMember;
+function GetInterfaceMethods(aTIInterface: TTypeInfoInterface): TTypeMemberMethodDynArray;
 
 function GetPropInfos(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
 function GetPropInfo(TI: TTypeInfoClass; const PropName: String): TTypeMemberProperty;
@@ -476,6 +488,86 @@ begin
       inc(i);
     end;
     C:=C.Ancestor;
+  end;
+end;
+
+function GetInterfaceMembers(aTIInterface: TTypeInfoInterface
+  ): TTypeMemberDynArray;
+var
+  Intf: TTypeInfoInterface;
+  i, Cnt, j: Integer;
+begin
+  Cnt:=0;
+  Intf:=aTIInterface;
+  while Intf<>nil do
+  begin
+    inc(Cnt,length(Intf.Names));
+    Intf:=Intf.Ancestor;
+  end;
+  SetLength(Result,Cnt);
+  Intf:=aTIInterface;
+  i:=0;
+  while Intf<>nil do
+  begin
+    for j:=0 to length(Intf.Names)-1 do
+    begin
+      Result[i]:=Intf.Members[Intf.Names[j]];
+      inc(i);
+    end;
+    Intf:=Intf.Ancestor;
+  end;
+end;
+
+function GetInterfaceMember(aTIInterface: TTypeInfoInterface;
+  const aName: String): TTypeMember;
+var
+  Intf: TTypeInfoInterface;
+  i: Integer;
+begin
+  // quick search: case sensitive
+  Intf:=aTIInterface;
+  while Intf<>nil do
+  begin
+    if TJSObject(Intf.Members).hasOwnProperty(aName) then
+      exit(Intf.Members[aName]);
+    Intf:=Intf.Ancestor;
+  end;
+  // slow search: case insensitive
+  Intf:=aTIInterface;
+  while Intf<>nil do
+  begin
+    for i:=0 to length(Intf.Names)-1 do
+      if CompareText(Intf.Names[i],aName)=0 then
+        exit(Intf.Members[Intf.Names[i]]);
+    Intf:=Intf.Ancestor;
+  end;
+  Result:=nil;
+end;
+
+function GetInterfaceMethods(aTIInterface: TTypeInfoInterface
+  ): TTypeMemberMethodDynArray;
+var
+  Intf: TTypeInfoInterface;
+  i, Cnt, j: Integer;
+begin
+  Cnt:=0;
+  Intf:=aTIInterface;
+  while Intf<>nil do
+  begin
+    inc(Cnt,Intf.MethodCount);
+    Intf:=Intf.Ancestor;
+  end;
+  SetLength(Result,Cnt);
+  Intf:=aTIInterface;
+  i:=0;
+  while Intf<>nil do
+  begin
+    for j:=0 to Intf.MethodCount-1 do
+    begin
+      Result[i]:=TTypeMemberMethod(Intf.Members[Intf.Methods[j]]);
+      inc(i);
+    end;
+    Intf:=Intf.Ancestor;
   end;
 end;
 

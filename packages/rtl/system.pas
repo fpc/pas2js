@@ -32,6 +32,7 @@ const
 
   Maxint = MaxLongint;
   IsMultiThread = false;
+
 {*****************************************************************************
                                Base types
 *****************************************************************************}
@@ -68,6 +69,7 @@ type
                             TObject, TClass
 *****************************************************************************}
 type
+  TGuid = string;
   TClass = class of TObject;
 
   { TObject }
@@ -83,7 +85,7 @@ type
 
     // Free is using compiler magic.
     // Reasons:
-    // 1. In JS calling obj.Free when obj=nil crashes.
+    // 1. In JS calling obj.Free when obj=nil would crash.
     // 2. In JS freeing memory requires to set all references to nil.
     // Therefore any obj.free call is replaced by the compiler with some rtl magic.
     procedure Free;
@@ -98,11 +100,91 @@ type
     procedure AfterConstruction; virtual;
     procedure BeforeDestruction; virtual;
 
+    function GetInterface(const iidstr: String; out obj): boolean;
+    function GetInterfaceByStr(const iidstr: String; out obj) : boolean;
+    function GetInterfaceWeak(const iid: TGuid; out obj): boolean; // equal to GetInterface but the interface returned is not referenced
+
     function Equals(Obj: TObject): boolean; virtual;
     function ToString: String; virtual;
   end;
 
-Const
+const
+  { IInterface }
+  S_OK          = 0;
+  S_FALSE       = 1;
+  E_NOINTERFACE = -2147467262; // FPC: longint($80004002)
+  E_UNEXPECTED  = -2147418113; // FPC: longint($8000FFFF)
+  E_NOTIMPL     = -2147467263; // FPC: longint($80004001)
+
+type
+  IUnknown = interface
+    ['{00000000-0000-0000-C000-000000000046}']
+    function QueryInterface(const iid: TGuid; out obj): Integer;
+    function _AddRef: Integer;
+    function _Release: Integer;
+  end;
+  IInterface = IUnknown;
+
+  {$M+}
+  IInvokable = interface(IInterface)
+  end;
+  {$M-}
+
+  { Enumerator support }
+  IEnumerator = interface(IInterface)
+    function GetCurrent: TObject;
+    function MoveNext: Boolean;
+    procedure Reset;
+    property Current: TObject read GetCurrent;
+  end;
+
+  IEnumerable = interface(IInterface)
+    function GetEnumerator: IEnumerator;
+  end;
+
+  { TInterfacedObject }
+
+  TInterfacedObject = class(TObject,IUnknown)
+  protected
+    fRefCount: Integer;
+    { implement methods of IUnknown }
+    function QueryInterface(const iid: TGuid; out obj): Integer; virtual;
+    function _AddRef: Integer; virtual;
+    function _Release: Integer; virtual;
+  public
+    procedure BeforeDestruction; override;
+    property RefCount: Integer read fRefCount;
+  end;
+  TInterfacedClass = class of TInterfacedObject;
+
+  { TAggregatedObject - sub or satellite object using same interface as controller }
+
+  TAggregatedObject = class(TObject)
+  private
+    fController: Pointer;
+    function GetController: IUnknown;
+  protected
+    { implement methods of IUnknown }
+    function QueryInterface(const iid: TGuid; out obj): Integer; virtual;
+    function _AddRef: Integer; virtual;
+    function _Release: Integer; virtual;
+  public
+    constructor Create(const aController: IUnknown);
+    property Controller: IUnknown read GetController;
+  end;
+
+  { TContainedObject }
+
+  TContainedObject = class(TAggregatedObject,IInterface)
+  protected
+    function QueryInterface(const iid: TGuid; out obj): Integer; override;
+  end;
+
+const
+  { for safe as operator support }
+  IObjectInstance: TGuid = '{D91C9AF4-3C93-420F-A303-BF5BA82BFD23}';
+
+const
   DefaultTextLineBreakStyle : TTextLineBreakStyle = tlbsLF;
 
 {*****************************************************************************
@@ -502,6 +584,77 @@ asm
   return A !== B;
 end;
 
+{ TContainedObject }
+
+function TContainedObject.QueryInterface(const iid: TGuid; out obj): Integer;
+begin
+  if GetInterface(iid,obj) then
+    Result:=S_OK
+  else
+    Result:=Integer(E_NOINTERFACE);
+end;
+
+{ TAggregatedObject }
+
+function TAggregatedObject.GetController: IUnknown;
+begin
+  Result := IUnknown(fController);
+end;
+
+function TAggregatedObject.QueryInterface(const iid: TGuid; out obj): Integer;
+begin
+  Result := IUnknown(fController).QueryInterface(iid, obj);
+end;
+
+function TAggregatedObject._AddRef: Integer;
+begin
+  Result := IUnknown(fController)._AddRef;
+end;
+
+function TAggregatedObject._Release: Integer;
+begin
+  Result := IUnknown(fController)._Release;
+end;
+
+constructor TAggregatedObject.Create(const aController: IUnknown);
+begin
+  inherited Create;
+  { do not keep a counted reference to the controller! }
+  fController := Pointer(aController);
+end;
+
+{ TInterfacedObject }
+
+function TInterfacedObject.QueryInterface(const iid: TGuid; out obj): Integer;
+begin
+  if GetInterface(iid,obj) then
+    Result:=S_OK
+  else
+    Result:=Integer(E_NOINTERFACE);
+end;
+
+function TInterfacedObject._AddRef: Integer;
+begin
+  inc(fRefCount);
+  Result:=fRefCount;
+end;
+
+function TInterfacedObject._Release: Integer;
+begin
+  dec(fRefCount);
+  Result:=fRefCount;
+  if fRefCount=0 then
+    Destroy;
+end;
+
+procedure TInterfacedObject.BeforeDestruction;
+begin
+  if fRefCount<>0 then
+    asm
+    rtl.raiseE('EHeapMemoryError');
+    end;
+end;
+
 { TObject }
 
 constructor TObject.Create;
@@ -544,6 +697,31 @@ begin
 
 end;
 
+function TObject.GetInterface(const iidstr: String; out obj): boolean;
+begin
+  Result := GetInterfaceByStr(iidstr,obj);
+end;
+
+function TObject.GetInterfaceByStr(const iidstr: String; out obj): boolean;
+begin
+  if (iidstr = IObjectInstance) then
+    begin
+    obj:=Self;
+    exit(true);
+    end;
+  asm
+    var i = rtl.getIntfG(this,iidstr,2);
+    obj.set(i);
+    return i!==null;
+  end;
+  Result:=false;
+end;
+
+function TObject.GetInterfaceWeak(const iid: TGuid; out obj): boolean;
+begin
+  Result:=GetInterfaceByStr(iid,obj);
+end;
+
 function TObject.Equals(Obj: TObject): boolean;
 begin
   Result:=Obj=Self;
@@ -557,7 +735,6 @@ end;
 
 initialization
   ExitCode:=0; // set it here, so that WPO does not remove it
-
 
 end.
 

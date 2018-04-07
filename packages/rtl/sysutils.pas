@@ -99,8 +99,8 @@ type
 
   { Run-time and I/O Errors }
   EInOutError = class(Exception)
-    public
-      ErrorCode : Integer;
+  public
+    ErrorCode : Integer;
   end;
 
   EHeapMemoryError = class(Exception);
@@ -159,9 +159,6 @@ type
 
   ENoConstructException = class(Exception);
 
-
-var
-  RTLEInvalidCast: ExceptClass external name 'rtl.EInvalidCast';
 
 //function GetTickCount: Integer;
 
@@ -536,8 +533,23 @@ type
   PathStr = String;
 //function ExtractFilePath(const FileName: PathStr): PathStr;
 
+{*****************************************************************************
+                               Interfaces
+*****************************************************************************}
 
+function Supports(const Instance: IInterface; const AClass: TClass; out Obj): Boolean; overload;
+function Supports(const Instance: TObject; const IID: String; out Intf): Boolean; overload;
 
+function Supports(const Instance: IInterface; const AClass: TClass): Boolean; overload;
+function Supports(const Instance: TObject; const IID: String): Boolean; overload;
+
+function Supports(const AClass: TClass; const IID: String): Boolean; assembler; overload;
+
+function TryStringToGUID(const S: string; out Guid: TGUID): Boolean;
+function StringToGUID(const S: string): TGUID;
+function GUIDToString(const GUID: TGUID): string;
+function IsEqualGUID(const guid1, guid2: TGUID): Boolean;
+function GuidCase(const GUID: TGUID; const List: array of TGuid): Integer;
 
 implementation
 
@@ -3304,6 +3316,76 @@ begin
   Result:=Value;
 end;
 
+function Supports(const Instance: IInterface; const AClass: TClass; out Obj
+  ): Boolean;
+begin
+  Result := (Instance<>nil) and (Instance.QueryInterface(IObjectInstance,Obj)=S_OK)
+     and (TObject(Obj).InheritsFrom(AClass));
+end;
+
+function Supports(const Instance: TObject; const IID: String; out Intf
+  ): Boolean;
+begin
+  Result:=(Instance<>nil) and Instance.GetInterface(IID,Intf);
+end;
+
+function Supports(const Instance: IInterface; const AClass: TClass): Boolean;
+var
+  Temp: TObject;
+begin
+  Result:=Supports(Instance,AClass,Temp);
+end;
+
+function Supports(const Instance: TObject; const IID: String): Boolean;
+var
+  Temp: TObject;
+begin
+  Result:=Supports(Instance,IID,Temp);
+end;
+
+function Supports(const AClass: TClass; const IID: String): Boolean; assembler;
+asm
+  if (!AClass) return false;
+  var maps = AClass.$intfmaps;
+  if (!maps) return false;
+  if (maps[IID]) return true;
+  return false;
+end;
+
+function TryStringToGUID(const S: string; out Guid: TGUID): Boolean;
+var
+  re: TJSRegexp;
+begin
+  if Length(S)<>38 then Exit(False);
+  re:=TJSRegexp.new('^\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}$');
+  Result:=re.test(S);
+  Guid:=S;
+end;
+
+function StringToGUID(const S: string): TGUID;
+begin
+  if not TryStringToGUID(S, Result) then
+    raise EConvertError.CreateFmt(SInvalidGUID, [S]);
+end;
+
+function GUIDToString(const GUID: TGUID): string;
+begin
+  Result:=GUID;
+end;
+
+function IsEqualGUID(const guid1, guid2: TGUID): Boolean;
+begin
+  Result:=SameText(guid1,guid2);
+end;
+
+function GuidCase(const GUID: TGUID; const List: array of TGuid): Integer;
+begin
+  for Result := High(List) downto 0 do
+    if IsEqualGUID(GUID, List[Result]) then
+      Exit;
+  Result := -1;
+end;
+
 { ---------------------------------------------------------------------
   Integer/Ordinal related
   ---------------------------------------------------------------------}
@@ -3665,7 +3747,6 @@ end;
 
 initialization
   FormatSettings := TFormatSettings.Create;
-  RTLEInvalidCast:=EInvalidCast;
 
 end.
 

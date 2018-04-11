@@ -1434,7 +1434,7 @@ Begin
     Q := Length(Result);
     while (Q > 0) and (Result[Q] = '0') do
       Dec(Q);
-    if Result[Q] = DS then
+    if Result[Q] = '.' then
       Dec(Q); { Remove trailing decimal point }
     if (Q = 0) or ((Q=1) and (Result[1] = '-')) then
       Result := '0'

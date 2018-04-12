@@ -243,6 +243,7 @@ function Copy(const S: string; Index, Size: Integer): String; assembler; overloa
 function Copy(const S: string; Index: Integer): String; assembler; overload;
 procedure Delete(var S: String; Index, Size: Integer); assembler; overload;
 function Pos(const Search, InString: String): Integer; assembler; overload;
+function Pos(const Search, InString: String; StartAt : Integer): Integer; assembler; overload;
 procedure Insert(const Insertion: String; var Target: String; Index: Integer); overload;
 function upcase(c : char) : char; assembler;
 
@@ -363,6 +364,14 @@ function Pos(const Search, InString: String): Integer; assembler;
 asm
   return InString.indexOf(Search)+1;
 end;
+
+function Pos(const Search, InString: String; StartAt : Integer): Integer; assembler; overload;
+
+asm
+  return InString.indexOf(Search,StartAt-1)+1;
+end;
+
+
 
 procedure Insert(const Insertion: String; var Target: String; Index: Integer);
 var

@@ -441,8 +441,7 @@ end;
 
 procedure TBaseJSONDataSet.GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark);
 begin
-//  writeln('Bookmark :',Buffer.bookmark);
-  Data.Data:=Buffer.bookmark;
+   Data.Data:=Buffer.bookmark;
 end;
 
 function TBaseJSONDataSet.GetBookmarkFlag(Buffer: TDataRecord): TBookmarkFlag;
@@ -451,8 +450,13 @@ begin
 end;
 
 function TBaseJSONDataSet.GetRecNo: Integer;
+
+Var
+  bkmIdx : Integer;
+
 begin
-  Result := FCurrent + 1;
+  bkmIdx:=Integer(ActiveBuffer.bookmark);
+  Result:=FCurrentIndex.FindRecord(bkmIdx);
 end;
 
 procedure TBaseJSONDataSet.InternalInitFieldDefs;

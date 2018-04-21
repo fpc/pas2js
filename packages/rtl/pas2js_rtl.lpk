@@ -32,7 +32,7 @@
     <Description Value="pas2js RTL - Run Time Library"/>
     <License Value="Modified LGPL2 as the FPC packages."/>
     <Version Major="1"/>
-    <Files Count="19">
+    <Files Count="20">
       <Item1>
         <HasRegisterProc Value="True"/>
       </Item1>
@@ -109,6 +109,10 @@
         <Filename Value="webrouter.pp"/>
         <UnitName Value="webrouter"/>
       </Item19>
+      <Item20>
+        <Filename Value="rtti.pas"/>
+        <UnitName Value="RTTI"/>
+      </Item20>
     </Files>
     <UsageOptions>
       <CustomOptions Value="-dPas2js"/>

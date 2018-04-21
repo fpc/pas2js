@@ -1,6 +1,6 @@
 {
     This file is part of the Pas2JS run time library.
-    Copyright (c) 2017 by Mattias Gaertner
+    Copyright (c) 2018 by Mattias Gaertner
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.
@@ -66,10 +66,17 @@ type
   TTextLineBreakStyle = (tlbsLF,tlbsCRLF,tlbsCR);
 
 {*****************************************************************************
-                            TObject, TClass
+            TObject, TClass, IUnknown, IInterface, TInterfacedObject
 *****************************************************************************}
 type
-  TGuid = string;
+  TGuid = record
+    D1: DWord;
+    D2: word;
+    D3: word;
+    D4: array[0..7] of byte;
+  end;
+  TGUIDString = string; // ToDo: use type string when supported by compiler
+
   TClass = class of TObject;
 
   { TObject }
@@ -100,8 +107,9 @@ type
     procedure AfterConstruction; virtual;
     procedure BeforeDestruction; virtual;
 
-    function GetInterface(const iidstr: String; out obj): boolean;
-    function GetInterfaceByStr(const iidstr: String; out obj) : boolean;
+    function GetInterface(const iid: TGuid; out obj): boolean;
+    function GetInterface(const iidstr: String; out obj): boolean; inline;
+    function GetInterfaceByStr(const iidstr: String; out obj): boolean;
     function GetInterfaceWeak(const iid: TGuid; out obj): boolean; // equal to GetInterface but the interface returned is not referenced
 
     function Equals(Obj: TObject): boolean; virtual;
@@ -184,8 +192,7 @@ const
   { for safe as operator support }
   IObjectInstance: TGuid = '{D91C9AF4-3C93-420F-A303-BF5BA82BFD23}';
 
-const
-  DefaultTextLineBreakStyle : TTextLineBreakStyle = tlbsLF;
+function GUIDToString(const GUID: TGUID): string; overload;
 
 {*****************************************************************************
                             Init / Exit / ExitProc
@@ -238,6 +245,9 @@ function Trunc(const A: Double): NativeInt;
 {*****************************************************************************
                           String functions
 *****************************************************************************}
+const
+  DefaultTextLineBreakStyle : TTextLineBreakStyle = tlbsLF;
+
 function Int(const A: Double): double;
 function Copy(const S: string; Index, Size: Integer): String; assembler; overload;
 function Copy(const S: string; Index: Integer): String; assembler; overload;
@@ -280,6 +290,11 @@ function isNaN(i: JSValue): boolean; external name 'isNaN'; // may result NaN
 function SameText(const s1, s2: String): Boolean; assembler;
 asm
   return s1.toLowerCase() == s2.toLowerCase();
+end;
+
+function GUIDToString(const GUID: TGUID): string; assembler;
+asm
+  return rtl.guidrToStr(GUID);
 end;
 
 function ParamCount: Longint;
@@ -706,6 +721,21 @@ begin
 
 end;
 
+function TObject.GetInterface(const iid: TGuid; out obj): boolean;
+begin
+  asm
+    var i = iid.$intf;
+    if (i){
+      i = rtl.getIntfG(this,i.$guid,2);
+      if (i){
+        obj.set(i);
+        return true;
+      }
+    }
+  end;
+  Result := GetInterfaceByStr(GUIDToString(iid),obj);
+end;
+
 function TObject.GetInterface(const iidstr: String; out obj): boolean;
 begin
   Result := GetInterfaceByStr(iidstr,obj);
@@ -728,7 +758,15 @@ end;
 
 function TObject.GetInterfaceWeak(const iid: TGuid; out obj): boolean;
 begin
-  Result:=GetInterfaceByStr(iid,obj);
+  Result:=GetInterface(iid,obj);
+  asm
+    if (Result){
+      var o = obj.get();
+      if (o.$kind==='com'){
+        o._Release();
+      }
+    }
+  end;
 end;
 
 function TObject.Equals(Obj: TObject): boolean;

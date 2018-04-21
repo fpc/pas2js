@@ -1,6 +1,6 @@
 {
     This file is part of the Pas2JS run time library.
-    Copyright (c) 2017 by Mattias Gaertner
+    Copyright (c) 2018 by Mattias Gaertner
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.

@@ -537,19 +537,27 @@ type
                                Interfaces
 *****************************************************************************}
 
+const
+  GUID_NULL: TGuid = '{00000000-0000-0000-0000-000000000000}';
+
 function Supports(const Instance: IInterface; const AClass: TClass; out Obj): Boolean; overload;
-function Supports(const Instance: TObject; const IID: String; out Intf): Boolean; overload;
+function Supports(const Instance: IInterface; const IID: TGuid; out Intf): Boolean; overload;
+function Supports(const Instance: TObject; const IID: TGuid; out Intf): Boolean; overload;
+function Supports(const Instance: TObject; const IID: TGuidString; out Intf): Boolean; overload;
 
 function Supports(const Instance: IInterface; const AClass: TClass): Boolean; overload;
-function Supports(const Instance: TObject; const IID: String): Boolean; overload;
+function Supports(const Instance: IInterface; const IID: TGuid): Boolean; overload;
+function Supports(const Instance: TObject; const IID: TGuid): Boolean; overload;
+function Supports(const Instance: TObject; const IID: TGuidString): Boolean; overload;
 
-function Supports(const AClass: TClass; const IID: String): Boolean; assembler; overload;
+function Supports(const AClass: TClass; const IID: TGuid): Boolean; overload;
+function Supports(const AClass: TClass; const IID: TGuidString): Boolean; overload;
 
-function TryStringToGUID(const S: string; out Guid: TGUID): Boolean;
-function StringToGUID(const S: string): TGUID;
-function GUIDToString(const GUID: TGUID): string;
-function IsEqualGUID(const guid1, guid2: TGUID): Boolean;
-function GuidCase(const GUID: TGUID; const List: array of TGuid): Integer;
+function TryStringToGUID(const s: string; out Guid: TGuid): Boolean;
+function StringToGUID(const S: string): TGuid;
+function GUIDToString(const guid: TGuid): string;
+function IsEqualGUID(const guid1, guid2: TGuid): Boolean;
+function GuidCase(const guid: TGuid; const List: array of TGuid): Integer;
 
 implementation
 
@@ -3316,6 +3324,9 @@ begin
   Result:=Value;
 end;
 
+{ ---------------------------------------------------------------------
+  Interface related
+  ---------------------------------------------------------------------}
 function Supports(const Instance: IInterface; const AClass: TClass; out Obj
   ): Boolean;
 begin
@@ -3323,10 +3334,22 @@ begin
      and (TObject(Obj).InheritsFrom(AClass));
 end;
 
-function Supports(const Instance: TObject; const IID: String; out Intf
+function Supports(const Instance: IInterface; const IID: TGUID; out Intf
+  ): Boolean;
+begin
+  Result:=(Instance<>nil) and (Instance.QueryInterface(IID,Intf)=S_OK);
+end;
+
+function Supports(const Instance: TObject; const IID: TGUID; out Intf
   ): Boolean;
 begin
   Result:=(Instance<>nil) and Instance.GetInterface(IID,Intf);
+end;
+
+function Supports(const Instance: TObject; const IID: TGuidString; out Intf
+  ): Boolean;
+begin
+  Result:=(Instance<>nil) and Instance.GetInterfaceByStr(IID,Intf);
 end;
 
 function Supports(const Instance: IInterface; const AClass: TClass): Boolean;
@@ -3336,30 +3359,71 @@ begin
   Result:=Supports(Instance,AClass,Temp);
 end;
 
-function Supports(const Instance: TObject; const IID: String): Boolean;
+function Supports(const Instance: IInterface; const IID: TGUID): Boolean;
 var
-  Temp: TObject;
+  Temp: IInterface;
 begin
   Result:=Supports(Instance,IID,Temp);
 end;
 
-function Supports(const AClass: TClass; const IID: String): Boolean; assembler;
-asm
-  if (!AClass) return false;
-  var maps = AClass.$intfmaps;
-  if (!maps) return false;
-  if (maps[IID]) return true;
-  return false;
+function Supports(const Instance: TObject; const IID: TGUID): Boolean;
+var
+  Temp: TJSObject;
+begin
+  Result:=Supports(Instance,IID,Temp);
+  asm
+    if (Temp && Temp.$kind==='com') Temp._Release();
+  end;
 end;
 
-function TryStringToGUID(const S: string; out Guid: TGUID): Boolean;
+function Supports(const Instance: TObject; const IID: TGuidString): Boolean;
+var
+  Temp: TJSObject;
+begin
+  Result:=Supports(Instance,IID,Temp);
+  asm
+    if (Temp && Temp.$kind==='com') Temp._Release();
+  end;
+end;
+
+function Supports(const AClass: TClass; const IID: TGUID): Boolean;
+var
+  maps: JSValue;
+begin
+  if AClass=nil then exit(false);
+  maps := TJSObject(AClass)['$intfmaps'];
+  if not maps then exit(false);
+  if TJSObject(maps)[GUIDToString(IID)] then exit(true);
+  Result:=false;
+end;
+
+function Supports(const AClass: TClass; const IID: TGuidString): Boolean;
+var
+  maps: JSValue;
+begin
+  if AClass=nil then exit(false);
+  maps := TJSObject(AClass)['$intfmaps'];
+  if not maps then exit(false);
+  if TJSObject(maps)[uppercase(IID)] then exit(true);
+  Result:=false;
+end;
+
+function TryStringToGUID(const s: string; out Guid: TGUID): Boolean;
 var
   re: TJSRegexp;
 begin
-  if Length(S)<>38 then Exit(False);
+  if Length(s)<>38 then Exit(False);
   re:=TJSRegexp.new('^\{[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}$');
-  Result:=re.test(S);
-  Guid:=S;
+  Result:=re.test(s);
+  if not Result then
+    begin
+    Guid.D1:=0;
+    exit;
+    end;
+  asm
+    rtl.strToGUIDR(s,Guid.get());
+  end;
+  Result:=true;
 end;
 
 function StringToGUID(const S: string): TGUID;
@@ -3368,20 +3432,25 @@ begin
     raise EConvertError.CreateFmt(SInvalidGUID, [S]);
 end;
 
-function GUIDToString(const GUID: TGUID): string;
+function GUIDToString(const guid: TGUID): string;
 begin
-  Result:=GUID;
+  Result:=System.GUIDToString(guid);
 end;
 
 function IsEqualGUID(const guid1, guid2: TGUID): Boolean;
+var
+  i: integer;
 begin
-  Result:=SameText(guid1,guid2);
+  if (guid1.D1<>guid2.D1) or (guid1.D2<>guid2.D2) or (guid1.D3<>guid2.D3) then
+    exit(false);
+  for i:=0 to 7 do if guid1.D4[i]<>guid2.D4[i] then exit(false);
+  Result:=true;
 end;
 
-function GuidCase(const GUID: TGUID; const List: array of TGuid): Integer;
+function GuidCase(const guid: TGUID; const List: array of TGuid): Integer;
 begin
   for Result := High(List) downto 0 do
-    if IsEqualGUID(GUID, List[Result]) then
+    if IsEqualGUID(guid, List[Result]) then
       Exit;
   Result := -1;
 end;
@@ -3585,21 +3654,19 @@ end;
 
 
 function IntToHex(Value: NativeInt; Digits: integer): string;
-
 const
-   HexDigits = '0123456789ABCDEF';
-
+  HexDigits = '0123456789ABCDEF';
 begin
- If Digits=0 then
-   Digits:=1;
- Result:='';
- While Value>0 do
-   begin
-   result:=HexDigits[(value and 15)+1]+Result;
-   value := value shr 4;
-   end ;
- while (Length(Result)<Digits) do
-   Result:='0'+Result;
+  If Digits=0 then
+    Digits:=1;
+  Result:='';
+  While Value>0 do
+    begin
+    result:=HexDigits[(value and 15)+1]+Result;
+    value := value shr 4;
+    end ;
+  while (Length(Result)<Digits) do
+    Result:='0'+Result;
 end;
 
 { TFormatSettings }

@@ -3512,7 +3512,9 @@ begin
     ABufferCount := 1
   else
     ABufferCount := DefaultBufferCount;
-
+{$ifdef dsdebug}
+  Writeln('Recalculating buffer list size, start count: ',ABufferCount);
+{$endif}
   for i := 0 to FDataSources.Count - 1 do
     for j := 0 to TDataSource(FDataSources[i]).DataLinks.Count - 1 do
       begin
@@ -3520,6 +3522,9 @@ begin
       if ABufferCount<DataLink.BufferCount then
         ABufferCount:=DataLink.BufferCount;
       end;
+{$ifdef dsdebug}
+  Writeln('Recalculating buffer list size, end  count: ',ABufferCount);
+{$endif}
 
   If (FBufferCount=ABufferCount) Then
     exit;
@@ -3569,7 +3574,12 @@ begin
   If Value=FBufferCount Then
     exit;
   // Less buffers, shift buffers.
-  if value<BufferCount then
+  if value>BufferCount then
+    begin
+    For I:=FBufferCount to Value do
+      FBuffers[i]:=AllocRecordBuffer;
+    end
+  else if value<BufferCount then
     if (value>=0) and (FActiveRecord>Value-1) then
       begin
       for i := 0 to (FActiveRecord-Value) do

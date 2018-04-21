@@ -48,6 +48,8 @@ type
   TMonthNames = TMonthNameArray;
   TDayNames = array[0..6] of string;
 
+  Currency = Double;
+
 {*****************************************************************************
                             Exception handling
 *****************************************************************************}
@@ -252,7 +254,7 @@ const
   MinCurrency {: Currency } = -922337203685477.0000;
 
 Type
-  TFloatFormat = (ffFixed,ffGeneral,ffExponent,ffNumber);
+  TFloatFormat = (ffFixed,ffGeneral,ffExponent,ffNumber,ffCurrency);
 
 Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
 Function FloatToStr(Value: Double): String;
@@ -415,12 +417,16 @@ type
 
   TFormatSettings = class(TObject)
   private
+    function GetCurrencyDecimals: Byte;
+    function GetCurrencyFormat: Byte;
+    function GetCurrencyString: String;
     function GetDateSeparator: char;
     function GetDecimalSeparator: string;
     function GetLongDateFormat: string;
     function GetLongDayNames: TDayNames;
     function GetLongMonthNames: TMonthNames;
     function GetLongTimeFormat: string;
+    function GetNegCurrFormat: Byte;
     function GetShortDateFormat: string;
     function GetShortDayNames: TDayNames;
     function GetShortMonthNames: TMonthNames;
@@ -429,16 +435,20 @@ type
     function GetTimeAMString: string;
     function GetTimePMString: string;
     function GetTimeSeparator: char;
+    procedure SetCurrencyFormat(AValue: Byte);
+    procedure SetCurrencyString(AValue: String);
     procedure SetDateSeparator(const Value: char);
     procedure SetDecimalSeparator(const Value: string);
     procedure SetLongDateFormat(const Value: string);
     procedure SetLongDayNames(AValue: TDayNames);
     procedure SetLongMonthNames(AValue: TMonthNames);
     procedure SetLongTimeFormat(const Value: string);
+    procedure SetNegCurrFormat(AValue: Byte);
     procedure SetShortDateFormat(const Value: string);
     procedure SetShortDayNames(AValue: TDayNames);
     procedure SetShortMonthNames(AValue: TMonthNames);
     procedure SetShortTimeFormat(const Value: string);
+    procedure SetCurrencyDecimals(AValue: Byte);
     procedure SetThousandSeparator(const Value: string);
     procedure SetTimeAMString(const Value: string);
     procedure SetTimePMString(const Value: string);
@@ -458,6 +468,10 @@ type
     property ThousandSeparator : string read GetThousandSeparator write SetThousandSeparator;
     property TimeAMString : string read GetTimeAMString write SetTimeAMString;
     property TimePMString : string read GetTimePMString write SetTimePMString;
+    Property CurrencyFormat : Byte read GetCurrencyFormat Write SetCurrencyFormat;
+    Property NegCurrFormat : Byte read GetNegCurrFormat Write SetNegCurrFormat;
+    Property CurrencyDecimals : Byte Read GetCurrencyDecimals Write SetCurrencyDecimals;
+    Property CurrencyString : String Read GetCurrencyString Write SetCurrencyString;
   end;
 
 Var
@@ -525,6 +539,27 @@ function CurrentYear:Word;
 procedure ReplaceTime(var dati: TDateTime; NewTime : TDateTime);
 procedure ReplaceDate(var DateTime: TDateTime; const NewDate: TDateTime);
 Function FloatToDateTime (Const Value : Extended) : TDateTime;
+
+{ *****************************************************************************
+  Currency support
+  *****************************************************************************}
+
+Var
+  CurrencyFormat : Byte = 0;
+  NegCurrFormat : Byte = 0;
+  CurrencyDecimals : Byte = 2;
+  CurrencyString : String = '$';
+
+Function FloattoCurr (Const Value : Extended) : Currency;
+function TryFloatToCurr(const Value: Extended; var AResult: Currency): Boolean;
+Function CurrToStr(Value: Currency): string;
+//Function CurrToStr(Value: Currency; Const FormatSettings: TFormatSettings): string;
+function StrToCurr(const S: string): Currency;
+//function StrToCurr(const S: string; Const FormatSettings: TFormatSettings): Currency;
+function TryStrToCurr(const S: string;Out Value : Currency): Boolean;
+//function TryStrToCurr(const S: string;Out Value : Currency; Const FormatSettings: TFormatSettings): Boolean;
+function StrToCurrDef(const S: string; Default : Currency): Currency;
+//function StrToCurrDef(const S: string; Default : Currency; Const FormatSettings: TFormatSettings): Currency;
 
 {*****************************************************************************
                                File Paths
@@ -1553,35 +1588,90 @@ Begin
       End;
 End;
 
+function RemoveLeadingNegativeSign(var AValue: String; DS : String): Boolean;
+
+// removes negative sign in case when result is zero eg. -0.00
+
+var
+  i: PtrInt;
+  TS: String;
+  StartPos: PtrInt;
+
+begin
+  Result:=False;
+  StartPos := 2;
+  TS := ThousandSeparator;
+  for i :=StartPos to length(AValue) do
+    begin
+    Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue=TS);
+    if not Result then
+      break;
+    end;
+  if (Result) then
+    Delete(AValue, 1, 1);
+end;
+
+Function FormatNumberCurrency(const Value : Currency; Digits : Integer; DS,TS : String) : string;
+
+Var
+  Negative: Boolean;
+  P : Integer;
+
+Begin
+   If Digits = -1 Then
+     Digits := CurrencyDecimals
+   Else If Digits > 18 Then
+     Digits := 18;
+   Str(Value:0:Digits, Result);
+   Negative:=Result[1] = '-';
+   if Negative then
+     System.Delete(Result, 1, 1);
+   P := Pos('.', Result);
+   If P <> 0 Then
+     Result:=ReplaceDecimalSep(Result,DS)
+   else
+     P := Length(Result)+1;
+   Dec(P, 3);
+   While (P > 1) Do
+   Begin
+     If ThousandSeparator<>#0 Then
+       Insert(FormatSettings.ThousandSeparator, Result, P);
+     Dec(P, 3);
+   End;
+   if (length(Result) > 1) and Negative then
+     Negative := not RemoveLeadingNegativeSign(Result,DS);
+   If Not Negative Then
+     Case CurrencyFormat Of
+       0: Result := CurrencyString + Result;
+       1: Result := Result + CurrencyString;
+       2: Result := CurrencyString + ' ' + Result;
+       3: Result := Result + ' ' + CurrencyString;
+     end
+   else
+     Case NegCurrFormat Of
+       0: Result := '(' + CurrencyString + Result + ')';
+       1: Result := '-' + CurrencyString + Result;
+       2: Result := CurrencyString + '-' + Result;
+       3: Result := CurrencyString + Result + '-';
+       4: Result := '(' + Result + CurrencyString + ')';
+       5: Result := '-' + Result + CurrencyString;
+       6: Result := Result + '-' + CurrencyString;
+       7: Result := Result + CurrencyString + '-';
+       8: Result := '-' + Result + ' ' + CurrencyString;
+       9: Result := '-' + CurrencyString + ' ' + Result;
+       10: Result := Result + ' ' + CurrencyString + '-';
+       11: Result := CurrencyString + ' ' + Result + '-';
+       12: Result := CurrencyString + ' ' + '-' + Result;
+       13: Result := Result + '-' + ' ' + CurrencyString;
+       14: Result := '(' + CurrencyString + ' ' + Result + ')';
+       15: Result := '(' + Result + ' ' + CurrencyString + ')';
+     end;
+end;
 
 Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;
 
 Var
   DS: string;
-
-  function RemoveLeadingNegativeSign(var AValue: String): Boolean;
-
-  // removes negative sign in case when result is zero eg. -0.00
-
-  var
-    i: PtrInt;
-    TS: String;
-    StartPos: PtrInt;
-
-  begin
-    Result:=False;
-    StartPos := 2;
-    TS := ThousandSeparator;
-    for i :=StartPos to length(AValue) do
-      begin
-      Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue=TS);
-      if not Result then
-        break;
-      end;
-    if (Result) then
-      Delete(AValue, 1, 1);
-  end;
-
 
 Begin
   DS:=DecimalSeparator;
@@ -1594,10 +1684,11 @@ Begin
       Result:=FormatFixedFloat(Value,Digits,DS);
     ffNumber:
       Result:=FormatNumberFloat(Value,Digits,DS,ThousandSeparator);
-    // ffCurrency:  not supported
+    ffCurrency:
+     Result:=FormatNumberCurrency(Value,Digits,DS,ThousandSeparator);
   end;
-  if (length(Result)>1) and (Result[1]='-') then
-    RemoveLeadingNegativeSign(Result);
+  if (Format<>ffCurrency) and (length(Result)>1) and (Result[1]='-') then
+    RemoveLeadingNegativeSign(Result,DS);
 end;
 
 function Format (const Fmt: String; const Args: array of jsvalue): String;
@@ -1820,7 +1911,7 @@ begin
               end;
         'M' : begin
               if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffNumber,9999,Prec);
+                ToAdd:=FloatToStrF(Double(Args[doarg]),ffCurrency,9999,Prec);
               end;
         'S' : begin
               CheckArg(jvtString,true);
@@ -3324,6 +3415,82 @@ begin
   Result:=Value;
 end;
 
+function FloattoCurr(const Value: Extended): Currency;
+begin
+  if not TryFloatToCurr(Value, Result) then
+    Raise EConvertError.CreateFmt(SInvalidCurrency, [FloatToStr(Value)]);
+end;
+
+function TryFloatToCurr(const Value: Extended; var AResult: Currency): Boolean;
+begin
+  Result:=(Value>=MinCurrency) and (Value<=MaxCurrency);
+  if Result then
+    AResult := Value;
+end;
+
+function CurrToStr(Value: Currency): string;
+begin
+  Result:=FloatToStrF(Value,ffGeneral,-1,0);
+end;
+
+(*
+function CurrToStr(Value: Currency; const FormatSettings: TFormatSettings): string;
+begin
+
+end;
+*)
+
+function StrToCurr(const S: string): Currency;
+
+begin
+  if not TryStrToCurr(S,Result) then
+    Raise EConvertError.createfmt(SInvalidCurrency,[S]);
+end;
+
+(*
+function StrToCurr(const S: string; const FormatSettings: TFormatSettings): Currency;
+begin
+
+end;
+*)
+
+function TryStrToCurr(const S: string; out Value: Currency): Boolean;
+
+Var
+  D : Double;
+
+begin
+  Result:=TryStrToFloat(S,D);
+  if Result then
+    Value:=D;
+end;
+
+(*
+function TryStrToCurr(const S: string; out Value: Currency; const FormatSettings: TFormatSettings): Boolean;
+begin
+
+end;
+*)
+
+function StrToCurrDef(const S: string; Default: Currency): Currency;
+
+Var
+  R : Currency;
+
+begin
+  if TryStrToCurr(S,R) then
+    Result:=R
+  else
+    Result:=Default;
+end;
+
+(*
+function StrToCurrDef(const S: string; Default: Currency; const FormatSettings: TFormatSettings): Currency;
+begin
+
+end;
+*)
+
 { ---------------------------------------------------------------------
   Interface related
   ---------------------------------------------------------------------}
@@ -3671,6 +3838,21 @@ end;
 
 { TFormatSettings }
 
+function TFormatSettings.GetCurrencyDecimals: Byte;
+begin
+  Result:=Sysutils.CurrencyDecimals;
+end;
+
+function TFormatSettings.GetCurrencyFormat: Byte;
+begin
+  Result:=Sysutils.CurrencyFormat;
+end;
+
+function TFormatSettings.GetCurrencyString: String;
+begin
+  Result:=Sysutils.CurrencyString;
+end;
+
 function TFormatSettings.GetDateSeparator: char;
 begin
   Result := SysUtils.DateSeparator;
@@ -3699,6 +3881,11 @@ end;
 function TFormatSettings.GetLongTimeFormat: string;
 begin
   Result := SysUtils.LongTimeFormat;
+end;
+
+function TFormatSettings.GetNegCurrFormat: Byte;
+begin
+  Result:=Sysutils.NegCurrFormat;
 end;
 
 function TFormatSettings.GetShortDateFormat: string;
@@ -3741,6 +3928,16 @@ begin
   Result := SysUtils.TimeSeparator;
 end;
 
+procedure TFormatSettings.SetCurrencyFormat(AValue: Byte);
+begin
+  Sysutils.CurrencyFormat:=AValue;
+end;
+
+procedure TFormatSettings.SetCurrencyString(AValue: String);
+begin
+  Sysutils.CurrencyString:=AValue;
+end;
+
 procedure TFormatSettings.SetDateSeparator(const Value: char);
 begin
   SysUtils.DateSeparator := Value;
@@ -3771,6 +3968,11 @@ begin
   SysUtils.LongTimeFormat := Value;
 end;
 
+procedure TFormatSettings.SetNegCurrFormat(AValue: Byte);
+begin
+  Sysutils.NegCurrFormat:=AValue;
+end;
+
 procedure TFormatSettings.SetShortDateFormat(const Value: string);
 begin
   SysUtils.ShortDateFormat := Value;
@@ -3789,6 +3991,11 @@ end;
 procedure TFormatSettings.SetShortTimeFormat(const Value: string);
 begin
   SysUtils.ShortTimeFormat := Value;
+end;
+
+procedure TFormatSettings.SetCurrencyDecimals(AValue: Byte);
+begin
+  Sysutils.CurrencyDecimals:=aValue;
 end;
 
 procedure TFormatSettings.SetThousandSeparator(const Value: string);

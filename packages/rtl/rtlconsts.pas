@@ -41,6 +41,7 @@ const
   SErrInvalidInteger            = 'Invalid integer value: "%s"';
   SErrInvalidFloat              = 'Invalid floating-point value: "%s"';
   SInvalidDateTime              = 'Invalid date-time value: %s';
+  SInvalidCurrency              = 'Invalid currency value: %s';
   SErrInvalidDayOfWeek          = '%d is not a valid day of the week';
   SErrInvalidTimeStamp          = 'Invalid date/timestamp : "%s"';
   SErrInvalidDateWeek           = '%d %d %d is not a valid dateweek';

@@ -48,8 +48,6 @@ type
   TMonthNames = TMonthNameArray;
   TDayNames = array[0..6] of string;
 
-  Currency = Double;
-
 {*****************************************************************************
                             Exception handling
 *****************************************************************************}
@@ -250,8 +248,8 @@ function IntToHex(Value: NativeInt; Digits: integer): string;
   *****************************************************************************}
 
 const
-  MaxCurrency {: Currency } = 922337203685477.0000;
-  MinCurrency {: Currency } = -922337203685477.0000;
+  MaxCurrency: Currency =  450359962737.0495; // fpc: 922337203685477.5807;
+  MinCurrency: Currency = -450359962737.0496; // fpc: -922337203685477.5808;
 
 Type
   TFloatFormat = (ffFixed,ffGeneral,ffExponent,ffNumber,ffCurrency);

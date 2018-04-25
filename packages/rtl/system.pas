@@ -192,7 +192,7 @@ const
   { for safe as operator support }
   IObjectInstance: TGuid = '{D91C9AF4-3C93-420F-A303-BF5BA82BFD23}';
 
-function GUIDToString(const GUID: TGUID): string; overload;
+function GUIDToString(const GUID: TGUID): string; external name 'rtl.guidrToStr';
 
 {*****************************************************************************
                             Init / Exit / ExitProc
@@ -290,11 +290,6 @@ function isNaN(i: JSValue): boolean; external name 'isNaN'; // may result NaN
 function SameText(const s1, s2: String): Boolean; assembler;
 asm
   return s1.toLowerCase() == s2.toLowerCase();
-end;
-
-function GUIDToString(const GUID: TGUID): string; assembler;
-asm
-  return rtl.guidrToStr(GUID);
 end;
 
 function ParamCount: Longint;

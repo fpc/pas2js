@@ -621,7 +621,7 @@ var
   // This can be used in catch blocks to access the JS throw value
   JSExceptValue: JSValue; external name '$e';
 
-Function new(aElements: TJSValueDynArray) : TJSObject;
+Function new(aElements: TJSValueDynArray) : TJSObject; overload;
 
 function decodeURIComponent(encodedURI : String) : String; external name 'decodeURIComponent';
 function encodeURIComponent(str : String) : String; external name 'encodeURIComponent';

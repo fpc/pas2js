@@ -256,6 +256,7 @@ function Pos(const Search, InString: String): Integer; assembler; overload;
 function Pos(const Search, InString: String; StartAt : Integer): Integer; assembler; overload;
 procedure Insert(const Insertion: String; var Target: String; Index: Integer); overload;
 function upcase(c : char) : char; assembler;
+function HexStr(Val: int64; cnt: byte): string; external name 'rtl.hexStr'; overload;
 
 procedure val(const S: String; out NI : NativeInt; out Code: Integer); overload;
 procedure val(const S: String; out SI : ShortInt; out Code: Integer); overload;

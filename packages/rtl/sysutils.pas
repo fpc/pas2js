@@ -1668,6 +1668,7 @@ Begin
        14: Result := '(' + CurrencyString + ' ' + Result + ')';
        15: Result := '(' + Result + ' ' + CurrencyString + ')';
      end;
+   if TS='' then ;
 end;
 
 Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;

@@ -39,8 +39,8 @@ Type
     failIfMajorPerformanceCaveat : GLBoolean;
   end;
 
-  TJSWebGLObject = class external name 'WebGLObject'(TJSObject);
-  TJSWebGLBuffer = Class external name 'WebGLObject'(TJSWebGLObject);
+  TJSWebGLObject = class external name 'WebGLObject' (TJSObject);
+  TJSWebGLBuffer = Class external name 'WebGLBuffer' (TJSWebGLObject);
   TJSWebGLFramebuffer = Class external name 'WebGLFramebuffer' (TJSWebGLObject);
   TJSWebGLProgram = Class external name 'WebGLProgram' (TJSWebGLObject);
   TJSWebGLRenderbuffer = Class external name 'WebGLRenderbuffer' (TJSWebGLObject);

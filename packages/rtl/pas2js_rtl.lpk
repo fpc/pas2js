@@ -8,7 +8,7 @@
     <CompilerOptions>
       <Version Value="11"/>
       <SearchPaths>
-        <UnitOutputDirectory Value="."/>
+        <UnitOutputDirectory Value="lib"/>
       </SearchPaths>
       <Parsing>
         <SyntaxOptions>
@@ -23,7 +23,7 @@
       <Other>
         <CustomOptions Value="-dPas2js"/>
         <ExecuteBefore>
-          <Command Value="$MakeExe(pas2js) -O- pas2js_rtl.pas"/>
+          <Command Value="$MakeExe(pas2js) -O- -Jc -FUlib pas2js_rtl.pas"/>
           <ScanForFPCMsgs Value="True"/>
         </ExecuteBefore>
       </Other>

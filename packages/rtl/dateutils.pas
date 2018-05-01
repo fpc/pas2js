@@ -1,8 +1,8 @@
 {$mode objfpc}
-{$h+}
+
 {
     This file is part of the Free Pascal run time library.
-    Copyright (c) 1999-2000 by the Free Pascal development team
+    Copyright (c) 2018 by the Free Pascal development team
 
     Delphi/Kylix compatibility unit, provides Date/Time handling routines.
 

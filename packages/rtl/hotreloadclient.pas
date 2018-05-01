@@ -1,6 +1,6 @@
 unit hotreloadclient;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}
 
 interface
 

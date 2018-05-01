@@ -1,6 +1,6 @@
 unit browserconsole;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}
 
 interface
 

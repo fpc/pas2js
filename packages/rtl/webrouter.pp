@@ -18,7 +18,6 @@
 }
 
 {$mode objfpc}
-{$H+}
 
 unit webrouter;
 

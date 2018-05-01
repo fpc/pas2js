@@ -2,7 +2,7 @@
     Delphi/Kylix compatibility unit: String handling routines.
 
     This file is part of the Free Pascal run time library.
-    Copyright (c) 1999-2005 by the Free Pascal development team
+    Copyright (c) 2018 by the Free Pascal development team
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.
@@ -13,7 +13,7 @@
 
  **********************************************************************}
 {$mode objfpc}
-{$h+}
+
 {$inline on}
 unit strutils;
 
@@ -180,7 +180,7 @@ function Dec2Numb(N: Longint; Len, Base: Byte): string;
 function Numb2Dec(S: string; Base: Byte): Longint;
 function IntToBin(Value: Longint; Digits, Spaces: Integer): string;
 function IntToBin(Value: Longint; Digits: Integer): string;
-function intToBin(Value: int64; Digits:integer): string;
+function IntToBin(Value: NativeInt; Digits:integer): string;
 function IntToRoman(Value: Longint): string;
 function TryRomanToInt(S: String; out N: LongInt; Strictness: TRomanConversionStrictness = rcsRelaxed): Boolean;
 function RomanToInt(const S: string; Strictness: TRomanConversionStrictness = rcsRelaxed): Longint;
@@ -590,6 +590,8 @@ begin
     else
       Result := 1;
     end;
+  if ADecSeparator='' then ;
+  if aThousandSeparator='' then ;
 end;
 
 function NaturalCompareText (const S1 , S2 : string ): Integer ;
@@ -1736,7 +1738,7 @@ begin
     end;
 end;
 
-function intToBin(Value: int64; Digits:integer): string;
+function IntToBin(Value: NativeInt; Digits:integer): string;
 var
       p,p2 : integer;
 begin
@@ -1747,10 +1749,10 @@ begin
   p2:=1;
   // typecasts because we want to keep intto* delphi compat and take a signed val
   // and avoid warnings
-  while (p>=p2) and (qword(value)>0) do     
+  while (p>=p2) and (value>0) do
     begin
        Result[p]:=chr(48+(cardinal(value) and 1));
-       value:=qword(value) shr 1;
+       value:=value div 2;
        dec(p); 
     end;
   digits:=p-p2+1;

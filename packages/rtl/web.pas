@@ -2205,7 +2205,7 @@ Type
     shadowColor : String;
     shadowOffsetX : Double;
     shadowOffsetY : Double;
-    strokeStye : JSValue;
+    strokeStyle : JSValue;
     textAlign : String;
     textBaseline : String;
     procedure arc(x,y, radius,startAngle,endAngle : TCanvasCoordType); overload;

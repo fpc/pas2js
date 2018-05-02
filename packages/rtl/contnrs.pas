@@ -1163,7 +1163,7 @@ end;
 
 Procedure TFPCustomHashTable.ChangeTableSize(const ANewSize: Longword);
 var
-  SavedTable: TFPObjectList;
+  SavedTable, List: TFPObjectList;
   SavedTableSize: Longword;
   i, j: Longword;
   temp: THTCustomNode;
@@ -1175,15 +1175,15 @@ begin
   InitializeHashTable;
   if SavedTableSize>0 Then
     for i:=0 to SavedTableSize-1 do
-      if Assigned(SavedTable[i]) then
-        for j:=0 to TFPObjectList(SavedTable[i]).Count -1 do
+      begin
+      List:=TFPObjectList(SavedTable[i]);
+      if Assigned(List) then
+        for j:=0 to List.Count -1 do
           begin
-
-          if TFPObjectList(SavedTable[i])[j]=nil then ;
-
-          temp:=THTCustomNode(TFPObjectList(SavedTable[i])[j]);
+          temp:=THTCustomNode(List[j]);
           AddNode(temp);
           end;
+      end;
   SavedTable.Free;
 end;
 

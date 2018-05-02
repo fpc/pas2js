@@ -1178,6 +1178,9 @@ begin
       if Assigned(SavedTable[i]) then
         for j:=0 to TFPObjectList(SavedTable[i]).Count -1 do
           begin
+
+          if TFPObjectList(SavedTable[i])[j]=nil then ;
+
           temp:=THTCustomNode(TFPObjectList(SavedTable[i])[j]);
           AddNode(temp);
           end;

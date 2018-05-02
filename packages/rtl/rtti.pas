@@ -17,7 +17,7 @@ unit RTTI;
 interface
 
 uses
-  SysUtils, Types, TypInfo;
+  SysUtils, Types;
 
 type
   TVirtualInterfaceInvokeEvent = function(const aMethodName: string;

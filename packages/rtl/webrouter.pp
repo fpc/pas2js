@@ -308,7 +308,7 @@ Function IncludeHTTPPathDelimiter (S : String) : String;
 
 implementation
 
-uses strutils, typinfo, js;
+uses strutils, js;
 
 Resourcestring
   EDuplicateRoute = 'Duplicate route pattern: %s';
@@ -358,17 +358,20 @@ function THTMLHistory.doPush(location: TRawLocation): TTransitionResult;
 
 begin
   pushState(GetURL(Location));
+  Result:=trOK;
 end;
 
 function THTMLHistory.doreplace(location: TRawLocation): TTransitionResult;
 
 begin
   ReplaceState(GetURL(Location));
+  Result:=trOK;
 end;
 
 function THTMLHistory.doGo(N: integer): TTransitionResult;
 begin
   window.history.go(n);
+  Result:=trOK;
 end;
 
 procedure THTMLHistory.ensureURL(push: boolean);
@@ -463,11 +466,8 @@ end;
 function THistory.TransitionTo(aLocation: TRawLocation): TTransitionResult;
 
 Var
-  H : TStrings;
   Params : TStrings;
   R : TRoute;
-  I : Integer;
-
 begin
   Params:=TStringList.Create;
   try
@@ -487,6 +487,7 @@ begin
   Finally
     Params.Free;
   end;
+  Result:=trOK;
 end;
 
 function THistory.ConfirmTransition(aRoute: TRoute; Params : TStrings): TTransitionResult;
@@ -1309,6 +1310,7 @@ begin
   L:=NormalizeHash(location);
   FLastHash:=L;
   pushHash(L);
+  Result:=trOK;
 end;
 
 function THashHistory.doreplace(location: TRawLocation): TTransitionResult;
@@ -1320,6 +1322,7 @@ begin
   L:=NormalizeHash(location);
   FLastHash:=L;
   replaceHash(L);
+  Result:=trOK;
 end;
 
 function THashHistory.doGo(N: integer): TTransitionResult;
@@ -1375,7 +1378,7 @@ end;
 class function THashHistory.getUrl (APath : string) : string;
 
 Var
-  Base,HRef : String;
+  HRef : String;
   Idx : Integer;
 
 begin
@@ -1438,12 +1441,14 @@ begin
   Inc(FIndex);
   MaybeGrow(FIndex);
   FStack[FIndex]:=Location;
+  Result:=trOK;
 end;
 
 function TAbstractHistory.doReplace(location: TRawLocation): TTransitionResult;
 
 begin
   FStack[FIndex]:=Location;
+  Result:=trOK;
 end;
 
 function TAbstractHistory.doGo(N: integer): TTransitionResult;
@@ -1488,12 +1493,14 @@ begin
     Route:=FStack[I]
   else
     Result:='/';
+  Result:=Route;
 end;
 
 procedure TAbstractHistory.ensureURL(Push: Boolean);
 
 begin
   // Noop
+  if Push then ;
 end;
 
 function TAbstractHistory.Kind: THistoryKind;

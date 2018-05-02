@@ -26,7 +26,7 @@ const
   MaxDouble  =  1.7e+308;
 
 
-var // ToDo: make these const
+const
   NaN: Double; external name 'NaN';
   Infinity: Double; external name 'Infinity';
   NegInfinity: Double; external name '-Infinity';

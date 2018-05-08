@@ -1,6 +1,6 @@
 unit browserapp;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}
 
 interface
 

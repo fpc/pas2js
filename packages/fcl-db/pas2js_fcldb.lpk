@@ -11,7 +11,7 @@
       </SearchPaths>
       <Other>
         <ExecuteBefore>
-          <Command Value="$MakeExe(pas2js) -O- pas2js_fcldb.pas"/>
+          <Command Value="$MakeExe(pas2js) -O- -Jc pas2js_fcldb.pas"/>
           <ScanForFPCMsgs Value="True"/>
         </ExecuteBefore>
       </Other>

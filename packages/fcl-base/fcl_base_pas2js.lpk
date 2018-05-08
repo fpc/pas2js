@@ -12,7 +12,7 @@
       </SearchPaths>
       <Other>
         <ExecuteBefore>
-          <Command Value="$MakeExe(pas2js) -O- fcl_base_pas2js.pas"/>
+          <Command Value="$MakeExe(pas2js) -O- -Jc fcl_base_pas2js.pas"/>
           <ScanForFPCMsgs Value="True"/>
         </ExecuteBefore>
       </Other>

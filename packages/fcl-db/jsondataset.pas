@@ -456,7 +456,7 @@ Var
 
 begin
   bkmIdx:=Integer(ActiveBuffer.bookmark);
-  Result:=FCurrentIndex.FindRecord(bkmIdx);
+  Result:=FCurrentIndex.FindRecord(bkmIdx)+1;
 end;
 
 procedure TBaseJSONDataSet.InternalInitFieldDefs;
@@ -816,7 +816,7 @@ end;
 
 procedure TBaseJSONDataSet.SetRecNo(Value: Integer);
 begin
-  if (Value < 0) or (Value > FCurrentIndex.Count) then
+  if (Value < 1) or (Value > FCurrentIndex.Count) then
     raise EJSONDataset.CreateFmt('%s: SetRecNo: index %d out of range',[Name,Value]);
   FCurrent := Value - 1;
   Resync([]); 

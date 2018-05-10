@@ -453,6 +453,16 @@ type
     function getTypedValue(Index : Integer): Shortint; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Shortint);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSInt8Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt8Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt8Array;
+    class function _of(aValue : jsValue) : TJSInt8Array; varargs;
     Property values[Index : Integer] : Shortint Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -461,6 +471,16 @@ type
     function getTypedValue(Index : Integer): Byte; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Byte);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSUInt8Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8Array;
+    class function _of(aValue : jsValue) : TJSUInt8Array; varargs;
     Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -469,6 +489,16 @@ type
     function getTypedValue(Index : Integer): Byte; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Byte);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSUInt8ClampedArray;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8ClampedArray;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8ClampedArray;
+    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs;
     Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -477,6 +507,16 @@ type
     function getTypedValue(Index : Integer): smallint; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Smallint);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSInt16Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt16Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt16Array;
+    class function _of(aValue : jsValue) : TJSInt16Array; varargs;
     Property values[Index : Integer] : SmallInt Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -485,6 +525,16 @@ type
     function getTypedValue(Index : Integer): Word; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Word);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSUInt16Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt16Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt16Array;
+    class function _of(aValue : jsValue) : TJSUInt16Array; varargs;
     Property values[Index : Integer] : Word Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -493,6 +543,16 @@ type
     function getTypedValue(Index : Integer): longint; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: longint);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSInt32Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt32Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt32Array;
+    class function _of(aValue : jsValue) : TJSInt32Array; varargs;
     Property values[Index : Integer] : longint Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -501,6 +561,16 @@ type
     function getTypedValue(Index : Integer): LongWord; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: LongWord);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSUInt32Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt32Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt32Array;
+    class function _of(aValue : jsValue) : TJSUInt32Array; varargs;
     Property values[Index : Integer] : LongWord Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -509,6 +579,16 @@ type
     function getTypedValue(Index : Integer): Float32; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Float32);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSFloat32Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSFloat32Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSFloat32Array;
+    class function _of(aValue : jsValue) : TJSFloat32Array; varargs;
     Property values[Index : Integer] : Float32 Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -517,6 +597,16 @@ type
     function getTypedValue(Index : Integer): Float64; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Float64);external name '[]';
   public
+    constructor new (length : Integer);
+    constructor new (atypedArray : TJSTypedArray);
+    constructor new (aObject : TJSObject);
+    constructor new (buffer : TJSArrayBuffer);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
+    constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
+    class function from(aValue : jsValue) : TJSFloat64Array;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSFloat64Array;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSFloat64Array;
+    class function _of(aValue : jsValue) : TJSFloat64Array; varargs;
     Property values[Index : Integer] : Float64 Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -525,7 +615,6 @@ type
     fBuffer : TJSArrayBuffer; external name 'buffer';
     fLength : NativeInt; external name 'byteLength';
     fOffset : NativeInt; external name 'byteOffset';
-
   public
     constructor new(aBuffer : TJSArrayBuffer); overload;
     constructor new(aBuffer : TJSArrayBuffer; aOffset : NativeInt); overload;

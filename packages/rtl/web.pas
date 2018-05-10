@@ -2119,6 +2119,150 @@ Type
     property willValidate : Boolean read fwillValidate;
   end;
 
+  { TJSHTMLTableElement }
+
+  TJSHTMLTableSectionElement = class;
+  TJSHTMLTableRowElement = class;
+
+  TJSHTMLTableElement = Class external name 'HTMLTableElement'(TJSHTMLElement)
+  private
+    FAlign: String; external name 'align';
+    FBGColor: String; external name 'bgColor';
+    FBorder: String; external name 'border';
+    FCaption: TJSHTMLElement; external name 'caption';
+    FCellPadding: String; external name 'cellPadding';
+    FCellSpacing: String; external name 'cellSpacing';
+    FFrame: String; external name 'frame';
+    FRows: TJSHTMLCollection; external name 'rows';
+    FRules: String; external name 'rules';
+    FSummary: String; external name 'summary';
+    FTBodies: TJSHTMLCollection; external name 'tBodies';
+    FTfoot: TJSHTMLTableSectionElement; external name 'tfoot';
+    FTHead: TJSHTMLTableSectionElement; external name 'tHead';
+    FWidth: String; external name 'width';
+  public
+  { Methods }
+    function createCaption: TJSHTMLElement;
+    function createTFoot: TJSHTMLTableSectionElement;
+    function createTHead: TJSHTMLTableSectionElement;
+    procedure deleteCaption;
+    procedure deleteRow(index: Integer);
+    procedure deleteTFoot;
+    procedure deleteTHead;
+    function insertRow(index: Integer): TJSHTMLTableRowElement;
+  { Properties }
+    property align: String read FAlign write FAlign;
+    property bgColor: String read FBGColor write FBGColor;
+    property border: String read FBorder write FBorder;
+    property caption: TJSHTMLElement read FCaption;
+    property cellPadding: String read FCellPadding write FCellPadding;
+    property cellSpacing: String read FCellSpacing write FCellSpacing;
+    property frame: String read FFrame write FFrame;
+    property rows: TJSHTMLCollection read FRows;
+    property rules: String read FRules write FRules;
+    property summary: String read FSummary write FSummary;
+    property tBodies: TJSHTMLCollection read FTBodies;
+    property tfoot: TJSHTMLTableSectionElement read FTfoot;
+    property tHead: TJSHTMLTableSectionElement read FTHead;
+    property width: String read FWidth write FWidth;
+  end;
+
+  { TJSHTMLTableSectionElement }
+
+  TJSHTMLTableSectionElement = Class external name 'HTMLTableSectionElement' (TJSHTMLElement)
+  private
+    Falign: String; external name 'align';
+    Frows: TJSHTMLCollection external name 'rows';
+    Fch: String; external name 'ch';
+    FchOff: String; external name 'chOff';
+    FvAlign: String; external name 'vAlign';
+  public
+  { Methods }
+    procedure deleteRow(index: Integer);
+    function insertRow(index: Integer): TJSHTMLTableRowElement;
+  { Properties }
+    property align: String read Falign write Falign;
+    property rows: TJSHTMLCollection read Frows;
+    property ch: String read Fch write Fch;
+    property chOff: String read FchOff write FchOff;
+    property vAlign: String read FvAlign write FvAlign;
+  end;
+
+  { TJSHTMLTableCellElement }
+
+  TJSHTMLTableCellElement = Class external name 'HTMLTableCellElement' (TJSHTMLElement)
+  private
+    Fabbr: String; external name 'abbr';
+    Falign: String; external name 'align';
+    Faxis: String; external name 'axis';
+    FbgColor: String; external name 'bgColor';
+    FcellIndex: Integer; external name 'cellIndex';
+    Fch: String; external name 'ch';
+    FchOff: String; external name 'chOff';
+    FcolSpan: Integer; external name 'colSpan';
+    Fheaders: String; external name 'headers';
+    Fheight: String; external name 'height';
+    FnoWrap: Boolean; external name 'noWrap';
+    FrowSpan: Integer; external name 'rowSpan';
+    Fscope: String; external name 'scope';
+    FvAlign: String; external name 'vAlign';
+    Fwidth: String; external name 'width';
+  public
+  { Properties }
+    property abbr: String read Fabbr write Fabbr;
+    property align: String read Falign write Falign;
+    property axis: String read Faxis write Faxis;
+    property bgColor: String read FbgColor write FbgColor;
+    property cellIndex: Integer read FcellIndex;
+    property ch: String read Fch write Fch;
+    property chOff: String read FchOff write FchOff;
+    property colSpan: Integer read FcolSpan write FcolSpan;
+    property headers: String read Fheaders write Fheaders;
+    property height: String read Fheight write Fheight;
+    property noWrap: Boolean read FnoWrap write FnoWrap;
+    property rowSpan: Integer read FrowSpan write FrowSpan;
+    property scope: String read Fscope write Fscope;
+    property vAlign: String read FvAlign write FvAlign;
+    property width: String read Fwidth write Fwidth;
+  end;
+
+  { TJSHTMLTableRowElement }
+
+  TJSHTMLTableRowElement = Class external name 'HTMLTableRowElement' (TJSHTMLElement)
+  private
+    Falign: String; external name 'align';
+    FbgColor: String; external name 'bgColor';
+    Fcells: TJSHTMLCollection; external name 'cells';
+    Fch: String; external name 'ch';
+    FchOff: String; external name 'chOff';
+    FrowIndex: Integer; external name 'rowIndex';
+    FsectionRowIndex: Integer; external name 'sectionRowIndex';
+    FvAlign: String; external name 'vAlign';
+  public
+  { Methods }
+    procedure deleteCell(index: Integer);
+    function insertCell(index: Integer): TJSHTMLTableCellElement;
+  { Properties }
+    property align: String read Falign write Falign;
+    property bgColor: String read FbgColor write FbgColor;
+    property cells: TJSHTMLCollection read Fcells;
+    property ch: String read Fch write Fch;
+    property chOff: String read FchOff write FchOff;
+    property rowIndex: Integer read FrowIndex;
+    property sectionRowIndex: Integer read FsectionRowIndex;
+    property vAlign: String read FvAlign write FvAlign;
+  end;
+
+  { TJSHTMLTableDataCellElement }
+
+  TJSHTMLTableDataCellElement = Class external name 'HTMLTableDataCellElement' (TJSHTMLElement)
+  private
+    Fabbr: String; external name 'abbr';
+  public
+  { Properties }
+    property abbr: String read Fabbr write Fabbr;
+  end;
+
 
   TJSCanvasRenderingContext2D = Class;
 

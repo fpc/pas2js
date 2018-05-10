@@ -125,6 +125,7 @@ const
   E_NOTIMPL     = -2147467263; // FPC: longint($80004001)
 
 type
+  {$Interfaces COM}
   IUnknown = interface
     ['{00000000-0000-0000-C000-000000000046}']
     function QueryInterface(const iid: TGuid; out obj): Integer;

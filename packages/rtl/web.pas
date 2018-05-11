@@ -1025,8 +1025,8 @@ Type
   
   { TJSSubtleCrypto }
 
-  TJSBufferSource = class external name 'BufferSource' end;
-  TJSTypedArray = class external name 'TypedArray' end;
+//  TJSBufferSource = class external name 'BufferSource' end;
+//  TJSTypedArray = class external name 'TypedArray' end;
 
   TJSSubtleCrypto = class external name 'SubtleCrypto'
   Public

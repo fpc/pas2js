@@ -391,7 +391,7 @@ type
     class function from(aValue : jsValue) : TJSTypedArray;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSTypedArray;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSTypedArray;
-    class function _of(aValue : jsValue) : TJSTypedArray; varargs;
+    class function _of(aValue : jsValue) : TJSTypedArray; varargs; external name 'of';
     function copyWithin(aTarget : NativeInt) : TJSTypedArray;overload;
     function copyWithin(aTarget, aStart : NativeInt) : TJSTypedArray;overload;
     function copyWithin(aTarget, aStart, aEnd : NativeInt) : TJSTypedArray;overload;
@@ -423,8 +423,8 @@ type
     function reduceRight(const aCallBack : TJSTypedArrayReduceCallBack) : JSValue; overload;
     function reduceRight(const aCallBack : TJSTypedArrayReduceCallBack; initialValue : JSValue) : JSValue; overload;
     Function reverse : TJSTypedArray;
-    procedure _set(anArray : TJSTypedArray);
-    procedure _set(anArray : TJSTypedArray; anOffset : NativeInt);
+    procedure _set(anArray : TJSTypedArray); external name 'set';
+    procedure _set(anArray : TJSTypedArray; anOffset : NativeInt); external name 'set';
     Function slice : TJSTypedArray; overload;
     function slice(aBegin : NativeInt) : TJSTypedArray; overload;
     function slice(aBegin,aEnd : NativeInt) : TJSTypedArray; overload;
@@ -462,11 +462,11 @@ type
     class function from(aValue : jsValue) : TJSInt8Array;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt8Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt8Array;
-    class function _of(aValue : jsValue) : TJSInt8Array; varargs;
+    class function _of(aValue : jsValue) : TJSInt8Array; varargs;external name 'of';
     Property values[Index : Integer] : Shortint Read getTypedValue Write setTypedValue; default;
   end;
 
-  TJSUint8Array  = class external name 'UInt8Array' (TJSTypedArray)
+  TJSUint8Array  = class external name 'Uint8Array' (TJSTypedArray)
   private
     function getTypedValue(Index : Integer): Byte; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Byte);external name '[]';
@@ -480,11 +480,11 @@ type
     class function from(aValue : jsValue) : TJSUInt8Array;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8Array;
-    class function _of(aValue : jsValue) : TJSUInt8Array; varargs;
+    class function _of(aValue : jsValue) : TJSUInt8Array; varargs;external name 'of';
     Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
-  TJSUint8ClampedArray  = class external name 'UInt8ClampedArray' (TJSTypedArray)
+  TJSUint8ClampedArray  = class external name 'Uint8ClampedArray' (TJSTypedArray)
   private
     function getTypedValue(Index : Integer): Byte; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Byte);external name '[]';
@@ -498,7 +498,7 @@ type
     class function from(aValue : jsValue) : TJSUInt8ClampedArray;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8ClampedArray;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8ClampedArray;
-    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs;
+    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs;external name 'of';
     Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -516,11 +516,11 @@ type
     class function from(aValue : jsValue) : TJSInt16Array;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt16Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt16Array;
-    class function _of(aValue : jsValue) : TJSInt16Array; varargs;
+    class function _of(aValue : jsValue) : TJSInt16Array; varargs; external name 'of';
     Property values[Index : Integer] : SmallInt Read getTypedValue Write setTypedValue; default;
   end;
 
-  TJSUint16Array = class external name 'UInt16Array' (TJSTypedArray)
+  TJSUint16Array = class external name 'Uint16Array' (TJSTypedArray)
   private
     function getTypedValue(Index : Integer): Word; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: Word);external name '[]';
@@ -534,7 +534,7 @@ type
     class function from(aValue : jsValue) : TJSUInt16Array;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt16Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt16Array;
-    class function _of(aValue : jsValue) : TJSUInt16Array; varargs;
+    class function _of(aValue : jsValue) : TJSUInt16Array; varargs; external name 'of';
     Property values[Index : Integer] : Word Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -552,11 +552,11 @@ type
     class function from(aValue : jsValue) : TJSInt32Array;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt32Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt32Array;
-    class function _of(aValue : jsValue) : TJSInt32Array; varargs;
+    class function _of(aValue : jsValue) : TJSInt32Array; varargs;external name 'of';
     Property values[Index : Integer] : longint Read getTypedValue Write setTypedValue; default;
   end;
 
-  TJSUint32Array = class external name 'UInt32Array' (TJSTypedArray)
+  TJSUint32Array = class external name 'Uint32Array' (TJSTypedArray)
   private
     function getTypedValue(Index : Integer): LongWord; external name '[]';
     procedure setTypedValue(Index : Integer; AValue: LongWord);external name '[]';
@@ -570,7 +570,7 @@ type
     class function from(aValue : jsValue) : TJSUInt32Array;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt32Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt32Array;
-    class function _of(aValue : jsValue) : TJSUInt32Array; varargs;
+    class function _of(aValue : jsValue) : TJSUInt32Array; varargs; external name 'of';
     Property values[Index : Integer] : LongWord Read getTypedValue Write setTypedValue; default;
   end;
 

@@ -423,6 +423,8 @@ type
     function reduceRight(const aCallBack : TJSTypedArrayReduceCallBack) : JSValue; overload;
     function reduceRight(const aCallBack : TJSTypedArrayReduceCallBack; initialValue : JSValue) : JSValue; overload;
     Function reverse : TJSTypedArray;
+    procedure _set(anArray : TJSArray); external name 'set';
+    procedure _set(anArray : TJSArray; anOffset : NativeInt); external name 'set';
     procedure _set(anArray : TJSTypedArray); external name 'set';
     procedure _set(anArray : TJSTypedArray; anOffset : NativeInt); external name 'set';
     Function slice : TJSTypedArray; overload;
@@ -463,6 +465,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt8Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt8Array;
     class function _of(aValue : jsValue) : TJSInt8Array; varargs;external name 'of';
+    procedure _set(anArray : Array of ShortInt); external name 'set';
+    procedure _set(anArray : Array of ShortInt; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : Shortint Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -481,6 +485,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8Array;
     class function _of(aValue : jsValue) : TJSUInt8Array; varargs;external name 'of';
+    procedure _set(anArray : Array of Byte); external name 'set';
+    procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -499,6 +505,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8ClampedArray;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8ClampedArray;
     class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs;external name 'of';
+    procedure _set(anArray : Array of Byte); external name 'set';
+    procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -517,6 +525,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt16Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt16Array;
     class function _of(aValue : jsValue) : TJSInt16Array; varargs; external name 'of';
+    procedure _set(anArray : Array of SmallInt); external name 'set';
+    procedure _set(anArray : Array of SmallInt; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : SmallInt Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -535,6 +545,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt16Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt16Array;
     class function _of(aValue : jsValue) : TJSUInt16Array; varargs; external name 'of';
+    procedure _set(anArray : Array of Word); external name 'set';
+    procedure _set(anArray : Array of Word; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : Word Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -553,6 +565,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt32Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt32Array;
     class function _of(aValue : jsValue) : TJSInt32Array; varargs;external name 'of';
+    procedure _set(anArray : Array of LongInt); external name 'set';
+    procedure _set(anArray : Array of LongInt; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : longint Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -571,6 +585,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt32Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt32Array;
     class function _of(aValue : jsValue) : TJSUInt32Array; varargs; external name 'of';
+    procedure _set(anArray : Array of Cardinal); external name 'set';
+    procedure _set(anArray : Array of Cardinal; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : LongWord Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -589,6 +605,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSFloat32Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSFloat32Array;
     class function _of(aValue : jsValue) : TJSFloat32Array; varargs;
+    procedure _set(anArray : Array of Double); external name 'set';
+    procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : Float32 Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -607,6 +625,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSFloat64Array;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSFloat64Array;
     class function _of(aValue : jsValue) : TJSFloat64Array; varargs;
+    procedure _set(anArray : Array of Double); external name 'set';
+    procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set';
     Property values[Index : Integer] : Float64 Read getTypedValue Write setTypedValue; default;
   end;
 

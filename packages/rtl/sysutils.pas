@@ -592,7 +592,7 @@ function Supports(const AClass: TClass; const IID: TGuidString): Boolean; overlo
 
 function TryStringToGUID(const s: string; out Guid: TGuid): Boolean;
 function StringToGUID(const S: string): TGuid;
-function GUIDToString(const guid: TGuid): string;
+function GUIDToString(const guid: TGuid): string; reintroduce;
 function IsEqualGUID(const guid1, guid2: TGuid): Boolean;
 function GuidCase(const guid: TGuid; const List: array of TGuid): Integer;
 

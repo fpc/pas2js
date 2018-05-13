@@ -44,7 +44,7 @@ type
     FList: TFPList;
     FPosition: Integer;
   public
-    constructor Create(AList: TFPList);
+    constructor Create(AList: TFPList); reintroduce;
     function GetCurrent: JSValue;
     function MoveNext: Boolean;
     property Current: JSValue read GetCurrent;
@@ -112,7 +112,7 @@ type
     FList: TList;
     FPosition: Integer;
   public
-    constructor Create(AList: TList);
+    constructor Create(AList: TList); reintroduce;
     function GetCurrent: JSValue;
     function MoveNext: Boolean;
     property Current: JSValue read GetCurrent;
@@ -496,7 +496,7 @@ type
     FComponent: TComponent;
     FPosition: Integer;
   public
-    constructor Create(AComponent: TComponent);
+    constructor Create(AComponent: TComponent); reintroduce;
     function GetCurrent: TComponent;
     function MoveNext: Boolean;
     property Current: TComponent read GetCurrent;

@@ -178,7 +178,7 @@ type
     function _AddRef: Integer; virtual;
     function _Release: Integer; virtual;
   public
-    constructor Create(const aController: IUnknown);
+    constructor Create(const aController: IUnknown); reintroduce;
     property Controller: IUnknown read GetController;
   end;
 

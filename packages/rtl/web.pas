@@ -1580,6 +1580,8 @@ Type
   end;
 
   { TJSWindow }
+  TJSDOMHighResTimeStamp = Double;
+  TFrameRequestCallback = procedure (aTime: TJSDOMHighResTimeStamp);
 
   TJSWindowArray = Array of TJSWindow;
   TJSWindow = class external name 'Window' (TJSObject)
@@ -1689,6 +1691,7 @@ Type
     Procedure clearInterval(aID: NativeInt);
     Procedure clearTimeout(aID: NativeInt);
     Function btoa(Const aValue : string) : string;
+    procedure cancelAnimationFrame(aHandle: Integer);
     Procedure close;
     Function confirm(Const aMsg : String) :  boolean;
     procedure focus;
@@ -1706,6 +1709,7 @@ Type
     function prompt(const aMessage,aDefault : String) : String; overload;
     procedure removeEventListener(aname : string; aListener : TJSEventHandler);
     procedure removeEventListener(aname : string; aListener : JSValue);
+    function requestAnimationFrame(aCallback: TFrameRequestCallback): Integer;
     procedure resizeBy(aWidth,aHeight : NativeInt);
     procedure resizeTo(aWidth,aHeight : NativeInt);
     procedure scrollBy(x,y : NativeInt);
@@ -1714,7 +1718,7 @@ Type
     Function setTimeout(ahandler : TJSTimerCallBack; aTimeout : NativeUInt) : NativeInt; varargs;
     Function setTimeout(ahandler : TJSTimerCallBack) : NativeInt;
     procedure stop;
-
+    { public methods }
     property console : TJSConsole Read FConsole;
     property closed : boolean read FClosed;
     property crypto : TJSCrypto Read FCrypto;

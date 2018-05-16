@@ -524,10 +524,10 @@ Type
     procedure bindRenderbuffer(target : GLenum; renderbuffer : TJSWebGLRenderbuffer);
     procedure bindTexture(target : GLenum; texture : TJSWebGLTexture);
     procedure blendColor(red : GLclampf; green : GLclampf; blue : GLclampf; alpha : GLclampf);
-    procedure blendEquation(RGB : GLenum : mode : GLenum);
+    procedure blendEquation(RGB : GLenum; mode : GLenum);
     procedure blendEquationSeparate(Alpha : GLenum; mode : GLenum);
     procedure blendFunc(sfactor : GLenum; dfactor : GLenum);
-    procedure blendFuncSeparate(srcRGB : GLenum; dstRGB : GLenum ; dstAlpha : GLenum: srcAlpha : GLenum);
+    procedure blendFuncSeparate(srcRGB : GLenum; dstRGB : GLenum ; dstAlpha : GLenum; srcAlpha : GLenum);
 
     procedure bufferData(target : GLenum; size : GLsizeiptr ; usage : GLenum);
     procedure bufferData(target : GLenum;  data : TJSBufferSource ; usage : GLenum);
@@ -573,7 +573,7 @@ Type
     procedure enableVertexAttribArray(index : GLuint);
     procedure finish();
     procedure flush();
-    procedure framebufferRenderbuffer(target: GLenum ; attachment : GLenum; renderbuffertarget: GLenum , renderbuffer: TJSWebGLRenderbuffer );
+    procedure framebufferRenderbuffer(target: GLenum ; attachment : GLenum; renderbuffertarget: GLenum; renderbuffer: TJSWebGLRenderbuffer );
     procedure framebufferTexture2D(target : GLenum; attachment:GLenum ;textarget: GLenum ; texture : TJSWebGLTexture; level: GLint );
     procedure frontFace(mode : GLenum);
     procedure generateMipmap(target : GLenum);
@@ -609,7 +609,7 @@ Type
     procedure linkProgram(aprogram : TJSWebGLProgram);
     procedure pixelStorei(pname: GLenum ; param : GLint);
     procedure polygonOffset(factor : GLfloat; units: GLfloat );
-    procedure readPixels(x : GLint; y : GLint ; width : GLsizei; height : GLsizei ; format : GLenum; atype: GLenum ,  pixels: TJSArrayBufferView );
+    procedure readPixels(x : GLint; y : GLint ; width : GLsizei; height : GLsizei ; format : GLenum; atype: GLenum ;  pixels: TJSArrayBufferView );
     procedure renderbufferStorage(target : GLenum; internalformat :GLenum ; width : GLsizei; height: GLsizei );
     procedure sampleCoverage(value : GLclampf; invert: GLboolean );
     procedure scissor(x : GLint; y : GLint ; width : GLsizei; height : GLsizei);
@@ -631,12 +631,12 @@ Type
 
     procedure uniform1f(location : TJSWebGLUniformLocation; x : GLFLoat);
     procedure uniform2f(location : TJSWebGLUniformLocation; x : GLFLoat; y : GLfloat);
-    procedure uniform3f(location : TJSWebGLUniformLocation; x : GLFLoat, y : GLFLoat, z : GLFLoat);
-    procedure uniform4f(location : TJSWebGLUniformLocation; x : GLFLoat, y : GLFLoat; z : GLfloat; w : GLFLoat);
+    procedure uniform3f(location : TJSWebGLUniformLocation; x : GLFLoat; y : GLFLoat; z : GLFLoat);
+    procedure uniform4f(location : TJSWebGLUniformLocation; x : GLFLoat; y : GLFLoat; z : GLfloat; w : GLFLoat);
 
     procedure uniform1i(location : TJSWebGLUniformLocation; x : GLint);
-    procedure uniform2i(location : TJSWebGLUniformLocation; x : GLint, y : GLint);
-    procedure uniform3i(location : TJSWebGLUniformLocation; x : GLint, y : GLint, z : GLint);
+    procedure uniform2i(location : TJSWebGLUniformLocation; x : GLint; y : GLint);
+    procedure uniform3i(location : TJSWebGLUniformLocation; x : GLint; y : GLint; z : GLint);
     procedure uniform4i(location : TJSWebGLUniformLocation; x : GLint; y : GLint; z : GLint; w : GLint);
 
     procedure uniform1fv(location : TJSWebGLUniformLocation; v : TJSFloat32List );
@@ -659,15 +659,15 @@ Type
     procedure vertexAttrib1f(index: GLuint; x : GLfloat);
     procedure vertexAttrib2f(index : GLuint; x : GLFLoat; y : GLfloat);
     procedure vertexAttrib3f(index : GLuint; x : GLFLoat; y : GLfloat; z : GLFLoat);
-    procedure vertexAttrib4f(index : GLuint; x : GLFLoat; y : GLfloat; z : GLFLoat, w : GLFLoat);
+    procedure vertexAttrib4f(index : GLuint; x : GLFLoat; y : GLfloat; z : GLFLoat; w : GLFLoat);
 
     procedure vertexAttrib1fv(index : GLuint; values : TJSFloat32List );
     procedure vertexAttrib2fv(index : GLuint; values : TJSFloat32List );
     procedure vertexAttrib3fv(index : GLuint; values : TJSFloat32List );
     procedure vertexAttrib4fv(index : GLuint; values : TJSFloat32List );
 
-    procedure vertexAttribPointer(index : GLuint; size : GLInt, atype : GLEnum; normalized : GLboolean; stride: GLsizei; aoffset: GLintptr );
-    procedure viewport(x : GLint; y : GLint; width: GLsizei , height: GLsizei );
+    procedure vertexAttribPointer(index : GLuint; size : GLInt; atype : GLEnum; normalized : GLboolean; stride: GLsizei; aoffset: GLintptr );
+    procedure viewport(x : GLint; y : GLint; width: GLsizei; height: GLsizei );
     Property canvas : TJSHTMLCanvasElement read Fcanvas;
     Property drawingBufferWidth : GLsizei read FdrawingBufferWidth;
     Property drawingBufferHeight : GLsizei read FdrawingBufferHeight;

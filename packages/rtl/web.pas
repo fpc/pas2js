@@ -2441,6 +2441,19 @@ Type
     property sandbox : string read FSandbox;
   end;
 
+  TJSHTMLScriptElement = Class external name 'HTMLScriptElement' (TJSHTMLElement)
+  Public
+    type_ : String;
+    src : String;
+    charset : string;
+    async : boolean;
+    defer : boolean;
+    text : string;
+    noModule : boolean;
+  end;
+
+
+
   TJSXMLHttpRequestEventTarget = class external name 'XMLHttpRequestEventTarget' (TJSEventTarget)
   end;
 

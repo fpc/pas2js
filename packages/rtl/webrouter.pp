@@ -67,7 +67,7 @@ Type
     function doGo(N: integer): TTransitionResult; virtual; abstract;
     procedure ensureURL (push : boolean = false); virtual; abstract;
   Public
-    Constructor Create(aRouter : TRouter);
+    Constructor Create(aRouter : TRouter); reintroduce;
     Constructor Create(aRouter : TRouter; aBase : String); virtual;
     Class Function NormalizeHash(aHash : String) : string;
     Procedure UpdateRoute (aRoute : TRoute);

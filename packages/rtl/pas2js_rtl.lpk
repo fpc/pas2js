@@ -10,18 +10,28 @@
       <Parsing>
         <SyntaxOptions>
           <AllowLabel Value="False"/>
+          <CPPInline Value="False"/>
+          <UseAnsiStrings Value="False"/>
         </SyntaxOptions>
       </Parsing>
+      <CodeGeneration>
+        <Optimizations>
+          <OptimizationLevel Value="0"/>
+        </Optimizations>
+      </CodeGeneration>
       <Linking>
         <Debugging>
           <GenerateDebugInfo Value="False"/>
         </Debugging>
       </Linking>
       <Other>
-        <CustomOptions Value="-dPas2js"/>
+        <CustomOptions Value="-dPas2js -O- -Jc"/>
+        <CompilerPath Value="pas2js"/>
         <ExecuteBefore>
-          <Command Value="$MakeExe(pas2js) -O- -Jc pas2js_rtl.pas"/>
-          <ScanForFPCMsgs Value="True"/>
+          <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq pas2js_rtl.pas"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
         </ExecuteBefore>
       </Other>
       <SkipCompiler Value="True"/>

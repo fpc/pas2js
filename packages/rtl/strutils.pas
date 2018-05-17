@@ -484,7 +484,7 @@ var
       Result:=0;
   end;
 
-  function IsNumber(ch: char): boolean;
+  function IsNumber(ch: char): boolean; overload;
   begin
     Result := ch in ['0'..'9'];
   end;

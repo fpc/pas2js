@@ -35,7 +35,7 @@ Type
     Procedure SetCapacity(NewCapacity: Integer);
     Function GetCapacity: integer;
   public
-    constructor Create;
+    constructor Create; reintroduce;
     constructor Create(FreeObjects : Boolean);
     destructor Destroy; override;
     Procedure Clear;
@@ -73,16 +73,16 @@ Type
     Function GetItem(Index: Integer): TObject;
     Procedure SetItem(Index: Integer; AObject: TObject);
   public
-    constructor Create;
+    constructor Create; reintroduce;
     constructor Create(FreeObjects : boolean);
-    Function Add(AObject: TObject): Integer;
-    Function Extract(Item: TObject): TObject;
-    Function Remove(AObject: TObject): Integer;
-    Function IndexOf(AObject: TObject): Integer;
+    Function Add(AObject: TObject): Integer; reintroduce;
+    Function Extract(Item: TObject): TObject; reintroduce;
+    Function Remove(AObject: TObject): Integer; reintroduce;
+    Function IndexOf(AObject: TObject): Integer; reintroduce;
     Function FindInstanceOf(AClass: TClass; AExact: Boolean; AStartAt: Integer): Integer;
-    Procedure Insert(Index: Integer; AObject: TObject);
-    Function First: TObject;
-    Function Last: TObject;
+    Procedure Insert(Index: Integer; AObject: TObject); reintroduce;
+    Function First: TObject; reintroduce;
+    Function Last: TObject; reintroduce;
     property OwnsObjects: Boolean read FFreeObjects write FFreeObjects;
     property Items[Index: Integer]: TObject read GetItem write SetItem; default;
   end;
@@ -97,13 +97,13 @@ Type
     Procedure HandleFreeNotify(Sender: TObject; AComponent: TComponent);
   public
     destructor Destroy; override;
-    Function Add(AComponent: TComponent): Integer;
-    Function Extract(Item: TComponent): TComponent;
-    Function Remove(AComponent: TComponent): Integer;
-    Function IndexOf(AComponent: TComponent): Integer;
-    Function First: TComponent;
-    Function Last: TComponent;
-    Procedure Insert(Index: Integer; AComponent: TComponent);
+    Function Add(AComponent: TComponent): Integer; reintroduce;
+    Function Extract(Item: TComponent): TComponent; reintroduce;
+    Function Remove(AComponent: TComponent): Integer; reintroduce;
+    Function IndexOf(AComponent: TComponent): Integer; reintroduce;
+    Function First: TComponent; reintroduce;
+    Function Last: TComponent; reintroduce;
+    Procedure Insert(Index: Integer; AComponent: TComponent); reintroduce;
     property Items[Index: Integer]: TComponent read GetItems write SetItems; default;
   end;
 
@@ -112,13 +112,13 @@ Type
     Function GetItems(Index: Integer): TClass;
     Procedure SetItems(Index: Integer; AClass: TClass);
   public
-    Function Add(AClass: TClass): Integer;
-    Function Extract(Item: TClass): TClass;
-    Function Remove(AClass: TClass): Integer;
-    Function IndexOf(AClass: TClass): Integer;
-    Function First: TClass;
-    Function Last: TClass;
-    Procedure Insert(Index: Integer; AClass: TClass);
+    Function Add(AClass: TClass): Integer; reintroduce;
+    Function Extract(Item: TClass): TClass; reintroduce;
+    Function Remove(AClass: TClass): Integer; reintroduce;
+    Function IndexOf(AClass: TClass): Integer; reintroduce;
+    Function First: TClass; reintroduce;
+    Function Last: TClass; reintroduce;
+    Procedure Insert(Index: Integer; AClass: TClass); reintroduce;
     property Items[Index: Integer]: TClass read GetItems write SetItems; default;
   end;
 
@@ -131,7 +131,7 @@ Type
     Function PeekItem: JSValue; virtual;
     property List: TList read FList;
   public
-    constructor Create;
+    constructor Create; reintroduce;
     destructor Destroy; override;
     Function Count: Integer;
     Function AtLeast(ACount: Integer): Boolean;
@@ -151,9 +151,9 @@ Type
 
   TObjectStack = class(TStack)
   public
-    Function Push(AObject: TObject): TObject;
-    Function Pop: TObject;
-    Function Peek: TObject;
+    Function Push(AObject: TObject): TObject; reintroduce;
+    Function Pop: TObject; reintroduce;
+    Function Peek: TObject; reintroduce;
   end;
 
 { TQueue class }
@@ -167,9 +167,9 @@ Type
 
   TObjectQueue = class(TQueue)
   public
-    Function Push(AObject: TObject): TObject;
-    Function Pop: TObject;
-    Function Peek: TObject;
+    Function Push(AObject: TObject): TObject; reintroduce;
+    Function Pop: TObject; reintroduce;
+    Function Peek: TObject; reintroduce;
   end;
 
 { ---------------------------------------------------------------------
@@ -220,7 +220,7 @@ Type
     Procedure SetHashFunction(AHashFunction: THashFunction); virtual;
     Function FindChainForAdd(Const aKey : String) : TFPObjectList;
   public
-    constructor Create;
+    constructor Create; reintroduce;
     constructor CreateWith(AHashTableSize: Longword; aHashFunc: THashFunction);
     destructor Destroy; override;
     Procedure ChangeTableSize(const ANewSize: Longword); virtual;
@@ -332,8 +332,8 @@ Type
     Function GetData(const index: string): TObject; virtual;
     Function ForEachCall(aMethod: TObjectIteratorMethod): THTObjectNode; virtual;
   Public
-    constructor Create(AOwnsObjects : Boolean = True);
-    constructor CreateWith(AHashTableSize: Longword; aHashFunc: THashFunction; AOwnsObjects : Boolean = True);
+    constructor Create(AOwnsObjects : Boolean = True); reintroduce;
+    constructor CreateWith(AHashTableSize: Longword; aHashFunc: THashFunction; AOwnsObjects : Boolean = True); reintroduce;
     Function Iterate(aMethod: TObjectIteratorMethod): TObject; virtual;
     Function Iterate(aMethod: TObjectIteratorCallback): TObject; virtual;
     Procedure Add(const aKey: string; AItem : TObject); virtual;
@@ -415,7 +415,7 @@ Type
   protected
     Function BucketFor(AItem: JSValue): Integer; override;
   public
-    constructor Create(ABuckets: TBucketListSizes = bl16);
+    constructor Create(ABuckets: TBucketListSizes = bl16); reintroduce;
   end;
 
 { ---------------------------------------------------------------------
@@ -426,11 +426,11 @@ Type
 
   TObjectBucketList = class(TBucketList)
   protected
-    Function GetData(AItem: TObject): TObject;
-    Procedure SetData(AItem: TObject; const AData: TObject);
+    Function GetData(AItem: TObject): TObject; reintroduce;
+    Procedure SetData(AItem: TObject; const AData: TObject); reintroduce;
   public
-    Function Add(AItem, AData: TObject): TObject;
-    Function Remove(AItem: TObject): TObject;
+    Function Add(AItem, AData: TObject): TObject; reintroduce;
+    Function Remove(AItem: TObject): TObject; reintroduce;
     property Data[AItem: TObject]: TObject read GetData write SetData; default;
   end;
 

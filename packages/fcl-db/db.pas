@@ -16,7 +16,7 @@
 unit DB;
 
 {$mode objfpc}
-{$h+}
+
 { $define dsdebug}
 interface
 
@@ -82,7 +82,7 @@ type
     FPreviousError     : Integer;
   public
     constructor Create(NativeError, Context : String;
-      ErrCode, PrevError : integer; E: Exception);
+      ErrCode, PrevError : integer; E: Exception); reintroduce;
     Destructor Destroy; override;
     property Context : String read FContext;
     property ErrorCode : integer read FErrorcode;
@@ -130,7 +130,7 @@ type
   protected
     procedure SetItemName(Item: TCollectionItem); override;
   public
-    constructor create(ADataset: TDataset; AOwner: TPersistent; AClass: TCollectionItemClass);
+    constructor create(ADataset: TDataset; AOwner: TPersistent; AClass: TCollectionItemClass); reintroduce;
     function Find(const AName: string): TNamedItem;
     procedure GetItemNames(List: TStrings);
     function IndexOf(const AName: string): Longint;
@@ -178,21 +178,21 @@ type
   TFieldDefs = class(TDefCollection)
   private
     FHiddenFields : Boolean;
-    function GetItem(Index: Longint): TFieldDef;
-    procedure SetItem(Index: Longint; const AValue: TFieldDef);
+    function GetItem(Index: Longint): TFieldDef; reintroduce;
+    procedure SetItem(Index: Longint; const AValue: TFieldDef); reintroduce;
   Protected
     Class Function FieldDefClass : TFieldDefClass; virtual;
   public
-    constructor Create(ADataSet: TDataSet);
+    constructor Create(ADataSet: TDataSet); reintroduce;
 //    destructor Destroy; override;
-    Function Add(const AName: string; ADataType: TFieldType; ASize, APrecision: Integer; ARequired, AReadOnly: Boolean; AFieldNo : Integer) : TFieldDef; overload;
+    Function Add(const AName: string; ADataType: TFieldType; ASize, APrecision{%H-}: Integer; ARequired, AReadOnly: Boolean; AFieldNo : Integer) : TFieldDef; overload;
     Function Add(const AName: string; ADataType: TFieldType; ASize: Word; ARequired: Boolean; AFieldNo : Integer) : TFieldDef; overload;
     procedure Add(const AName: string; ADataType: TFieldType; ASize: Word; ARequired: Boolean); overload;
     procedure Add(const AName: string; ADataType: TFieldType; ASize: Word); overload;
     procedure Add(const AName: string; ADataType: TFieldType); overload;
     Function AddFieldDef : TFieldDef;
     procedure Assign(FieldDefs: TFieldDefs); overload;
-    function Find(const AName: string): TFieldDef;
+    function Find(const AName: string): TFieldDef; reintroduce;
 //    procedure Clear;
 //    procedure Delete(Index: Longint);
     procedure Update; overload;
@@ -219,7 +219,7 @@ type
   private
     FList: TFPList;
   public
-    constructor Create;
+    constructor Create; reintroduce;
     destructor Destroy; override;
     procedure Add(const AKey, AValue: JSValue);
     procedure Clear;
@@ -315,25 +315,25 @@ type
     function GetCurValue: JSValue; virtual;
     function GetNewValue: JSValue; virtual;
     function GetIsNull: Boolean; virtual;
-    procedure GetText(var AText: string; ADisplayText: Boolean); virtual;
+    procedure GetText(var AText: string; ADisplayText{%H-}: Boolean); virtual;
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     procedure PropertyChanged(LayoutAffected: Boolean);
-    procedure SetAsBoolean(AValue: Boolean); virtual;
-    procedure SetAsDateTime(AValue: TDateTime); virtual;
-    procedure SetAsFloat(AValue: Double); virtual;
+    procedure SetAsBoolean(AValue{%H-}: Boolean); virtual;
+    procedure SetAsDateTime(AValue{%H-}: TDateTime); virtual;
+    procedure SetAsFloat(AValue{%H-}: Double); virtual;
     procedure SetAsLongint(AValue: Longint); virtual;
-    procedure SetAsInteger(AValue: Longint); virtual;
-    procedure SetAsLargeInt(AValue: NativeInt); virtual;
+    procedure SetAsInteger(AValue{%H-}: Longint); virtual;
+    procedure SetAsLargeInt(AValue{%H-}: NativeInt); virtual;
     procedure SetAsJSValue(const AValue: JSValue); virtual;
-    procedure SetAsString(const AValue: string); virtual;
+    procedure SetAsString(const AValue{%H-}: string); virtual;
     procedure SetDataset(AValue : TDataset); virtual;
     procedure SetDataType(AValue: TFieldType);
     procedure SetNewValue(const AValue: JSValue);
     procedure SetSize(AValue: Integer); virtual;
     procedure SetParentComponent(Value: TComponent); override;
     procedure SetText(const AValue: string); virtual;
-    procedure SetVarValue(const AValue: JSValue); virtual;
-    procedure SetAsBytes(const AValue: TBytes); virtual;
+    procedure SetVarValue(const AValue{%H-}: JSValue); virtual;
+    procedure SetAsBytes(const AValue{%H-}: TBytes); virtual;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -348,7 +348,7 @@ type
     function IsValidChar(InputChar: Char): Boolean; virtual;
     procedure RefreshLookupList;
     procedure SetData(Buffer: JSValue); overload;
-    procedure SetFieldType(AValue: TFieldType); virtual;
+    procedure SetFieldType(AValue{%H-}: TFieldType); virtual;
     procedure Validate(Buffer: Pointer);
     property AsBoolean: Boolean read GetAsBoolean write SetAsBoolean;
     property AsDateTime: TDateTime read GetAsDateTime write SetAsDateTime;
@@ -424,7 +424,7 @@ type
     function GetAsString: String; override;
     function GetAsJSValue: JSValue; override;
     function GetDefaultWidth: Longint; override;
-    procedure GetText(var AText: string; ADisplayText: Boolean); override;
+    procedure GetText(var AText: string; ADisplayText{%H-}: Boolean); override;
     procedure SetAsBoolean(AValue: Boolean); override;
     procedure SetAsDateTime(AValue: TDateTime); override;
     procedure SetAsFloat(AValue: Double); override;
@@ -674,7 +674,7 @@ type
   protected
     function GetBlobSize: Longint; virtual;
     function GetIsNull: Boolean; override;
-    procedure GetText(var AText: string; ADisplayText: Boolean); override;
+    procedure GetText(var AText: string; ADisplayText{%H-}: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
     procedure Clear; override;
@@ -700,7 +700,7 @@ type
 
   TVariantField = class(TField)
   protected
-    class procedure CheckTypeSize(aValue: Integer); override;
+    class procedure CheckTypeSize(aValue{%H-}: Integer); override;
 
     function GetAsBoolean: Boolean; override;
     procedure SetAsBoolean(aValue: Boolean); override;
@@ -763,14 +763,14 @@ type
 
   TIndexDefs = class(TDefCollection)
   Private
-    Function  GetItem(Index: Integer): TIndexDef;
-    Procedure SetItem(Index: Integer; Value: TIndexDef);
+    Function  GetItem(Index: Integer): TIndexDef; reintroduce;
+    Procedure SetItem(Index: Integer; Value: TIndexDef); reintroduce;
   public
     constructor Create(ADataSet: TDataSet); virtual; overload;
-    procedure Add(const Name, Fields: string; Options: TIndexOptions);
+    procedure Add(const Name, Fields: string; Options: TIndexOptions); reintroduce;
     Function AddIndexDef: TIndexDef;
-    function Find(const IndexName: string): TIndexDef;
-    function FindIndexForFields(const Fields: string): TIndexDef;
+    function Find(const IndexName: string): TIndexDef; reintroduce;
+    function FindIndexForFields(const Fields{%H-}: string): TIndexDef;
     function GetIndexForFields(const Fields: string;
       CaseInsensitive: Boolean): TIndexDef;
     procedure Update; overload; virtual;
@@ -786,7 +786,7 @@ type
     FFromDictionary : Boolean;
     FImportedConstraint : String;
   public
-    procedure Assign(Source: TPersistent); override;
+    procedure Assign(Source{%H-}: TPersistent); override;
   //  function GetDisplayName: string; override;
   published
     property CustomConstraint: string read FCustomConstraint write FCustomConstraint;
@@ -799,13 +799,13 @@ type
 
   TCheckConstraints = class(TCollection)
   Private
-   Function GetItem(Index : Longint) : TCheckConstraint;
-   Procedure SetItem(index : Longint; Value : TCheckConstraint);
+   Function GetItem(Index{%H-} : Longint) : TCheckConstraint; reintroduce;
+   Procedure SetItem(index{%H-} : Longint; Value{%H-} : TCheckConstraint); reintroduce;
   protected
     function GetOwner: TPersistent; override;
   public
-    constructor Create(AOwner: TPersistent);
-    function Add: TCheckConstraint;
+    constructor Create(AOwner{%H-}: TPersistent); reintroduce;
+    function Add: TCheckConstraint; reintroduce;
     property Items[Index: Longint]: TCheckConstraint read GetItem write SetItem; default;
   end;
 
@@ -817,7 +817,7 @@ type
     FFields: TFields;
     function GetCurrent: TField;
   public
-    constructor Create(AFields: TFields);
+    constructor Create(AFields: TFields); reintroduce;
     function MoveNext: Boolean;
     property Current: TField read GetCurrent;
   end;
@@ -841,7 +841,7 @@ type
     Property OnChange : TNotifyEvent Read FOnChange Write FOnChange;
     Property ValidFieldKinds : TFieldKinds Read FValidFieldKinds;
   Public
-    Constructor Create(ADataset : TDataset);
+    Constructor Create(ADataset : TDataset); reintroduce;
     Destructor Destroy;override;
     Procedure Add(Field : TField);
     Procedure CheckFieldName (Const Value : String);
@@ -875,7 +875,6 @@ type
 
   TParam = class(TCollectionItem)
   private
-    FNativeStr: string;
     FValue: JSValue;
     FPrecision: Integer;
     FNumericScale: Integer;
@@ -886,7 +885,6 @@ type
     FSize: Integer;
     Function GetDataSet: TDataSet;
     Function IsParamStored: Boolean;
-    procedure SetAsBytes(AValue: TBlobData);
   protected
     Procedure AssignParam(Param: TParam);
     Procedure AssignTo(Dest: TPersistent); override;
@@ -904,7 +902,7 @@ type
     Function IsEqual(AValue: TParam): Boolean;
     Procedure SetAsBlob(const AValue: TBlobData);
     Procedure SetAsBoolean(AValue: Boolean);
-    Procedure SetAsBytes(const AValue: TBytes);
+    Procedure SetAsBytes(const AValue{%H-}: TBytes);
     Procedure SetAsDate(const AValue: TDateTime);
     Procedure SetAsDateTime(const AValue: TDateTime);
     Procedure SetAsFloat(const AValue: Double);
@@ -957,9 +955,9 @@ type
   TParams = class(TCollection)
   private
     FOwner: TPersistent;
-    Function  GetItem(Index: Integer): TParam;
+    Function  GetItem(Index: Integer): TParam; reintroduce;
     Function  GetParamValue(const ParamName: string): JSValue;
-    Procedure SetItem(Index: Integer; Value: TParam);
+    Procedure SetItem(Index: Integer; Value: TParam); reintroduce;
     Procedure SetParamValue(const ParamName: string; const Value: JSValue);
   protected
     Procedure AssignTo(Dest: TPersistent); override;
@@ -969,7 +967,7 @@ type
   public
     Constructor Create(AOwner: TPersistent; AItemClass : TCollectionItemClass); overload;
     Constructor Create(AOwner: TPersistent); overload;
-    Constructor Create; overload;
+    Constructor Create; overload; reintroduce;
     Procedure AddParam(Value: TParam);
     Procedure AssignValues(Value: TParams);
     Function  CreateParam(FldType: TFieldType; const ParamName: string; ParamType: TParamType): TParam;
@@ -1124,10 +1122,10 @@ type
   protected
     // Proxy methods
     // Override this to integrate package in local data
-    function DoResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor): Boolean; virtual;
+    function DoResolveRecordUpdate(anUpdate{%H-}: TRecordUpdateDescriptor): Boolean; virtual;
     Function GetRecordUpdates(AList: TRecordUpdateDescriptorList) : Integer; virtual;
     procedure ResolveUpdateBatch(Sender: TObject; aBatch: TRecordUpdateBatch); virtual;
-    Function DataPacketReceived(ARequest: TDataRequest) : Boolean; virtual;
+    Function DataPacketReceived(ARequest{%H-}: TDataRequest) : Boolean; virtual;
     function DoLoad(aOptions: TLoadOptions; aAfterLoad: TDatasetLoadEvent): Boolean; virtual;
     function DoGetDataProxy: TDataProxy; virtual;
     Procedure InitChangeList; virtual;
@@ -1148,8 +1146,8 @@ type
     procedure CheckBiDirectional;
     procedure Loaded; override;
     procedure ClearBuffers; virtual;
-    procedure ClearCalcFields(var Buffer: TDataRecord); virtual;
-    procedure CloseBlob(Field: TField); virtual;
+    procedure ClearCalcFields(var Buffer{%H-}: TDataRecord); virtual;
+    procedure CloseBlob(Field{%H-}: TField); virtual;
     procedure CloseCursor; virtual;
     procedure CreateFields; virtual;
     procedure DataEvent(Event: TDataEvent; Info: JSValue); virtual;
@@ -1179,7 +1177,7 @@ type
     procedure DoBeforeApplyUpdates; virtual;
     procedure DoAfterApplyUpdates;virtual;
     function  FieldByNumber(FieldNo: Longint): TField;
-    function  FindRecord(Restart, GoForward: Boolean): Boolean; virtual;
+    function  FindRecord(Restart{%H-}, GoForward{%H-}: Boolean): Boolean; virtual;
     function  GetBookmarkStr: TBookmarkStr; virtual;
     procedure GetCalcFields(Var Buffer: TDataRecord); virtual;
     function  GetCanModify: Boolean; virtual;
@@ -1187,7 +1185,7 @@ type
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; virtual;
     Function  GetfieldCount : Integer;
     function  GetFieldValues(const FieldName : string) : JSValue; virtual;
-    function  GetIsIndexField(Field: TField): Boolean; virtual;
+    function  GetIsIndexField(Field{%H-}: TField): Boolean; virtual;
     function  GetIndexDefs(IndexDefs : TIndexDefs; IndexTypes : TIndexOptions) : TIndexDefs;
     function  GetNextRecords: Longint; virtual;
     function  GetNextRecord: Boolean; virtual;
@@ -1204,7 +1202,7 @@ type
     procedure InternalRefresh; virtual;
     procedure OpenCursor(InfoQuery: Boolean); virtual;
     procedure OpenCursorcomplete; virtual;
-    procedure RefreshInternalCalcFields(Var Buffer: TDataRecord); virtual;
+    procedure RefreshInternalCalcFields(Var Buffer{%H-}: TDataRecord); virtual;
     procedure RestoreState(const Value: TDataSetState);
     Procedure SetActive (Value : Boolean); virtual;
     procedure SetBookmarkStr(const Value: TBookmarkStr); virtual;
@@ -1220,7 +1218,7 @@ type
     procedure SetModified(Value: Boolean);
     procedure SetName(const NewName: TComponentName); override;
     procedure SetOnFilterRecord(const Value: TFilterRecordEvent); virtual;
-    procedure SetRecNo(Value: Longint); virtual;
+    procedure SetRecNo(Value{%H-}: Longint); virtual;
     procedure SetState(Value: TDataSetState);
     function SetTempState(const Value: TDataSetState): TDataSetState;
     Function TempBuffer: TDataRecord;
@@ -1235,22 +1233,22 @@ type
     property InternalCalcFields: Boolean read FInternalCalcFields;
     property Constraints: TCheckConstraints read FConstraints write SetConstraints;
     function AllocRecordBuffer: TDataRecord; virtual;
-    procedure FreeRecordBuffer(var Buffer: TDataRecord); virtual;
-    procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); virtual;
-    function GetBookmarkFlag(Buffer: TDataRecord): TBookmarkFlag; virtual;
+    procedure FreeRecordBuffer(var Buffer{%H-}: TDataRecord); virtual;
+    procedure GetBookmarkData(Buffer{%H-}: TDataRecord; var Data{%H-}: TBookmark); virtual;
+    function GetBookmarkFlag(Buffer{%H-}: TDataRecord): TBookmarkFlag; virtual;
     function GetDataSource: TDataSource; virtual;
     function GetRecordSize: Word; virtual;
-    procedure InternalAddRecord(Buffer: Pointer; AAppend: Boolean); virtual;
+    procedure InternalAddRecord(Buffer{%H-}: Pointer; AAppend{%H-}: Boolean); virtual;
     procedure InternalDelete; virtual;
     procedure InternalFirst; virtual;
-    procedure InternalGotoBookmark(ABookmark: TBookmark); virtual;
+    procedure InternalGotoBookmark(ABookmark{%H-}: TBookmark); virtual;
     procedure InternalHandleException(E: Exception); virtual;
-    procedure InternalInitRecord(var Buffer: TDataRecord); virtual;
+    procedure InternalInitRecord(var Buffer{%H-}: TDataRecord); virtual;
     procedure InternalLast; virtual;
     procedure InternalPost; virtual;
-    procedure InternalSetToRecord(Buffer: TDataRecord); virtual;
-    procedure SetBookmarkFlag(Var Buffer: TDataRecord; Value: TBookmarkFlag); virtual;
-    procedure SetBookmarkData(Var Buffer: TDataRecord; Data: TBookmark); virtual;
+    procedure InternalSetToRecord(Buffer{%H-}: TDataRecord); virtual;
+    procedure SetBookmarkFlag(Var Buffer{%H-}: TDataRecord; Value{%H-}: TBookmarkFlag); virtual;
+    procedure SetBookmarkData(Var Buffer{%H-}: TDataRecord; Data{%H-}: TBookmark); virtual;
     procedure SetUniDirectional(const Value: Boolean);
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
     // These use the active buffer
@@ -1273,10 +1271,10 @@ type
     function ActiveBuffer: TDataRecord;
     procedure Append;
     procedure AppendRecord(const Values: array of jsValue);
-    function BookmarkValid(ABookmark: TBookmark): Boolean; virtual;
+    function BookmarkValid(ABookmark{%H-}: TBookmark): Boolean; virtual;
     function ConvertToDateTime(aValue : JSValue; ARaiseException : Boolean) : TDateTime; virtual;
     function ConvertDateTimeToNative(aValue : TDateTime) : JSValue; virtual;
-    Class function DefaultConvertToDateTime(aValue : JSValue; ARaiseException : Boolean) : TDateTime; virtual;
+    Class function DefaultConvertToDateTime(aValue : JSValue; ARaiseException{%H-} : Boolean) : TDateTime; virtual;
     Class function DefaultConvertDateTimeToNative(aValue : TDateTime) : JSValue; virtual;
     Function BlobDataToBytes(aValue : JSValue) : TBytes; virtual;
     Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; virtual;
@@ -1288,7 +1286,7 @@ type
     procedure Close;
     Procedure ApplyUpdates;
     function  ControlsDisabled: Boolean;
-    function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Longint; virtual;
+    function CompareBookmarks(Bookmark1{%H-}, Bookmark2{%H-}: TBookmark): Longint; virtual;
     procedure CursorPosChanged;
     procedure Delete; virtual;
     procedure DisableControls;
@@ -1301,21 +1299,21 @@ type
     function FindNext: Boolean; virtual;
     function FindPrior: Boolean; virtual;
     procedure First;
-    procedure FreeBookmark(ABookmark: TBookmark); virtual;
+    procedure FreeBookmark(ABookmark{%H-}: TBookmark); virtual;
     function GetBookmark: TBookmark; virtual;
-    function GetCurrentRecord(Buffer: TDataRecord): Boolean; virtual;
+    function GetCurrentRecord(Buffer{%H-}: TDataRecord): Boolean; virtual;
     procedure GetFieldList(List: TList; const FieldNames: string);
     procedure GetFieldNames(List: TStrings);
     procedure GotoBookmark(const ABookmark: TBookmark);
-    procedure Insert;
+    procedure Insert; reintroduce;
     procedure InsertRecord(const Values: array of JSValue);
     function IsEmpty: Boolean;
     function IsLinkedTo(ADataSource: TDataSource): Boolean;
     function IsSequenced: Boolean; virtual;
     procedure Last;
     Function Load(aOptions : TLoadOptions; aAfterLoad : TDatasetLoadEvent) : Boolean;
-    function Locate(const KeyFields: string; const KeyValues: JSValue; Options: TLocateOptions) : boolean; virtual;
-    function Lookup(const KeyFields: string; const KeyValues: JSValue; const ResultFields: string): JSValue; virtual;
+    function Locate(const KeyFields{%H-}: string; const KeyValues{%H-}: JSValue; Options{%H-}: TLocateOptions) : boolean; virtual;
+    function Lookup(const KeyFields{%H-}: string; const KeyValues{%H-}: JSValue; const ResultFields{%H-}: string): JSValue; virtual;
     function MoveBy(Distance: Longint): Longint;
     procedure Next;
     procedure Open;
@@ -1406,9 +1404,9 @@ type
     procedure CheckBrowseMode; virtual;
     procedure DataEvent(Event: TDataEvent; Info: JSValue); virtual;
     procedure DataSetChanged; virtual;
-    procedure DataSetScrolled(Distance: Integer); virtual;
+    procedure DataSetScrolled(Distance{%H-}: Integer); virtual;
     procedure EditingChanged; virtual;
-    procedure FocusControl(Field: JSValue); virtual;
+    procedure FocusControl(Field{%H-}: JSValue); virtual;
     function  GetActiveRecord: Integer; virtual;
     function  GetBOF: Boolean; virtual;
     function  GetBufferCount: Integer; virtual;
@@ -1416,14 +1414,14 @@ type
     function  GetRecordCount: Integer; virtual;
     procedure LayoutChanged; virtual;
     function  MoveBy(Distance: Integer): Integer; virtual;
-    procedure RecordChanged(Field: TField); virtual;
+    procedure RecordChanged(Field{%H-}: TField); virtual;
     procedure SetActiveRecord(Value: Integer); virtual;
     procedure SetBufferCount(Value: Integer); virtual;
     procedure UpdateData; virtual;
     property VisualControl: Boolean read FVisualControl write FVisualControl;
     property FirstRecord: Integer read FFirstRecord write FFirstRecord;
   public
-    constructor Create;
+    constructor Create; reintroduce;
     destructor Destroy; override;
     function  Edit: Boolean;
     procedure UpdateRecord;
@@ -1468,7 +1466,7 @@ type
     Procedure DoMasterDisable; virtual;
     Procedure DoMasterChange; virtual;
   public
-    constructor Create(ADataSet: TDataSet);virtual;
+    constructor Create(ADataSet: TDataSet);virtual; reintroduce;
     destructor Destroy; override;
     property FieldNames: string read FFieldNames write SetFieldNames;
     property Fields: TList read FFields;
@@ -1521,7 +1519,7 @@ type
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
     procedure Edit;
-    function IsLinkedTo(ADataSet: TDataSet): Boolean;
+    function IsLinkedTo(ADataSet{%H-}: TDataSet): Boolean;
     property State: TDataSetState read FState;
   published
     property AutoEdit: Boolean read FAutoEdit write FAutoEdit default True;
@@ -1553,7 +1551,7 @@ type
   Protected
     Procedure DoAfterRequest;
   Public
-    Constructor Create(aDataProxy : TDataProxy; aOptions: TLoadOptions; aAfterRequest: TDataRequestEvent; aAfterLoad: TDatasetLoadEvent); virtual;
+    Constructor Create(aDataProxy : TDataProxy; aOptions: TLoadOptions; aAfterRequest: TDataRequestEvent; aAfterLoad: TDatasetLoadEvent); virtual; reintroduce;
     property DataProxy : TDataProxy Read FDataProxy;
     Property Dataset : TDataset Read FDataset;
     Property Bookmark : TBookMark Read FBookmark;
@@ -1582,7 +1580,7 @@ type
   Protected
     Procedure SetStatus(aValue : TUpdateStatus); virtual;
   Public
-    Constructor Create(aProxy : TDataProxy; aDataset : TDataset; aBookmark : TBookMark; AData : JSValue; AStatus : TUpdateStatus);
+    Constructor Create(aProxy : TDataProxy; aDataset : TDataset; aBookmark : TBookMark; AData : JSValue; AStatus : TUpdateStatus); reintroduce;
     Procedure Resolve(aData : JSValue);
     Procedure ResolveFailed(aError : String);
     Property Proxy : TDataProxy read FProxy;
@@ -1621,7 +1619,7 @@ type
   Protected
     Property LastChangeIndex : Integer Read FLastChangeIndex;
   Public
-    Constructor Create (aBatchID : Integer; AList : TRecordUpdateDescriptorList; AOwnsList : Boolean);
+    Constructor Create (aBatchID : Integer; AList : TRecordUpdateDescriptorList; AOwnsList : Boolean); reintroduce;
     Destructor Destroy; override;
     Procedure FreeList;
     Property Dataset : TDataset Read FDataset Write FDataset;
@@ -2089,6 +2087,7 @@ function TIndexDefs.FindIndexForFields(const Fields: string): TIndexDef;
 
 begin
   //!! To be implemented
+  Result:=nil;
 end;
 
 
@@ -2723,6 +2722,7 @@ function TDataSet.FindRecord(Restart, GoForward: Boolean): Boolean;
 
 begin
   //!! To be implemented
+  Result:=false;
 end;
 
 
@@ -5168,7 +5168,7 @@ end;
 function TField.AccessError(const TypeName: string): EDatabaseError;
 
 begin
-  Raise EDatabaseError.CreateFmt(SinvalidTypeConversion,[TypeName,FFieldName]);
+  Result:=EDatabaseError.CreateFmt(SinvalidTypeConversion,[TypeName,FFieldName]);
 end;
 
 procedure TField.Assign(Source: TPersistent);
@@ -5255,12 +5255,14 @@ end;
 function TField.GetAsBoolean: Boolean;
 begin
   raiseAccessError(SBoolean);
+  Result:=false;
 end;
 
 function TField.GetAsBytes: TBytes;
 
 begin
   raiseAccessError(SBytes);
+  Result:=nil;
 end;
 
 
@@ -5268,17 +5270,20 @@ function TField.GetAsDateTime: TDateTime;
 
 begin
   raiseAccessError(SdateTime);
+  Result:=0.0;
 end;
 
 function TField.GetAsFloat: Double;
 
 begin
   raiseAccessError(SDateTime);
+  Result:=0.0;
 end;
 
 function TField.GetAsLargeInt: NativeInt;
 begin
   RaiseAccessError(SLargeInt);
+  Result:=0;
 end;
 
 function TField.GetAsLongint: Longint;
@@ -5291,6 +5296,7 @@ function TField.GetAsInteger: Longint;
 
 begin
   RaiseAccessError(SInteger);
+  Result:=0;
 end;
 
 function TField.GetAsJSValue: JSValue;
@@ -8423,11 +8429,6 @@ end;
 Function TParam.IsParamStored: Boolean;
 begin
   Result:=Bound;
-end;
-
-procedure TParam.SetAsBytes(AValue: TBlobData);
-begin
-  FValue:=TDataset.DefaultBytesToBlobData(aValue);
 end;
 
 Procedure TParam.AssignParam(Param: TParam);

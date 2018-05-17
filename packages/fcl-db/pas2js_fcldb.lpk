@@ -11,8 +11,10 @@
       </SearchPaths>
       <Other>
         <ExecuteBefore>
-          <Command Value="$MakeExe(pas2js) -O- -Jc pas2js_fcldb.pas"/>
-          <ScanForFPCMsgs Value="True"/>
+          <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq pas2js_fcldb.pas"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
         </ExecuteBefore>
       </Other>
       <SkipCompiler Value="True"/>
@@ -36,7 +38,7 @@
       </Item4>
       <Item5>
         <Filename Value="extjsdataset.pas"/>
-        <UnitName Value="extjsdataset"/>
+        <UnitName Value="ExtJSDataset"/>
       </Item5>
     </Files>
     <RequiredPkgs Count="1">

@@ -1,6 +1,6 @@
 unit ExtJSDataset;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}
 
 interface
 
@@ -147,8 +147,8 @@ procedure TExtJSJSONDataSet.MetaDataToFieldDefs;
 Var
   A : TJSArray;
   F : TJSObject;
-  I,J,FS : Integer;
-  N,idf : String;
+  I,FS : Integer;
+  N: String;
   ft: TFieldType;
   D : JSValue;
 
@@ -348,7 +348,7 @@ procedure TExtJSJSONDataSet.InitDateTimeFields;
 Var
   F : TJSObject;
   FF : TField;
-  I,J : Integer;
+  I: Integer;
   Fmt : String;
   D : JSValue;
 

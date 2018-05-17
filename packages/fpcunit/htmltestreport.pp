@@ -1,6 +1,6 @@
 unit htmltestreport;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}
 
 interface
 

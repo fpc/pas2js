@@ -1,6 +1,6 @@
 unit RestConnection;
 
-{$mode objfpc}{$H+}
+{$mode objfpc}
 
 interface
 
@@ -58,7 +58,7 @@ Type
   Private
     FXHR : TJSXMLHttpRequest;
   protected
-    function onLoad(Event: TEventListenerEvent): boolean; virtual;
+    function onLoad(Event{%H-}: TEventListenerEvent): boolean; virtual;
     function TransformResult: JSValue; virtual;
   end;
 
@@ -69,7 +69,7 @@ Type
     FXHR : TJSXMLHttpRequest;
     FBatch : TRecordUpdateBatch;
   protected
-    function onLoad(Event: TEventListenerEvent): boolean; virtual;
+    function onLoad(Event{%H-}: TEventListenerEvent): boolean; virtual;
   end;
 
 implementation

@@ -1,5 +1,5 @@
 {$mode objfpc}
-{$h+}
+
 unit JSONDataset;
 
 interface
@@ -72,7 +72,7 @@ type
     Property Rows : TJSArray Read FRows;
     Property Dataset : TDataset Read FDataset;
   Public
-    Constructor Create(aDataset: TDataset; aRows : TJSArray);
+    Constructor Create(aDataset: TDataset; aRows : TJSArray); reintroduce;
     // Append remainder of FRows to FList.
     Procedure AppendToIndex; virtual; abstract;
     // Delete aListIndex from list, not from row. Return Recordindex of deleted record.
@@ -80,7 +80,7 @@ type
     // Append aRecordIndex to list. Return ListIndex of appended record.
     Function Append(aRecordIndex : Integer) : Integer; virtual; abstract;
     // Insert record into list. By default, this does an append. Return ListIndex of inserted record
-    Function Insert(aCurrentIndex, aRecordIndex : Integer) : Integer; virtual;
+    Function Insert(aCurrentIndex{%H-}, aRecordIndex : Integer) : Integer; virtual;
     // Record at index aCurrentIndex has changed. Update index and return new listindex.
     Function Update(aCurrentIndex, aRecordIndex : Integer) : Integer; virtual; abstract;
     // Find list index for Record at index aCurrentIndex. Return -1 if not found.
@@ -129,7 +129,7 @@ type
     function AllocRecordBuffer: TDataRecord; override;
     procedure FreeRecordBuffer(var Buffer: TDataRecord); override;
     procedure InternalInitRecord(var Buffer: TDataRecord); override;
-    function GetRecord(Var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult; override;
+    function GetRecord(Var Buffer: TDataRecord; GetMode: TGetMode; DoCheck{%H-}: Boolean): TGetResult; override;
     function GetRecordSize: Word; override;
     procedure AddToRows(AValue: TJSArray);
     procedure InternalClose; override;
@@ -146,7 +146,6 @@ type
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; override;
     function IsCursorOpen: Boolean; override;
     // Bookmark operations
-    function BookmarkValid(ABookmark: TBookmark): Boolean; override;
     procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); override;
     function GetBookmarkFlag(Buffer: TDataRecord): TBookmarkFlag; override;
     procedure InternalGotoBookmark(ABookmark: TBookmark); override;
@@ -188,7 +187,8 @@ type
     constructor Create (AOwner: TComponent); override;
     destructor Destroy; override;
     function GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;  override;
-    procedure SetFieldData(Field: TField; var Buffer: TDatarecord; AValue : JSValue);  override;
+    procedure SetFieldData(Field: TField; var Buffer{%H-}: TDatarecord; AValue : JSValue);  override;
+    function BookmarkValid(ABookmark: TBookmark): Boolean; override;
     function CompareBookmarks(Bookmark1, Bookmark2: TBookmark): Longint; override;
   end;
 
@@ -225,8 +225,8 @@ type
   // Fieldmapper to be used when the data is in an object
   TJSONObjectFieldMapper = Class(TJSONFieldMapper)
   Public
-    procedure SetJSONDataForField(Const FieldName : String; FieldIndex : Integer; Row,Data : JSValue); override;
-    Function GetJSONDataForField(Const FieldName : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
+    procedure SetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row,Data : JSValue); override;
+    Function GetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
   end;
 
@@ -234,8 +234,8 @@ type
   // Fieldmapper to be used when the data is in an array
   TJSONArrayFieldMapper = Class(TJSONFieldMapper)
   Public
-    procedure SetJSONDataForField(Const FieldName : String; FieldIndex : Integer; Row,Data : JSValue); override;
-    Function GetJSONDataForField(Const FieldName : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
+    procedure SetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row,Data : JSValue); override;
+    Function GetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
   end;
 
@@ -289,6 +289,7 @@ end;
 function TDefaultJSONIndex.Update(aCurrentIndex, aRecordIndex: Integer
   ): Integer;
 begin
+  Result:=0;
   If RecordIndex[aCurrentIndex]<>aRecordIndex then
     DatabaseErrorFmt('Inconsistent record index in default index, expected %d, got %d.',[aCurrentIndex,RecordIndex[aCurrentIndex]],Dataset);
 end;

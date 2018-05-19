@@ -291,7 +291,7 @@ type
     function GetElements(Index: NativeInt): JSValue; external name '[]';
     procedure SetElements(Index: NativeInt; const AValue: JSValue); external name '[]';
   public
-    flength : integer; external name 'length';
+    FLength : NativeInt; external name 'length';
     constructor new; overload;
     constructor new(aLength : NativeInt); overload;
     constructor new(aElement1 : JSValue); varargs; overload;
@@ -349,7 +349,7 @@ type
     function toLocaleString(locales : string; const Options : TLocaleCompareOptions) : String; overload;
     function toString : String;
     function unshift : NativeInt; varargs; 
-    Property Length : Integer Read FLength Write FLength;
+    Property Length : NativeInt Read FLength Write FLength;
     property Elements[Index: NativeInt]: JSValue read GetElements write SetElements; default;
   end;
 
@@ -445,17 +445,17 @@ type
     property byteLength : NativeInt Read FByteLength;
     property byteOffset : NativeInt Read FByteOffset;
     property length : NativeInt Read FLength;
-    Property values[Index : NativeInt] : JSValue Read getValue Write SetValue; default;
+    property values[Index : NativeInt] : JSValue Read getValue Write SetValue; default;
   end;
 
   { TJSInt8Array }
 
   TJSInt8Array = class external name 'Int8Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): Shortint; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Shortint);external name '[]';
+    function getTypedValue(Index : NativeInt): Shortint; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Shortint);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -467,15 +467,15 @@ type
     class function _of(aValue : jsValue) : TJSInt8Array; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of ShortInt); external name 'set'; reintroduce;
     procedure _set(anArray : Array of ShortInt; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : Shortint Read getTypedValue Write setTypedValue; default;
+    property values[Index : NativeInt] : Shortint Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSUint8Array  = class external name 'Uint8Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): Byte; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Byte);external name '[]';
+    function getTypedValue(Index : NativeInt): Byte; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Byte);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -487,15 +487,15 @@ type
     class function _of(aValue : jsValue) : TJSUInt8Array; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of Byte); external name 'set'; reintroduce;
     procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSUint8ClampedArray  = class external name 'Uint8ClampedArray' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): Byte; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Byte);external name '[]';
+    function getTypedValue(Index : NativeInt): Byte; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Byte);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -507,15 +507,15 @@ type
     class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of Byte); external name 'set'; reintroduce;
     procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : Byte Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSInt16Array = class external name 'Int16Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): smallint; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Smallint);external name '[]';
+    function getTypedValue(Index : NativeInt): smallint; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Smallint);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -527,15 +527,15 @@ type
     class function _of(aValue : jsValue) : TJSInt16Array; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of SmallInt); external name 'set'; reintroduce;
     procedure _set(anArray : Array of SmallInt; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : SmallInt Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : SmallInt Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSUint16Array = class external name 'Uint16Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): Word; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Word);external name '[]';
+    function getTypedValue(Index : NativeInt): Word; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Word);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -547,15 +547,15 @@ type
     class function _of(aValue : jsValue) : TJSUInt16Array; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of Word); external name 'set'; reintroduce;
     procedure _set(anArray : Array of Word; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : Word Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : Word Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSInt32Array = class external name 'Int32Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): longint; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: longint);external name '[]';
+    function getTypedValue(Index : NativeInt): longint; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: longint);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -567,15 +567,15 @@ type
     class function _of(aValue : jsValue) : TJSInt32Array; varargs;external name 'of'; reintroduce;
     procedure _set(anArray : Array of LongInt); external name 'set'; reintroduce;
     procedure _set(anArray : Array of LongInt; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : longint Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : longint Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSUint32Array = class external name 'Uint32Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): LongWord; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: LongWord);external name '[]';
+    function getTypedValue(Index : NativeInt): LongWord; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: LongWord);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -587,15 +587,15 @@ type
     class function _of(aValue : jsValue) : TJSUInt32Array; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of Cardinal); external name 'set'; reintroduce;
     procedure _set(anArray : Array of Cardinal; anOffset : NativeInt); external name 'set';
-    Property values[Index : Integer] : LongWord Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : LongWord Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSFloat32Array = class external name 'Float32Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): Float32; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Float32);external name '[]';
+    function getTypedValue(Index : NativeInt): Float32; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Float32);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -607,15 +607,15 @@ type
     class function _of(aValue : jsValue) : TJSFloat32Array; varargs; reintroduce;
     procedure _set(anArray : Array of Double); external name 'set'; reintroduce;
     procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set'; reintroduce;
-    Property values[Index : Integer] : Float32 Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : Float32 Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSFloat64Array = class external name 'Float64Array' (TJSTypedArray)
   private
-    function getTypedValue(Index : Integer): Float64; external name '[]';
-    procedure setTypedValue(Index : Integer; AValue: Float64);external name '[]';
+    function getTypedValue(Index : NativeInt): Float64; external name '[]';
+    procedure setTypedValue(Index : NativeInt; AValue: Float64);external name '[]';
   public
-    constructor new (length : Integer);
+    constructor new (length : NativeInt);
     constructor new (atypedArray : TJSTypedArray);
     constructor new (aObject : TJSObject);
     constructor new (buffer : TJSArrayBuffer);
@@ -627,7 +627,7 @@ type
     class function _of(aValue : jsValue) : TJSFloat64Array; varargs; reintroduce;
     procedure _set(anArray : Array of Double); external name 'set'; reintroduce;
     procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set'; reintroduce;
-    Property values[Index : Integer] : Float64 Read getTypedValue Write setTypedValue; default;
+    Property values[Index : NativeInt] : Float64 Read getTypedValue Write setTypedValue; default;
   end;
 
   TJSDataView = Class external name 'DataView' (TJSBufferSource)

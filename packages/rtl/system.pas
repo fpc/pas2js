@@ -61,6 +61,7 @@ type
   UnicodeString = String;
   WideString = String;
   WideChar = char;
+  UnicodeChar = char;
 
   TDynArrayIndex = NativeInt;
   TTextLineBreakStyle = (tlbsLF,tlbsCRLF,tlbsCR);

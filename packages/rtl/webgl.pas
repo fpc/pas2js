@@ -82,6 +82,7 @@ Type
   TJSTexImageSource = JSValue;
   TJSFloat32List = Array of GLFloat;
   TJSInt32List = Array of integer;
+  TJSUInt32List = Array of longword;
 
   TJSWebGLShaderArray = array of TJSWebGLShader;
   TJSWebGLRenderingContextBase = Class External name 'WebGLRenderingContextBase' (TJSObject)

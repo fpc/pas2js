@@ -131,7 +131,9 @@ begin
     P.Dependencies.Clear;
     Defaults.Options.Add('-Sc');
     P.Targets.AddProgram('pas2js.pp');
+    {$IF FPC_FULLVERSION>=30101}
     P.Targets.AddLibrary('pas2jslib.pp');
+    {$ENDIF}
     P.Targets.AddImplicitUnit('fpjson',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('fppas2js',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('fppjssrcmap',False);

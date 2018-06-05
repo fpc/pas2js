@@ -99,7 +99,7 @@ begin
     begin
       case PropInfo.TypeInfo.Kind of
       tkInteger: Value:=IntToStr(GetNativeIntProp(Instance,PropInfo));
-      tkString: Value:=GetStringProp(Instance,PropInfo);
+      tkString: Value:=GetStrProp(Instance,PropInfo);
       end;
     end;
     writeln('  Name="',PropInfo.Name,'"',

@@ -380,10 +380,20 @@ function GetNativeIntProp(Instance: TObject; const PropInfo: TTypeMemberProperty
 procedure SetNativeIntProp(Instance: TObject; const PropName: String; Value: NativeInt);
 procedure SetNativeIntProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: NativeInt);
 
-function GetStringProp(Instance: TObject; const PropName: String): String;
-function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
-procedure SetStringProp(Instance: TObject; const PropName: String; Value: String);
-procedure SetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String);
+function GetOrdProp(Instance: TObject; const PropName: String): longint;
+function GetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty): longint;
+procedure SetOrdProp(Instance: TObject; const PropName: String; Value: longint);
+procedure SetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: longint);
+
+function GetStrProp(Instance: TObject; const PropName: String): String;
+function GetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
+procedure SetStrProp(Instance: TObject; const PropName: String; Value: String);
+procedure SetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String);
+
+function GetStringProp(Instance: TObject; const PropName: String): String; deprecated;
+function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String; deprecated;
+procedure SetStringProp(Instance: TObject; const PropName: String; Value: String); deprecated;
+procedure SetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String); deprecated;
 
 function GetBoolProp(Instance: TObject; const PropName: String): boolean;
 function GetBoolProp(Instance: TObject; const PropInfo: TTypeMemberProperty): boolean;
@@ -871,27 +881,72 @@ begin
   SetJSValueProp(Instance,PropInfo,Value);
 end;
 
-function GetStringProp(Instance: TObject; const PropName: String): String;
+function GetOrdProp(Instance: TObject; const PropName: String): longint;
 begin
-  Result:=GetStringProp(Instance,FindPropInfo(Instance,PropName));
+  Result:=longint(GetJSValueProp(Instance,PropName));
 end;
 
-function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty
+function GetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty
+  ): longint;
+begin
+  Result:=longint(GetJSValueProp(Instance,PropInfo));
+end;
+
+procedure SetOrdProp(Instance: TObject; const PropName: String; Value: longint);
+begin
+  SetJSValueProp(Instance,PropName,Value);
+end;
+
+procedure SetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty;
+  Value: longint);
+begin
+  SetJSValueProp(Instance,PropInfo,Value);
+end;
+
+function GetStrProp(Instance: TObject; const PropName: String): String;
+begin
+  Result:=GetStrProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function GetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty
   ): String;
 begin
   Result:=String(GetJSValueProp(Instance,PropInfo));
 end;
 
+procedure SetStrProp(Instance: TObject; const PropName: String; Value: String
+  );
+begin
+  SetStrProp(Instance,FindPropInfo(Instance,PropName),Value);
+end;
+
+procedure SetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty;
+  Value: String);
+begin
+  SetJSValueProp(Instance,PropInfo,Value);
+end;
+
+function GetStringProp(Instance: TObject; const PropName: String): String;
+begin
+  Result:=GetStrProp(Instance,PropName);
+end;
+
+function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty
+  ): String;
+begin
+  Result:=GetStrProp(Instance,PropInfo);
+end;
+
 procedure SetStringProp(Instance: TObject; const PropName: String; Value: String
   );
 begin
-  SetStringProp(Instance,FindPropInfo(Instance,PropName),Value);
+  SetStrProp(Instance,PropName,Value);
 end;
 
 procedure SetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty;
   Value: String);
 begin
-  SetJSValueProp(Instance,PropInfo,Value);
+  SetStrProp(Instance,PropInfo,Value);
 end;
 
 function GetBoolProp(Instance: TObject; const PropName: String): boolean;

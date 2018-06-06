@@ -186,6 +186,20 @@ type
   end;
   TPersistentClass = Class of TPersistent;
 
+  { TInterfacedPersistent }
+
+  TInterfacedPersistent = class(TPersistent, IInterface)
+  private
+    FOwnerInterface: IInterface;
+  protected
+    function _AddRef: Integer;
+    function _Release: Integer;
+  public
+    function QueryInterface(const IID: TGUID; out Obj): integer; virtual;
+    procedure AfterConstruction; override;
+  end;
+
+
   TStrings = Class;
   { TStringsEnumerator class }
 
@@ -578,6 +592,37 @@ Function GetClass(AClassName : string) : TPersistentClass;
 implementation
 
 uses JS;
+
+{ TInterfacedPersistent }
+
+function TInterfacedPersistent._AddRef: Integer;
+begin
+  Result:=-1;
+  if Assigned(FOwnerInterface) then
+    Result:=FOwnerInterface._AddRef;
+end;
+
+function TInterfacedPersistent._Release: Integer;
+
+begin
+  Result:=-1;
+  if Assigned(FOwnerInterface) then
+    Result:=FOwnerInterface._Release;
+end;
+
+function TInterfacedPersistent.QueryInterface(const IID: TGUID; out Obj): integer;
+begin
+  Result:=E_NOINTERFACE;
+  if GetInterface(IID, Obj)  then
+    Result:=0;
+end;
+
+procedure TInterfacedPersistent.AfterConstruction;
+begin
+  inherited AfterConstruction;
+  if (GetOwner<>nil) then
+    GetOwner.GetInterface(IInterface, FOwnerInterface);
+end;
 
 { TComponentEnumerator }
 

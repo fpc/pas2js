@@ -516,7 +516,7 @@ type
     property Current: TComponent read GetCurrent;
   end;
 
-  TComponent = class(TPersistent)
+  TComponent = class(TPersistent, IInterface)
   private
     FOwner: TComponent;
     FName: TComponentName;
@@ -555,12 +555,16 @@ type
     procedure ValidateRename(AComponent: TComponent;  const CurName, NewName: string); virtual;
     procedure ValidateContainer(AComponent: TComponent); virtual;
     procedure ValidateInsert(AComponent: TComponent); virtual;
+  protected
+    function _AddRef: Integer;
+    function _Release: Integer;
   public
     constructor Create(AOwner: TComponent); virtual; reintroduce;
     destructor Destroy; override;
     procedure BeforeDestruction; override;
     procedure DestroyComponents;
     procedure Destroying;
+    function QueryInterface(const IID: TGUID; out Obj): integer; virtual;
 //    function ExecuteAction(Action: TBasicAction): Boolean; virtual;
     function FindComponent(const AName: string): TComponent;
     procedure FreeNotification(AComponent: TComponent);
@@ -3528,6 +3532,16 @@ begin
   if AComponent=nil then ;
 end;
 
+function TComponent._AddRef: Integer;
+begin
+  Result:=-1;
+end;
+
+function TComponent._Release: Integer;
+begin
+  Result:=-1;
+end;
+
 
 Constructor TComponent.Create(AOwner: TComponent);
 
@@ -3599,6 +3613,15 @@ begin
   If Assigned(FComponents) then
     for Runner:=0 to FComponents.Count-1 do
       TComponent(FComponents.Items[Runner]).Destroying;
+end;
+
+function TComponent.QueryInterface(const IID: TGUID; out Obj): integer;
+begin
+  if GetInterface(IID, Obj) then
+    Result := S_OK
+  else
+    Result := E_NOINTERFACE;
+
 end;
 
 

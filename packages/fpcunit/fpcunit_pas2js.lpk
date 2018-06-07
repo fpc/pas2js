@@ -12,9 +12,7 @@
       <Other>
         <ExecuteBefore>
           <Command Value="$MakeExe(pas2js) -O- -Jc -vbq fpcunit_pas2js.pas"/>
-          <Parsers Count="1">
-            <Item1 Value="Pas2JS"/>
-          </Parsers>
+          <ScanForFPCMsgs Value="True"/>
         </ExecuteBefore>
       </Other>
       <SkipCompiler Value="True"/>

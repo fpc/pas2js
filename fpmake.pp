@@ -1,7 +1,7 @@
 {$mode objfpc}{$H+}
 program fpmake;
 
-uses {$ifdef unix}cthreads{$endif},sysutils,fpmkunit;
+uses {$ifdef unix}cthreads,{$endif} sysutils, fpmkunit;
 
 Procedure CreateConfigFile(CfgFile,BaseDir : String);
 

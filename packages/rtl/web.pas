@@ -2543,6 +2543,7 @@ Type
     FscreenY: Double; external name 'screenY';
     FShiftKey: Boolean; external name 'shiftKey';
   Public
+    function getModifierState(keyArg: String): boolean;
     Property altKey : Boolean read FAltKey;
     Property button: NativeInt read FBUtton;
     Property buttons: NativeInt read FBUttons;

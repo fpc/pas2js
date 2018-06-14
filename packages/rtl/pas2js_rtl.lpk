@@ -7,6 +7,9 @@
     <AutoUpdate Value="Manually"/>
     <CompilerOptions>
       <Version Value="11"/>
+      <SearchPaths>
+        <UnitOutputDirectory Value="."/>
+      </SearchPaths>
       <Parsing>
         <SyntaxOptions>
           <AllowLabel Value="False"/>

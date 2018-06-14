@@ -731,6 +731,7 @@ var
   JSExceptValue: JSValue; external name '$e';
 
 Function new(aElements: TJSValueDynArray) : TJSObject; overload;
+function JSDelete(const Obj: JSValue; const PropName: string): boolean; assembler; overload;
 
 function decodeURIComponent(encodedURI : String) : String; external name 'decodeURIComponent';
 function encodeURIComponent(str : String) : String; external name 'encodeURIComponent';
@@ -780,7 +781,7 @@ Var
 
 implementation
 
-Function new(aElements: TJSValueDynArray) : TJSObject;
+function new(aElements: TJSValueDynArray): TJSObject;
 
   function toString(I : Integer): string; external name 'String';
 
@@ -811,6 +812,11 @@ begin
     Result.Properties[S]:=aElements[i+1];
     inc(I,2);
     end;
+end;
+
+function JSDelete(const Obj: JSValue; const PropName: string): boolean; assembler;
+asm
+  return delete Obj[PropName];
 end;
 
 function hasValue(const v: JSValue): boolean; assembler;
@@ -948,7 +954,7 @@ begin
 end;
 
 
-Function GetValueType(JS : JSValue) : TJSValueType;
+function GetValueType(JS: JSValue): TJSValueType;
 
 Var
   t : string;

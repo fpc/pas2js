@@ -1,6 +1,6 @@
 program demodatetime;
 
-uses sysutils;
+uses sysutils, js;
 
 Procedure DumpDate(Msg : String; Dt : TDateTime);
 

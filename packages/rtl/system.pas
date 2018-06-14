@@ -47,19 +47,19 @@ type
   ValSInt = NativeInt;
   ValUInt = NativeUInt;
   ValReal = Double;
-  Real = Double;
-  Extended = Double;
+  Real = type Double;
+  Extended = type Double;
 
-  Int64 = NativeInt unimplemented; // only 53 bits at runtime
-  UInt64 = NativeUInt unimplemented; // only 52 bits at runtime
-  QWord = NativeUInt unimplemented; // only 52 bits at runtime
-  Single = Double unimplemented;
-  Comp = NativeInt unimplemented;
+  Int64 = type NativeInt unimplemented; // only 53 bits at runtime
+  UInt64 = type NativeUInt unimplemented; // only 52 bits at runtime
+  QWord = type NativeUInt unimplemented; // only 52 bits at runtime
+  Single = type Double unimplemented;
+  Comp = type NativeInt unimplemented;
   NativeLargeInt = NativeInt;
   NativeLargeUInt = NativeUInt;
 
-  UnicodeString = String;
-  WideString = String;
+  UnicodeString = type String;
+  WideString = type String;
   WideChar = char;
   UnicodeChar = char;
 

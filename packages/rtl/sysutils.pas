@@ -316,10 +316,10 @@ Type
 *****************************************************************************}
 Type
   
-  TDateTime = double;
+  TDateTime = type double;
   
-  TTime = TDateTime;
-  TDate = TDateTime;
+  TTime = type TDateTime;
+  TDate = type TDateTime;
   
   TSystemTime = record
      Year, Month, Day, DayOfWeek: word;

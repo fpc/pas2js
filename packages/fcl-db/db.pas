@@ -99,7 +99,7 @@ type
   TFieldType = (
     ftUnknown, ftString, ftInteger, ftLargeInt, ftBoolean, ftFloat, ftDate,
     ftTime, ftDateTime,  ftAutoInc, ftBlob, ftMemo, ftFixedChar,
-    ftVariant
+    ftVariant,ftDataset
   );
 
 { TDateTimeRec }
@@ -1675,7 +1675,8 @@ Const
       {ftBlob} 'Blob',
       {ftMemo} 'Memo',
       {ftFixedChar} 'FixedChar',
-      {ftVariant} 'Variant'
+      {ftVariant} 'Variant',
+      {ftDataset} 'Dataset'
     );
 
   DefaultFieldClasses : Array [TFieldType] of TFieldClass =
@@ -1693,7 +1694,8 @@ Const
       { ftBlob} TBlobField,
       { ftMemo} TMemoField,
       { ftFixedChar} TStringField,
-      { ftVariant} TVariantField
+      { ftVariant} TVariantField,
+      { ftDataset} Nil
     );
 
   dsEditModes = [dsEdit, dsInsert, dsSetKey];

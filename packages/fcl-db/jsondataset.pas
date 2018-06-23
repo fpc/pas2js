@@ -777,9 +777,19 @@ var
 
 begin
   if (FEditIdx=Buffer.Bookmark) then
-    R:=FEditRow
+    begin
+    if State=dsOldValue then
+      R:=Buffer.data
+    else
+      R:=FEditRow
+    end
   else
-    R:=Buffer.data;
+    begin
+    if State=dsOldValue then
+      Exit(Null)
+    else
+      R:=Buffer.data;
+    end;
   Result:=FFieldMapper.GetJSONDataForField(Field,R);
 end;
 

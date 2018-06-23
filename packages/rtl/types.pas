@@ -21,6 +21,7 @@ type
 
   TBooleanDynArray = array of Boolean;
   TIntegerDynArray = array of Integer;
+  TNativeIntDynArray = array of NativeInt;
   TStringDynArray = array of String;
   TDoubleDynArray = array of Double;
   TJSValueDynArray = array of JSValue;

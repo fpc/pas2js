@@ -108,7 +108,7 @@ type
 
   TTypeInfoEnum = class external name 'rtl.tTypeInfoEnum'(TTypeInfoInteger)
   public
-    // not supported: OrdType : TOrdType, BaseType: TTypeInfo
+    // not supported: BaseType: TTypeInfo
     EnumType: TEnumType external name 'enumtype';
   end;
 
@@ -116,7 +116,7 @@ type
 
   TTypeInfoSet = class external name 'rtl.tTypeInfoSet'(TTypeInfo)
   public
-    // not supported: OrdType : TOrdType, BaseType: TTypeInfo
+    // not supported: BaseType: TTypeInfo
     CompType: TTypeInfo external name 'comptype';
   end;
 
@@ -385,15 +385,27 @@ function GetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty): lon
 procedure SetOrdProp(Instance: TObject; const PropName: String; Value: longint);
 procedure SetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: longint);
 
+function GetEnumProp(Instance: TObject; const PropName: String): String;
+function GetEnumProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
+procedure SetEnumProp(Instance: TObject; const PropName: String; const Value: String);
+procedure SetEnumProp(Instance: TObject; const PropInfo: TTypeMemberProperty; const Value: String);
+
+function GetSetProp(Instance: TObject; const PropName: String): String; overload;
+function GetSetProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String; overload;
+function GetSetPropArray(Instance: TObject; const PropName: String): TIntegerDynArray; overload;
+function GetSetPropArray(Instance: TObject; const PropInfo: TTypeMemberProperty): TIntegerDynArray; overload;
+procedure SetSetPropArray(Instance: TObject; const PropName: String; const Arr: TIntegerDynArray); overload;
+procedure SetSetPropArray(Instance: TObject; const PropInfo: TTypeMemberProperty; const Arr: TIntegerDynArray); overload;
+
 function GetStrProp(Instance: TObject; const PropName: String): String;
 function GetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
 procedure SetStrProp(Instance: TObject; const PropName: String; Value: String);
 procedure SetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String);
 
-function GetStringProp(Instance: TObject; const PropName: String): String; deprecated;
-function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String; deprecated;
-procedure SetStringProp(Instance: TObject; const PropName: String; Value: String); deprecated;
-procedure SetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String); deprecated;
+function GetStringProp(Instance: TObject; const PropName: String): String; deprecated; // use GetStrProp
+function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String; deprecated; // use GetStrProp
+procedure SetStringProp(Instance: TObject; const PropName: String; Value: String); deprecated; // use GetStrProp
+procedure SetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String); deprecated; // use GetStrProp
 
 function GetBoolProp(Instance: TObject; const PropName: String): boolean;
 function GetBoolProp(Instance: TObject; const PropInfo: TTypeMemberProperty): boolean;
@@ -901,6 +913,116 @@ procedure SetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty;
   Value: longint);
 begin
   SetJSValueProp(Instance,PropInfo,Value);
+end;
+
+function GetEnumProp(Instance: TObject; const PropName: String): String;
+begin
+  Result:=GetEnumProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function GetEnumProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
+var
+  n: NativeInt;
+  TIEnum: TTypeInfoEnum;
+begin
+  TIEnum:=PropInfo.TypeInfo as TTypeInfoEnum;
+  n:=NativeInt(GetJSValueProp(Instance,PropInfo));
+  if (n>=TIEnum.MinValue) and (n<=TIEnum.MaxValue) then
+    Result:=TIEnum.EnumType.IntToName[n]
+  else
+    Result:=str(n);
+end;
+
+procedure SetEnumProp(Instance: TObject; const PropName: String;
+  const Value: String);
+begin
+  SetEnumProp(Instance,FindPropInfo(Instance,PropName),Value);
+end;
+
+procedure SetEnumProp(Instance: TObject; const PropInfo: TTypeMemberProperty;
+  const Value: String);
+var
+  TIEnum: TTypeInfoEnum;
+  n: NativeInt;
+begin
+  TIEnum:=PropInfo.TypeInfo as TTypeInfoEnum;
+  n:=TIEnum.EnumType.NameToInt[Value];
+  if not isUndefined(n) then
+    SetJSValueProp(Instance,PropInfo,n);
+end;
+
+function GetSetProp(Instance: TObject; const PropName: String): String;
+begin
+  Result:=GetSetProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function GetSetProp(Instance: TObject; const PropInfo: TTypeMemberProperty
+  ): String;
+var
+  o: TJSObject;
+  key, Value: String;
+  n: NativeInt;
+  TIEnum: TTypeInfoEnum;
+  TISet: TTypeInfoSet;
+begin
+  Result:='';
+  // get enum type if available
+  TISet:=PropInfo.TypeInfo as TTypeInfoSet;
+  TIEnum:=nil;
+  if TISet.CompType is TTypeInfoEnum then
+    TIEnum:=TTypeInfoEnum(TISet.CompType);
+  // read value
+  o:=TJSObject(GetJSValueProp(Instance,PropInfo));
+  // a set is a JS object, where included element is stored as: o[ElementDecimal]=true
+  for Key in o do
+  begin
+    n:=parseInt(Key,10);
+    if (TIEnum<>nil) and (n>=TIEnum.MinValue) and (n<=TIEnum.MaxValue) then
+      Value:=TIEnum.EnumType.IntToName[n]
+    else
+      Value:=str(n);
+    if Result<>'' then Result:=Result+',';
+    Result:=Result+Value;
+  end;
+  Result:='['+Result+']';
+end;
+
+function GetSetPropArray(Instance: TObject; const PropName: String
+  ): TIntegerDynArray;
+begin
+  Result:=GetSetPropArray(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function GetSetPropArray(Instance: TObject; const PropInfo: TTypeMemberProperty
+  ): TIntegerDynArray;
+var
+  o: TJSObject;
+  Key: string;
+begin
+  Result:=[];
+  // read value
+  o:=TJSObject(GetJSValueProp(Instance,PropInfo));
+  // a set is a JS object, where included element is stored as: o[ElementDecimal]=true
+  for Key in o do
+    TJSArray(Result).push(parseInt(Key,10));
+end;
+
+procedure SetSetPropArray(Instance: TObject; const PropName: String;
+  const Arr: TIntegerDynArray);
+begin
+  SetSetPropArray(Instance,FindPropInfo(Instance,PropName),Arr);
+end;
+
+procedure SetSetPropArray(Instance: TObject;
+  const PropInfo: TTypeMemberProperty; const Arr: TIntegerDynArray);
+var
+  o: TJSObject;
+  i: integer;
+begin
+  o:=TJSObject.new;
+  for i in Arr do
+    o[str(i)]:=true;
+  SetJSValueProp(Instance,PropInfo,o);
 end;
 
 function GetStrProp(Instance: TObject; const PropName: String): String;

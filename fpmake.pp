@@ -127,10 +127,15 @@ begin
     P.UnitPath.Add('compiler/packages/fcl-passrc/src');
     P.UnitPath.Add('compiler/packages/fcl-js/src');
     P.UnitPath.Add('compiler/packages/fcl-json/src');
+{$IFDEF VER3_0}    
+    P.UnitPath.Add('compiler/packages/compat');
+{$ENDIF}    
+    P.UnitPath.Add('compiler/packages/webidl/src');
     P.IncludePath.Add('compiler/packages/pastojs/src');
     P.Dependencies.Clear;
     Defaults.Options.Add('-Sc');
     P.Targets.AddProgram('pas2js.pp');
+    P.Targets.AddProgram('webidl2pas.pp');
     {$IF FPC_FULLVERSION>=30101}
     P.Targets.AddLibrary('pas2jslib.pp');
     {$ENDIF}
@@ -157,6 +162,10 @@ begin
     P.Targets.AddImplicitUnit('pasuseanalyzer',False);
     P.Targets.AddImplicitUnit('pparser',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('pscanner',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('webidldefs',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('webidlscanner',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('webidlparser',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('webidltopas',False).ResourceStrings:=True;
     // Determine unit files location
     BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));
     UnitDir:=ExcludeTrailingPathDelimiter(Defaults.UnitInstallDir);

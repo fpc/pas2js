@@ -895,24 +895,51 @@ end;
 
 function GetOrdProp(Instance: TObject; const PropName: String): longint;
 begin
-  Result:=longint(GetJSValueProp(Instance,PropName));
+  Result:=GetOrdProp(Instance,FindPropInfo(Instance,PropName));
 end;
 
 function GetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty
   ): longint;
+var
+  o: TJSObject;
+  Key: String;
+  n: NativeInt;
 begin
-  Result:=longint(GetJSValueProp(Instance,PropInfo));
+  if PropInfo.TypeInfo.Kind=tkSet then
+  begin
+    // a set is a JS object, with the following property: o[ElementDecimal]=true
+    o:=TJSObject(GetJSValueProp(Instance,PropInfo));
+    Result:=0;
+    for Key in o do
+    begin
+      n:=parseInt(Key,10);
+      if n<32 then
+        Result:=Result+(1 shl n);
+    end;
+  end else
+    Result:=longint(GetJSValueProp(Instance,PropInfo));
 end;
 
 procedure SetOrdProp(Instance: TObject; const PropName: String; Value: longint);
 begin
-  SetJSValueProp(Instance,PropName,Value);
+  SetOrdProp(Instance,FindPropInfo(Instance,PropName),Value);
 end;
 
 procedure SetOrdProp(Instance: TObject; const PropInfo: TTypeMemberProperty;
   Value: longint);
+var
+  o: TJSObject;
+  i: Integer;
 begin
-  SetJSValueProp(Instance,PropInfo,Value);
+  if PropInfo.TypeInfo.Kind=tkSet then
+  begin
+    o:=TJSObject.new;
+    for i:=0 to 31 do
+      if (1 shl i) and Value>0 then
+        o[str(i)]:=true;
+    SetJSValueProp(Instance,PropInfo,o);
+  end else
+    SetJSValueProp(Instance,PropInfo,Value);
 end;
 
 function GetEnumProp(Instance: TObject; const PropName: String): String;

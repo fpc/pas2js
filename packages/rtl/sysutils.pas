@@ -316,11 +316,6 @@ Type
 *****************************************************************************}
 Type
   
-  TDateTime = type double;
-  
-  TTime = type TDateTime;
-  TDate = type TDateTime;
-  
   TSystemTime = record
      Year, Month, Day, DayOfWeek: word;
      Hour, Minute, Second, MilliSecond: word;

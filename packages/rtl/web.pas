@@ -2834,6 +2834,42 @@ Type
     function takeRecords: TJSMutationRecordArray;
   end;
 
+  { --------------------------------------------------------------------
+    TJSWebSocket
+    --------------------------------------------------------------------}
+
+  TJSWebSocket = class external name 'WebSocket'  (TJSEventTarget)
+  Private
+    Furl : String; external name 'url';
+    FreadyState : Cardinal; external name 'readyState';
+    FbufferedAmount : NativeInt; external name 'bufferedAmount';
+    Fextensions : String; external name 'extensions';
+    Fprotocol : String; external name 'protocol';
+  Public
+    Const
+      CONNECTING = 0;
+      OPEN = 1;
+      CLOSING = 2;
+      CLOSED = 3;
+  Public
+    onopen : TJSEventHandler;
+    onerror : TJSEventHandler;
+    onclose : TJSEventHandler;
+    onmessage : TJSEventHandler;
+    binaryType : String;
+    Procedure close; overload;
+    Procedure close(code : Cardinal); overload;
+    Procedure close(code : Cardinal; reason : String); overload;
+    Procedure send(data : String);
+    Procedure send(data : TJSBlob);
+    Procedure send(data : TJSArrayBuffer);
+    Procedure send(data : TJSTypedArray);
+    Property url : String Read Furl;
+    Property readyState : Cardinal Read FreadyState;
+    Property bufferedAmount : NativeInt Read FbufferedAmount;
+    Property extensions : String Read Fextensions;
+    Property protocol : String Read Fprotocol;
+  end;
 
 var
   document : TJSDocument; external name 'document';

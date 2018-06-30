@@ -2793,6 +2793,47 @@ Type
     property shiftKey : Boolean read FShiftKey;
   end;
 
+  { MutationObserver }
+
+  TJSMutationObserver = Class;
+
+  TJSMutationRecord = record
+    type_ : string;
+    target : TJSNode;
+    addedNodes : TJSNodeList;
+    removedNodes : TJSNodeList;
+    previousSibling : TJSNode;
+    nextSibling : TJSNode;
+    attributeName : String;
+    attributeNamespace : String;
+    oldValue : String;
+  end;
+
+  TJSMutationRecordArray = array of TJSMutationRecord;
+  TJSMutationCallback = reference to procedure(mutations: TJSMutationRecordArray; observer: TJSMutationObserver);
+
+  TJSMutationObserverInit = record
+    attributes: boolean;
+    attributeOldValue: boolean;
+    characterData: boolean;
+    characterDataOldValue: boolean;
+    childList: boolean;
+    subTree: boolean;
+    attributeFilter: TJSArray;
+  end;
+
+  TJSMutationObserver = class external name 'MutationObserver' (TJSObject)
+  public
+    { constructor }
+    constructor new(mutationCallback: TJSMutationCallback);
+    { public methods }
+    procedure observe(target: TJSNode); overload;
+    procedure observe(target: TJSNode; options: TJSMutationObserverInit); overload;
+    procedure observe(target: TJSNode; options: TJSObject); overload;
+    procedure disconnect;
+    function takeRecords: TJSMutationRecordArray;
+  end;
+
 
 var
   document : TJSDocument; external name 'document';

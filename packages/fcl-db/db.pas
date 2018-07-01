@@ -1032,6 +1032,16 @@ type
   end;
   TBuffers = Array of TDataRecord;
 
+  TResolveInfo = record
+    Data : JSValue;
+    Status : TUpdateStatus;
+    Error : String; // Only filled on error.
+    BookMark : TBookmark;
+    _private : JSValue; // for use by descendents of TDataset
+  end;
+  TResolveInfoArray = Array of TResolveInfo;
+  TOnRecordResolveEvent = Procedure (Sender : TDataset; info : TResolveInfo);
+
 {------------------------------------------------------------------------------}
 
   TDataSet = class(TComponent)
@@ -1044,6 +1054,8 @@ type
     FCalcBuffer: TDataRecord;
     FCalcFieldsSize: Longint;
     FOnLoadFail: TDatasetLoadFailEvent;
+    FOnRecordResolved: TOnRecordResolveEvent;
+    FOnRecordResolveEvent: TOnRecordResolveEvent;
     FOpenAfterRead : boolean;
     FActiveRecord: Longint;
     FAfterCancel: TDataSetNotifyEvent;
@@ -1122,6 +1134,10 @@ type
   protected
     // Proxy methods
     // Override this to integrate package in local data
+    // call OnRecordResolved
+    procedure DoOnRecordResolved(anUpdate: TRecordUpdateDescriptor); virtual;
+    // Convert TRecordUpdateDescriptor to ResolveInfo
+    function RecordUpdateDescriptorToResolveInfo(anUpdate: TRecordUpdateDescriptor): TResolveInfo; virtual;
     function DoResolveRecordUpdate(anUpdate{%H-}: TRecordUpdateDescriptor): Boolean; virtual;
     Function GetRecordUpdates(AList: TRecordUpdateDescriptorList) : Integer; virtual;
     procedure ResolveUpdateBatch(Sender: TObject; aBatch: TRecordUpdateBatch); virtual;
@@ -1324,6 +1340,7 @@ type
     procedure SetFields(const Values: array of JSValue);
     procedure UpdateCursorPos;
     procedure UpdateRecord;
+    Function GetPendingUpdates : TResolveInfoArray;
     function UpdateStatus: TUpdateStatus; virtual;
     property BlockReadSize: Integer read FBlockReadSize write SetBlockReadSize;
     property BOF: Boolean read FBOF;
@@ -1375,6 +1392,7 @@ type
     property OnEditError: TDataSetErrorEvent read FOnEditError write FOnEditError;
     property OnFilterRecord: TFilterRecordEvent read FOnFilterRecord write SetOnFilterRecord;
     property OnNewRecord: TDataSetNotifyEvent read FOnNewRecord write FOnNewRecord;
+    Property OnRecordResolved : TOnRecordResolveEvent Read FOnRecordResolved Write FOnRecordResolveEvent;
     property OnPostError: TDataSetErrorEvent read FOnPostError write FOnPostError;
     property OnLoadFail : TDatasetLoadFailEvent Read FOnLoadFail Write FOnLoadFail;
   end;
@@ -2853,6 +2871,27 @@ begin
     On E : Exception do
       anUpdate.ResolveFailed(E.Classname+': '+E.Message);
   end;
+  DoOnRecordResolved(anUpdate);
+end;
+
+Function TDataSet.RecordUpdateDescriptorToResolveInfo(anUpdate: TRecordUpdateDescriptor) : TResolveInfo;
+
+begin
+  Result.BookMark:=anUpdate.Bookmark;
+  Result.Data:=anUpdate.Data;
+  Result.Status:=anUpdate.Status;
+  Result.Error:=anUpdate.ResolveError;
+end;
+
+procedure TDataSet.DoOnRecordResolved(anUpdate: TRecordUpdateDescriptor) ;
+
+Var
+  Info : TResolveInfo;
+
+begin
+  if Not Assigned(OnRecordResolved) then exit;
+  Info:=RecordUpdateDescriptorToResolveInfo(anUpdate);
+  OnRecordResolved(Self,Info);
 end;
 
 procedure TDataSet.ResolveUpdateBatch(Sender: TObject; aBatch : TRecordUpdateBatch);
@@ -4716,6 +4755,23 @@ begin
   if not (State in dsEditModes) then
     DatabaseErrorFmt(SNotEditing, [Name], Self);
   DataEvent(deUpdateRecord, 0);
+end;
+
+function TDataSet.GetPendingUpdates: TResolveInfoArray;
+
+Var
+  L : TRecordUpdateDescriptorList;
+  I : integer;
+
+begin
+  L:=TRecordUpdateDescriptorList.Create;
+  try
+    SetLength(Result,GetRecordUpdates(L));
+    For I:=0 to L.Count-1 do
+      Result[i]:=RecordUpdateDescriptorToResolveInfo(L[i]);
+  finally
+    L.Free;
+  end;
 end;
 
 function TDataSet.UpdateStatus: TUpdateStatus;

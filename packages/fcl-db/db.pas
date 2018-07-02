@@ -1055,7 +1055,6 @@ type
     FCalcFieldsSize: Longint;
     FOnLoadFail: TDatasetLoadFailEvent;
     FOnRecordResolved: TOnRecordResolveEvent;
-    FOnRecordResolveEvent: TOnRecordResolveEvent;
     FOpenAfterRead : boolean;
     FActiveRecord: Longint;
     FAfterCancel: TDataSetNotifyEvent;
@@ -1392,7 +1391,7 @@ type
     property OnEditError: TDataSetErrorEvent read FOnEditError write FOnEditError;
     property OnFilterRecord: TFilterRecordEvent read FOnFilterRecord write SetOnFilterRecord;
     property OnNewRecord: TDataSetNotifyEvent read FOnNewRecord write FOnNewRecord;
-    Property OnRecordResolved : TOnRecordResolveEvent Read FOnRecordResolved Write FOnRecordResolveEvent;
+    Property OnRecordResolved : TOnRecordResolveEvent Read FOnRecordResolved Write FOnRecordResolved;
     property OnPostError: TDataSetErrorEvent read FOnPostError write FOnPostError;
     property OnLoadFail : TDatasetLoadFailEvent Read FOnLoadFail Write FOnLoadFail;
   end;
@@ -1597,6 +1596,7 @@ type
     FOriginalStatus : TUpdateStatus;
   Protected
     Procedure SetStatus(aValue : TUpdateStatus); virtual;
+    Procedure Reset;
   Public
     Constructor Create(aProxy : TDataProxy; aDataset : TDataset; aBookmark : TBookMark; AData : JSValue; AStatus : TUpdateStatus); reintroduce;
     Procedure Resolve(aData : JSValue);
@@ -1822,6 +1822,13 @@ end;
 procedure TRecordUpdateDescriptor.SetStatus(aValue: TUpdateStatus);
 begin
   FStatus:=AValue;
+end;
+
+procedure TRecordUpdateDescriptor.Reset;
+begin
+  FStatus:=FOriginalStatus;
+  FResolveError:='';
+  FServerData:=Null;
 end;
 
 constructor TRecordUpdateDescriptor.Create(aProxy: TDataProxy; aDataset: TDataset; aBookmark: TBookMark; AData: JSValue;
@@ -2862,6 +2869,9 @@ end;
 
 Function TDataSet.ResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor) : Boolean;
 
+// This must return true if the record may be removed from the list of 'modified' records.
+// If it returns false, the record is kept in the list of modified records.
+
 begin
   try
     Result:=DoResolveRecordUpdate(anUpdate);
@@ -2869,7 +2879,10 @@ begin
       anUpdate.FStatus:=usResolveFailed;
   except
     On E : Exception do
+      begin
       anUpdate.ResolveFailed(E.Classname+': '+E.Message);
+      Result:=False;
+      end;
   end;
   DoOnRecordResolved(anUpdate);
 end;
@@ -2920,13 +2933,15 @@ begin
       if (RUD.Status=usResolved) then
         DoRemove:=ResolveRecordUpdate(RUD)
       else
-        DoRemove:=(RUD.Status in [usUnmodified,usResolveFailed]);
-      // What if not resolvable.. ?
+        // What if not resolvable.. ?
+        DoRemove:=(RUD.Status in [usUnmodified]);
       If DoRemove then
         begin
         RUD.Free;
         FChangeList.Delete(Idx);
-        end;
+        end
+      else
+        RUD.Reset; // So we try it again in next applyupdates.
       end;
     end;
   if (FBatchList.Count=0) then

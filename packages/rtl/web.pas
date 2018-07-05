@@ -2825,7 +2825,7 @@ Type
   TJSMutationObserver = class external name 'MutationObserver' (TJSObject)
   public
     { constructor }
-    constructor new(mutationCallback: TJSMutationCallback);
+    constructor new(mutationCallback: TJSMutationCallback); overload;
     { public methods }
     procedure observe(target: TJSNode); overload;
     procedure observe(target: TJSNode; options: TJSMutationObserverInit); overload;

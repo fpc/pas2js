@@ -588,7 +588,7 @@ type
     property Name: TComponentName read FName write SetName stored False;
     property Tag: PtrInt read FTag write FTag {default 0};
   end;
-
+  TComponentClass = Class of TComponent;
 
 Procedure RegisterClass(AClass : TPersistentClass);
 Function GetClass(AClassName : string) : TPersistentClass;

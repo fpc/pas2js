@@ -251,7 +251,7 @@ type
   public
     TypeInfo: TTypeInfo external name 'typeinfo';
     Flags: NativeInt external name 'flags'; // bit vector, see pf constants above
-    Params: TProcedureParams external name 'params'; // can be null
+    Params: TProcedureParams external name 'params'; // can be null or undefined
     Index: JSValue external name 'index'; // can be undefined
     Getter: String external name 'getter'; // name of field or function
     Setter: String external name 'setter'; // name of field or function

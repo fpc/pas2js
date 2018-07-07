@@ -80,7 +80,7 @@ type
     D3: word;
     D4: array[0..7] of byte;
   end;
-  TGUIDString = string; // ToDo: use type string when supported by compiler
+  TGUIDString = type string;
 
   TClass = class of TObject;
 

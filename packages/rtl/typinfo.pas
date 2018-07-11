@@ -596,24 +596,21 @@ end;
 function GetPropInfos(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
 var
   C: TTypeInfoClass;
-  i, Cnt, j: Integer;
+  i: Integer;
+  Names: TJSObject;
+  PropName: String;
 begin
-  Cnt:=0;
+  Result:=nil;
   C:=aTIClass;
+  Names:=TJSObject.new;
   while C<>nil do
   begin
-    inc(Cnt,C.PropCount);
-    C:=C.Ancestor;
-  end;
-  SetLength(Result,Cnt);
-  C:=aTIClass;
-  i:=0;
-  while C<>nil do
-  begin
-    for j:=0 to C.PropCount-1 do
+    for i:=0 to C.PropCount-1 do
     begin
-      Result[i]:=TTypeMemberProperty(C.Members[C.Properties[j]]);
-      inc(i);
+      PropName:=C.Properties[i];
+      if Names.hasOwnProperty(PropName) then continue;
+      TJSArray(Result).push(TTypeMemberProperty(C.Members[PropName]));
+      Names[PropName]:=true;
     end;
     C:=C.Ancestor;
   end;

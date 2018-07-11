@@ -348,6 +348,11 @@ function GetInterfaceMember(aTIInterface: TTypeInfoInterface; const aName: Strin
 function GetInterfaceMethods(aTIInterface: TTypeInfoInterface): TTypeMemberMethodDynArray;
 
 function GetPropInfos(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
+function GetPropList(aTIClass: TTypeInfoClass; TypeKinds: TTypeKinds; Sorted: boolean = true): TTypeMemberPropertyDynArray;
+function GetPropList(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
+function GetPropList(AClass: TClass): TTypeMemberPropertyDynArray;
+function GetPropList(Instance: TObject): TTypeMemberPropertyDynArray;
+
 function GetPropInfo(TI: TTypeInfoClass; const PropName: String): TTypeMemberProperty;
 function GetPropInfo(TI: TTypeInfoClass; const PropName: String; const Kinds: TTypeKinds): TTypeMemberProperty;
 function GetPropInfo(Instance: TObject; const PropName: String): TTypeMemberProperty;
@@ -429,24 +434,21 @@ implementation
 function GetClassMembers(aTIClass: TTypeInfoClass): TTypeMemberDynArray;
 var
   C: TTypeInfoClass;
-  i, Cnt, j: Integer;
+  i: Integer;
+  PropName: String;
+  Names: TJSObject;
 begin
-  Cnt:=0;
+  Result:=nil;
+  Names:=TJSObject.new;
   C:=aTIClass;
   while C<>nil do
   begin
-    inc(Cnt,length(C.Names));
-    C:=C.Ancestor;
-  end;
-  SetLength(Result,Cnt);
-  C:=aTIClass;
-  i:=0;
-  while C<>nil do
-  begin
-    for j:=0 to length(C.Names)-1 do
+    for i:=0 to length(C.Names)-1 do
     begin
-      Result[i]:=C.Members[C.Names[j]];
-      inc(i);
+      PropName:=C.Names[i];
+      if Names.hasOwnProperty(PropName) then continue;
+      TJSArray(Result).push(C.Members[PropName]);
+      Names[PropName]:=true;
     end;
     C:=C.Ancestor;
   end;
@@ -614,6 +616,61 @@ begin
     end;
     C:=C.Ancestor;
   end;
+end;
+
+function GetPropList(aTIClass: TTypeInfoClass; TypeKinds: TTypeKinds;
+  Sorted: boolean): TTypeMemberPropertyDynArray;
+
+  function NameSort(a,b: JSValue): NativeInt;
+  begin
+    if TTypeMemberProperty(a).Name<TTypeMemberProperty(b).Name then
+      Result:=-1
+    else if TTypeMemberProperty(a).Name>TTypeMemberProperty(b).Name then
+      Result:=1
+    else
+      Result:=0;
+  end;
+
+var
+  C: TTypeInfoClass;
+  i: Integer;
+  Names: TJSObject;
+  PropName: String;
+  Prop: TTypeMemberProperty;
+begin
+  Result:=nil;
+  C:=aTIClass;
+  Names:=TJSObject.new;
+  while C<>nil do
+  begin
+    for i:=0 to C.PropCount-1 do
+    begin
+      PropName:=C.Properties[i];
+      if Names.hasOwnProperty(PropName) then continue;
+      Prop:=TTypeMemberProperty(C.Members[PropName]);
+      if not (Prop.TypeInfo.Kind in TypeKinds) then continue;
+      TJSArray(Result).push(Prop);
+      Names[PropName]:=true;
+    end;
+    C:=C.Ancestor;
+  end;
+  if Sorted then
+    TJSArray(Result).sort(@NameSort);
+end;
+
+function GetPropList(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
+begin
+  Result:=GetPropInfos(aTIClass);
+end;
+
+function GetPropList(AClass: TClass): TTypeMemberPropertyDynArray;
+begin
+  Result:=GetPropInfos(TypeInfo(AClass));
+end;
+
+function GetPropList(Instance: TObject): TTypeMemberPropertyDynArray;
+begin
+  Result:=GetPropList(Instance.ClassType);
 end;
 
 function GetPropInfo(TI: TTypeInfoClass; const PropName: String

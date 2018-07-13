@@ -855,7 +855,7 @@ Type
     function execCommand(aCommandName : String; aShowDefaultUI : Boolean) : boolean; overload;
     Procedure exitFullScreen;
     function getElementById(aID : String) : TJSElement;
-    function getElementsyClassName(aNames : string) : TJSHTMLCollection;
+    function getElementsByClassName(aNames : string) : TJSHTMLCollection;
     function getElementsByName(aName : String) : TJSNodeList;
     function getElementsByTagName(aName : String) : TJSHTMLCollection;
     function getElementsByTagNameNS(aNameSpace,aName : String) : TJSHTMLCollection;

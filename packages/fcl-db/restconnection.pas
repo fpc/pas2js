@@ -281,9 +281,14 @@ begin
     end
   else
     begin
-    R.FXHR.open('GET',URL,true);
-    R.FXHR.send;
-    Result:=True;
+    if (loAtEOF in R.LoadOptions) and (Connection.PageParam='') then
+      R.Success:=rrEOF
+    else
+      begin
+      R.FXHR.open('GET',URL,true);
+      R.FXHR.send;
+      Result:=True;
+      end;
     end;
 end;
 

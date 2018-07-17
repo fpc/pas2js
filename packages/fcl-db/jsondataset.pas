@@ -527,6 +527,7 @@ begin
     Buffer.Data:=FRows[bkmIdx];
     Buffer.BookmarkFlag := bfCurrent;
     Buffer.Bookmark:=BkmIdx;
+    CalculateFields(Buffer);
     end;
 end;
 
@@ -776,7 +777,9 @@ var
   R : JSValue;
 
 begin
-  if (FEditIdx=Buffer.Bookmark) then
+  if State in [dsCalcFields,dsInternalCalc] then
+    R:=CalcBuffer.data
+  else if (FEditIdx=Buffer.Bookmark) then
     begin
     if State=dsOldValue then
       R:=Buffer.data
@@ -795,8 +798,15 @@ end;
 
 procedure TBaseJSONDataSet.SetFieldData(Field: TField; var Buffer: TDatarecord; AValue : JSValue);
 
+var
+  R : JSValue;
+
 begin
-  FFieldMapper.SetJSONDataForField(Field,FEditRow,AValue);
+  if State in [dsCalcFields,dsInternalCalc] then
+    R:=CalcBuffer.Data
+  else
+    R:=FEditRow;
+  FFieldMapper.SetJSONDataForField(Field,R,AValue);
   SetModified(True);
 //  FFieldMapper.SetJSONDataForField(Field,Buffer.Data,AValue);
 end;

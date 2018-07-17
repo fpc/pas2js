@@ -1052,7 +1052,7 @@ type
     FBeforeLoad: TDatasetNotifyEvent;
     FBlockReadSize: Integer;
     FCalcBuffer: TDataRecord;
-    FCalcFieldsSize: Longint;
+    FCalcFieldsCount: Longint;
     FOnLoadFail: TDatasetLoadFailEvent;
     FOnRecordResolved: TOnRecordResolveEvent;
     FOpenAfterRead : boolean;
@@ -1244,7 +1244,7 @@ type
     property Buffers[Index: Longint]: TDataRecord read GetBuffer;
     property BufferCount: Longint read GetBufferCount;
     property CalcBuffer: TDataRecord read FCalcBuffer;
-    property CalcFieldsSize: Longint read FCalcFieldsSize;
+    property CalcFieldsCount: Longint read FCalcFieldsCount;
     property InternalCalcFields: Boolean read FInternalCalcFields;
     property Constraints: TCheckConstraints read FConstraints write SetConstraints;
     function AllocRecordBuffer: TDataRecord; virtual;
@@ -2367,7 +2367,7 @@ var i, FieldIndex: Integer;
 begin
   { FieldNo is set to -1 for calculated/lookup fields, to 0 for unbound field
     and for bound fields it is set to FieldDef.FieldNo }
-  FCalcFieldsSize := 0;
+  FCalcFieldsCount := 0;
   FBlobFieldCount := 0;
   for i := 0 to Fields.Count - 1 do
     begin
@@ -2378,8 +2378,8 @@ begin
     else if Field.FieldKind in [fkCalculated, fkLookup] then
       begin
       Field.FFieldNo := -1;
-      Field.FOffset := FCalcFieldsSize;
-      Inc(FCalcFieldsSize, Field.DataSize + 1);
+      Field.FOffset := -1;
+      Inc(FCalcFieldsCount);
       end
     else
       begin
@@ -2518,10 +2518,9 @@ procedure TDataSet.DataEvent(Event: TDataEvent; Info: JSValue);
       if aField.FieldKind = fkData then begin
         if FInternalCalcFields then
           RefreshInternalCalcFields(FBuffers[FActiveRecord])
-        else if FAutoCalcFields and (FCalcFieldsSize <> 0) then
+        else if FAutoCalcFields and (FCalcFieldsCount <> 0) then
           CalculateFields(FBuffers[FActiveRecord]);
       end;
-      
       aField.Change;
     end;
   end;
@@ -3053,7 +3052,7 @@ end;
 procedure TDataSet.GetCalcFields(var Buffer: TDataRecord);
 
 begin
-  if (FCalcFieldsSize > 0) or FInternalCalcFields then
+  if (FCalcFieldsCount > 0) or FInternalCalcFields then
     CalculateFields(Buffer);
 end;
 

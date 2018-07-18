@@ -1040,13 +1040,15 @@ type
     _private : JSValue; // for use by descendents of TDataset
   end;
   TResolveInfoArray = Array of TResolveInfo;
-  TOnRecordResolveEvent = Procedure (Sender : TDataset; info : TResolveInfo);
+
+  TOnRecordResolveEvent = Procedure (Sender : TDataset; info : TResolveInfo) of object;
+  TApplyUpdatesEvent = Procedure (Sender : TDataset; info : TResolveInfoArray) of object;
 
 {------------------------------------------------------------------------------}
 
   TDataSet = class(TComponent)
   Private
-    FAfterApplyUpdates: TDatasetNotifyEvent;
+    FAfterApplyUpdates: TApplyUpdatesEvent;
     FAfterLoad: TDatasetNotifyEvent;
     FBeforeApplyUpdates: TDatasetNotifyEvent;
     FBeforeLoad: TDatasetNotifyEvent;
@@ -1190,7 +1192,7 @@ type
     procedure DoBeforeLoad; virtual;
     procedure DoAfterLoad; virtual;
     procedure DoBeforeApplyUpdates; virtual;
-    procedure DoAfterApplyUpdates;virtual;
+    procedure DoAfterApplyUpdates(const ResolveInfo: TResolveInfoArray); virtual;
     function  FieldByNumber(FieldNo: Longint): TField;
     function  FindRecord(Restart{%H-}, GoForward{%H-}: Boolean): Boolean; virtual;
     function  GetBookmarkStr: TBookmarkStr; virtual;
@@ -1384,7 +1386,7 @@ type
     property BeforeLoad : TDatasetNotifyEvent Read FBeforeLoad Write FBeforeLoad;
     Property AfterLoad : TDatasetNotifyEvent Read FAfterLoad Write FAfterLoad;
     Property BeforeApplyUpdates : TDatasetNotifyEvent Read FBeforeApplyUpdates Write FBeforeApplyUpdates;
-    Property AfterApplyUpdates : TDatasetNotifyEvent Read FAfterApplyUpdates Write FAfterApplyUpdates;
+    Property AfterApplyUpdates : TApplyUpdatesEvent Read FAfterApplyUpdates Write FAfterApplyUpdates;
     property AfterRefresh: TDataSetNotifyEvent read FAfterRefresh write FAfterRefresh;
     property OnCalcFields: TDataSetNotifyEvent read FOnCalcFields write FOnCalcFields;
     property OnDeleteError: TDataSetErrorEvent read FOnDeleteError write FOnDeleteError;
@@ -2731,11 +2733,11 @@ begin
     FBeforeApplyUpdates(Self);
 end;
 
-procedure TDataSet.DoAfterApplyUpdates;
+procedure TDataSet.DoAfterApplyUpdates(Const ResolveInfo : TResolveInfoArray);
 
 begin
   If Assigned(FAfterApplyUpdates) then
-    FAfterApplyUpdates(Self);
+    FAfterApplyUpdates(Self,ResolveInfo);
 end;
 
 function TDataSet.FieldByNumber(FieldNo: Longint): TField;
@@ -2912,6 +2914,7 @@ Var
   BI,RI,Idx: integer;
   RUD : TRecordUpdateDescriptor;
   doRemove : Boolean;
+  Resolved : TResolveInfoArray;
 
 begin
   if Assigned(FBatchList) and (aBatch.Dataset=Self) then
@@ -2921,9 +2924,11 @@ begin
   if (BI=-1) then
     Exit;
   FBatchList.Delete(Bi);
+  SetLength(Resolved, aBatch.List.Count);
   For RI:=0 to aBatch.List.Count-1 do
     begin
     RUD:=aBatch.List[RI];
+    Resolved[RI]:=RecordUpdateDescriptorToResolveInfo(RUD);
     aBatch.List.Items[RI]:=Nil;
     Idx:=IndexInChangeList(RUD.Bookmark);
     if (Idx<>-1) then
@@ -2945,7 +2950,7 @@ begin
     end;
   if (FBatchList.Count=0) then
     FreeAndNil(FBatchList);
-  DoAfterApplyUpdates;
+  DoAfterApplyUpdates(Resolved);
 end;
 
 procedure TDataSet.DoApplyUpdates;

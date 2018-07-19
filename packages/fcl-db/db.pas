@@ -258,7 +258,6 @@ type
     FLookupKeyfields : String;
     FLookupresultField : String;
     FLookupList: TLookupList;
-    FOffset : Word;
     FOnChange : TFieldNotifyEvent;
     FOnGetText: TFieldGetTextEvent;
     FOnSetText: TFieldSetTextEvent;
@@ -372,7 +371,6 @@ type
     property IsNull: Boolean read GetIsNull;
     property Lookup: Boolean read GetLookup write SetLookup; deprecated;
     property NewValue: JSValue read GetNewValue write SetNewValue;
-    property Offset: word read FOffset;
     property Size: Integer read FSize write SetSize;
     property Text: string read GetEditText write SetEditText;
     property ValidChars : TFieldChars read FValidChars write FValidChars;
@@ -2385,7 +2383,6 @@ begin
     else if Field.FieldKind in [fkCalculated, fkLookup] then
       begin
       Field.FFieldNo := -1;
-      Field.FOffset := -1;
       Inc(FCalcFieldsCount);
       end
     else
@@ -2403,7 +2400,6 @@ begin
         if Field.IsBlob then
           begin
           Field.FSize := FieldDef.Size;
-          Field.FOffset := FBlobFieldCount;
           Inc(FBlobFieldCount);
           end;
         // synchronize CodePage between TFieldDef and TField
@@ -2919,7 +2915,6 @@ Var
   BI,RI,Idx: integer;
   RUD : TRecordUpdateDescriptor;
   doRemove : Boolean;
-  Resolved : TResolveInfoArray;
   Results : TResolveResults;
 
 begin

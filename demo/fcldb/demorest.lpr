@@ -46,7 +46,7 @@ Type
     function DoEditRecord(aEvent: TJSMouseEvent): boolean;
     procedure DoGetURL(Sender: TComponent; aRequest: TDataRequest; Var aURL: String);
     procedure DoLoadFail(DataSet: TDataSet; ID: Integer; const ErrorMsg: String);
-    procedure DSAfterApplyUpdates(DataSet: TDataSet; Updates: TResolveInfoArray);
+    procedure DSAfterApplyUpdates(DataSet: TDataSet; Updates: TResolveResults);
     procedure DSOpen(DataSet: TDataSet);
     procedure ResetButtons(Sender: TDataset);
     function SelectRecord(aEvent: TJSMouseEvent): boolean;
@@ -135,7 +135,7 @@ begin
   PanelContent.append(N);
 end;
 
-procedure TForm.DSAfterApplyUpdates(DataSet: TDataSet; Updates : TResolveInfoArray);
+procedure TForm.DSAfterApplyUpdates(DataSet: TDataSet; Updates : TResolveResults);
 begin
   Window.Alert('Updates applied on server!');
   EName.value:='';

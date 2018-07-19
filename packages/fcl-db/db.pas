@@ -1041,8 +1041,13 @@ type
   end;
   TResolveInfoArray = Array of TResolveInfo;
 
+  // Record so we can extend later on
+  TResolveResults = record
+    Records : TResolveInfoArray;
+  end;
+
   TOnRecordResolveEvent = Procedure (Sender : TDataset; info : TResolveInfo) of object;
-  TApplyUpdatesEvent = Procedure (Sender : TDataset; info : TResolveInfoArray) of object;
+  TApplyUpdatesEvent = Procedure (Sender : TDataset; info : TResolveResults) of object;
 
 {------------------------------------------------------------------------------}
 
@@ -1192,7 +1197,7 @@ type
     procedure DoBeforeLoad; virtual;
     procedure DoAfterLoad; virtual;
     procedure DoBeforeApplyUpdates; virtual;
-    procedure DoAfterApplyUpdates(const ResolveInfo: TResolveInfoArray); virtual;
+    procedure DoAfterApplyUpdates(const ResolveInfo: TResolveResults); virtual;
     function  FieldByNumber(FieldNo: Longint): TField;
     function  FindRecord(Restart{%H-}, GoForward{%H-}: Boolean): Boolean; virtual;
     function  GetBookmarkStr: TBookmarkStr; virtual;
@@ -2733,7 +2738,7 @@ begin
     FBeforeApplyUpdates(Self);
 end;
 
-procedure TDataSet.DoAfterApplyUpdates(Const ResolveInfo : TResolveInfoArray);
+procedure TDataSet.DoAfterApplyUpdates(Const ResolveInfo : TResolveResults);
 
 begin
   If Assigned(FAfterApplyUpdates) then
@@ -2915,6 +2920,7 @@ Var
   RUD : TRecordUpdateDescriptor;
   doRemove : Boolean;
   Resolved : TResolveInfoArray;
+  Results : TResolveResults;
 
 begin
   if Assigned(FBatchList) and (aBatch.Dataset=Self) then
@@ -2924,11 +2930,11 @@ begin
   if (BI=-1) then
     Exit;
   FBatchList.Delete(Bi);
-  SetLength(Resolved, aBatch.List.Count);
+  SetLength(Results.Records, aBatch.List.Count);
   For RI:=0 to aBatch.List.Count-1 do
     begin
     RUD:=aBatch.List[RI];
-    Resolved[RI]:=RecordUpdateDescriptorToResolveInfo(RUD);
+    Results.Records[RI]:=RecordUpdateDescriptorToResolveInfo(RUD);
     aBatch.List.Items[RI]:=Nil;
     Idx:=IndexInChangeList(RUD.Bookmark);
     if (Idx<>-1) then
@@ -2950,7 +2956,7 @@ begin
     end;
   if (FBatchList.Count=0) then
     FreeAndNil(FBatchList);
-  DoAfterApplyUpdates(Resolved);
+  DoAfterApplyUpdates(Results);
 end;
 
 procedure TDataSet.DoApplyUpdates;

@@ -210,6 +210,7 @@ Type
 
 function StringReplace(aOriginal, aSearch, aReplace : string; Flags : TStringReplaceFlags) : String;
 function QuoteString(aOriginal : String; AQuote : Char) : String;
+function QuotedStr(const s: string; QuoteChar : Char = ''''): string;
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;
 function AdjustLineBreaks(const S: string): string;
 function AdjustLineBreaks(const S: string; Style: TTextLineBreakStyle): string;
@@ -2072,12 +2073,14 @@ end;
 
 Function QuoteString(aOriginal : String; AQuote : Char) : String;
 
-Var
-  REString : String;
+begin
+  Result:=AQuote+StringReplace(aOriginal,aQuote,aQuote+aQuote,[rfReplaceAll])+AQuote;
+end;
+
+function QuotedStr(const s: string; QuoteChar : Char = ''''): string;
 
 begin
-  REString:=TJSString(aQuote).replace(TJSRegexp.new(aOriginal,'g'),'\\$1');
-  Result:=AQuote+TJSString(aOriginal).replace(TJSRegexp.new(REString,'g'),'$1\$1')+AQuote;
+  Result:=QuoteString(S,QuoteChar);
 end;
 
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;
@@ -3833,6 +3836,7 @@ begin
   while (Length(Result)<Digits) do
     Result:='0'+Result;
 end;
+
 
 { TFormatSettings }
 

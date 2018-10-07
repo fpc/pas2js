@@ -394,6 +394,10 @@ function GetEnumProp(Instance: TObject; const PropName: String): String;
 function GetEnumProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
 procedure SetEnumProp(Instance: TObject; const PropName: String; const Value: String);
 procedure SetEnumProp(Instance: TObject; const PropInfo: TTypeMemberProperty; const Value: String);
+// Auxiliary routines, which may be useful
+function GetEnumName(TypeInfo: TTypeInfoEnum; Value: Integer): String;
+function GetEnumValue(TypeInfo: TTypeInfoEnum; const Name: string): Longint;
+function GetEnumNameCount(TypeInfo: TTypeInfoEnum): Longint;
 
 function GetSetProp(Instance: TObject; const PropName: String): String; overload;
 function GetSetProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String; overload;
@@ -1030,6 +1034,42 @@ begin
   n:=TIEnum.EnumType.NameToInt[Value];
   if not isUndefined(n) then
     SetJSValueProp(Instance,PropInfo,n);
+end;
+
+function GetEnumName(TypeInfo: TTypeInfoEnum; Value: Integer): String;
+begin
+  Result:=TypeInfo.EnumType.IntToName[Value];
+end;
+
+function GetEnumValue(TypeInfo: TTypeInfoEnum; const Name: string): Longint;
+begin
+  Result:=TypeInfo.EnumType.NameToInt[Name];
+end;
+
+function GetEnumNameCount(TypeInfo: TTypeInfoEnum): Longint;
+var
+  o: TJSObject;
+  l, r: LongInt;
+begin
+  o:=TJSObject(TypeInfo.EnumType);
+  // as of pas2js 1.0 the RTTI does not contain a min/max value
+  // -> use exponential search
+  // ToDo: adapt this once enums with gaps are supported
+  Result:=1;
+  while o.hasOwnProperty(String(JSValue(Result))) do
+    Result:=Result*2;
+  l:=Result div 2;
+  r:=Result;
+  while l<=r do
+    begin
+    Result:=(l+r) div 2;
+    if o.hasOwnProperty(String(JSValue(Result))) then
+      l:=Result+1
+    else
+      r:=Result-1;
+    end;
+  if o.hasOwnProperty(String(JSValue(Result))) then
+    inc(Result);
 end;
 
 function GetSetProp(Instance: TObject; const PropName: String): String;

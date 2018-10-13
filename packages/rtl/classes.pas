@@ -1541,26 +1541,6 @@ end;
 
 { //!! is used to mark unsupported things. }
 
-(*
-Function QuoteString (Const S : String; Const Quote : String) : String;
-Var
-  I,J : Integer;
-begin
-  J:=0;
-  Result:=S;
-  for i:=1 to length(s) do
-   begin
-     inc(j);
-     if S[i]=Quote then
-      begin
-        Insert(Quote,Result,J);
-        inc(j);
-      end;
-   end;
-  Result:=Quote+Result+Quote;
-end;
-*)
-
 {
   For compatibility we can't add a Constructor to TSTrings to initialize
   the special characters. Therefore we add a routine which is called whenever

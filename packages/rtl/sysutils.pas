@@ -208,9 +208,10 @@ Type
   TStringReplaceFlags = set of TStringReplaceFlag;
   TReplaceFlags = TStringReplaceFlags;
 
-function StringReplace(aOriginal, aSearch, aReplace : string; Flags : TStringReplaceFlags) : String;
-function QuoteString(aOriginal : String; AQuote : Char) : String;
-function QuotedStr(const s: string; QuoteChar : Char = ''''): string;
+function StringReplace(aOriginal, aSearch, aReplace: string; Flags: TStringReplaceFlags): String;
+function QuoteString(aOriginal: String; AQuote: Char): String;
+function QuotedStr(const s: string; QuoteChar: Char = ''''): string;
+function DeQuoteString(aQuoted: String; AQuote: Char): String;
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;
 function AdjustLineBreaks(const S: string): string;
 function AdjustLineBreaks(const S: string; Style: TTextLineBreakStyle): string;
@@ -2081,6 +2082,31 @@ function QuotedStr(const s: string; QuoteChar : Char = ''''): string;
 
 begin
   Result:=QuoteString(S,QuoteChar);
+end;
+
+function DeQuoteString(aQuoted: String; AQuote: Char): String;
+var
+  i: Integer;
+begin
+  Result:=aQuoted;
+  if TJSString(Result).substr(0,1)<>AQuote then exit;
+  Result:=TJSString(Result).slice(1);
+  i:=1;
+  while i<=length(Result) do
+    begin
+    if Result[i]=AQuote then
+      begin
+      if (i=length(Result)) or (Result[i+1]<>AQuote) then
+        begin
+        Result:=TJSString(Result).slice(0,i-1);
+        exit;
+        end
+      else
+        Result:=TJSString(Result).slice(0,i-1)+TJSString(Result).slice(i);
+      end
+    else
+      inc(i);
+    end;
 end;
 
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;

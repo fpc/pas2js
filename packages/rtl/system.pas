@@ -265,6 +265,7 @@ function upcase(c : char) : char; assembler;
 function HexStr(Val: NativeInt; cnt: byte): string; external name 'rtl.hexStr'; overload;
 
 procedure val(const S: String; out NI : NativeInt; out Code: Integer); overload;
+procedure val(const S: String; out NI : NativeUInt; out Code: Integer); overload;
 procedure val(const S: String; out SI : ShortInt; out Code: Integer); overload;
 procedure val(const S: String; out B : Byte; out Code: Integer); overload;
 procedure val(const S: String; out SI : smallint; out Code: Integer); overload;
@@ -476,8 +477,19 @@ begin
     NI:=Trunc(x);
 end;
 
-procedure val(const S: String; out SI : ShortInt; out Code: Integer);
+procedure val(const S: String; out NI: NativeUInt; out Code: Integer);
+var
+  x : double;
+begin
+  Code:=0;
+  x:=Number(S);
+  if isNaN(x) or (X<>Int(X)) or (X<0) then
+    Code:=1
+  else
+    NI:=Trunc(x);
+end;
 
+procedure val(const S: String; out SI : ShortInt; out Code: Integer);
 var
   X:Double;
 begin

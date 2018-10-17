@@ -455,10 +455,9 @@ end;
 
 function Int(const A: Double): double;
 
-  function FTrunc(const A: Double): double; overload; external name 'Math.trunc';
-
 begin
-  Result:=FTrunc(A);
+  // trunc contains fix for missing Math.trunc in IE
+  Result:=Trunc(A);
 end;
 
 function Number(S: String): Double; external name 'Number';

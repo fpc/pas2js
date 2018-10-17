@@ -603,7 +603,7 @@ var
   i: Integer;
 begin
   asm
-    if (c.repeat) return c.repeat(l);
+    if ((l>0) && c.repeat) return c.repeat(l);
   end;
   Result:='';
   for i:=1 to l do Result:=Result+c;

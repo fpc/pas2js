@@ -220,7 +220,7 @@ function ParamStr(Index: Longint): String;
 {*****************************************************************************
                                  Math
 *****************************************************************************}
-var // ToDo: make these const
+const
   PI: Double; external name 'Math.PI';
   MathE: Double; external name 'Math.E'; // Euler's number
   MathLN10: Double; external name 'Math.LN10'; // ln(10)

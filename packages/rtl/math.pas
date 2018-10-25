@@ -36,12 +36,12 @@ type
 
   //EInvalidArgument = class(EMathError);
 
-function Min(const a, b: Integer): Integer; varargs; external name 'Math.min'; overload;
-function Max(const a, b: Integer): Integer; varargs; external name 'Math.max'; overload;
 function Min(const a, b: Double): Double; varargs; external name 'Math.min'; overload;
 function Max(const a, b: Double): Double; varargs; external name 'Math.max'; overload;
-function Min(const a, b: NativeLargeInt): Double; varargs; external name 'Math.min'; overload;
-function Max(const a, b: NativeLargeUInt): Double; varargs; external name 'Math.max'; overload;
+function Min(const a, b: NativeLargeInt): NativeLargeInt; varargs; external name 'Math.min'; overload;
+function Max(const a, b: NativeLargeUInt): NativeLargeUInt; varargs; external name 'Math.max'; overload;
+function Min(const a, b: Integer): Integer; varargs; external name 'Math.min'; overload;
+function Max(const a, b: Integer): Integer; varargs; external name 'Math.max'; overload;
 
 function InRange(const AValue, AMin, AMax: Integer): Boolean; assembler; overload;
 function InRange(const AValue, AMin, AMax: Double): Boolean; assembler; overload;

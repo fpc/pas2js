@@ -38,8 +38,10 @@ type
 
 function Min(const a, b: Double): Double; varargs; external name 'Math.min'; overload;
 function Max(const a, b: Double): Double; varargs; external name 'Math.max'; overload;
-function Min(const a, b: NativeLargeInt): NativeLargeInt; varargs; external name 'Math.min'; overload;
+function Min(const a, b: NativeLargeUInt): NativeLargeUInt; varargs; external name 'Math.min'; overload;
 function Max(const a, b: NativeLargeUInt): NativeLargeUInt; varargs; external name 'Math.max'; overload;
+function Min(const a, b: NativeLargeInt): NativeLargeInt; varargs; external name 'Math.min'; overload;
+function Max(const a, b: NativeLargeInt): NativeLargeInt; varargs; external name 'Math.max'; overload;
 function Min(const a, b: Integer): Integer; varargs; external name 'Math.min'; overload;
 function Max(const a, b: Integer): Integer; varargs; external name 'Math.max'; overload;
 

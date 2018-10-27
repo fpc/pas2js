@@ -33,7 +33,7 @@ type
   TFloatRec = Record
      Exponent: Integer;
      Negative: Boolean;
-     Digits: Array Of Char;
+     Digits: Array[0..18] Of Char;
   End;
   TEndian = (Little,Big);
   TFileName = String;
@@ -673,20 +673,21 @@ end;
 Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
 
 Const
-  Rounds = '234567890';
+  Rounds = '1234567890';
 
 var
   Buffer: String;  //Though str func returns only 25 chars, this might change in the future
   InfNan: string;
-  Error, N, L, Start, C: Integer;
+  OutPos,Error, N, L, Start, C: Integer;
   GotNonZeroBeforeDot, BeforeDot : boolean;
 
 begin
-  if Value=0 then ;
-  SetLength(Result.Digits,19);
+  if Value=0 then
+    exit;
   asm
     Buffer=Value.toPrecision(21); // Double precision
   end;
+  // Writeln('Buffer :',Buffer);
   N := 1;
   L := Length(Buffer);
   while Buffer[N]=' ' do
@@ -714,47 +715,51 @@ begin
         end;
     end;
   Start := N;  //Start of digits
+  Outpos:=0;
   Result.Exponent := 0; BeforeDot := true;
   GotNonZeroBeforeDot := false;
   while (L>=N) and (Buffer[N]<>'E') do
     begin
+      // Writeln('Examining : ',Buffer[N],'( output pos: ',outPos,')');
       if Buffer[N]='.' then
         BeforeDot := false
       else
         begin
-          if BeforeDot then
-            begin  // Currently this is always 1 char
-              Inc(Result.Exponent);
-              Result.Digits[N-Start] := Buffer[N];
-              if Buffer[N] <> '0' then
-                GotNonZeroBeforeDot := true;
-            end
-          else
-            Result.Digits[N-Start-1] := Buffer[N]
+        if BeforeDot then
+          begin  // Currently this is always 1 char
+            Inc(Result.Exponent);
+            Result.Digits[Outpos] := Buffer[N];
+            if Buffer[N] <> '0' then
+              GotNonZeroBeforeDot := true;
+          end
+        else
+          Result.Digits[Outpos] := Buffer[N];
+        Inc(outpos);
         end;
       Inc(N);
     end;
-    Inc(N); // Pass through 'E'
-    if N<=L then
-      begin
-        Val(Copy(Buffer, N, L-N+1), C, Error); // Get exponent after 'E'
-        Inc(Result.Exponent, C);
-      end;
-    // Calculate number of digits we have from str
-    if BeforeDot then
-      N := N - Start - 1
-    else
-      N := N - Start - 2;
-    L := Length(Result.Digits);
-    if N<L then
-
-      Result.Digits[N]:='0';  //Zero remaining space
-    if Decimals + Result.Exponent < Precision Then //After this it is the same as in FloatToDecimal
-      N := Decimals + Result.Exponent
-    Else
-      N := Precision;
-    if N >= L Then
-      N := L-1;
+  Inc(N); // Pass through 'E'
+  if N<=L then
+    begin
+      Val(Copy(Buffer, N, L-N+1), C, Error); // Get exponent after 'E'
+      Inc(Result.Exponent, C);
+    end;
+  // Calculate number of digits we have from str
+  N:=OutPos;
+//  Writeln('Number of digits: ',N,' requested precision : ',Precision);
+  L:=Length(Result.Digits);
+  While N<L do
+    begin
+    Result.Digits[N]:='0';  //Zero remaining space
+    Inc(N);
+    end;
+  if Decimals + Result.Exponent < Precision Then //After this it is the same as in FloatToDecimal
+    N := Decimals + Result.Exponent
+  Else
+    N := Precision;
+  if N >= L Then
+    N := L-1;
+//  Writeln('Rounding on digit : ',N);
   if N = 0 Then
     begin
       if Result.Digits[0] >= '5' Then
@@ -774,9 +779,9 @@ begin
             Result.Digits[N] := #0;
             Dec(N);
             // Writeln(N,': ',Result.Digits[N],', Rounding to : ',Rounds[StrToInt(Result.Digits[N])]);
-            Result.Digits[N]:=Rounds[StrToInt(Result.Digits[N])];
+            Result.Digits[N]:=Rounds[StrToInt(Result.Digits[N])+1];
           Until (N = 0) Or (Result.Digits[N] < ':');
-          If Result.Digits[0] = ':' Then
+          If Result.Digits[0] = '0' Then
             begin
               Result.Digits[0] := '1';
               Inc(Result.Exponent);
@@ -925,7 +930,7 @@ var
   // Will return '0' if applicable.
 
   begin
-    // Writeln(' DistToDecimal <= LastDigit : ',DistToDecimal,' <  ',LastDigit,' have digit: ',Current<=Available, '(',Current,')');
+    // Writeln(' DistToDecimal <= LastDigit : ',DistToDecimal,' <= ',LastDigit,' have digit: ',Current<=Available, ' (',Current,')');
     Result:=#0;
     if (Current<=Available) then
       begin
@@ -936,7 +941,7 @@ var
       Dec(DistToDecimal)
     else
       Result:='0';
-    //  Writeln('GetDigit ->: ',Result);
+    // Writeln('GetDigit ->: ',Result);
   end;
 
   procedure CopyDigit;
@@ -1112,6 +1117,9 @@ var
       D:=RequestedDigits-DecimalPos+1;
       end;
     FV:=FloatToDecimal(aValue,P,D);
+    // Writeln('Number of digits available : ',Length(FV.Digits));
+    // For p:=0 to Length(FV.Digits)-1 do
+    //  writeln(P,': ',FV.Digits[p]);
     DistToDecimal:=DecimalPos-1;
     if IsScientific then
       PadZeroes:=0 // No padding.

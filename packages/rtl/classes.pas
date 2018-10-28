@@ -28,6 +28,7 @@ type
 
   EListError = class(Exception);
   EStringListError = class(EListError);
+  EParserError = class(Exception);
   EComponentError = class(Exception);
 
   TListAssignOp = (laCopy, laAnd, laOr, laXor, laSrcUnique, laDestUnique);

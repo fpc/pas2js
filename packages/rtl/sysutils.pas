@@ -678,7 +678,7 @@ Const
 var
   Buffer: String;  //Though str func returns only 25 chars, this might change in the future
   InfNan: string;
-  OutPos,Error, N, L, Start, C: Integer;
+  OutPos,Error, N, L, C: Integer;
   GotNonZeroBeforeDot, BeforeDot : boolean;
 
 begin
@@ -714,7 +714,7 @@ begin
           exit
         end;
     end;
-  Start := N;  //Start of digits
+  //Start := N;  //Start of digits
   Outpos:=0;
   Result.Exponent := 0; BeforeDot := true;
   GotNonZeroBeforeDot := false;

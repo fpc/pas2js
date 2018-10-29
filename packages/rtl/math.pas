@@ -276,7 +276,7 @@ end;
 
 function IsInfinite(const d: JSValue): Boolean; assembler;
 asm
-  return (d==Infinite) || (d==-Infinite);
+  return (d==Infinity) || (d==-Infinity);
 end;
 
 function SameValue(const A, B: Double; Epsilon: Double): Boolean;

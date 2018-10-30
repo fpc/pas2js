@@ -687,7 +687,7 @@ type
 
   { TJSError }
 
-  TJSError = CLass external name 'Error'
+  TJSError = Class external name 'Error'
   private
     FMessage: String; external name 'message';
   Public

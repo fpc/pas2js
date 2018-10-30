@@ -21,6 +21,34 @@ uses
   JS, Types;
 
 type
+
+  { TNJSOS }
+
+  TNJSOS = class external name 'os'
+  public const
+    EOL: string; // end of line, Windows: \r\n, Posix: \r
+    function arch: string; // name of architecture, e.g. 'arm', 'arm64', 'ia32', 'mips', 'mipsel', 'ppc', 'ppc64', 's390', 's390x', 'x32', and 'x64'
+    function cpus: TJSObjectDynArray;
+    function endianness: string; // 'BE', 'LE'
+    function freemem: nativeint; // free memory in bytes
+    function getPriority(pid: NativeInt = 0): NativeInt;
+    function homedir: string;
+    function hostname: string;
+    function loadavg: TDoubleDynArray; // 1, 5 and 15 minutes
+    function networkInterfaces: TJSObject;
+    function platform: string; // e.g. 'aix', 'darwin', 'freebsd', 'linux', 'openbsd', 'sunos', 'win32'
+    function release: string; // operating system release
+    procedure setPriority(pid, priority: NativeInt);
+    procedure setPriority(priority: NativeInt); // current process
+    function tmpdir: string; // operating system's default directory for temporary files
+    function totalmem: NativeInt;
+    function ostype: string; // e.g. 'Linux', 'Darwin', 'Windows_NT'
+    function uptime: NativeInt;
+    function userInfo(const options: TJSObject): TJSObject;
+  end;
+
+  { TNJSBuffer }
+
   TNJSBuffer = class external name 'buffer'
   public
     class function alloc(Size: NativeInt): TJSArrayBuffer;
@@ -106,6 +134,8 @@ type
     class property versions: TJSObject read FVersions;
   end;
 
+  { TNJSConsole }
+
   TNJSConsole = class external name 'Console'
   Public
     procedure assert(anAssertion : string; Obj1 : JSValue); varargs;
@@ -124,8 +154,14 @@ function Require(ModuleName: String): JSValue; external name 'require';
 
 var
   Console: TNJSConsole external name 'console';
+  NJS_OS: TNJSOS;
 
 implementation
+
+initialization
+  NJS_OS:=TNJSOS(Require('os'));
+  LineEnding:=NJS_OS.EOL;
+  sLineBreak:=NJS_OS.EOL;
 
 end.
 

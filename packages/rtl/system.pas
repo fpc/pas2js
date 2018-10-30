@@ -17,10 +17,10 @@ unit System;
 
 interface
 
+var
+  LineEnding: string = #10;
+  sLineBreak: string = #10;
 const
-  LineEnding = #10;
-  sLineBreak = LineEnding;
-
   MaxSmallint = 32767;
   MinSmallint = -32768;
   MaxShortInt = 127;
@@ -206,6 +206,7 @@ function GUIDToString(const GUID: TGUID): string; external name 'rtl.guidrToStr'
 var
   ExitCode: Integer; external name 'rtl.exitcode';
   IsConsole: Boolean = {$IFDEF NodeJS}true{$ELSE}false{$ENDIF};
+  FirstDotAtFileNameStartIsExtension : Boolean = False;
 
 type
   TOnParamCount = function: Longint;

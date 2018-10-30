@@ -373,7 +373,7 @@ type
     function dirname(Path: string): string; // returns directory without trailing sep
     function extname(Path: string): string; // returns from last occurence of '.', if path starts with '.' the empty string is returned
     function format(PathObject: TJSObject): string; {
-      PathObjectis can contain the followinf string properties:
+      PathObjectis can contain the following string properties:
       dir, root, base, name, ext
       root is ignored if dir exists
       ext and name are ignored if base exists

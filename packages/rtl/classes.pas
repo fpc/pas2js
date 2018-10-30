@@ -26,10 +26,23 @@ type
   // Observer has changed, is freed, item added to/deleted from list, custom event.
   TFPObservedOperation = (ooChange,ooFree,ooAddItem,ooDeleteItem,ooCustom);
 
+  EStreamError = class(Exception);
+  EFCreateError = class(EStreamError);
+  EFOpenError = class(EStreamError);
+  EFilerError = class(EStreamError);
+  EReadError = class(EFilerError);
+  EWriteError = class(EFilerError);
+  EClassNotFound = class(EFilerError);
+  EMethodNotFound = class(EFilerError);
+  EInvalidImage = class(EFilerError);
+  EResNotFound = class(Exception);
   EListError = class(Exception);
+  EBitsError = class(Exception);
   EStringListError = class(EListError);
-  EParserError = class(Exception);
   EComponentError = class(Exception);
+  EParserError = class(Exception);
+  EOutOfResources = class(EOutOfMemory);
+  EInvalidOperation = class(Exception);
 
   TListAssignOp = (laCopy, laAnd, laOr, laXor, laSrcUnique, laDestUnique);
   TListSortCompare = function(Item1, Item2: JSValue): Integer;

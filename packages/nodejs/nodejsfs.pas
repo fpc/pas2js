@@ -18,7 +18,7 @@ unit NodeJSFS;
 interface
 
 uses
-  JS, NodeJS, SysUtils;
+  JS, NodeJS, Types, SysUtils;
 
 var
   DirectorySeparator: char = '/';
@@ -43,6 +43,7 @@ const
   //faReserve       =  8;
   faDirectory     = 16;
   //faArchive       = 32;
+  faAnyFile    = $000001FF;
 
 function GetCurrentDir: string;
 function FileExists(const Filename: string): boolean;
@@ -73,6 +74,9 @@ type
 function FindFirst(const Path: String; Attr : Longint; out Rslt: TSearchRec): Longint;
 function FindNext(var Rslt: TSearchRec): Longint;
 procedure FindClose(var F: TSearchrec);
+
+function FileDateToDateTime(Filedate : Longint): TDateTime;
+function DateTimeToFileDate(DateTime: TDateTime): longint;
 
 const
   S_IRUSR = &400; // read by owner
@@ -318,6 +322,7 @@ type
     procedure mkdirSync(Path: string; const Options: TJSObject{TNJSMkdirOpts});
     // mkdtempSync
     function openSync(Path: string; Flags: string; mode: TNJSFileMode): TNJSFileDesc;
+    function readdirSync(Path: string): TJSArray; // TStringDynArray
     function readdirSync(Path: string; const Options: TJSObject{TNJSReadDirOpts}): TJSArray; // can be TStringDynArray or TNJSDirEntArray if withFileTypes=true
     function readFileSync(Path: string; const Options: TJSObject{TNJSReadFileOpts}): string;
     function readlinkSync(Path: string): string;
@@ -568,27 +573,90 @@ function FindFirst(const Path: String; Attr: Longint; out Rslt: TSearchRec
   ): Longint;
 var
   Mask: String;
-  Entries: TNJSDirEntArray;
+  Entries: TStringDynArray;
+  Iterator: TJSObject;
 begin
+  writeln('FindFirst ',Path);
   Mask:=ExtractFileName(Path);
   if Mask<>AllFilesMask then
     raise Exception.Create('FindFirst: ToDo: Mask='+Path);
   try
-    Entries:=TNJSDirEntArray(NJS_FS.readdirSync(NJS_Path.dirname(Path),new(['withFileTypes',true])));
+    Entries:=TStringDynArray(NJS_FS.readdirSync(NJS_Path.dirname(Path)));
   except
     exit(-1);
   end;
-
+  Iterator:=TJSObject.new;
+  Iterator['path']:=ExtractFilePath(Path);
+  Iterator['index']:=-1;
+  Iterator['entries']:=Entries;
+  Iterator['attr']:=Attr;
+  Rslt.FindHandle:=Iterator;
+  Result:=FindNext(Rslt);
 end;
 
 function FindNext(var Rslt: TSearchRec): Longint;
+var
+  Iterator: TJSObject;
+  Entries: TStringDynArray;
+  Index: NativeInt;
+  Attr: LongInt;
+  Entry: TNJSDirEnt;
+  Path: String;
+  Stats: TNJSStats;
+  Name: string;
+  IsDirectory: Boolean;
 begin
-
+  Iterator:=TJSObject(Rslt.FindHandle);
+  Path:=IncludeTrailingPathDelimiter(String(Iterator['path']));
+  Entries:=TStringDynArray(Iterator['entries']);
+  Attr:=longint(Iterator['attr']);
+  Index:=NativeInt(Iterator['index']);
+  //writeln('FindNext Path=',Path,' Index=',Index,'/',length(Entries),' Attr=',Attr);
+  repeat
+    inc(Index);
+    if Index>=length(Entries) then break;
+    Name:=Entries[Index];
+    Rslt.Name:=Name;
+    Stats:=nil;
+    try
+      Stats:=NJS_FS.statSync(Path+Name);
+    except
+    end;
+    if Stats=nil then continue;
+    IsDirectory:=Stats.isDirectory;
+    if IsDirectory and (faDirectory and Attr=0) then continue;
+    // fill in Rslt
+    Rslt.Time:=Stats.mtime.time div 1000;
+    Rslt.Size:=Stats.size;
+    Rslt.Attr:=0;
+    if IsDirectory then
+      Rslt.Attr+=faDirectory;
+    Iterator['index']:=Index;
+    exit(0);
+  until false;
+  Iterator['index']:=length(Entries);
+  Result:=-1;
 end;
 
 procedure FindClose(var F: TSearchrec);
 begin
+  F.FindHandle:=nil;
+end;
 
+function FileDateToDateTime(Filedate: Longint): TDateTime;
+var
+  d: TJSDate;
+begin
+  d:=TJSDate.new(Filedate*1000);
+  Result:=JSDateToDateTime(d);
+end;
+
+function DateTimeToFileDate(DateTime: TDateTime): longint;
+var
+  d: TJSDate;
+begin
+  d:=DateTimeToJSDate(DateTime);
+  Result:=d.Time div 1000;
 end;
 
 initialization

@@ -582,7 +582,6 @@ var
   Entries: TStringDynArray;
   Iterator: TJSObject;
 begin
-  writeln('FindFirst ',Path);
   Mask:=ExtractFileName(Path);
   if Mask<>AllFilesMask then
     raise Exception.Create('FindFirst: ToDo: Mask='+Path);

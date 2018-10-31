@@ -70,6 +70,7 @@ type
     //Mode : TMode;
     //FindData : TFindData;
   end;
+  TUnicodeSearchRec = TSearchRec;
 
 function FindFirst(const Path: String; Attr : Longint; out Rslt: TSearchRec): Longint;
 function FindNext(var Rslt: TSearchRec): Longint;
@@ -340,9 +341,14 @@ type
     // utimesSync(path, atime, mtime)
     // watch(filename[, options][, listener])
     // watchFile(filename[, options], listener)
-    procedure writeFileSync(aFile: jsvalue; // string | buffer | URL | filedescriptor
+    procedure writeFileSync(
+      aFile: jsvalue; // string | buffer | URL | filedescriptor
+      Data: jsvalue // string | buffer | typedarray | DataView
+      );
+    procedure writeFileSync(
+      aFile: jsvalue; // string | buffer | URL | filedescriptor
       Data: jsvalue; // string | buffer | typedarray | DataView
-      const Options: TNJSWriteFileOpts);
+      const Options: TJSObject{TNJSWriteFileOpts});
     function writeSync(fd: TNJSFileDesc;
       buffer: jsvalue; // buffer | TypedArray | DataView
       Offset, Count, Position: NativeInt): NativeInt;

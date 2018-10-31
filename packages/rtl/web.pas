@@ -1562,7 +1562,24 @@ Type
 
   TJSPerformance = class external name 'Performance' (TJSObject);
 
-  TJSScreen = class external name 'Screen' (TJSObject);
+  TJSScreen = class external name 'Screen' (TJSObject)
+  private
+    FavailHeight: Integer; external name 'availHeight';
+    FavailWidth: Integer; external name 'availWidth';
+    FcolorDepth: Integer; external name 'colorDepth';
+    FPixelDepth: Integer; external name 'pixelDepth';
+    Fheight: Integer; external name 'height';
+    Fwidth: Integer; external name 'width';
+  public
+  { Properties declarations }
+    property availHeight: Integer read FavailHeight;
+    property availWidth: Integer read FavailWidth;
+    property colorDepth: Integer read FcolorDepth;
+    property pixelDepth: Integer read FPixelDepth;
+    property height: Integer read Fheight;
+    property width: Integer read Fwidth;
+  end;
+
 
   TJSURL = class external name 'URL' (TJSObject);
   

@@ -600,7 +600,6 @@ var
   Entries: TStringDynArray;
   Index: NativeInt;
   Attr: LongInt;
-  Entry: TNJSDirEnt;
   Path: String;
   Stats: TNJSStats;
   Name: string;

@@ -471,7 +471,6 @@ var
 begin
   Code:=0;
   x:=Number(S);
-  writeln('val ',x);
   if isNaN(x) then
     case copy(s,1,1) of
     '$': x:=Number('0x'+copy(S,2));

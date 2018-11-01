@@ -3691,13 +3691,11 @@ Var
 
 begin
   N:=S;
-  F:=Copy(N,1,1);
-  if (F='$') then
-    Radix:=16
-  else if (F='&') then
-    Radix:=8
-  else if (F='%') then
-    Radix:=2;
+  case Copy(N,1,1) of
+  '$': Radix:=16;
+  '&': Radix:=8;
+  '%': Radix:=2;
+  end;
   If Radix<>10 then
     Delete(N,1,1);
   J:=parseInt(N,Radix);

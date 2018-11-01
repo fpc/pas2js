@@ -471,6 +471,16 @@ var
 begin
   Code:=0;
   x:=Number(S);
+  writeln('val ',x);
+  if isNaN(x) then
+    case copy(s,1,1) of
+    '$': x:=Number('0x'+copy(S,2));
+    '&': x:=Number('0o'+copy(S,2));
+    '%': x:=Number('0b'+copy(S,2));
+    else
+      Code:=1;
+      exit;
+    end;
   if isNaN(x) or (X<>Int(X)) then
     Code:=1
   else

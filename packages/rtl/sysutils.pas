@@ -3686,7 +3686,7 @@ Function TryStrToInt(const S : String; Out res : NativeInt) : Boolean;
 
 Var
   Radix : Integer = 10;
-  F,N : String;
+  N : String;
   J : JSValue;
 
 begin

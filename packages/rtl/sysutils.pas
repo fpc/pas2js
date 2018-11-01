@@ -58,6 +58,9 @@ type
   private
     fMessage: String;
     fHelpContext: Integer;
+    {$ifdef NodeJS}
+    FNodeJSError: TJSError;
+    {$endif}
   public
     constructor Create(const Msg: String); reintroduce;
     constructor CreateFmt(const Msg: string; const Args: array of jsvalue);
@@ -66,6 +69,9 @@ type
     function ToString: String; override;
     property HelpContext: Integer read fHelpContext write fHelpContext;
     property Message: String read fMessage write fMessage;
+    {$ifdef NodeJS}
+    property NodeJSError: TJSError read FNodeJSError write FNodeJSError;
+    {$endif}
   end;
 
   ExceptClass = class of Exception;
@@ -2034,25 +2040,29 @@ end;
 constructor Exception.Create(const Msg: String);
 begin
   fMessage:=Msg;
+  {$ifdef nodejs}
+  FNodeJSError:=TJSError.new;
+  {$endif}
 end;
 
-constructor Exception.CreateFmt(const Msg: string; const Args: array of JSValue);
+constructor Exception.CreateFmt(const Msg: string; const Args: array of jsvalue
+  );
 begin
   //writeln('Exception.CreateFmt START ',ClassName,' "',Msg,'" Args=',Args);
-  fMessage:=Format(Msg,Args);
+  Create(Format(Msg,Args));
   //writeln('Exception.CreateFmt END ',ClassName,' "',Msg,'" fMessage=',fMessage);
 end;
 
 constructor Exception.CreateHelp(const Msg: String; AHelpContext: Integer);
 begin
-  fMessage:=Msg;
+  Create(Msg);
   fHelpContext:=AHelpContext;
 end;
 
 constructor Exception.CreateFmtHelp(const Msg: string;
-  const Args: array of JSValue; AHelpContext: Integer);
+  const Args: array of jsvalue; AHelpContext: Integer);
 begin
-  fMessage:=Format(Msg,Args);
+  Create(Format(Msg,Args));
   fHelpContext:=AHelpContext;
 end;
 

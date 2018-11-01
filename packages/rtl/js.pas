@@ -690,12 +690,18 @@ type
   TJSError = Class external name 'Error'
   private
     FMessage: String; external name 'message';
+    {$ifdef NodeJS}
+    FStack: JSValue; external name 'stack';
+    {$endif}
   Public
     Constructor new;
     Constructor new(Const aMessage : string);
     Constructor new(Const aMessage,aFileName : string);
     Constructor new(Const aMessage,aFileName : string; aLineNumber : NativeInt);
     Property Message : String Read FMessage;
+    {$ifdef NodeJS}
+    Property Stack: JSValue read FStack;
+    {$endif}
   end;
 
 

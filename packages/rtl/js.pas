@@ -244,6 +244,7 @@ type
     function match(aRegexp : TJSRegexp) : TStringDynArray; overload;
     function match(aRegexp : String) : TStringDynArray;overload;
     {$IFDEF ECMAScript6}
+    function normalize : string;
     function normalize(aForm : string) : string;
     {$ENDIF}
     function _repeat(aCount : NativeInt) : Integer; external name 'repeat';

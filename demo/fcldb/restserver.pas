@@ -2,6 +2,10 @@ program restserver;
 
 uses sysutils,custhttpapp, fpwebfile, httproute, restdata;
 
+{$IF FPC_FULLVERSION<30101}
+  {$ERROR You need at least fpc 3.1.1}
+{$ENDIF}
+
 Type
 
   { THTTPApplication }
@@ -63,9 +67,13 @@ begin
   if D='' then
     D:=GetCurrentDir;
   Log(etInfo,'Listening on port %d, serving files from directory: %s',[Port,D]);
-{$ifdef unix}
-  MimeTypesFile:='/etc/mime.types';
-{$endif}
+  {$IFDEF darwin}
+  MimeTypesFile:='/private/etc/apache2/mime.types';
+  {$else}
+  {$ifdef unix}
+    MimeTypesFile:='/etc/mime.types';
+  {$endif}
+  {$endif}
   TSimpleFileModule.BaseDir:=IncludeTrailingPathDelimiter(D);
   TSimpleFileModule.OnLog:=@Log;
   If not HasOption('n','noindexpage') then

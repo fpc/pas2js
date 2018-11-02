@@ -151,10 +151,12 @@ begin
   document.body.appendChild(panel);
   Panel.appendChild(PanelContent);
   PanelContent.appendChild(Button);
-  DS:=TRestDataset.Create(Nil);
+
   Conn:=TRestConnection.Create(nil);
   Conn.BaseURL:='countries.json';
   Conn.OnGetURL:=@DoGetURL;
+
+  DS:=TRestDataset.Create(Nil);
   DS.Connection:=Conn;
   DS.OnLoadFail:=@DoLoadFail;
   DS.AfterLoad:=@DoAfterLoad;

@@ -27,13 +27,15 @@ type
  {*****************************************************************************
                               Various types
   *****************************************************************************}
+Const
+  FloatRecDigits = 19;
 
 type
   { TFloatRec }
   TFloatRec = Record
      Exponent: Integer;
      Negative: Boolean;
-     Digits: Array[0..18] Of Char;
+     Digits: Array[0..FloatRecDigits-1] Of Char;
   End;
   TEndian = (Little,Big);
   TFileName = String;
@@ -679,7 +681,7 @@ end;
 Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
 
 Const
-  Rounds = '1234567890';
+  Rounds = '123456789:';
 
 var
   Buffer: String;  //Though str func returns only 25 chars, this might change in the future
@@ -688,6 +690,10 @@ var
   GotNonZeroBeforeDot, BeforeDot : boolean;
 
 begin
+  Result.Negative:=False;
+  Result.Exponent:=0;
+  For C:=0 to FloatRecDigits do
+    Result.Digits[C]:='0';
   if Value=0 then
     exit;
   asm
@@ -752,7 +758,7 @@ begin
     end;
   // Calculate number of digits we have from str
   N:=OutPos;
-//  Writeln('Number of digits: ',N,' requested precision : ',Precision);
+  // Writeln('Number of digits: ',N,' requested precision : ',Precision);
   L:=Length(Result.Digits);
   While N<L do
     begin
@@ -765,7 +771,7 @@ begin
     N := Precision;
   if N >= L Then
     N := L-1;
-//  Writeln('Rounding on digit : ',N);
+  // Writeln('Rounding on digit : ',N);
   if N = 0 Then
     begin
       if Result.Digits[0] >= '5' Then
@@ -787,7 +793,7 @@ begin
             // Writeln(N,': ',Result.Digits[N],', Rounding to : ',Rounds[StrToInt(Result.Digits[N])]);
             Result.Digits[N]:=Rounds[StrToInt(Result.Digits[N])+1];
           Until (N = 0) Or (Result.Digits[N] < ':');
-          If Result.Digits[0] = '0' Then
+          If Result.Digits[0] = ':' Then
             begin
               Result.Digits[0] := '1';
               Inc(Result.Exponent);
@@ -955,7 +961,7 @@ var
   // Copy a digit (#, 0) to the output with the correct value
 
   begin
-    // Writeln('CopyDigit ');
+    // Writeln('CopyDigit: Padzeroes: ',PadZeroes,', DistToDecimal: ',DistToDecimal);
     if (PadZeroes=0) then
       WriteDigit(GetDigit) // No shift needed, just copy what is available.
     else if (PadZeroes<0) then
@@ -1125,8 +1131,9 @@ var
     FV:=FloatToDecimal(aValue,P,D);
     // Writeln('Number of digits available : ',Length(FV.Digits));
     // For p:=0 to Length(FV.Digits)-1 do
-    //  writeln(P,': ',FV.Digits[p]);
+    //   Writeln(P,': ',FV.Digits[p]);
     DistToDecimal:=DecimalPos-1;
+    // Writeln('DistToDecimal : ',DistToDecimal);
     if IsScientific then
       PadZeroes:=0 // No padding.
     else

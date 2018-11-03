@@ -72,7 +72,7 @@ function Sign(const AValue: Double): Double; external name 'Math.sign'; overload
 function IsZero(const d: Double; Epsilon: Double): Boolean; overload;
 function IsZero(const d: Double): Boolean; overload;
 
-function IsNaN(const v: JSValue): boolean; external name {$IFDEF ECMAScript5}'isNaN'{$ELSE}'Number.isNan'{$ENDIF}; overload;
+function IsNaN(const v: JSValue): boolean; external name {$IFDEF ECMAScript5}'isNaN'{$ELSE}'Number.isNaN'{$ENDIF}; overload;
 function IsFinite(const d: JSValue): Boolean; external name 'isFinite'; overload;// false if NaN, positive or negative infinity
 function IsInfinite(const d: JSValue): Boolean; assembler; overload; // negative or positive infinity
 {$IFDEF ECMAScript6}

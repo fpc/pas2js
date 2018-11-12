@@ -1623,11 +1623,11 @@ begin
   TS := ThousandSeparator;
   for i :=StartPos to length(AValue) do
     begin
-    Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue=TS);
+    Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue[i]=TS);
     if not Result then
       break;
     end;
-  if (Result) then
+  if (Result) and (AValue[1]='-') then
     Delete(AValue, 1, 1);
 end;
 
@@ -1636,30 +1636,40 @@ Function FormatNumberCurrency(const Value : Currency; Digits : Integer; DS,TS : 
 Var
   Negative: Boolean;
   P : Integer;
+  D : Double;
 
 Begin
+  D:=Value;
+  //  Writeln('Value ',D);
    If Digits = -1 Then
      Digits := CurrencyDecimals
    Else If Digits > 18 Then
      Digits := 18;
-   Str(Value:0:Digits, Result);
+   Str(D:0:Digits, Result);
+   // Writeln('1. Result ',Result,' currencystring : ',CurrencyString);
    Negative:=Result[1] = '-';
    if Negative then
      System.Delete(Result, 1, 1);
    P := Pos('.', Result);
-   If P <> 0 Then
-     Result:=ReplaceDecimalSep(Result,DS)
-   else
-     P := Length(Result)+1;
-   Dec(P, 3);
-   While (P > 1) Do
-   Begin
-     If ThousandSeparator<>#0 Then
-       Insert(FormatSettings.ThousandSeparator, Result, P);
+   // Writeln('2. Result ',Result,' currencystring : ',CurrencyString);
+   If TS<>'' Then
+     begin
+     If P <> 0 Then
+       Result:=ReplaceDecimalSep(Result,DS)
+     else
+       P := Length(Result)+1;
      Dec(P, 3);
-   End;
-   if (length(Result) > 1) and Negative then
-     Negative := not RemoveLeadingNegativeSign(Result,DS);
+     While (P > 1) Do
+     Begin
+         Insert(TS, Result, P);
+     Dec(P, 3);
+     End;
+     end;
+   // Writeln('3. Result ',Result,' currencystring : ',CurrencyString);
+   if Negative then
+     RemoveLeadingNegativeSign(Result,DS);
+   // Writeln('4. Result ',Result,' currencystring : ',CurrencyString);
+   // Writeln('CurrencyFormat:  ',CurrencyFormat,'NegcurrencyFormat: ',NegCurrFormat);
    If Not Negative Then
      Case CurrencyFormat Of
        0: Result := CurrencyString + Result;
@@ -1686,7 +1696,6 @@ Begin
        14: Result := '(' + CurrencyString + ' ' + Result + ')';
        15: Result := '(' + Result + ' ' + CurrencyString + ')';
      end;
-   if TS='' then ;
 end;
 
 Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;

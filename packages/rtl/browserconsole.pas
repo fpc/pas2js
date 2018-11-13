@@ -8,20 +8,21 @@ uses
   js,web;
 
 Const
+  BrowserLineBreak = #10;
   DefaultMaxConsoleLines = 25;
-  DefaultConsoleStyle = '.pasconsole { '+sLineBreak+
-  'font-family: courier;'+sLineBreak+
-  'font-size: 14px;'+sLineBreak+
-  'background: #FFFFFF;'+sLineBreak+
-  'color: #000000;'+sLineBreak+
-  'display: block;'+sLineBreak+
+  DefaultConsoleStyle = '.pasconsole { '+BrowserLineBreak+
+  'font-family: courier;'+BrowserLineBreak+
+  'font-size: 14px;'+BrowserLineBreak+
+  'background: #FFFFFF;'+BrowserLineBreak+
+  'color: #000000;'+BrowserLineBreak+
+  'display: block;'+BrowserLineBreak+
   '}';
-  DefaultCRTConsoleStyle = '.pasconsole { '+sLineBreak+
-  'font-family: courier;'+sLineBreak+
-  'font-size: 14px;'+sLineBreak+
-  'background: #000;'+sLineBreak+
-  'color: #14fdce;'+sLineBreak+
-  'display: block;'+sLineBreak+
+  DefaultCRTConsoleStyle = '.pasconsole { '+BrowserLineBreak+
+  'font-family: courier;'+BrowserLineBreak+
+  'font-size: 14px;'+BrowserLineBreak+
+  'background: #000;'+BrowserLineBreak+
+  'color: #14fdce;'+BrowserLineBreak+
+  'display: block;'+BrowserLineBreak+
   '}';
 
 Var

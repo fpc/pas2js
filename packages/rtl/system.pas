@@ -17,9 +17,15 @@ unit System;
 
 interface
 
+{$IFDEF NodeJS}
 var
   LineEnding: string = #10;
   sLineBreak: string = #10;
+{$ELSE}
+const
+  LineEnding = #10;
+  sLineBreak = LineEnding;
+{$ENDIF}
 const
   MaxSmallint = 32767;
   MinSmallint = -32768;

@@ -1636,16 +1636,14 @@ Function FormatNumberCurrency(const Value : Currency; Digits : Integer; DS,TS : 
 Var
   Negative: Boolean;
   P : Integer;
-  D : Double;
 
 Begin
-  D:=Value;
   //  Writeln('Value ',D);
    If Digits = -1 Then
      Digits := CurrencyDecimals
    Else If Digits > 18 Then
      Digits := 18;
-   Str(D:0:Digits, Result);
+   Str(Value:0:Digits, Result);
    // Writeln('1. Result ',Result,' currencystring : ',CurrencyString);
    Negative:=Result[1] = '-';
    if Negative then

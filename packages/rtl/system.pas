@@ -17,10 +17,10 @@ unit System;
 
 interface
 
+var
+  LineEnding: string = #10;
+  sLineBreak: string = #10;
 const
-  LineEnding = #10;
-  sLineBreak = LineEnding;
-
   MaxSmallint = 32767;
   MinSmallint = -32768;
   MaxShortInt = 127;
@@ -206,6 +206,7 @@ function GUIDToString(const GUID: TGUID): string; external name 'rtl.guidrToStr'
 var
   ExitCode: Integer; external name 'rtl.exitcode';
   IsConsole: Boolean = {$IFDEF NodeJS}true{$ELSE}false{$ENDIF};
+  FirstDotAtFileNameStartIsExtension : Boolean = False;
 
 type
   TOnParamCount = function: Longint;
@@ -265,6 +266,7 @@ function upcase(c : char) : char; assembler;
 function HexStr(Val: NativeInt; cnt: byte): string; external name 'rtl.hexStr'; overload;
 
 procedure val(const S: String; out NI : NativeInt; out Code: Integer); overload;
+procedure val(const S: String; out NI : NativeUInt; out Code: Integer); overload;
 procedure val(const S: String; out SI : ShortInt; out Code: Integer); overload;
 procedure val(const S: String; out B : Byte; out Code: Integer); overload;
 procedure val(const S: String; out SI : smallint; out Code: Integer); overload;
@@ -469,14 +471,34 @@ var
 begin
   Code:=0;
   x:=Number(S);
+  if isNaN(x) then
+    case copy(s,1,1) of
+    '$': x:=Number('0x'+copy(S,2));
+    '&': x:=Number('0o'+copy(S,2));
+    '%': x:=Number('0b'+copy(S,2));
+    else
+      Code:=1;
+      exit;
+    end;
   if isNaN(x) or (X<>Int(X)) then
     Code:=1
   else
     NI:=Trunc(x);
 end;
 
-procedure val(const S: String; out SI : ShortInt; out Code: Integer);
+procedure val(const S: String; out NI: NativeUInt; out Code: Integer);
+var
+  x : double;
+begin
+  Code:=0;
+  x:=Number(S);
+  if isNaN(x) or (X<>Int(X)) or (X<0) then
+    Code:=1
+  else
+    NI:=Trunc(x);
+end;
 
+procedure val(const S: String; out SI : ShortInt; out Code: Integer);
 var
   X:Double;
 begin

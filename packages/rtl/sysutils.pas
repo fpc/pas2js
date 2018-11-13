@@ -27,13 +27,15 @@ type
  {*****************************************************************************
                               Various types
   *****************************************************************************}
+Const
+  FloatRecDigits = 19;
 
 type
   { TFloatRec }
   TFloatRec = Record
      Exponent: Integer;
      Negative: Boolean;
-     Digits: Array[0..18] Of Char;
+     Digits: Array[0..FloatRecDigits-1] Of Char;
   End;
   TEndian = (Little,Big);
   TFileName = String;
@@ -58,6 +60,9 @@ type
   private
     fMessage: String;
     fHelpContext: Integer;
+    {$ifdef NodeJS}
+    FNodeJSError: TJSError;
+    {$endif}
   public
     constructor Create(const Msg: String); reintroduce;
     constructor CreateFmt(const Msg: string; const Args: array of jsvalue);
@@ -66,6 +71,9 @@ type
     function ToString: String; override;
     property HelpContext: Integer read fHelpContext write fHelpContext;
     property Message: String read fMessage write fMessage;
+    {$ifdef NodeJS}
+    property NodeJSError: TJSError read FNodeJSError write FNodeJSError;
+    {$endif}
   end;
 
   ExceptClass = class of Exception;
@@ -208,9 +216,10 @@ Type
   TStringReplaceFlags = set of TStringReplaceFlag;
   TReplaceFlags = TStringReplaceFlags;
 
-function StringReplace(aOriginal, aSearch, aReplace : string; Flags : TStringReplaceFlags) : String;
-function QuoteString(aOriginal : String; AQuote : Char) : String;
-function QuotedStr(const s: string; QuoteChar : Char = ''''): string;
+function StringReplace(aOriginal, aSearch, aReplace: string; Flags: TStringReplaceFlags): String;
+function QuoteString(aOriginal: String; AQuote: Char): String;
+function QuotedStr(const s: string; QuoteChar: Char = ''''): string;
+function DeQuoteString(aQuoted: String; AQuote: Char): String;
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;
 function AdjustLineBreaks(const S: string): string;
 function AdjustLineBreaks(const S: string; Style: TTextLineBreakStyle): string;
@@ -672,15 +681,19 @@ end;
 Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
 
 Const
-  Rounds = '1234567890';
+  Rounds = '123456789:';
 
 var
   Buffer: String;  //Though str func returns only 25 chars, this might change in the future
   InfNan: string;
-  OutPos,Error, N, L, Start, C: Integer;
+  OutPos,Error, N, L, C: Integer;
   GotNonZeroBeforeDot, BeforeDot : boolean;
 
 begin
+  Result.Negative:=False;
+  Result.Exponent:=0;
+  For C:=0 to FloatRecDigits do
+    Result.Digits[C]:='0';
   if Value=0 then
     exit;
   asm
@@ -713,7 +726,7 @@ begin
           exit
         end;
     end;
-  Start := N;  //Start of digits
+  //Start := N;  //Start of digits
   Outpos:=0;
   Result.Exponent := 0; BeforeDot := true;
   GotNonZeroBeforeDot := false;
@@ -745,7 +758,7 @@ begin
     end;
   // Calculate number of digits we have from str
   N:=OutPos;
-//  Writeln('Number of digits: ',N,' requested precision : ',Precision);
+  // Writeln('Number of digits: ',N,' requested precision : ',Precision);
   L:=Length(Result.Digits);
   While N<L do
     begin
@@ -758,7 +771,7 @@ begin
     N := Precision;
   if N >= L Then
     N := L-1;
-//  Writeln('Rounding on digit : ',N);
+  // Writeln('Rounding on digit : ',N);
   if N = 0 Then
     begin
       if Result.Digits[0] >= '5' Then
@@ -780,7 +793,7 @@ begin
             // Writeln(N,': ',Result.Digits[N],', Rounding to : ',Rounds[StrToInt(Result.Digits[N])]);
             Result.Digits[N]:=Rounds[StrToInt(Result.Digits[N])+1];
           Until (N = 0) Or (Result.Digits[N] < ':');
-          If Result.Digits[0] = '0' Then
+          If Result.Digits[0] = ':' Then
             begin
               Result.Digits[0] := '1';
               Inc(Result.Exponent);
@@ -948,7 +961,7 @@ var
   // Copy a digit (#, 0) to the output with the correct value
 
   begin
-    // Writeln('CopyDigit ');
+    // Writeln('CopyDigit: Padzeroes: ',PadZeroes,', DistToDecimal: ',DistToDecimal);
     if (PadZeroes=0) then
       WriteDigit(GetDigit) // No shift needed, just copy what is available.
     else if (PadZeroes<0) then
@@ -1118,8 +1131,9 @@ var
     FV:=FloatToDecimal(aValue,P,D);
     // Writeln('Number of digits available : ',Length(FV.Digits));
     // For p:=0 to Length(FV.Digits)-1 do
-    //  writeln(P,': ',FV.Digits[p]);
+    //   Writeln(P,': ',FV.Digits[p]);
     DistToDecimal:=DecimalPos-1;
+    // Writeln('DistToDecimal : ',DistToDecimal);
     if IsScientific then
       PadZeroes:=0 // No padding.
     else
@@ -1609,11 +1623,11 @@ begin
   TS := ThousandSeparator;
   for i :=StartPos to length(AValue) do
     begin
-    Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue=TS);
+    Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue[i]=TS);
     if not Result then
       break;
     end;
-  if (Result) then
+  if (Result) and (AValue[1]='-') then
     Delete(AValue, 1, 1);
 end;
 
@@ -1624,28 +1638,36 @@ Var
   P : Integer;
 
 Begin
+  //  Writeln('Value ',D);
    If Digits = -1 Then
      Digits := CurrencyDecimals
    Else If Digits > 18 Then
      Digits := 18;
    Str(Value:0:Digits, Result);
+   // Writeln('1. Result ',Result,' currencystring : ',CurrencyString);
    Negative:=Result[1] = '-';
    if Negative then
      System.Delete(Result, 1, 1);
    P := Pos('.', Result);
-   If P <> 0 Then
-     Result:=ReplaceDecimalSep(Result,DS)
-   else
-     P := Length(Result)+1;
-   Dec(P, 3);
-   While (P > 1) Do
-   Begin
-     If ThousandSeparator<>#0 Then
-       Insert(FormatSettings.ThousandSeparator, Result, P);
+   // Writeln('2. Result ',Result,' currencystring : ',CurrencyString);
+   If TS<>'' Then
+     begin
+     If P <> 0 Then
+       Result:=ReplaceDecimalSep(Result,DS)
+     else
+       P := Length(Result)+1;
      Dec(P, 3);
-   End;
-   if (length(Result) > 1) and Negative then
-     Negative := not RemoveLeadingNegativeSign(Result,DS);
+     While (P > 1) Do
+     Begin
+         Insert(TS, Result, P);
+     Dec(P, 3);
+     End;
+     end;
+   // Writeln('3. Result ',Result,' currencystring : ',CurrencyString);
+   if Negative then
+     RemoveLeadingNegativeSign(Result,DS);
+   // Writeln('4. Result ',Result,' currencystring : ',CurrencyString);
+   // Writeln('CurrencyFormat:  ',CurrencyFormat,'NegcurrencyFormat: ',NegCurrFormat);
    If Not Negative Then
      Case CurrencyFormat Of
        0: Result := CurrencyString + Result;
@@ -1672,7 +1694,6 @@ Begin
        14: Result := '(' + CurrencyString + ' ' + Result + ')';
        15: Result := '(' + Result + ' ' + CurrencyString + ')';
      end;
-   if TS='' then ;
 end;
 
 Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;
@@ -2033,25 +2054,29 @@ end;
 constructor Exception.Create(const Msg: String);
 begin
   fMessage:=Msg;
+  {$ifdef nodejs}
+  FNodeJSError:=TJSError.new;
+  {$endif}
 end;
 
-constructor Exception.CreateFmt(const Msg: string; const Args: array of JSValue);
+constructor Exception.CreateFmt(const Msg: string; const Args: array of jsvalue
+  );
 begin
   //writeln('Exception.CreateFmt START ',ClassName,' "',Msg,'" Args=',Args);
-  fMessage:=Format(Msg,Args);
+  Create(Format(Msg,Args));
   //writeln('Exception.CreateFmt END ',ClassName,' "',Msg,'" fMessage=',fMessage);
 end;
 
 constructor Exception.CreateHelp(const Msg: String; AHelpContext: Integer);
 begin
-  fMessage:=Msg;
+  Create(Msg);
   fHelpContext:=AHelpContext;
 end;
 
 constructor Exception.CreateFmtHelp(const Msg: string;
-  const Args: array of JSValue; AHelpContext: Integer);
+  const Args: array of jsvalue; AHelpContext: Integer);
 begin
-  fMessage:=Format(Msg,Args);
+  Create(Format(Msg,Args));
   fHelpContext:=AHelpContext;
 end;
 
@@ -2089,6 +2114,31 @@ function QuotedStr(const s: string; QuoteChar : Char = ''''): string;
 
 begin
   Result:=QuoteString(S,QuoteChar);
+end;
+
+function DeQuoteString(aQuoted: String; AQuote: Char): String;
+var
+  i: Integer;
+begin
+  Result:=aQuoted;
+  if TJSString(Result).substr(0,1)<>AQuote then exit;
+  Result:=TJSString(Result).slice(1);
+  i:=1;
+  while i<=length(Result) do
+    begin
+    if Result[i]=AQuote then
+      begin
+      if (i=length(Result)) or (Result[i+1]<>AQuote) then
+        begin
+        Result:=TJSString(Result).slice(0,i-1);
+        exit;
+        end
+      else
+        Result:=TJSString(Result).slice(0,i-1)+TJSString(Result).slice(i);
+      end
+    else
+      inc(i);
+    end;
 end;
 
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;
@@ -3650,18 +3700,16 @@ Function TryStrToInt(const S : String; Out res : NativeInt) : Boolean;
 
 Var
   Radix : Integer = 10;
-  F,N : String;
+  N : String;
   J : JSValue;
 
 begin
   N:=S;
-  F:=Copy(N,1,1);
-  if (F='$') then
-    Radix:=16
-  else if (F='&') then
-    Radix:=8
-  else if (F='%') then
-    Radix:=2;
+  case Copy(N,1,1) of
+  '$': Radix:=16;
+  '&': Radix:=8;
+  '%': Radix:=2;
+  end;
   If Radix<>10 then
     Delete(N,1,1);
   J:=parseInt(N,Radix);

@@ -17,9 +17,9 @@ unit System;
 
 interface
 
-var
-  LineEnding: string = #10;
-  sLineBreak: string = #10;
+const
+  LineEnding = #10;
+  sLineBreak = LineEnding;
 const
   MaxSmallint = 32767;
   MinSmallint = -32768;

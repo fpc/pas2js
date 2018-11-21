@@ -2001,9 +2001,9 @@ function StringOf(const ABytes: TBytes): string;
 var
   I: Integer;
 begin
-  SetLength(Result, Length(ABytes));
+  Result:='';
   for I := 0 to Length(ABytes)-1 do
-    Result[I+1] := Char(ABytes[I]);
+    Result:=Result+Char(ABytes[I]);
 end;
 
 function LocaleCompare(const s1, s2, locales: String): Boolean; assembler;

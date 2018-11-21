@@ -204,6 +204,9 @@ procedure AppendStr(var Dest: String; const S: string);
 
 function Format(const Fmt: String; const Args: array of JSValue): String;
 
+function BytesOf(const AVal: string): TBytes;
+function StringOf(const ABytes: TBytes): string;
+
 // JavaScript built-in functions
 function LocaleCompare(const s1, s2, locales: String): Boolean; assembler; overload;
 function NormalizeStr(const S: String; const Norm: String = 'NFC'): String; assembler; overload; // not in IE
@@ -1983,6 +1986,24 @@ begin
     inc(ChPos);
     Oldpos:=ChPos;
     end;
+end;
+
+function BytesOf(const AVal: string): TBytes;
+var
+  I: SizeUInt;
+begin
+  SetLength(Result, Length(AVal));
+  for I := 0 to Length(AVal)-1 do
+    Result[I] := Ord(AVal[I+1]);
+end;
+
+function StringOf(const ABytes: TBytes): string;
+var
+  I: Integer;
+begin
+  SetLength(Result, Length(ABytes));
+  for I := 0 to Length(ABytes)-1 do
+    Result[I+1] := Char(ABytes[I]);
 end;
 
 function LocaleCompare(const s1, s2, locales: String): Boolean; assembler;

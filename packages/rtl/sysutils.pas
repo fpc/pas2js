@@ -576,7 +576,24 @@ function StrToCurrDef(const S: string; Default : Currency): Currency;
 *****************************************************************************}
 type
   PathStr = String;
-//function ExtractFilePath(const FileName: PathStr): PathStr;
+  TPathStrArray = Array of PathStr;
+
+function ChangeFileExt(const FileName, Extension: PathStr): PathStr;
+function ExtractFilePath(const FileName: PathStr): PathStr;
+function ExtractFileDrive(const FileName: PathStr): PathStr;
+function ExtractFileName(const FileName: PathStr): PathStr;
+function ExtractFileExt(const FileName: PathStr): PathStr;
+function ExtractFileDir(Const FileName : PathStr): PathStr;
+function ExtractRelativepath (Const BaseName,DestName : PathStr): PathStr;
+function IncludeTrailingPathDelimiter(Const Path : PathStr) : PathStr;
+function ExcludeTrailingPathDelimiter(Const Path: PathStr): PathStr;
+function IncludeLeadingPathDelimiter(Const Path : PathStr) : PathStr;
+function ExcludeLeadingPathDelimiter(Const Path: PathStr): PathStr;
+function IsPathDelimiter(Const Path: PathStr; Index: Integer): Boolean;
+Function SetDirSeparators (Const FileName : PathStr) : PathStr;
+Function GetDirs (DirName : PathStr) : TPathStrArray;
+function ConcatPaths(const Paths: array of PathStr): PathStr;
+
 
 {*****************************************************************************
                                Interfaces
@@ -603,6 +620,7 @@ function StringToGUID(const S: string): TGuid;
 function GUIDToString(const guid: TGuid): string;
 function IsEqualGUID(const guid1, guid2: TGuid): Boolean;
 function GuidCase(const guid: TGuid; const List: array of TGuid): Integer;
+Function CreateGUID(out GUID : TGUID) : Integer;
 
 implementation
 
@@ -634,6 +652,13 @@ begin
   Raise EAbort.Create(SAbortError);
 end;
 
+Type
+  TCharSet = Set of Char;
+Function CharInSet(Ch: Char;Const CSet : TCharSet) : Boolean;
+
+begin
+  Result:=Ch in CSet;
+end;
 
 Function CharInSet(Ch: Char;Const CSet : array of char) : Boolean;
 
@@ -3702,6 +3727,33 @@ begin
   Result := -1;
 end;
 
+Function CreateGUID(out GUID : TGUID) : Integer;
+
+  Function R(B: Integer) : NativeInt;
+
+  Var
+    v : NativeInt;
+  begin
+    v:=Random(256);
+    While B>1 do
+      begin
+      v:=v*256+Random(256);
+      Dec(B);
+      end;
+    Result:=V;
+  end;
+
+Var
+  I : Integer;
+
+begin
+  Result:=0;
+  GUID.D1:= R(4);
+  GUID.D2:= R(2);
+  GUID.D3:= R(2);
+  For I:=0 to 7 do
+   GUID.D4[I]:=R(1);
+end;
 { ---------------------------------------------------------------------
   Integer/Ordinal related
   ---------------------------------------------------------------------}
@@ -4095,6 +4147,264 @@ end;
 procedure TFormatSettings.SetTimeSeparator(const Value: char);
 begin
   SysUtils.TimeSeparator := Value;
+end;
+
+{ ---------------------------------------------------------------------
+  FileNames
+  ---------------------------------------------------------------------}
+
+function ChangeFileExt(const FileName, Extension: PathStr): PathStr;
+var
+  i : longint;
+  EndSep : Set of Char;
+  SOF : Boolean;
+
+begin
+  i := Length(FileName);
+  EndSep:=AllowDirectorySeparators+AllowDriveSeparators+[ExtensionSeparator];
+  while (I > 0) and not(FileName[I] in EndSep) do
+    Dec(I);
+  if (I = 0) or (FileName[I] <> ExtensionSeparator) then
+    I := Length(FileName)+1
+  else
+    begin
+        SOF:=(I=1) or (FileName[i-1] in AllowDirectorySeparators);
+        if (SOF) and not FirstDotAtFileNameStartIsExtension then
+          I:=Length(FileName)+1;
+        end;
+  Result := Copy(FileName, 1, I - 1) + Extension;
+end;
+
+function ExtractFilePath(const FileName: PathStr): PathStr;
+var
+  i : longint;
+  EndSep : Set of Char;
+begin
+  i := Length(FileName);
+  EndSep:=AllowDirectorySeparators+AllowDriveSeparators;
+  while (i > 0) and not CharInSet(FileName[i],EndSep) do
+    Dec(i);
+  If I>0 then
+    Result := Copy(FileName, 1, i)
+  else
+    Result:='';
+end;
+
+function ExtractFileDir(const FileName: PathStr): PathStr;
+var
+  i : longint;
+  EndSep : Set of Char;
+begin
+  I := Length(FileName);
+  EndSep:=AllowDirectorySeparators+AllowDriveSeparators;
+  while (I > 0) and not CharInSet(FileName[I],EndSep) do
+    Dec(I);
+  if (I > 1) and CharInSet(FileName[I],AllowDirectorySeparators) and
+     not CharInSet(FileName[I - 1],EndSep) then
+    Dec(I);
+  Result := Copy(FileName, 1, I);
+end;
+
+function ExtractFileDrive(const FileName: PathStr): PathStr;
+var
+  i,l: longint;
+begin
+  Result := '';
+  l:=Length(FileName);
+  if (l<2) then
+    exit;
+  If CharInSet(FileName[2],AllowDriveSeparators) then
+    result:=Copy(FileName,1,2)
+  else if CharInSet(FileName[1],AllowDirectorySeparators) and
+          CharInSet(FileName[2],AllowDirectorySeparators) then
+    begin
+      i := 2;
+
+      { skip share }
+      While (i<l) and Not CharInSet(Filename[i+1],AllowDirectorySeparators) do
+        inc(i);
+      inc(i);
+
+      While (i<l) and Not CharInSet(Filename[i+1],AllowDirectorySeparators) do
+        inc(i);
+      Result:=Copy(FileName,1,i);
+    end;
+end;
+
+function ExtractFileName(const FileName: PathStr): PathStr;
+var
+  i : longint;
+  EndSep : Set of Char;
+begin
+  I := Length(FileName);
+  EndSep:=AllowDirectorySeparators+AllowDriveSeparators;
+  while (I > 0) and not CharInSet(FileName[I],EndSep) do
+    Dec(I);
+  Result := Copy(FileName, I + 1, MaxInt);
+end;
+
+function ExtractFileExt(const FileName: PathStr): PathStr;
+var
+  i : longint;
+  EndSep : Set of Char;
+  SOF : Boolean; // Dot at Start of filename ?
+
+begin
+  Result:='';
+  I := Length(FileName);
+  EndSep:=AllowDirectorySeparators+AllowDriveSeparators+[ExtensionSeparator];
+  while (I > 0) and not CharInSet(FileName[I],EndSep) do
+    Dec(I);
+  if (I > 0) and (FileName[I] = ExtensionSeparator) then
+    begin
+        SOF:=(I=1) or (FileName[i-1] in AllowDirectorySeparators);
+        if (Not SOF) or FirstDotAtFileNameStartIsExtension then
+          Result := Copy(FileName, I, MaxInt);
+        end
+  else
+    Result := '';
+end;
+
+function ExtractRelativepath (Const BaseName,DestName : PathStr): PathStr;
+
+Var
+  OneLevelBack,Source, Dest   : PathStr;
+  Sc,Dc,I,J      : Longint;
+  SD,DD          : TPathStrArray;
+
+
+begin
+  OneLevelBack := '..'+PathDelim;
+  If Uppercase(ExtractFileDrive(BaseName))<>Uppercase(ExtractFileDrive(DestName)) Then
+    begin
+    Result:=DestName;
+    exit;
+    end;
+  Source:=ExcludeTrailingPathDelimiter(ExtractFilePath(BaseName));
+  Dest:=ExcludeTrailingPathDelimiter(ExtractFilePath(DestName));
+  SD:=GetDirs (Source);
+  SC:=Length(SD);
+  DD:=GetDirs (Dest);
+  DC:=Length(SD);
+  I:=0;
+  While (I<DC) and (I<SC) do
+    begin
+    If SameText(DD[i],SD[i]) then
+      Inc(i)
+    else
+      Break;
+    end;
+  Result:='';
+  For J:=I to SC do Result:=Result+OneLevelBack;
+  For J:=I to DC do Result:=Result+DD[J]+PathDelim;
+  Result:=Result+ExtractFileName(DestName);
+end;
+
+Function SetDirSeparators (Const FileName : PathStr) : PathStr;
+
+Var
+  I : integer;
+
+begin
+  Result:=FileName;
+  For I:=1 to Length(Result) do
+    If CharInSet(Result[I],AllowDirectorySeparators) then
+      Result[i]:=PathDelim;
+end;
+
+Function GetDirs (DirName : PathStr) : TPathStrArray;
+
+Var
+  I,J,L : Longint;
+  D : String;
+
+begin
+  I:=1;
+  J:=0;
+  L:=0;
+  SetLength(Result,Length(DirName));
+  While I<=Length(DirName) do
+    begin
+    If CharInSet(DirName[i],AllowDirectorySeparators) then
+      begin
+      D:=Copy(DirName,J+1,J-I);
+      if (D<>'') then
+        begin
+        Result[L]:=D;
+        Inc(L);
+        end;
+      J:=I;
+      end;
+    Inc(I);
+    end;
+  SetLength(Result,L);
+end;
+
+function IncludeTrailingPathDelimiter(Const Path : PathStr) : PathStr;
+
+Var
+  l : Integer;
+
+begin
+  Result:=Path;
+  l:=Length(Result);
+  If (L=0) or not CharInSet(Result[l],AllowDirectorySeparators) then
+    Result:=Result+PathDelim;
+end;
+
+function ExcludeTrailingPathDelimiter(Const Path: PathStr): PathStr;
+
+Var
+  L : Integer;
+
+begin
+  L:=Length(Path);
+  If (L>0) and CharInSet(Path[L],AllowDirectorySeparators) then
+    Dec(L);
+  Result:=Copy(Path,1,L);
+end;
+
+function IncludeLeadingPathDelimiter(Const Path : PathStr) : PathStr;
+
+Var
+  l : Integer;
+
+begin
+  Result:=Path;
+  l:=Length(Result);
+  If (L=0) or not CharInSet(Result[1],AllowDirectorySeparators) then
+    Result:=PathDelim+Result;
+end;
+
+function ExcludeLeadingPathDelimiter(Const Path: PathStr): PathStr;
+
+Var
+  L : Integer;
+
+begin
+  Result:=Path;
+  L:=Length(Result);
+  If (L>0) and CharInSet(Result[1],AllowDirectorySeparators) then
+    Delete(Result,1,1);
+end;
+
+function IsPathDelimiter(Const Path: PathStr; Index: Integer): Boolean;
+
+begin
+  Result:=(Index>0) and (Index<=Length(Path)) and CharInSet(Path[Index],AllowDirectorySeparators);
+end;
+
+function ConcatPaths(const Paths: array of PathStr): PathStr;
+var
+  I: Integer;
+begin
+  if Length(Paths) > 0 then
+  begin
+    Result := Paths[0];
+    for I := 1 to Length(Paths) - 1 do
+      Result := IncludeTrailingPathDelimiter(Result) + ExcludeLeadingPathDelimiter(Paths[I]);
+  end else
+    Result := '';
 end;
 
 

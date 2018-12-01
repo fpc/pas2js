@@ -26,6 +26,13 @@ const
   LineEnding = #10;
   sLineBreak = LineEnding;
 {$ENDIF}
+
+Var
+  PathDelim : Char = '/';
+  AllowDirectorySeparators : Set of Char = ['/'];
+  AllowDriveSeparators : Set of Char = [':'];
+  ExtensionSeparator : Char = '.';
+
 const
   MaxSmallint = 32767;
   MinSmallint = -32768;

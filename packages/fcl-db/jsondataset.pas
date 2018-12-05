@@ -807,6 +807,10 @@ begin
   else
     R:=FEditRow;
   FFieldMapper.SetJSONDataForField(Field,R,AValue);
+  
+  if not(State in [dsCalcFields, dsInternalCalc, dsFilter, dsNewValue]) then
+    DataEvent(deFieldChange, Field);
+
   SetModified(True);
 //  FFieldMapper.SetJSONDataForField(Field,Buffer.Data,AValue);
 end;

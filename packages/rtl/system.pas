@@ -476,11 +476,9 @@ end;
 
 function Number(S: String): Double; external name 'Number';
 
-procedure val(const S: String; out NI : NativeInt; out Code: Integer);
-
+function valint(const S: String; MinVal, MaxVal: NativeInt; out Code: Integer): NativeInt;
 var
-  x : double;
-
+  x: double;
 begin
   Code:=0;
   x:=Number(S);
@@ -495,8 +493,15 @@ begin
     end;
   if isNaN(x) or (X<>Int(X)) then
     Code:=1
+  else if (x<MinVal) or (x>MaxVal) then
+    Code:=2
   else
-    NI:=Trunc(x);
+    Result:=Trunc(x);
+end;
+
+procedure val(const S: String; out NI : NativeInt; out Code: Integer);
+begin
+  NI:=valint(S,low(NI),high(NI),Code);
 end;
 
 procedure val(const S: String; out NI: NativeUInt; out Code: Integer);
@@ -512,96 +517,36 @@ begin
 end;
 
 procedure val(const S: String; out SI : ShortInt; out Code: Integer);
-var
-  X:Double;
 begin
-  Code:=0;
-  x:=Number(S);
-  if isNaN(x) or (X<>Int(X)) then
-    Code:=1
-  else if (x<MinShortInt) or (x>MaxShortInt) then
-    Code:=2
-  else
-    SI:=Trunc(x);
+  SI:=valint(S,low(SI),high(SI),Code);
 end;
 
 procedure val(const S: String; out SI: smallint; out Code: Integer);
-
-var
-  x: double;
 begin
-  Code:=0;
-  x:=Number(S);
-  if isNaN(x) or (X<>Int(X)) then
-    Code:=1
-  else if (x<MinSmallint) or (x>MaxSmallint) then
-    Code:=2
-  else
-    SI:=Trunc(x);
+  SI:=valint(S,low(SI),high(SI),Code);
 end;
 
 procedure val(const S: String; out C: Cardinal; out Code: Integer);
-
-var
-  x: double;
 begin
-  Code:=0;
-  x:=Number(S);
-  if isNaN(x) or (X<>Int(X)) then
-    Code:=1
-  else if (x<0) or (x>MaxCardinal) then
-    Code:=2
-  else
-    C:=trunc(x);
+  C:=valint(S,low(C),high(C),Code);
 end;
 
 procedure val(const S: String; out B: Byte; out Code: Integer);
-
-var
-  x: double;
 begin
-  Code:=0;
-  x:=Number(S);
-  if isNaN(x) or (X<>Int(X)) then
-    Code:=1
-  else if (x<0) or (x>MaxByte) then
-    Code:=2
-  else
-    B:=Trunc(x);
+  B:=valint(S,low(B),high(B),Code);
 end;
 
-
 procedure val(const S: String; out W: word; out Code: Integer);
-
-var
-  x: double;
 begin
-  Code:=0;
-  x:=Number(S);
-  if isNaN(x) then
-    Code:=1
-  else if (x<0) or (x>MaxWord) then
-    Code:=2
-  else
-    W:=Trunc(x);
+  W:=valint(S,low(W),high(W),Code);
 end;
 
 procedure val(const S : String; out I : integer; out Code : Integer);
-var
-  x: double;
 begin
-  Code:=0;
-  x:=Number(S);
-  if isNaN(x) then
-    Code:=1
-  else if x>MaxInt then
-    Code:=2
-  else
-    I:=Trunc(x);
+  I:=valint(S,low(I),high(I),Code);
 end;
 
 procedure val(const S : String; out d : double; out Code : Integer);
-
 Var
   x: double;
 begin

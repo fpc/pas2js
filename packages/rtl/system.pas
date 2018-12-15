@@ -287,6 +287,7 @@ procedure val(const S: String; out W : word; out Code : Integer); overload;
 procedure val(const S: String; out I : integer; out Code : Integer); overload;
 procedure val(const S: String; out C : Cardinal; out Code: Integer); overload;
 procedure val(const S: String; out d : double; out Code : Integer); overload;
+procedure val(const S: String; out b : boolean; out Code: Integer); overload;
 function StringOfChar(c: Char; l: NativeInt): String;
 
 {*****************************************************************************
@@ -480,7 +481,6 @@ function valint(const S: String; MinVal, MaxVal: NativeInt; out Code: Integer): 
 var
   x: double;
 begin
-  Code:=0;
   x:=Number(S);
   if isNaN(x) then
     case copy(s,1,1) of
@@ -496,7 +496,10 @@ begin
   else if (x<MinVal) or (x>MaxVal) then
     Code:=2
   else
+    begin
     Result:=Trunc(x);
+    Code:=0;
+    end;
 end;
 
 procedure val(const S: String; out NI : NativeInt; out Code: Integer);
@@ -508,12 +511,14 @@ procedure val(const S: String; out NI: NativeUInt; out Code: Integer);
 var
   x : double;
 begin
-  Code:=0;
   x:=Number(S);
   if isNaN(x) or (X<>Int(X)) or (X<0) then
     Code:=1
   else
+    begin
+    Code:=0;
     NI:=Trunc(x);
+    end;
 end;
 
 procedure val(const S: String; out SI : ShortInt; out Code: Integer);
@@ -558,6 +563,22 @@ begin
     Code:=0;
     d:=x;
     end;
+end;
+
+procedure val(const S: String; out b: boolean; out Code: Integer);
+begin
+  if SameText(S,'true') then
+    begin
+    Code:=0;
+    b:=true;
+    end
+  else if SameText(S,'false') then
+    begin
+    Code:=0;
+    b:=false;
+    end
+  else
+    Code:=1;
 end;
 
 function upcase(c : char) : char; assembler;

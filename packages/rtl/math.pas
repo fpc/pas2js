@@ -20,7 +20,7 @@ uses
   SysUtils;
 
 const
-  MinInteger = -$10000000000000;
+  MinInteger = -$fffffffffffff-1;
   MaxInteger = $fffffffffffff;
   MinDouble  =  5.0e-324;
   MaxDouble  =  1.7e+308;

@@ -17,9 +17,18 @@ unit RTTI;
 interface
 
 uses
-  SysUtils, Types;
+  SysUtils, Types, TypInfo, JS;
+
+resourcestring
+  SErrInvokeInvalidCodeAddr = 'CodeAddress is not a function';
 
 type
+  // will be changed to 'record' and improved as soon as the
+  // operator overloading is implemented
+  TValue = JSValue;
+
+  EInvoke = EJS;
+
   TVirtualInterfaceInvokeEvent = function(const aMethodName: string;
     const Args: TJSValueDynArray): JSValue of object;
 
@@ -37,6 +46,10 @@ type
 
 procedure CreateVirtualCorbaInterface(InterfaceTypeInfo: Pointer;
   const MethodImplementation: TVirtualInterfaceInvokeEvent; out IntfVar); assembler;
+
+function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;
+  ACallConv: TCallConv; AResultType: PTypeInfo; AIsStatic: Boolean;
+  AIsConstructor: Boolean): TValue;
 
 implementation
 
@@ -101,6 +114,16 @@ constructor TVirtualInterface.Create(InterfaceTypeInfo: Pointer;
 begin
   Create(InterfaceTypeInfo);
   OnInvoke:=InvokeEvent;
+end;
+
+function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;
+  ACallConv: TCallConv; AResultType: PTypeInfo; AIsStatic: Boolean;
+  AIsConstructor: Boolean): TValue;
+begin
+  if isFunction(ACodeAddress) then
+    Result := TJSFunction(ACodeAddress).apply(nil, AArgs)
+  else
+    raise EInvoke.Create(SErrInvokeInvalidCodeAddr);
 end;
 
 end.

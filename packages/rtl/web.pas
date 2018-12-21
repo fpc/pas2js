@@ -2044,7 +2044,7 @@ Type
     formMethod : string;
     formNoValidate : Boolean;
     formTarget : string;
-    height : Boolean;
+    height : string;
     indeterminate : boolean;
     inputMode : string;
     max : string;
@@ -2065,7 +2065,7 @@ Type
     selectionDirection : string;
     useMap : string;
     value : string;
-    width : NativeInt;
+    width : string;
     property files : TJSHTMLFileList Read FFiles;
     property form : TJSHTMLFormElement read FForm;
     property labels : TJSNodeList read FLabels;
@@ -2073,6 +2073,48 @@ Type
     property validationMessage : string read FValidationmMessage;
     property willValidate : boolean read FWillValidate;
     property validity : TJSValidityState read FValidity;
+  end;
+
+  { TJSHTMLMenuElement }
+
+  TJSHTMLMenuElement = class external name 'HTMLMenuElement' (TJSHTMLElement) //  uhm... should it be declared? it is experimental at Mozilla docs...
+  end;
+
+  { TJSHTMLButtonElement }
+
+  TJSHTMLButtonElement = class external name 'HTMLButtonElement' (TJSHTMLElement)
+  private
+    FForm: TJSHTMLFormElement; external name 'form';
+    FLabels: TJSNodeList; external name 'labels';
+    FValidationmMessage: String; external name 'validationMessage';
+    FValidity: TJSValidityState; external name 'validity';
+    FWillValidate: boolean; external name 'willValidate';
+  Public
+    autofocus : boolean;
+    disabled : boolean;
+    formAction : String;
+    formEnctype : String;
+    formMethod : String;
+    formNoValidate : Boolean;
+    formTarget : String;
+    menu: TJSHTMLMenuElement;
+    _type : String; external name 'type';
+  Public
+    property form : TJSHTMLFormElement Read FForm;
+    property labels : TJSNodeList Read FLabels;
+    property validationMessage : String Read FValidationmMessage;
+    property validity : TJSValidityState Read FValidity;
+    property willValidate : boolean read FWillValidate;
+  end;
+
+  { TJSHTMLEmbedElement }
+
+  TJSHTMLEmbedElement = class external name 'HTMLEmbedElement' (TJSHTMLElement)
+  Public
+    height: String;
+    src: String;
+    _type : String; external name 'type';
+    width: String;
   end;
 
   { TJSHTMLOptionElement }

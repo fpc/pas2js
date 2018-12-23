@@ -380,7 +380,6 @@ Var
   I : integer;
 begin
   Result:=Nil;
-  Writeln('Converting ',DADS.Params.Count,' parameters.');
   if DADS.Params.Count=0 then
      Exit;
   SetLength(Result,DADS.Params.Count);
@@ -467,8 +466,6 @@ begin
     end
   else
     Msg:=Fail;
-
-  writeln('Data request or processing failed: ',Msg);
   Success:=rrFail;
 end;
 

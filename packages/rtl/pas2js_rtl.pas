@@ -8,8 +8,9 @@ unit pas2js_rtl;
 interface
 
 uses
-  Classes, JS, Math, NodeJS, ObjPas, RTLConsts, SysUtils, Types, TypInfo, Web, hotreloadclient, DateUtils, strutils, contnrs, 
-  browserconsole, webrouter, RTTI, webgl;
+  Classes, JS, Math, ObjPas, RTLConsts, SysUtils, Types, TypInfo, Web, 
+  hotreloadclient, DateUtils, strutils, contnrs, browserconsole, webrouter, 
+  RTTI, webgl;
 
 implementation
 

@@ -6,6 +6,7 @@ uses
 	JS;
 
 type
+    TMBFloat32 = double;
 	TMemoryBuffer = class
 		private
 			byteBuffer: TJSUint8Array;
@@ -16,8 +17,8 @@ type
 		 procedure AddBytes (count: integer; data: array of byte);
 
 		 { Float32 }
-		 procedure AddFloats (count: integer; data: array of single);
-		 procedure AddFloat (data: single);
+		 procedure AddFloats (count: integer; data: array of TMBFloat32);
+		 procedure AddFloat (data: TMBFloat32);
 
 		 { UInt16 }
 		 procedure AddWords(count: integer; data: array of word);
@@ -43,12 +44,12 @@ begin
 	byteOffset := byteOffset + (count * 1);
 end;
 
-procedure TMemoryBuffer.AddFloat (data: single);
+procedure TMemoryBuffer.AddFloat (data: TMBFloat32);
 begin
 	AddFloats(1, [data]);
 end;
 
-procedure TMemoryBuffer.AddFloats (count: integer; data: array of single);
+procedure TMemoryBuffer.AddFloats (count: integer; data: array of TMBFloat32);
 const
 	kElementSize = 4;
 var

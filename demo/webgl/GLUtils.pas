@@ -2,8 +2,8 @@ unit GLUtils;
 interface
 uses
 	MemoryBuffer, Mat4, GLTypes,
-	BrowserConsole, Web, WebGL, JS, 
-	Types, Math, SysUtils;
+	BrowserConsole, WebGL, JS,
+	Types, SysUtils;
 
 type
 	TShader = class
@@ -64,7 +64,7 @@ type
 			data: TModelData;
 			vertexBuffer: TJSWebGLBuffer;
 			indexBuffer: TJSWebGLBuffer;
-			elementCount: integer;
+			//elementCount: integer;
 
 			procedure EnableAttributes;
 			procedure Load;
@@ -88,11 +88,11 @@ begin
 end;
 
 // TODO: toll free bridge to FPC strings
-procedure Fatal (messageString: TJSString); overload;
+{procedure Fatal (messageString: TJSString); overload;
 begin
 	writeln('*** FATAL: ', messageString);
 	raise Exception.Create('FATAL');
-end;
+end;}
 
 procedure GLFatal (gl: TJSWebGLRenderingContext; messageString: string = 'Fatal OpenGL error'); 
 var
@@ -420,22 +420,20 @@ begin
 end;
 
 function TShader.CreateShader(theType: GLenum; source: string): TJSWebGLShader; 
-var
-	shader: TJSWebGLShader;
 begin
-	shader := gl.createShader(theType);
-	if shader = nil then
+	Result := gl.createShader(theType);
+	if Result = nil then
 		Fatal('create shader failed');
-	gl.shaderSource(shader, source);
-	gl.compileShader(shader);
-	if gl.getShaderParameter(shader, gl.COMPILE_STATUS) then
+	gl.shaderSource(Result, source);
+	gl.compileShader(Result);
+	if gl.getShaderParameter(Result, gl.COMPILE_STATUS) then
 		begin
 			//writeln('loaded shader ', theType);
-			exit(shader);
+			exit;
 		end
 	else
 		begin
-			Fatal(gl.getShaderInfoLog(shader));
+			Fatal(gl.getShaderInfoLog(Result));
 			//gl.deleteShader(shader);
 		end;
 end;

@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<CONFIG>
-  <Compiler Value="/home/mattias/bin/pas2js" Date="1527534865"/>
-  <Params Value=" -Tbrowser -Pecmascript5 -MObjFPC -Sc -O1 -l -vewnhibq -Fi/home/mattias/pascal/pas2js_svn/demo/webgl/js -Fu/home/mattias/pascal/pas2js_svn/demo/webgl/ -FU/home/mattias/pascal/pas2js_svn/demo/webgl/js/ -FE/home/mattias/pascal/pas2js_svn/demo/webgl/ -o/home/mattias/pascal/pas2js_svn/demo/webgl/Pas2JS_WebGL.js -dPas2js -Jeutf-8 -Jirtl.js -Jc -Jminclude Pas2JS_WebGL.pas"/>
-</CONFIG>

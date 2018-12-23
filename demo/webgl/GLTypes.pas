@@ -1,10 +1,12 @@
 unit GLTypes;
 interface
 uses
-	WebGL, JS, Math, SysUtils;
+	WebGL, Math, SysUtils;
 
 type
 	TScalar = double;
+    TJSFloat32 = double;
+    TJSFloat32List = array of TJSFloat32;
 
 type
 	TVec2 = record

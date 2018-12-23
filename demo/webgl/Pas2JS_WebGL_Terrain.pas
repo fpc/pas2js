@@ -2,7 +2,7 @@ program Pas2JS_WebGL_Terrain;
 uses
 	Terrain, Noise, Types, Mat4, GLUtils, GLTypes, 
 	SysUtils,
-	BrowserConsole, Web, WebGL, WebGL2, JS, Math;
+	BrowserConsole, Web, WebGL, JS, Math;
 
 var
 	gl: TJSWebGLRenderingContext;
@@ -22,7 +22,7 @@ var
   terrainNoise: TNoise;
 	terrainSize: integer = 64 * 3;
 	terrainResolution: integer = 128;
-	flySpeed: single = 1.3;
+	flySpeed: TJSFloat32 = 1.3;
 	visiblity: integer = 4;
 	textureLoaded: boolean = false;
 
@@ -51,7 +51,6 @@ var
 	startIndex, endIndex: integer;
 	i: integer;
 	map: TTilingTerrain;
-	neighbor: TTilingTerrain = nil;
 begin
 	gl.clear(gl.COLOR_BUFFER_BIT + gl.DEPTH_BUFFER_BIT);
 
@@ -126,7 +125,7 @@ begin
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
 	gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TJSTexImageSource(event.target));
+	gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, TexImageSource(event.target));
 
 	textureLoaded := true;
 	result := true;
@@ -134,15 +133,9 @@ end;
 
 var
   canvas: TJSHTMLCanvasElement;
-  i: integer;
-  stride: integer;
-  offset: integer;
   vertexShaderSource: string;
   fragmentShaderSource: string;
-  buffer: TJSWebGLBuffer;
-  element: TJSElement;
   img: TJSHTMLElement;
-  texture: TJSWebGLTexture;
 begin
 
 	// add debug status

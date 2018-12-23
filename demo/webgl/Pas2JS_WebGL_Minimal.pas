@@ -1,7 +1,7 @@
 program Pas2JS_WebGL_Minimal;
 uses
 	GLUtils, GLTypes, SysUtils,
-	BrowserConsole, Web, WebGL, WebGL2, JS, Math;
+	BrowserConsole, Web, WebGL, JS, Math;
 
 var
 	gl: TJSWebGLRenderingContext;

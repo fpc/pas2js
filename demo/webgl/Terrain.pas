@@ -12,7 +12,7 @@ type
 			constructor Create (context: TJSWebGLRenderingContext; size, resolution: integer); overload;
 			constructor Create (context: TJSWebGLRenderingContext; inNoise: TNoise; size, resolution: integer; offset: TVec2); overload;
 			
-			function GetHeightAtPoint (x, y: integer): single;
+			function GetHeightAtPoint (x, y: integer): TJSFloat32;
 			function GetWidth: integer;
 			function GetHeight: integer;
 
@@ -52,7 +52,7 @@ begin
 	result := heights.GetHeight;
 end;
 
-function TTerrain.GetHeightAtPoint (x, y: integer): single;
+function TTerrain.GetHeightAtPoint (x, y: integer): TJSFloat32;
 begin
 	result := TNoiseFloat(heights.GetValue(x, y));
 end;

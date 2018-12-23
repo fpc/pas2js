@@ -1,7 +1,7 @@
 program Pas2JS_WebGL;
 uses
 	Mat4, MemoryBuffer, GLUtils, GLTypes, SysUtils,
-	BrowserConsole, Web, WebGL, WebGL2, JS, Math;
+	BrowserConsole, Web, WebGL, JS, Math;
 
 type
 	GLVertex2 = record
@@ -53,8 +53,8 @@ end;
 
 
 var
-	nextTime: single = 0;
-	deltaTime: single = 0;
+	nextTime: TJSFloat32 = 0;
+	deltaTime: TJSFloat32 = 0;
 
 var
 	gl: TJSWebGLRenderingContext;
@@ -68,7 +68,7 @@ var
 
 procedure UpdateCanvas(time: TJSDOMHighResTimeStamp);
 var
-	now: single;
+	now: TJSFloat32;
 begin
 	now := time * 0.001;
 	deltaTime := now - nextTime;
@@ -91,7 +91,6 @@ end;
 
 var
   canvas: TJSHTMLCanvasElement;
-  i: integer;
   stride: integer;
   offset: integer;
   vertexShaderSource: string;

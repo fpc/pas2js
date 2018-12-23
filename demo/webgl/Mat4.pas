@@ -3,7 +3,7 @@
 unit Mat4;
 interface
 uses
-	BrowserConsole, JS, Math;
+	BrowserConsole, JS;
 
 type
 	TScalar = double;
@@ -43,8 +43,8 @@ implementation
 const
 	PI = 3.14159265359;
 	DEG2RAD = PI/180.0;
-  RAD2DEG = 180.0/PI;
-  HalfPI = PI*0.5;	
+  //RAD2DEG = 180.0/PI;
+  //HalfPI = PI*0.5;	
 
 var
 	Matrix4x4Identity: TMat4;

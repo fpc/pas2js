@@ -2,7 +2,7 @@ program Pas2JS_WebGL_Terrain;
 uses
 	Terrain, Noise, Types, Mat4, GLUtils, GLTypes, 
 	SysUtils,
-	BrowserConsole, Web, WebGL, WebGL2, JS, Math;
+	BrowserConsole, Web, WebGL, JS, Math;
 
 var
 	gl: TJSWebGLRenderingContext;
@@ -22,7 +22,7 @@ var
   terrainNoise: TNoise;
 	terrainSize: integer = 64 * 3;
 	terrainResolution: integer = 128;
-	flySpeed: single = 1.3;
+	flySpeed: TJSFloat32 = 1.3;
 	visiblity: integer = 4;
 	textureLoaded: boolean = false;
 

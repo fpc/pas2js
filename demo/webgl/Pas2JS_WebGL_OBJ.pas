@@ -1,7 +1,7 @@
 program Pas2JS_WebGL_OBJ;
 uses
 	Types, Mat4, MemoryBuffer, GLUtils, GLTypes, SysUtils,
-	BrowserConsole, Web, WebGL, WebGL2, JS, Math;
+	BrowserConsole, Web, WebGL, JS, Math;
 
 var
 	gl: TJSWebGLRenderingContext;
@@ -13,8 +13,8 @@ var
 var
 	dragonModel: TModel = nil;
 	rotateAngle: double = 0;
-	deltaTime: single = 0;
-	nextTime: single = 0;
+	deltaTime: TJSFloat32 = 0;
+	nextTime: TJSFloat32 = 0;
 
 procedure DrawCanvas;
 begin
@@ -33,8 +33,7 @@ end;
 
 procedure AnimateCanvas(time: TJSDOMHighResTimeStamp);
 var
-	now: single;
-	list: TScalarArray;
+	now: TJSFloat32;
 begin
 	now := time * 0.001;
 	deltaTime := now - nextTime;
@@ -87,12 +86,8 @@ end;
 
 var
   canvas: TJSHTMLCanvasElement;
-  i: integer;
-  stride: integer;
-  offset: integer;
   vertexShaderSource: string;
   fragmentShaderSource: string;
-  buffer: TJSWebGLBuffer;
 begin
 
 	// make webgl context

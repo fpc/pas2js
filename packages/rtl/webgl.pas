@@ -6,7 +6,7 @@ Unit webgl;
 
 interface
 
-uses SysUtils, JS,web,types;
+uses SysUtils, JS,web;
 
 {
   Automatically generated file by TWebIDLToPas on 2018-06-23 15:31:57
@@ -222,8 +222,9 @@ Type
   TTJSWebGLShaderDynArray = Array of TJSWebGLShader;
   TGLfloatDynArray = Array of GLfloat;
   TGLintDynArray = Array of GLint;
-  
-  TJSWebGLRenderingContextBase = class external name 'WebGLRenderingContextBase' 
+
+  // MG: added ancestor (TJSObject), issue 34745
+  TJSWebGLRenderingContextBase = class external name 'WebGLRenderingContextBase' (TJSObject)
   Private
     Fcanvas : TJSHTMLCanvasElement; external name 'canvas'; 
     FdrawingBufferWidth : GLsizei; external name 'drawingBufferWidth'; 
@@ -543,8 +544,8 @@ Type
     Procedure blendEquationSeparate(modeRGB : GLenum; modeAlpha : GLenum);
     Procedure blendFunc(sfactor : GLenum; dfactor : GLenum);
     Procedure blendFuncSeparate(srcRGB : GLenum; dstRGB : GLenum; srcAlpha : GLenum; dstAlpha : GLenum);
-    Procedure bufferData(target : GLenum; size : GLsizeiptr; usage : GLenum);
-    Procedure bufferData(target : GLenum; data : TJSBufferSource; usage : GLenum);
+    Procedure bufferData(target : GLenum; size : GLsizeiptr; usage : GLenum); overload;
+    Procedure bufferData(target : GLenum; data : TJSBufferSource; usage : GLenum); overload;
     Procedure bufferSubData(target : GLenum; offset : GLintptr; data : TJSBufferSource);
     function checkFramebufferStatus(target : GLenum): GLenum;
     Procedure clear(mask : GLbitfield);

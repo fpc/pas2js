@@ -58,6 +58,7 @@
       </Item4>
       <Item5>
         <Filename Value="nodejs.pas"/>
+        <AddToUsesPkgSection Value="False"/>
         <UnitName Value="NodeJS"/>
       </Item5>
       <Item6>

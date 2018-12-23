@@ -1,7 +1,7 @@
 unit Terrain;
 interface
 uses
-	Noise, Matrix, MemoryBuffer,
+	Noise, Matrix,
 	GLTypes, GLUtils,
 	WebGL, JS,
 	Math;

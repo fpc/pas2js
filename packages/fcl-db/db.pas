@@ -1322,7 +1322,8 @@ type
     procedure FreeBookmark(ABookmark{%H-}: TBookmark); virtual;
     function GetBookmark: TBookmark; virtual;
     function GetCurrentRecord(Buffer{%H-}: TDataRecord): Boolean; virtual;
-    procedure GetFieldList(List: TList; const FieldNames: string);
+    procedure GetFieldList(List: TList; const FieldNames: string); overload;
+    procedure GetFieldList(List: TFPList; const FieldNames: string); overload;
     procedure GetFieldNames(List: TStrings);
     procedure GotoBookmark(const ABookmark: TBookmark);
     procedure Insert; reintroduce;
@@ -1363,7 +1364,7 @@ type
     property RecordSize: Word read GetRecordSize;
     property State: TDataSetState read FState;
     property Fields : TFields read FFieldList;
-//    property FieldValues[FieldName : string] : JSValue read GetFieldValues write SetFieldValues; default;
+    property FieldValues[FieldName : string] : JSValue read GetFieldValues write SetFieldValues; default;
     property Filter: string read FFilterText write SetFilterText;
     property Filtered: Boolean read FFiltered write SetFiltered default False;
     property FilterOptions: TFilterOptions read FFilterOptions write SetFilterOptions;
@@ -4346,6 +4347,23 @@ begin
   until StrPos > Length(FieldNames);
 end;
 
+procedure TDataSet.GetFieldList(List: TFPList; const FieldNames: string);
+var
+  F: TField;
+  N: String;
+  StrPos: Integer;
+
+begin
+  if (FieldNames = '') or (List = nil) then
+    Exit;
+  StrPos := 1;
+  repeat
+    N := ExtractFieldName(FieldNames, StrPos);
+    F := FieldByName(N);
+    List.Add(F);
+  until StrPos > Length(FieldNames);
+end;
+
 procedure TDataSet.GetFieldNames(List: TStrings);
 
 
@@ -5525,12 +5543,14 @@ end;
 
 procedure TField.CalcLookupValue;
 begin
-{ MVC: TODO
-  if FLookupCache then
-    Value := LookupList.ValueOfKey(FDataSet.FieldValues[FKeyFields])
-  else if Assigned(FLookupDataSet) and FDataSet.Active then
-    Value := FLookupDataSet.Lookup(FLookupKeyfields, FDataSet.FieldValues[FKeyFields], FLookupresultField);
-}
+// MVC: TODO
+//  if FLookupCache then
+//    Value := LookupList.ValueOfKey(FDataSet.FieldValues[FKeyFields])
+//  else if
+  if Assigned(FLookupDataSet) and FDataSet.Active then
+    Value := FLookupDataSet.Lookup(FLookupKeyfields, FDataSet.FieldValues[FKeyFields], FLookupresultField)
+  else
+    Value:=Null;
 end;
 
 function TField.GetIndex: longint;

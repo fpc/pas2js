@@ -194,13 +194,9 @@ Var
 
 begin
   inherited InternalOpen;
-  Writeln('Checking ID field ',IDField, ' as key field');
   for I:=0 to Fields.Count-1 do
     If SameText(Fields[i].FieldName,IDField) then
-      begin
       Fields[i].ProviderFlags:=Fields[i].ProviderFlags+[pfInKey];
-      Writeln('Setting ID field ',IDField, ' as key field');
-      end;
 end;
 
 function TExtJSJSONDataSet.DoResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor): Boolean;

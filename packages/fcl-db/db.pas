@@ -756,7 +756,7 @@ type
     property Options: TIndexOptions read FOptions write FOptions;
     property Source: string read FSource write FSource;
   end;
-
+  TIndexDefClass = class of TIndexDef;
 { TIndexDefs }
 
   TIndexDefs = class(TDefCollection)
@@ -2100,13 +2100,13 @@ Function TIndexDefs.AddIndexDef: TIndexDef;
 
 begin
 //  Result := inherited add as TIndexDef;
-  Result:=TIndexDef.Create(Self,'','',[]);
+  Result:=TIndexDefClass(Self.ItemClass).Create(Self,'','',[]);
 end;
 
 procedure TIndexDefs.Add(const Name, Fields: string; Options: TIndexOptions);
 
 begin
-  TIndexDef.Create(Self,Name,Fields,Options);
+  TIndexDefClass(Self.ItemClass).Create(Self,Name,Fields,Options);
 end;
 
 function TIndexDefs.Find(const IndexName: string): TIndexDef;

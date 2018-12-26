@@ -39,6 +39,8 @@ type
     property IDField : String Read FIDField Write FIDField;
   published
     Property FieldDefs;
+    Property Indexes;
+    Property ActiveIndex;
     // redeclared data set properties
     property Active;
     property BeforeOpen;

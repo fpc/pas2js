@@ -756,7 +756,7 @@ Type
     Property Identifiers : TFPExprIdentifierDefs Read FIdentifiers Write SetIdentifiers;
     Property BuiltIns : TBuiltInCategories Read FBuiltIns Write SetBuiltIns;
   end;
-
+  TFPExpressionParserClass = Class of TFPExpressionParser;
   { TExprBuiltInManager }
 
   TExprBuiltInManager = Class(TComponent)
@@ -3666,7 +3666,10 @@ end;
 Function TFPExprIdentifierNode.GetNodeValue : TFPExpressionResult;
 begin
   if Identifier.EventBasedVariable then
+    begin
     Identifier.FetchValue;
+    PResult:=@FID.FValue;
+    end;
   Result:=PResult^;
   Result.ResultType:=FResultType;
 end;

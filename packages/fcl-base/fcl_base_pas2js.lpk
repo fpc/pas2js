@@ -22,7 +22,7 @@
 Port to pas2js."/>
     <License Value="Modified LGPL-2"/>
     <Version Major="1"/>
-    <Files Count="3">
+    <Files Count="4">
       <Item1>
         <Filename Value="custapp.pas"/>
         <UnitName Value="custapp"/>
@@ -35,6 +35,10 @@ Port to pas2js."/>
         <Filename Value="browserapp.pas"/>
         <UnitName Value="browserapp"/>
       </Item3>
+      <Item4>
+        <Filename Value="fpexprpars.pas"/>
+        <UnitName Value="fpexprpars"/>
+      </Item4>
     </Files>
     <RequiredPkgs Count="1">
       <Item1>

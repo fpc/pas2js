@@ -5,7 +5,7 @@ unit JSONDataset;
 interface
 
 uses
-  Types, JS, DB, Classes, SysUtils, typinfo;
+  Types, JS, DB, Classes, SysUtils, typinfo, fpexprpars;
 
 type
   TBaseJSONDataset = Class;
@@ -255,14 +255,28 @@ type
     // When editing, this object is edited.
     FEditIdx : Integer;
     FEditRow : JSValue;
+    // When filtering, this is the current row;
+    FFilterRow : JSValue;
     FUseDateTimeFormatFields: Boolean;
     FRowType: TJSONRowType;
+    FFilterExpression : TFPExpressionParser;
+    function GetFilterField(const AName: String): TFPExpressionResult;
     procedure SetActiveIndex(AValue: String);
     procedure SetIndexes(AValue: TJSONIndexDefs);
     procedure SetMetaData(AValue: TJSObject);
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
+    // Determine filter value type based on field type
+    function FieldTypeToExpressionType(aDataType: TFieldType): TResultType; virtual;
+    // Callback for IsNull filter function.
+    function GetFilterIsNull(const Args: TExprParameterArray): TFPExpressionResult; virtual;
+    // Expression parser class. Override this to create a customized version.
+    function FilterExpressionClass: TFPExpressionParserClass; virtual;
+    // Create filter expression.
+    function CreateFilterExpression: TFPExpressionParser; virtual;
+    // Function called to check if current buffer should be accepted.
+    function DoFilterRecord: Boolean; virtual;
     // Override this to return customized version.
     function CreateIndexDefs: TJSONIndexDefs; virtual;
     // override this to return a customized version if you are so inclined
@@ -287,6 +301,8 @@ type
     procedure InternalCancel; override;
     procedure InternalInitFieldDefs; override;
     procedure InternalSetToRecord(Buffer: TDataRecord); override;
+    procedure SetFilterText(const Value: string); override;
+    procedure SetFiltered(Value: Boolean); override;
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; override;
     function IsCursorOpen: Boolean; override;
     // Bookmark operations
@@ -1142,36 +1158,141 @@ begin
   FCurrentIndex:=FDefaultIndex;
 end;
 
+function TBaseJSONDataSet.FilterExpressionClass : TFPExpressionParserClass;
+
+begin
+  Result:=TFPExpressionParser;
+end;
+
+function TBaseJSONDataSet.GetFilterIsNull(Const Args : TExprParameterArray) : TFPExpressionResult;
+
+begin
+  Result.ResultType:=rtBoolean;
+  Result.ResValue:=FieldByName(String(Args[0].resValue)).IsNull;
+end;
+
+function TBaseJSONDataSet.FieldTypeToExpressionType(aDataType : TFieldType) : TResultType;
+
+begin
+  Case aDataType of
+    ftMemo,
+    ftFixedChar,
+    ftString : Result:=rtString;
+    ftInteger,
+    ftAutoInc,
+    ftLargeInt : Result:=rtInteger;
+    ftBoolean : Result:=rtBoolean;
+    ftFloat : Result:=rtFloat;
+    ftDate,
+    ftTime,
+    ftDateTime : Result:=rtDateTime;
+  else
+    DatabaseErrorFmt('Fields of type %s are not supported in filter expressions.',[Fieldtypenames[aDataType]],Self);
+  end;
+end;
+
+function TBaseJSONDataSet.GetFilterField(Const AName : String) : TFPExpressionResult;
+
+Var
+  F : TField;
+  C : Currency;
+
+begin
+  F:=FieldByName(aName);
+  Result.resultType:=FieldTypeToExpressionType(F.DataType);
+  case Result.resultType of
+    rtBoolean : Result.resValue:=F.AsBoolean;
+    rtInteger : Result.resValue:=F.AsLargeInt;
+    rtFloat : Result.resValue:=F.AsFloat;
+    rtDateTime : Result.resValue:=F.AsDateTime;
+    rtString : Result.resValue:=F.AsString;
+    rtCurrency :
+      begin
+      C:=Currency(F.AsFloat);
+      Result.resValue:=C;
+      end;
+  end;
+//  Writeln('Filtering field ',aName,'value: ',result.resValue);
+end;
+
+
+function TBaseJSONDataSet.CreateFilterExpression : TFPExpressionParser;
+
+Var
+  I : Integer;
+
+begin
+  Result:=FilterExpressionClass.Create(Self);
+  for I:=0 to Fields.Count-1 do
+    Result.Identifiers.AddVariable(Fields[i].FieldName,FieldTypeToExpressionType(Fields[i].DataType),@GetFilterField);
+  Result.Identifiers.AddFunction('IsNull','B','S',@GetFilterIsNull);
+  Result.Expression:=Filter;
+end;
+
+function TBaseJSONDataSet.DoFilterRecord : Boolean;
+
+Var
+  DS : TDatasetState;
+
+begin
+  // Writeln('Filtering');
+  Result:=True;
+  DS:=SetTempState(dsFilter);
+  try
+    if Assigned(OnFilterRecord) then
+      begin
+      OnFilterRecord(Self,Result);
+      if Not Result then
+        Exit;
+      end;
+    if not Filtered or (Filter='') then
+      Exit;
+    if (FFilterExpression=Nil) then
+      FFilterExpression:=CreateFilterExpression;
+    Result:=FFilterExpression.AsBoolean;
+  finally
+    RestoreState(DS);
+  end;
+end;
+
 function TBaseJSONDataSet.GetRecord(Var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult;
 
 Var
   BkmIdx : Integer;
-
+  recordAccepted : Boolean;
 begin
   Result := grOK; // default
-  case GetMode of
-    gmNext: // move on
-      if fCurrent < fCurrentIndex.Count - 1 then
-        Inc (fCurrent)
-      else
-        Result := grEOF; // end of file
-    gmPrior: // move back
-      if fCurrent > 0 then
-        Dec (fCurrent)
-      else
-        Result := grBOF; // begin of file
-    gmCurrent: // check if empty
-      if fCurrent >= fCurrentIndex.Count then
-        Result := grEOF;
-  end;
-  if Result = grOK then // read the data
-    begin
-    BkmIdx:=FCurrentIndex.RecordIndex[FCurrent];
-    Buffer.Data:=FRows[bkmIdx];
-    Buffer.BookmarkFlag := bfCurrent;
-    Buffer.Bookmark:=BkmIdx;
-    CalculateFields(Buffer);
+  Repeat
+    recordAccepted:=True;
+    case GetMode of
+      gmNext: // move on
+        if fCurrent < fCurrentIndex.Count - 1 then
+          Inc (fCurrent)
+        else
+          Result := grEOF; // end of file
+      gmPrior: // move back
+        if fCurrent > 0 then
+          Dec (fCurrent)
+        else
+          Result := grBOF; // begin of file
+      gmCurrent: // check if empty
+        if fCurrent >= fCurrentIndex.Count then
+          Result := grEOF;
     end;
+    if Result = grOK then // read the data
+      begin
+      BkmIdx:=FCurrentIndex.RecordIndex[FCurrent];
+      Buffer.Data:=FRows[bkmIdx];
+      Buffer.BookmarkFlag := bfCurrent;
+      Buffer.Bookmark:=BkmIdx;
+      CalculateFields(Buffer);
+      if Filtered then
+        begin
+        FFilterRow:=Buffer.Data;
+        recordAccepted:=DoFilterRecord;
+        end;
+      end;
+  until recordAccepted;
 end;
 
 function TBaseJSONDataSet.GetRecordCount: Integer;
@@ -1355,6 +1476,22 @@ begin
   FCurrent:=FCurrentIndex.FindRecord(Integer(Buffer.Bookmark));
 end;
 
+procedure TBaseJSONDataSet.SetFilterText(const Value: string);
+begin
+  inherited SetFilterText(Value);
+  FreeAndNil(FFilterExpression);
+  if Active then
+    Resync([rmCenter]);
+end;
+
+procedure TBaseJSONDataSet.SetFiltered(Value: Boolean);
+begin
+  inherited SetFiltered(Value);
+  FreeAndNil(FFilterExpression);
+  if Active then
+    Resync([rmCenter]);
+end;
+
 function TBaseJSONDataSet.GetFieldClass(FieldType: TFieldType): TFieldClass;
 begin
   If UseDateTimeFormatFields and (FieldType in [ftDate,ftDateTime,ftTime]) then
@@ -1445,6 +1582,8 @@ var
 begin
   if State in [dsCalcFields,dsInternalCalc] then
     R:=CalcBuffer.data
+  else if (State=dsFilter) then
+    R:=FFilterRow
   else if (FEditIdx=Buffer.Bookmark) then
     begin
     if State=dsOldValue then
@@ -1525,6 +1664,7 @@ end;
 
 destructor TBaseJSONDataSet.Destroy;
 begin
+  FreeAndNil(FFilterExpression);
   FreeAndNil(FIndexes);
   FEditIdx:=-1;
   FreeData;

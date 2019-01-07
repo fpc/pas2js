@@ -3693,7 +3693,7 @@ begin
     exit;
     end;
   asm
-    rtl.strToGUIDR(s,Guid.get());
+    rtl.strToGUIDR(s,Guid);
   end;
   Result:=true;
 end;

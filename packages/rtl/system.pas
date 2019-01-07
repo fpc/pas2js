@@ -306,6 +306,20 @@ function StrictInequal(const A: JSValue; const B): boolean; assembler;
 
 implementation
 
+type
+
+  { TJSObj - simple access to JS Object }
+
+  TJSObj = class external name 'Object'
+  private
+    function GetProperties(Name: String): JSValue; external name '[]';
+    procedure SetProperties(Name: String; const AValue: JSValue); external name '[]';
+  public
+    //constructor new;
+    //function hasOwnProperty(prop: String): boolean;
+    property Properties[Name: String]: JSValue read GetProperties write SetProperties; default;
+  end;
+
 // function parseInt(s: String; Radix: NativeInt): NativeInt; external name 'parseInt'; // may result NaN
 function isNaN(i: JSValue): boolean; external name 'isNaN'; // may result NaN
 
@@ -399,12 +413,9 @@ asm
 end;
 
 function Pos(const Search, InString: String; StartAt : Integer): Integer; assembler; overload;
-
 asm
   return InString.indexOf(Search,StartAt-1)+1;
 end;
-
-
 
 procedure Insert(const Insertion: String; var Target: String; Index: Integer);
 var
@@ -582,7 +593,6 @@ begin
 end;
 
 function upcase(c : char) : char; assembler;
-
 asm
   return c.toUpperCase();
 end;
@@ -731,6 +741,7 @@ begin
   asm
     var i = iid.$intf;
     if (i){
+      // iid is the private TGuid of an interface
       i = rtl.getIntfG(this,i.$guid,2);
       if (i){
         obj.set(i);
@@ -748,7 +759,9 @@ end;
 
 function TObject.GetInterfaceByStr(const iidstr: String; out obj): boolean;
 begin
-  if (iidstr = IObjectInstance) then
+  if not TJSObj(IObjectInstance)['$str'] then
+    TJSObj(IObjectInstance)['$str']:=GUIDToString(IObjectInstance);
+  if iidstr = TJSObj(IObjectInstance)['$str'] then
     begin
     obj:=Self;
     exit(true);

@@ -343,24 +343,24 @@ type
 
   EPropertyError  = class(Exception);
 
-function GetClassMembers(aTIClass: TTypeInfoClass): TTypeMemberDynArray;
-function GetClassMember(aTIClass: TTypeInfoClass; const aName: String): TTypeMember;
+function GetClassMembers(aTIStruct: TTypeInfoStruct): TTypeMemberDynArray;
+function GetClassMember(aTIStruct: TTypeInfoStruct; const aName: String): TTypeMember;
 function GetInstanceMethod(Instance: TObject; const aName: String): Pointer;
-function GetClassMethods(aTIClass: TTypeInfoClass): TTypeMemberMethodDynArray;
+function GetClassMethods(aTIStruct: TTypeInfoStruct): TTypeMemberMethodDynArray;
 function CreateMethod(Instance: TObject; FuncName: String): Pointer; external name 'rtl.createCallback';
 
 function GetInterfaceMembers(aTIInterface: TTypeInfoInterface): TTypeMemberDynArray;
 function GetInterfaceMember(aTIInterface: TTypeInfoInterface; const aName: String): TTypeMember;
 function GetInterfaceMethods(aTIInterface: TTypeInfoInterface): TTypeMemberMethodDynArray;
 
-function GetPropInfos(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
-function GetPropList(aTIClass: TTypeInfoClass; TypeKinds: TTypeKinds; Sorted: boolean = true): TTypeMemberPropertyDynArray;
-function GetPropList(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
+function GetPropInfos(aTIStruct: TTypeInfoStruct): TTypeMemberPropertyDynArray;
+function GetPropList(aTIStruct: TTypeInfoStruct; TypeKinds: TTypeKinds; Sorted: boolean = true): TTypeMemberPropertyDynArray;
+function GetPropList(aTIStruct: TTypeInfoStruct): TTypeMemberPropertyDynArray;
 function GetPropList(AClass: TClass): TTypeMemberPropertyDynArray;
 function GetPropList(Instance: TObject): TTypeMemberPropertyDynArray;
 
-function GetPropInfo(TI: TTypeInfoClass; const PropName: String): TTypeMemberProperty;
-function GetPropInfo(TI: TTypeInfoClass; const PropName: String; const Kinds: TTypeKinds): TTypeMemberProperty;
+function GetPropInfo(TI: TTypeInfoStruct; const PropName: String): TTypeMemberProperty;
+function GetPropInfo(TI: TTypeInfoStruct; const PropName: String; const Kinds: TTypeKinds): TTypeMemberProperty;
 function GetPropInfo(Instance: TObject; const PropName: String): TTypeMemberProperty;
 function GetPropInfo(Instance: TObject; const PropName: String; const Kinds: TTypeKinds): TTypeMemberProperty;
 function GetPropInfo(aClass: TClass; const PropName: String): TTypeMemberProperty;
@@ -381,8 +381,12 @@ function PropType(aClass: TClass; const PropName: string): TTypeKind;
 function PropIsType(Instance: TObject; const PropName: string; const TypeKind: TTypeKind): Boolean;
 function PropIsType(aClass: TClass; const PropName: string; const TypeKind: TTypeKind): Boolean;
 
+function GetJSValueProp(Instance: TJSObject; TI: TTypeInfoStruct; const PropName: String): JSValue;
+function GetJSValueProp(Instance: TJSObject; const PropInfo: TTypeMemberProperty): JSValue;
 function GetJSValueProp(Instance: TObject; const PropName: String): JSValue;
 function GetJSValueProp(Instance: TObject; const PropInfo: TTypeMemberProperty): JSValue;
+procedure SetJSValueProp(Instance: TJSObject; TI: TTypeInfoStruct; const PropName: String; Value: JSValue);
+procedure SetJSValueProp(Instance: TJSObject; const PropInfo: TTypeMemberProperty; Value: JSValue);
 procedure SetJSValueProp(Instance: TObject; const PropName: String; Value: JSValue);
 procedure SetJSValueProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: JSValue);
 
@@ -441,16 +445,16 @@ Procedure SetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty;  Value
 
 implementation
 
-function GetClassMembers(aTIClass: TTypeInfoClass): TTypeMemberDynArray;
+function GetClassMembers(aTIStruct: TTypeInfoStruct): TTypeMemberDynArray;
 var
-  C: TTypeInfoClass;
+  C: TTypeInfoStruct;
   i: Integer;
   PropName: String;
   Names: TJSObject;
 begin
   Result:=nil;
   Names:=TJSObject.new;
-  C:=aTIClass;
+  C:=aTIStruct;
   while C<>nil do
   begin
     for i:=0 to length(C.Names)-1 do
@@ -460,31 +464,34 @@ begin
       TJSArray(Result).push(C.Members[PropName]);
       Names[PropName]:=true;
     end;
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
 end;
 
-function GetClassMember(aTIClass: TTypeInfoClass; const aName: String): TTypeMember;
+function GetClassMember(aTIStruct: TTypeInfoStruct; const aName: String): TTypeMember;
 var
-  C: TTypeInfoClass;
+  C: TTypeInfoStruct;
   i: Integer;
 begin
   // quick search: case sensitive
-  C:=aTIClass;
+  C:=aTIStruct;
   while C<>nil do
   begin
     if TJSObject(C.Members).hasOwnProperty(aName) then
       exit(C.Members[aName]);
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
   // slow search: case insensitive
-  C:=aTIClass;
+  C:=aTIStruct;
   while C<>nil do
   begin
     for i:=0 to length(C.Names)-1 do
       if CompareText(C.Names[i],aName)=0 then
         exit(C.Members[C.Names[i]]);
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
   Result:=nil;
 end;
@@ -499,20 +506,21 @@ begin
   Result:=CreateMethod(Instance,TI.Name); // Note: use TI.Name for the correct case!
 end;
 
-function GetClassMethods(aTIClass: TTypeInfoClass): TTypeMemberMethodDynArray;
+function GetClassMethods(aTIStruct: TTypeInfoStruct): TTypeMemberMethodDynArray;
 var
-  C: TTypeInfoClass;
+  C: TTypeInfoStruct;
   i, Cnt, j: Integer;
 begin
   Cnt:=0;
-  C:=aTIClass;
+  C:=aTIStruct;
   while C<>nil do
   begin
     inc(Cnt,C.MethodCount);
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
   SetLength(Result,Cnt);
-  C:=aTIClass;
+  C:=aTIStruct;
   i:=0;
   while C<>nil do
   begin
@@ -521,7 +529,8 @@ begin
       Result[i]:=TTypeMemberMethod(C.Members[C.Methods[j]]);
       inc(i);
     end;
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
 end;
 
@@ -605,15 +614,15 @@ begin
   end;
 end;
 
-function GetPropInfos(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
+function GetPropInfos(aTIStruct: TTypeInfoStruct): TTypeMemberPropertyDynArray;
 var
-  C: TTypeInfoClass;
+  C: TTypeInfoStruct;
   i: Integer;
   Names: TJSObject;
   PropName: String;
 begin
   Result:=nil;
-  C:=aTIClass;
+  C:=aTIStruct;
   Names:=TJSObject.new;
   while C<>nil do
   begin
@@ -624,11 +633,13 @@ begin
       TJSArray(Result).push(TTypeMemberProperty(C.Members[PropName]));
       Names[PropName]:=true;
     end;
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then
+      break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
 end;
 
-function GetPropList(aTIClass: TTypeInfoClass; TypeKinds: TTypeKinds;
+function GetPropList(aTIStruct: TTypeInfoStruct; TypeKinds: TTypeKinds;
   Sorted: boolean): TTypeMemberPropertyDynArray;
 
   function NameSort(a,b: JSValue): NativeInt;
@@ -642,14 +653,14 @@ function GetPropList(aTIClass: TTypeInfoClass; TypeKinds: TTypeKinds;
   end;
 
 var
-  C: TTypeInfoClass;
+  C: TTypeInfoStruct;
   i: Integer;
   Names: TJSObject;
   PropName: String;
   Prop: TTypeMemberProperty;
 begin
   Result:=nil;
-  C:=aTIClass;
+  C:=aTIStruct;
   Names:=TJSObject.new;
   while C<>nil do
   begin
@@ -662,15 +673,17 @@ begin
       TJSArray(Result).push(Prop);
       Names[PropName]:=true;
     end;
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then
+      break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
   if Sorted then
     TJSArray(Result).sort(@NameSort);
 end;
 
-function GetPropList(aTIClass: TTypeInfoClass): TTypeMemberPropertyDynArray;
+function GetPropList(aTIStruct: TTypeInfoStruct): TTypeMemberPropertyDynArray;
 begin
-  Result:=GetPropInfos(aTIClass);
+  Result:=GetPropInfos(aTIStruct);
 end;
 
 function GetPropList(AClass: TClass): TTypeMemberPropertyDynArray;
@@ -683,12 +696,12 @@ begin
   Result:=GetPropList(Instance.ClassType);
 end;
 
-function GetPropInfo(TI: TTypeInfoClass; const PropName: String
+function GetPropInfo(TI: TTypeInfoStruct; const PropName: String
   ): TTypeMemberProperty;
 var
   m: TTypeMember;
   i: Integer;
-  C: TTypeInfoClass;
+  C: TTypeInfoStruct;
 begin
   // quick search case sensitive
   C:=TI;
@@ -697,7 +710,9 @@ begin
     m:=C.Members[PropName];
     if m is TTypeMemberProperty then
       exit(TTypeMemberProperty(m));
-    C:=C.Ancestor;
+    if not (C is TTypeInfoClass) then
+      break;
+    C:=TTypeInfoClass(C).Ancestor;
   end;
 
   // slow search case insensitive
@@ -711,11 +726,13 @@ begin
           Result:=TTypeMemberProperty(m);
         exit;
       end;
-    TI:=TI.Ancestor;
+    if not (TI is TTypeInfoClass) then
+      break;
+    TI:=TTypeInfoClass(TI).Ancestor;
   until TI=nil;
 end;
 
-function GetPropInfo(TI: TTypeInfoClass; const PropName: String;
+function GetPropInfo(TI: TTypeInfoStruct; const PropName: String;
   const Kinds: TTypeKinds): TTypeMemberProperty;
 begin
   Result:=GetPropInfo(TI,PropName);
@@ -875,13 +892,19 @@ begin
     Result:=skField;
 end;
 
-function GetJSValueProp(Instance: TObject; const PropName: String): JSValue;
+function GetJSValueProp(Instance: TJSObject; TI: TTypeInfoStruct;
+  const PropName: String): JSValue;
+var
+  PropInfo: TTypeMemberProperty;
 begin
-  Result:=GetJSValueProp(Instance,FindPropInfo(Instance,PropName));
+  PropInfo:=GetPropInfo(TI,PropName);
+  if PropInfo=nil then
+    raise EPropertyError.CreateFmt(SErrPropertyNotFound, [PropName]);
+  Result:=GetJSValueProp(Instance,PropInfo);
 end;
 
-function GetJSValueProp(Instance: TObject; const PropInfo: TTypeMemberProperty
-  ): JSValue;
+function GetJSValueProp(Instance: TJSObject;
+  const PropInfo: TTypeMemberProperty): JSValue;
 type
   TGetter = function: JSValue of object;
   TGetterWithIndex = function(Index: JSValue): JSValue of object;
@@ -893,24 +916,40 @@ begin
     gkNone:
       raise EPropertyError.CreateFmt(SCantReadPropertyS, [PropInfo.Name]);
     gkField:
-      Result:=TJSObject(Instance)[PropInfo.Getter];
+      Result:=Instance[PropInfo.Getter];
     gkFunction:
       if (pfHasIndex and PropInfo.Flags)>0 then
-        Result:=TGetterWithIndex(TJSObject(Instance)[PropInfo.Getter])(PropInfo.Index)
+        Result:=TGetterWithIndex(Instance[PropInfo.Getter])(PropInfo.Index)
       else
-        Result:=TGetter(TJSObject(Instance)[PropInfo.Getter])();
+        Result:=TGetter(Instance[PropInfo.Getter])();
     gkFunctionWithParams:
       raise EPropertyError.CreateFmt(SIndexedPropertyNeedsParams, [PropInfo.Name]);
   end;
 end;
 
-procedure SetJSValueProp(Instance: TObject; const PropName: String;
-  Value: JSValue);
+function GetJSValueProp(Instance: TObject; const PropName: String): JSValue;
 begin
-  SetJSValueProp(Instance,FindPropInfo(Instance,PropName),Value);
+  Result:=GetJSValueProp(Instance,FindPropInfo(Instance,PropName));
 end;
 
-procedure SetJSValueProp(Instance: TObject;
+function GetJSValueProp(Instance: TObject; const PropInfo: TTypeMemberProperty
+  ): JSValue;
+begin
+  Result:=GetJSValueProp(TJSObject(Instance),PropInfo);
+end;
+
+procedure SetJSValueProp(Instance: TJSObject; TI: TTypeInfoStruct;
+  const PropName: String; Value: JSValue);
+var
+  PropInfo: TTypeMemberProperty;
+begin
+  PropInfo:=GetPropInfo(TI,PropName);
+  if PropInfo=nil then
+    raise EPropertyError.CreateFmt(SErrPropertyNotFound, [PropName]);
+  SetJSValueProp(Instance,PropInfo,Value);
+end;
+
+procedure SetJSValueProp(Instance: TJSObject;
   const PropInfo: TTypeMemberProperty; Value: JSValue);
 type
   TSetter = procedure(Value: JSValue) of object;
@@ -923,15 +962,27 @@ begin
     skNone:
       raise EPropertyError.CreateFmt(SCantWritePropertyS, [PropInfo.Name]);
     skField:
-      TJSObject(Instance)[PropInfo.Setter]:=Value;
+      Instance[PropInfo.Setter]:=Value;
     skProcedure:
       if (pfHasIndex and PropInfo.Flags)>0 then
-        TSetterWithIndex(TJSObject(Instance)[PropInfo.Setter])(PropInfo.Index,Value)
+        TSetterWithIndex(Instance[PropInfo.Setter])(PropInfo.Index,Value)
       else
-        TSetter(TJSObject(Instance)[PropInfo.Setter])(Value);
+        TSetter(Instance[PropInfo.Setter])(Value);
     skProcedureWithParams:
       raise EPropertyError.CreateFmt(SIndexedPropertyNeedsParams, [PropInfo.Name]);
   end;
+end;
+
+procedure SetJSValueProp(Instance: TObject; const PropName: String;
+  Value: JSValue);
+begin
+  SetJSValueProp(Instance,FindPropInfo(Instance,PropName),Value);
+end;
+
+procedure SetJSValueProp(Instance: TObject;
+  const PropInfo: TTypeMemberProperty; Value: JSValue);
+begin
+  SetJSValueProp(TJSObject(Instance),PropInfo,Value);
 end;
 
 function GetNativeIntProp(Instance: TObject; const PropName: String): NativeInt;
@@ -1265,24 +1316,26 @@ begin
   SetJSValueProp(Instance,PropInfo,Value);
 end;
 
-Function  GetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty) : Double;
+function GetFloatProp(Instance: TObject; PropInfo: TTypeMemberProperty): Double;
 begin
   Result:=Double(GetJSValueProp(Instance,PropInfo));
 end;
 
-Function  GetFloatProp(Instance: TObject; const PropName: string): Double;
+function GetFloatProp(Instance: TObject; const PropName: string): Double;
 
 begin
   Result:=GetFloatProp(Instance,FindPropInfo(Instance,PropName));
 end;
 
-Procedure SetFloatProp(Instance: TObject; const PropName: string; Value: Double);
+procedure SetFloatProp(Instance: TObject; const PropName: string; Value: Double
+  );
 
 begin
   SetFloatProp(Instance,FindPropInfo(Instance,PropName),Value);
 end;
 
-Procedure SetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty; Value : Double);
+procedure SetFloatProp(Instance: TObject; PropInfo: TTypeMemberProperty;
+  Value: Double);
 
 begin
   SetJSValueProp(Instance,PropInfo,Value);

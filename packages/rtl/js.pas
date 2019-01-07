@@ -782,7 +782,7 @@ Type
 
 Function GetValueType(JS : JSValue) : TJSValueType;
 
-Var
+Const
   Null : JSValue; external name 'null';
   Undefined : JSValue; external name 'undefined';
 

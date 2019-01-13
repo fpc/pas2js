@@ -1,6 +1,6 @@
 {
     This file is part of the Pas2JS run time library.
-    Copyright (c) 2017 by Mattias Gaertner
+    Copyright (c) 2017-2019 by the Pas2JS development team.
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.
@@ -649,7 +649,7 @@ Type
     property Items[aIndex : NativeInt] : TJSDataTransferItem Read getitem; default;
   end;
 
-  { TDataTransfer }
+  { TJSDataTransfer }
 
   TJSDataTransfer = class external name 'DataTransfer'
   private
@@ -731,7 +731,7 @@ Type
     Property error : TJSObject read FError;
   end;
 
-  TJsPageTransitionEvent = class(TJSEvent)
+  TJSPageTransitionEvent = class(TJSEvent)
   end;
 
   TJSHashChangeEvent = class external name 'HashChangeEvent' (TJSEvent)
@@ -2073,6 +2073,37 @@ Type
     property validationMessage : string read FValidationmMessage;
     property willValidate : boolean read FWillValidate;
     property validity : TJSValidityState read FValidity;
+  end;
+
+  { TJSHTMLImageElement }
+
+  TJSHTMLImageElement = class external name 'HTMLImageElement' (TJSHTMLElement)
+  Private
+    FComplete: boolean; external name 'complete';
+    FCurrentSrc: String; external name 'currentSrc';
+    FNaturalHeight: NativeUInt; external name 'naturalHeight';
+    FNaturalWidth: NativeUInt; external name 'naturalWidth';
+    FX: NativeInt; external name 'x';
+    FY: NativeInt; external name 'y';
+  Public
+    alt: String;
+    crossOrigin: String;
+    decoding: String;
+    height: NativeUInt;
+    isMap: boolean;
+    referrerPolicy: String;
+    src: String;
+    sizes: String;
+    srcset: String;
+    useMap: String;
+    width: NativeUInt;
+    function decode : TJSPromise;
+    property complete: boolean read FComplete;
+    property currentSrc: String read FCurrentSrc;
+    property naturalHeight: NativeUInt read FNaturalHeight;
+    property naturalWidth: NativeUInt read FNaturalWidth;
+    property x: NativeInt read FX;
+    property y: NativeInt read FY;
   end;
 
   { TJSHTMLMenuElement }

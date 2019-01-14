@@ -1550,7 +1550,7 @@ Type
 
   { TJSTouchList }
 
-  TJSTouchList = class external name 'TouchList'
+  TJSTouchList = class external name 'TouchList' (TJSObject)
   private
     FLength: NativeInt; external name 'length';
   Public

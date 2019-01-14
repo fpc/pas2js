@@ -41,7 +41,7 @@ Type
   TJSUIEvent = class;
   TJSTouchEvent = Class;
 
-  TJSAttr = class external name 'Attr'
+  TJSAttr = class external name 'Attr' (TJSObject)
   Private
     fLocalName : String; external name 'localName';
     fNameSpaceURI : String external name 'namespaceURI';
@@ -58,7 +58,7 @@ Type
 
   { TEventListenerEvent }
 
-  TEventListenerEvent = class external name 'EventListener_Event'
+  TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   private
     FTarget: TJSEventTarget; external name 'target';
   public
@@ -67,7 +67,7 @@ Type
 
   TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean;
 
-  TJSEventTarget = class external name 'EventTarget'
+  TJSEventTarget = class external name 'EventTarget' (TJSObject)
   public
     procedure addEventListener(aname : string; aListener : TJSEventHandler);
     procedure addEventListener(aname : string; aListener : JSValue);
@@ -137,7 +137,7 @@ Type
   TJSNodeListCallBack = procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList);
   TJSNodeListEvent = procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList) of object;
   
-  TJSNodeList = class external name 'NodeList'
+  TJSNodeList = class external name 'NodeList' (TJSObject)
   Private
     FLength : NativeInt; external name 'length';
   Public
@@ -148,13 +148,13 @@ Type
     Property Nodes [aIndex : NativeInt] : TJSNode Read item; default;
   end;
   
-  TJSNamedNodeMap = class external name 'NamedNodeMap'
+  TJSNamedNodeMap = class external name 'NamedNodeMap'  (TJSObject)
   Public
     function getNamedItem(aName : string) : TJSAttr;
     Property Attrs[aIndex : String] : TJSattr Read getNamedItem; default;
   end;
   
-  TJSHTMLCollection = class external name 'HTMLCollection'
+  TJSHTMLCollection = class external name 'HTMLCollection'  (TJSObject)
   Private
     FLength : NativeInt; external name 'length';
   public
@@ -170,7 +170,7 @@ Type
   TDOMTokenlistCallBack = Procedure (Current : JSValue; currentIndex : NativeInt; list : TJSDOMTokenList);
   
   // Interface
-  TJSDOMTokenList = class external name 'DOMTokenList'
+  TJSDOMTokenList = class external name 'DOMTokenList'  (TJSObject)
   Private
     FLength : NativeInt; external name 'length';
   public
@@ -186,7 +186,7 @@ Type
     property length : NativeInt read FLength;
   end;
 
-  TJSDOMRect = class external name 'DOMRect'
+  TJSDOMRect = class external name 'DOMRect'  (TJSObject)
   public
     left,top,right,bottom,x,y,width,height : double;
     {$IFDEF FIREFOX}
@@ -307,14 +307,14 @@ Type
     property systemId : String read FSystemID;
   end;
 
-  TJSDOMImplementation  = class external name 'DocumentImplementation'
+  TJSDOMImplementation  = class external name 'DocumentImplementation'  (TJSObject)
   Public  
     function createDocument(aNamespaceURI, aQualifiedNameStr : String; aDocumentType : TJSDocumentType) : TJSDocument;
     function createDocumentType(aQualifiedNameStr,aPublicId,aSystemId : String) : TJSDocumentType;
     function createHTMLDocument(aTitle : String) : TJSDocument;
   end;
 
-  TJSLocation = class external name 'Location'
+  TJSLocation = class external name 'Location'  (TJSObject)
   Private
     FOrigin : string;
   Public
@@ -352,7 +352,7 @@ Type
   end;
 
 
-  TJSCSSRule = class external name 'CSSRule'
+  TJSCSSRule = class external name 'CSSRule'  (TJSObject)
   Private
     FCSSText : String; external name 'cssText';
     FParentStyleSheet : TJSCSSStyleSheet; external name 'parentStyleSheet';
@@ -363,7 +363,7 @@ Type
     property parentStyleSheet : TJSCSSStyleSheet Read FParentStyleSheet;
   end;
   
-  TJSCSSRuleList = Class external name 'CSSRuleList'
+  TJSCSSRuleList = Class external name 'CSSRuleList'  (TJSObject)
   Private
     FLength : NativeInt; external name 'length';
   Public
@@ -382,7 +382,7 @@ Type
     Property cssRules : TJSCSSRuleList read FCSSRules;
   end;
 
-  TJSStyleSheetList = Class external name 'StyleSheetList'
+  TJSStyleSheetList = Class external name 'StyleSheetList'  (TJSObject)
   Private
     FLength : NativeInt; external name 'length';
   Public
@@ -416,7 +416,7 @@ Type
     composed : boolean;
   end;
 
-  TJSEvent = class external name 'Event'
+  TJSEvent = class external name 'Event'  (TJSObject)
   Private
     FBubbles : Boolean; external name 'bubbles';
     FCancelable : Boolean; external name 'cancelable';
@@ -453,13 +453,13 @@ Type
   end;
 
 
-  TJSXPathExpression = class external name 'XPathExpression'
+  TJSXPathExpression = class external name 'XPathExpression'  (TJSObject)
   Public
     function evaluate(contextNode : TJSNode; aType : NativeInt; aResult : TJSXPathResult) : TJSXPathResult;
     function evaluateWithContext(contextNode : TJSNode; aPosition, aSize, aType : NativeInt; aResult : TJSXPathResult) : TJSXPathResult;
   end;
 
-  TJSXPathNSResolver = class external name 'XPathNSResolver'
+  TJSXPathNSResolver = class external name 'XPathNSResolver'  (TJSObject)
   Public
     function lookupNamespaceURI(prefix : string) : string;
   end;
@@ -479,7 +479,7 @@ Type
 
   { TJSRange }
 
-  TJSRange = class external name 'Range'
+  TJSRange = class external name 'Range'  (TJSObject)
   private
     FCollapsed: boolean; external name 'collapsed';
     FcommonAncestorContainer: TJSNode; external name 'commonAncestorContainer';
@@ -525,7 +525,7 @@ Type
 
   { TJSTreeWalker }
 
-  TJSTreeWalker = class external name 'TreeWalker'
+  TJSTreeWalker = class external name 'TreeWalker' (TJSObject)
   private
     FCurrentNode: TJSNode; external name 'currentNode';
     FexpandEntityReference: Boolean; external name 'expandEntityReference';
@@ -548,7 +548,7 @@ Type
     property currentNode : TJSNode Read FCurrentNode;
   end;
 
-  TJSNodeFilter = class external name 'NodeFilter'
+  TJSNodeFilter = class external name 'NodeFilter'  (TJSObject)
     const
       SHOW_ALL                    = -1;
       SHOW_ATTRIBUTE              = 2;
@@ -566,7 +566,7 @@ Type
     function acceptNode (aNode : TJSNode) : NativeInt;
   end;
 
-  TJSXPathResult = class external name 'XPathResult'
+  TJSXPathResult = class external name 'XPathResult'  (TJSObject)
   private
     FBooleanValue : Boolean; external name 'booleanValue';
     FNumberValue : Double; external name 'numberValue';
@@ -585,7 +585,7 @@ Type
     property stringValue : String Read FStringValue;
   end;
 
-  TJSSelection = class external name 'Selection'
+  TJSSelection = class external name 'Selection'  (TJSObject)
   Private
     FanchorNode : TJSNode ; external name 'anchorNode';
     FanchorOffset : NativeInt ; external name 'anchorOffset';
@@ -625,7 +625,7 @@ Type
 
   TJSDataTransferItemCallBack = reference to Procedure(aData : String);
 
-  TJSDataTransferItem = class external name 'DataTransferItem'
+  TJSDataTransferItem = class external name 'DataTransferItem'  (TJSObject)
   private
     FKind: String; external name 'kind';
     FType: string; external name 'type';
@@ -636,7 +636,7 @@ Type
     property _Type : string read FType;
   end;
 
-  TJSDataTransferItemList = class external name 'DataTransferItemList'
+  TJSDataTransferItemList = class external name 'DataTransferItemList'  (TJSObject)
   private
     FLength: NativeInt; external name 'length';
     function getitem(aIndex : nativeInt) : TJSDataTransferItem ; external name '[]';
@@ -651,7 +651,7 @@ Type
 
   { TJSDataTransfer }
 
-  TJSDataTransfer = class external name 'DataTransfer'
+  TJSDataTransfer = class external name 'DataTransfer'  (TJSObject)
   private
     FFiles: TJSHTMLFileList; external name 'files';
     FItems: TJSDataTransferItemList; external name 'items';
@@ -984,7 +984,7 @@ Type
     property visibilityState : string read FVisibilityState;
   end;
 
-  TJSConsole = class external name 'Console'
+  TJSConsole = class external name 'Console'  (TJSObject)
   Public
     procedure assert(anAssertion : string; Obj1 : JSValue); varargs;
     Procedure clear;  
@@ -1010,7 +1010,7 @@ Type
 
   { TJSCryptoKey }
 
-  TJSCryptoKey = class external name 'CryptoKey'
+  TJSCryptoKey = class external name 'CryptoKey'  (TJSObject)
   private
     FAlgorithm: JSValue; external name 'algorithm';
     FExtractable: Boolean; external name 'extractable';
@@ -1028,7 +1028,7 @@ Type
 //  TJSBufferSource = class external name 'BufferSource' end;
 //  TJSTypedArray = class external name 'TypedArray' end;
 
-  TJSSubtleCrypto = class external name 'SubtleCrypto'
+  TJSSubtleCrypto = class external name 'SubtleCrypto'  (TJSObject)
   Public
     function decrypt(algorithm : JSValue; aKey : TJSCryptoKey; aData : TJSBufferSource) : TJSPromise;
     function deriveKey(algorithm : JSValue; aMasterKey : TJSCryptoKey; aDerivedAlgo : JSValue; extractable : Boolean; Usages : TStringDynArray) : TJSPromise;
@@ -1049,7 +1049,7 @@ Type
   
   { TJSCrypto }
 
-  TJSCrypto = class external name 'Crypto'
+  TJSCrypto = class external name 'Crypto'  (TJSObject)
   private
     FsubtleCrypto: TJSSubtleCrypto;
   Public
@@ -1059,7 +1059,7 @@ Type
   
   { TJSHistory }
 
-  TJSHistory = class external name 'History'
+  TJSHistory = class external name 'History'  (TJSObject)
   private
     FLength: NativeInt; external name 'length';
 {$IFDEF FIREFOX}
@@ -1109,7 +1109,7 @@ Type
 
   { TJSIDBKeyRange }
 
-  TJSIDBKeyRange = class external name 'IDBKeyRange'
+  TJSIDBKeyRange = class external name 'IDBKeyRange'  (TJSObject)
   private
     FLower: JSValue;
     FLowerOpen: Boolean;
@@ -1140,7 +1140,7 @@ Type
 
   { TJSIDBIndex }
 
-  TJSIDBIndex = class external name 'IDBIndex'
+  TJSIDBIndex = class external name 'IDBIndex'  (TJSObject)
   private
     FKeyPath: JSValue; external name 'keyPath';
     FMultiEntry: Boolean; external name 'multiEntry';
@@ -1172,7 +1172,7 @@ Type
     property unique : boolean read FUnique;
   end;
 
-  TJSIDBCursorDirection = class external name 'IDBCursorDirection'
+  TJSIDBCursorDirection = class external name 'IDBCursorDirection'  (TJSObject)
   Const
     next = 'next';
     nextUnique = 'nextUnique';
@@ -1183,7 +1183,7 @@ Type
 
   { TJSIDBCursor }
 
-  TJSIDBCursor = class external name 'IDBCursor'
+  TJSIDBCursor = class external name 'IDBCursor'  (TJSObject)
   private
     FDirection: string; external name 'direction';
     FKey: JSValue; external name 'key';
@@ -1347,7 +1347,7 @@ Type
   end;
 
   // Fake object, used for objects whose visible can be checked
-  TJSVisibleItem = class external name 'IVisible'
+  TJSVisibleItem = class external name 'IVisible'  (TJSObject)
   Private
     FVisible : boolean; external name 'visible';
   Public
@@ -1391,7 +1391,7 @@ Type
   TJSGeoLocationErrorCallback = procedure (aValue : TJSPositionError);
   TJSGeoLocationErrorEvent = procedure (aValue : TJSPositionError) of object;
 
-  TJSGeoLocation  = class external name 'GeoLocation'
+  TJSGeoLocation  = class external name 'GeoLocation'  (TJSObject)
   Public
     Procedure getCurrentPosition(ASuccess : TJSGeoLocationCallback); overload;
     Procedure getCurrentPosition(ASuccess : TJSGeoLocationCallback;aError : TJSGeoLocationErrorCallback); overload;
@@ -1445,7 +1445,7 @@ Type
 
   { TJSServiceWorkerRegistration }
 
-  TJSServiceWorkerRegistration = class external name 'ServiceWorkerRegistration'
+  TJSServiceWorkerRegistration = class external name 'ServiceWorkerRegistration'  (TJSObject)
   private
     FActive: TJSServiceWorker; external name 'active';
     FInstalling: TJSServiceWorker; external name 'installing';
@@ -1466,7 +1466,7 @@ Type
 
   { TJSServiceWorkerContainer }
 
-  TJSServiceWorkerContainer = class external name 'ServiceWorkerContainer'
+  TJSServiceWorkerContainer = class external name 'ServiceWorkerContainer'  (TJSObject)
   private
     FController: TJSServiceWorker; external name 'controller';
     FReady: TJSPromise; external name 'ready';
@@ -1483,7 +1483,7 @@ Type
 
   { TJSNavigator }
 
-  TJSNavigator = class external name 'Navigator'
+  TJSNavigator = class external name 'Navigator'  (TJSObject)
 {$IFDEF FIREFOX}
     FbuildID : String ; external name 'buildID';
     FOSCPU : String ; external name 'oscpu';
@@ -1527,7 +1527,7 @@ Type
   { TJSTouchEvent }
   TTouchCoord = longint;
 
-  TJSTouch = class external name 'Touch'
+  TJSTouch = class external name 'Touch'  (TJSObject)
   private
     FClientX: TTouchCoord; external name 'clientX';
     FClientY: TTouchCoord; external name 'clientY';
@@ -1777,7 +1777,7 @@ Type
 
   { TJSCSSStyleDeclaration }
 
-  TJSCSSStyleDeclaration = class external name 'CSSStyleDeclaration'
+  TJSCSSStyleDeclaration = class external name 'CSSStyleDeclaration'  (TJSObject)
   private
     FLength: NativeInt; external name 'length';
     FParentRule: TJSCSSRule; external name 'parentRule';
@@ -1935,7 +1935,7 @@ Type
 
   { TJSValidityState }
 
-  TJSValidityState = class external name 'ValidityState'
+  TJSValidityState = class external name 'ValidityState'  (TJSObject)
   private
     FBadInput: Boolean; external name 'badInput';
     FCustomError: Boolean; external name 'customError';
@@ -2380,18 +2380,18 @@ Type
   end;
 
   // Opaque objects
-  TJSCanvasGradient = class external name 'CanvasGradient'
+  TJSCanvasGradient = class external name 'CanvasGradient'  (TJSObject)
   end;
 
-  TJSCanvasPattern = class external name 'CanvasPattern'
+  TJSCanvasPattern = class external name 'CanvasPattern'  (TJSObject)
   end;
 
-  TJSPath2D = class external name 'Path2D'
+  TJSPath2D = class external name 'Path2D'  (TJSObject)
   end;
 
   { TJSImageData }
 
-  TJSImageData = class external name 'ImageData'
+  TJSImageData = class external name 'ImageData'  (TJSObject)
   private
     FData: TJSUint8ClampedArray; external name 'data';
     FHeight: Integer; external name 'height';
@@ -2422,7 +2422,7 @@ Type
   end;
 
   { TJSCanvasRenderingContext2D }
-  TJSCanvasRenderingContext2D = class external name 'CanvasRenderingContext2D'
+  TJSCanvasRenderingContext2D = class external name 'CanvasRenderingContext2D'  (TJSObject)
   private
     FCanvas: TJSHTMLCanvasElement; external name 'canvas';
     FfillStyleColor: String; external name 'fillStyle';

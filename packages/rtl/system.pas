@@ -291,12 +291,12 @@ procedure val(const S: String; out b : boolean; out Code: Integer); overload;
 function StringOfChar(c: Char; l: NativeInt): String;
 function Lo(i: word): byte; overload;
 function Lo(i: smallint): byte; overload;
-function Lo(i: longint): byte; overload;
-function Lo(i: longword): byte; overload;
+function Lo(i: longword): word; overload;
+function Lo(i: longint): word; overload;
 function Hi(i: word): byte; overload;
 function Hi(i: smallint): byte; overload;
-function Hi(i: longword): byte; overload;
-function Hi(i: longint): byte; overload;
+function Hi(i: longword): word; overload;
+function Hi(i: longint): word; overload;
 
 {*****************************************************************************
                           Other functions
@@ -439,9 +439,19 @@ begin
     Target:=copy(t,1,Index-1)+Insertion+copy(t,Index,length(t));
 end;
 
+type
+  TJSArguments = class external name 'arguments'
+  private
+    FLength: NativeInt; external name 'length';
+    function GetElements(Index: NativeInt): JSValue; external name '[]';
+    procedure SetElements(Index: NativeInt; const AValue: JSValue); external name '[]';
+  public
+    property Length: NativeInt read FLength;
+    property Elements[Index: NativeInt]: JSValue read GetElements write SetElements; default;
+  end;
 var
   WriteBuf: String;
-  JSArguments: array of JSValue; external name 'arguments';
+  JSArguments: TJSArguments; external name 'arguments';
   WriteCallBack : TConsoleHandler;
 
 Function SetWriteCallBack(H : TConsoleHandler) : TConsoleHandler;
@@ -455,7 +465,7 @@ procedure Write;
 var
   i: Integer;
 begin
-  for i:=0 to length(JSArguments)-1 do
+  for i:=0 to JSArguments.Length-1 do
     if Assigned(WriteCallBack) then
       WriteCallBack(JSArguments[i],False)
     else
@@ -469,7 +479,7 @@ var
   s: String;
 
 begin
-  L:=length(JSArguments)-1;
+  L:=JSArguments.Length-1;
   if Assigned(WriteCallBack) then
     begin
     for i:=0 to L do
@@ -626,12 +636,12 @@ begin
   Result:=i and $ff;
 end;
 
-function Lo(i: longint): byte;
+function Lo(i: longword): word;
 begin
   Result:=i and $ffff;
 end;
 
-function Lo(i: longword): byte;
+function Lo(i: longint): word;
 begin
   Result:=i and $ffff;
 end;
@@ -646,12 +656,12 @@ begin
   Result:=(i shr 8) and $ff;
 end;
 
-function Hi(i: longword): byte;
+function Hi(i: longword): word;
 begin
   Result:=(i shr 16) and $ffff;
 end;
 
-function Hi(i: longint): byte;
+function Hi(i: longint): word;
 begin
   Result:=(i shr 16) and $ffff;
 end;

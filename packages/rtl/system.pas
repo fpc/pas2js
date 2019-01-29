@@ -444,10 +444,9 @@ type
   private
     FLength: NativeInt; external name 'length';
     function GetElements(Index: NativeInt): JSValue; external name '[]';
-    procedure SetElements(Index: NativeInt; const AValue: JSValue); external name '[]';
   public
     property Length: NativeInt read FLength;
-    property Elements[Index: NativeInt]: JSValue read GetElements write SetElements; default;
+    property Elements[Index: NativeInt]: JSValue read GetElements; default;
   end;
 var
   WriteBuf: String;

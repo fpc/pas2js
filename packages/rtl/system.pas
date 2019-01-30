@@ -289,14 +289,6 @@ procedure val(const S: String; out C : Cardinal; out Code: Integer); overload;
 procedure val(const S: String; out d : double; out Code : Integer); overload;
 procedure val(const S: String; out b : boolean; out Code: Integer); overload;
 function StringOfChar(c: Char; l: NativeInt): String;
-function Lo(i: word): byte; overload;
-function Lo(i: smallint): byte; overload;
-function Lo(i: longword): word; overload;
-function Lo(i: longint): word; overload;
-function Hi(i: word): byte; overload;
-function Hi(i: smallint): byte; overload;
-function Hi(i: longword): word; overload;
-function Hi(i: longint): word; overload;
 
 {*****************************************************************************
                           Other functions
@@ -623,46 +615,6 @@ begin
   end;
   Result:='';
   for i:=1 to l do Result:=Result+c;
-end;
-
-function Lo(i: word): byte;
-begin
-  Result:=i and $ff;
-end;
-
-function Lo(i: smallint): byte;
-begin
-  Result:=i and $ff;
-end;
-
-function Lo(i: longword): word;
-begin
-  Result:=i and $ffff;
-end;
-
-function Lo(i: longint): word;
-begin
-  Result:=i and $ffff;
-end;
-
-function Hi(i: word): byte;
-begin
-  Result:=(i shr 8) and $ff;
-end;
-
-function Hi(i: smallint): byte;
-begin
-  Result:=(i shr 8) and $ff;
-end;
-
-function Hi(i: longword): word;
-begin
-  Result:=(i shr 16) and $ffff;
-end;
-
-function Hi(i: longint): word;
-begin
-  Result:=(i shr 16) and $ffff;
 end;
 
 function Assigned(const V: JSValue): boolean; assembler;

@@ -70,7 +70,7 @@ begin
     PanelContent.removeChild(PanelContent.childNodes.item(PanelContent.childNodes.length-1));}
   if (xhr.status = 200) then
     begin
-    J:=TJSJSON.parse(xhr.responseText);
+    J:=TJSJSON.parseObject(xhr.responseText);
     A:=TJSObjectDynArray(J.Properties['Data']);
     Table:=CreateTable;
     Document.Body.append(Table);

@@ -371,8 +371,8 @@ type
 
   TJSArray = class external name 'Array'
   public
-    length: nativeint;
-    constructor new; overload;
+    //length: nativeint;
+    //constructor new; overload;
     function push(aElement : JSValue) : NativeInt; varargs;
   end;
 

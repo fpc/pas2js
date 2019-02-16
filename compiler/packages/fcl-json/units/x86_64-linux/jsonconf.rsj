@@ -1,0 +1,5 @@
+{"version":1,"strings":[
+{"hash":246587102,"name":"jsonconf.serrinvalidjsonfile","sourcebytes":[34,37,115,34,32,105,115,32,110,111,116,32,97,32,118,97,108,105,100,32,74,83,79,78,32,99,111,110,102,105,103,117,114,97,116,105,111,110,32,102,105,108,101,46],"value":"\"%s\" is not a valid JSON configuration file."},
+{"hash":242487694,"name":"jsonconf.serrcouldnotopenkey","sourcebytes":[67,111,117,108,100,32,110,111,116,32,111,112,101,110,32,107,101,121,32,34,37,115,34,46],"value":"Could not open key \"%s\"."},
+{"hash":12426702,"name":"jsonconf.serrcannotnotreplacekey","sourcebytes":[65,32,40,115,117,98,41,107,101,121,32,119,105,116,104,32,110,97,109,101,32,34,37,115,34,32,97,108,114,101,97,100,121,32,101,120,105,115,116,115,46],"value":"A (sub)key with name \"%s\" already exists."}
+]}

@@ -1,0 +1,10 @@
+Name=utils-pas2js
+Version=3.3.1
+Checksum=1549701314
+CPU=x86_64
+OS=linux
+SourcePath=/home/mattias/pascal/fpc_sources/3.3.1/fpc/utils/pas2js/
+FPMakeOptions=-o -Ur -o -Xs -o -O2 -o -n -o -Cg -o -dx86_64 -o -dRELEASE
+Depends=rtl,fcl-json|1549701248,fcl-js|1549701252,fcl-passrc|1549701253,pastojs|1549701292,fcl-web|1549701257,webidl|1549701293
+NeedLibC=N
+FPMakeAddIn=N

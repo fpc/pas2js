@@ -1,0 +1,9 @@
+{"version":1,"strings":[
+{"hash":77244558,"name":"jsonreader.serrunexpectedeof","sourcebytes":[85,110,101,120,112,101,99,116,101,100,32,69,79,70,32,101,110,99,111,117,110,116,101,114,101,100,46],"value":"Unexpected EOF encountered."},
+{"hash":171419534,"name":"jsonreader.serrunexpectedtoken","sourcebytes":[85,110,101,120,112,101,99,116,101,100,32,116,111,107,101,110,32,40,37,115,41,32,101,110,99,111,117,110,116,101,114,101,100,46],"value":"Unexpected token (%s) encountered."},
+{"hash":171025534,"name":"jsonreader.serrexpectedcolon","sourcebytes":[69,120,112,101,99,116,101,100,32,99,111,108,111,110,32,40,58,41,44,32,103,111,116,32,116,111,107,101,110,32,34,37,115,34,46],"value":"Expected colon (:), got token \"%s\"."},
+{"hash":174529602,"name":"jsonreader.serrexpectedelementname","sourcebytes":[69,120,112,101,99,116,101,100,32,101,108,101,109,101,110,116,32,110,97,109,101,44,32,103,111,116,32,116,111,107,101,110,32,34,37,115,34],"value":"Expected element name, got token \"%s\""},
+{"hash":182858430,"name":"jsonreader.sexpectedcommaorbraceclose","sourcebytes":[69,120,112,101,99,116,101,100,32,44,32,111,114,32,93,44,32,103,111,116,32,116,111,107,101,110,32,34,37,115,34,46],"value":"Expected , or ], got token \"%s\"."},
+{"hash":222938003,"name":"jsonreader.serrinvalidnumber","sourcebytes":[78,117,109,98,101,114,32,105,115,32,110,111,116,32,97,110,32,105,110,116,101,103,101,114,32,111,114,32,114,101,97,108,32,110,117,109,98,101,114,58,32,37,115],"value":"Number is not an integer or real number: %s"},
+{"hash":70947455,"name":"jsonreader.serrnoscanner","sourcebytes":[78,111,32,115,99,97,110,110,101,114,46,32,78,111,32,115,111,117,114,99,101,32,115,112,101,99,105,102,105,101,100,32,63],"value":"No scanner. No source specified ?"}
+]}

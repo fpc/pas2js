@@ -1,0 +1,5 @@
+{"version":1,"strings":[
+{"hash":5885991,"name":"jsonscanner.serrinvalidcharacter","sourcebytes":[73,110,118,97,108,105,100,32,99,104,97,114,97,99,116,101,114,32,97,116,32,108,105,110,101,32,37,100,44,32,112,111,115,32,37,100,58,32,39,37,115,39],"value":"Invalid character at line %d, pos %d: '%s'"},
+{"hash":163695895,"name":"jsonscanner.sunterminatedcomment","sourcebytes":[85,110,116,101,114,109,105,110,97,116,101,100,32,99,111,109,109,101,110,116,32,97,116,32,108,105,110,101,32,37,100,44,32,112,111,115,32,37,100,58,32,39,37,115,39],"value":"Unterminated comment at line %d, pos %d: '%s'"},
+{"hash":127311205,"name":"jsonscanner.serropenstring","sourcebytes":[115,116,114,105,110,103,32,101,120,99,101,101,100,115,32,101,110,100,32,111,102,32,108,105,110,101],"value":"string exceeds end of line"}
+]}

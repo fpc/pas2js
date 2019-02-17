@@ -463,6 +463,7 @@ type
     procedure SetTimePMString(const Value: string);
     procedure SetTimeSeparator(const Value: char);
   public
+    class constructor Init;
     Property ShortMonthNames : TMonthNames Read GetShortMonthNames Write SetShortMonthNames;
     Property LongMonthNames : TMonthNames Read GetLongMonthNames Write SetLongMonthNames;
     Property ShortDayNames : TDayNames Read GetShortDayNames Write SetShortDayNames;
@@ -4146,6 +4147,11 @@ begin
   SysUtils.TimeSeparator := Value;
 end;
 
+class constructor TFormatSettings.Init;
+begin
+  FormatSettings := TFormatSettings.Create;
+end;
+
 { ---------------------------------------------------------------------
   FileNames
   ---------------------------------------------------------------------}
@@ -4403,10 +4409,6 @@ begin
   end else
     Result := '';
 end;
-
-
-initialization
-  FormatSettings := TFormatSettings.Create;
 
 end.
 

@@ -134,6 +134,12 @@ type
     function ToString: String; virtual;
   end;
 
+  { TCustomAttribute - base class of all user defined attributes. }
+
+  TCustomAttribute = class
+  end;
+  TCustomAttributeArray = array of TCustomAttribute;
+
 const
   { IInterface }
   S_OK          = 0;

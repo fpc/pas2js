@@ -68,12 +68,15 @@ const
   tkProperties = tkAny-tkMethods-[tkUnknown];
 
 type
+  TTypeInfoAttributes = type TJSValueDynArray;
+
   { TTypeInfo }
 
   TTypeInfo = class external name 'rtl.tTypeInfo'
   public
     Name: String external name 'name';
     Kind: TTypeKind external name 'kind';
+    Attributes: TTypeInfoAttributes external name 'attr'; // can be undefined
   end;
   TTypeInfoClassOf = class of TTypeInfo;
 
@@ -222,6 +225,7 @@ type
   public
     Name: String external name 'name';
     Kind: TTypeMemberKind external name 'kind';
+    Attributes: TTypeInfoAttributes external name 'attr'; // can be undefined
   end;
   TTypeMemberDynArray = array of TTypeMember;
 
@@ -361,6 +365,8 @@ function CreateMethod(Instance: TObject; FuncName: String): Pointer; external na
 function GetInterfaceMembers(aTIInterface: TTypeInfoInterface): TTypeMemberDynArray;
 function GetInterfaceMember(aTIInterface: TTypeInfoInterface; const aName: String): TTypeMember;
 function GetInterfaceMethods(aTIInterface: TTypeInfoInterface): TTypeMemberMethodDynArray;
+
+function GetRTTIAttributes(const Attributes: TTypeInfoAttributes): TCustomAttributeArray;
 
 function GetPropInfos(aTIStruct: TTypeInfoStruct): TTypeMemberPropertyDynArray;
 function GetPropList(aTIStruct: TTypeInfoStruct; TypeKinds: TTypeKinds; Sorted: boolean = true): TTypeMemberPropertyDynArray;
@@ -621,6 +627,42 @@ begin
     end;
     Intf:=Intf.Ancestor;
   end;
+end;
+
+type
+  TCreatorAttribute = class external name 'attr'
+    class function Create(const ProcName: string): TCustomAttribute; overload; external name '$create';
+    class function Create(const ProcName: string; Params: jsvalue): TCustomAttribute; overload; external name '$create';
+  end;
+  TCreatorAttributeClass = class of TCreatorAttribute;
+
+function GetRTTIAttributes(const Attributes: TTypeInfoAttributes
+  ): TCustomAttributeArray;
+var
+  i, len: Integer;
+  AttrClass: TCreatorAttributeClass;
+  ProcName: String;
+  Attr: TCustomAttribute;
+begin
+  Result:=nil;
+  if Attributes=Undefined then exit;
+  i:=0;
+  len:=length(Attributes);
+  while i<len do
+    begin
+    AttrClass:=TCreatorAttributeClass(Attributes[i]);
+    inc(i);
+    ProcName:=String(Attributes[i]);
+    inc(i);
+    if (i<len) and isArray(Attributes[i]) then
+      begin
+      Attr:=AttrClass.Create(ProcName,Attributes[i]);
+      inc(i);
+      end
+    else
+      Attr:=AttrClass.Create(ProcName);
+    Insert(Attr,Result,length(Result));
+    end;
 end;
 
 function GetPropInfos(aTIStruct: TTypeInfoStruct): TTypeMemberPropertyDynArray;

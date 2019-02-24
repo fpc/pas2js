@@ -68,6 +68,14 @@ const
   tkProperties = tkAny-tkMethods-[tkUnknown];
 
 type
+
+  { TTypeInfoModule }
+
+  TTypeInfoModule = class external name 'pasmodule'
+  public
+    Name: String external name '$name';
+  end;
+
   TTypeInfoAttributes = type TJSValueDynArray;
 
   { TTypeInfo }
@@ -77,6 +85,7 @@ type
     Name: String external name 'name';
     Kind: TTypeKind external name 'kind';
     Attributes: TTypeInfoAttributes external name 'attr'; // can be undefined
+    Module: TTypeInfoModule external name '$module'; // can be undefined
   end;
   TTypeInfoClassOf = class of TTypeInfo;
 

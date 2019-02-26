@@ -2337,5 +2337,6 @@ end;
 
 Initialization
   RegisterTests([TTestPrecompile]);
+  RegisterPCUFormat;
 end.
 

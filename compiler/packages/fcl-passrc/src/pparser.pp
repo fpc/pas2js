@@ -4262,7 +4262,7 @@ begin
     UngetToken;
     exit;
     end;
-  Include(varMods,ExtMod);
+  Include(VarMods,ExtMod);
   Result:=Result+';'+CurTokenText;
 
   NextToken;
@@ -4373,14 +4373,14 @@ begin
       NextToken;
       If Curtoken<>tkSemicolon then
         UnGetToken;
-      VarEl:=TPasVariable(VarList[0]);
+      VarEl:=TPasVariable(VarList[OldListCount]);
       AllowedVarMods:=[];
       if ExternalStruct then
         AllowedVarMods:=[vmExternal]
       else
         AllowedVarMods:=[vmCVar,vmExternal,vmPublic,vmExport];
       Mods:=GetVariableModifiers(VarEl,VarMods,aLibName,aExpName,AllowedVarMods);
-      if (mods='') and (CurToken<>tkSemicolon) then
+      if (Mods='') and (CurToken<>tkSemicolon) then
         NextToken;
       end
     else

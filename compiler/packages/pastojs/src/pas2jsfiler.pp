@@ -170,7 +170,7 @@ const
     'PrefixedAttributes',
     'IgnoreAttributes',
     'OmitRTTI',
-    'MultipleScopeHelpers'
+    'MultiHelpers'
     );
 
   PCUDefaultBoolSwitches: TBoolSwitches = [
@@ -1385,8 +1385,10 @@ begin
     msISOLikeMod: Result:=43;
     msExternalClass: Result:=44;
     msPrefixedAttributes: Result:=45;
-    // msIgnoreInterfaces: Result:=46;
+    // was: msIgnoreInterfaces: Result:=46;
     msIgnoreAttributes: Result:=47;
+    msOmitRTTI: Result:=48;
+    msMultiHelpers: Result:=49;
   end;
 end;
 
@@ -4892,6 +4894,8 @@ begin
     begin
     s:=Names[i];
     Found:=false;
+    if (FileVersion<5) and (SameText(s,'multiplescopehelpers')) then
+      s:=PCUModeSwitchNames[msMultiHelpers];
     for f in TModeSwitch do
       if s=PCUModeSwitchNames[f] then
         begin

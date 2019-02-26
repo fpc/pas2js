@@ -87,6 +87,7 @@
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
       <OtherUnitFiles Value="../../fcl-json/src;../src"/>
+      <UnitOutputDirectory Value="units/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>
       <Checks>
@@ -102,9 +103,6 @@
     </CodeGeneration>
     <Other>
       <CustomOptions Value="-dVerboseSrcMap"/>
-      <OtherDefines Count="1">
-        <Define0 Value="VerboseSrcMap"/>
-      </OtherDefines>
     </Other>
   </CompilerOptions>
   <Debugging>

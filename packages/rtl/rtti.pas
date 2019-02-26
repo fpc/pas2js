@@ -18,15 +18,50 @@ unit RTTI;
 interface
 
 uses
-  Types, TypInfo, JS;
+  JS, RTLConsts, Types, SysUtils, TypInfo;
 
 resourcestring
   SErrInvokeInvalidCodeAddr = 'CodeAddress is not a function';
 
 type
-  // will be changed to 'record' and improved as soon as the
-  // operator overloading is implemented
-  TValue = JSValue;
+
+  { TValue }
+
+  TValue = record
+  private
+    FTypeInfo: TTypeInfo;
+    FData: JSValue;
+    function GetIsEmpty: boolean;
+    function GetTypeKind: TTypeKind;
+  public
+    class function FromJSValue(v: JSValue): TValue; static;
+
+    property Kind: TTypeKind read GetTypeKind;
+    property TypeInfo: TTypeInfo read FTypeInfo;
+
+    property IsEmpty: boolean read GetIsEmpty; // check if nil or undefined
+    function IsObject: boolean;
+    function AsObject: TObject;
+    function IsObjectInstance: boolean;
+    function IsArray: boolean;
+    function IsClass: boolean;
+    function AsClass: TClass;
+    function IsOrdinal: boolean;
+    function AsOrdinal: NativeInt;
+    function AsBoolean: boolean;
+    //ToDo: function AsCurrency: Currency;
+    function AsInteger: Integer;
+    function AsNativeInt: NativeInt;
+    function AsInterface: IInterface;
+    function AsString: string;
+    function AsUnicodeString: UnicodeString;
+    function AsExtended: Extended;
+    function ToString: String;
+    function GetArrayLength: SizeInt;
+    function GetArrayElement(aIndex: SizeInt): TValue;
+    //ToDo: procedure SetArrayElement(aIndex: SizeInt; constref AValue: TValue);
+    function IsType(ATypeInfo: PTypeInfo): boolean;
+  end;
 
   TRttiType = class;
 
@@ -35,6 +70,7 @@ type
   TRTTIContext = record
   private
     FPool: TJSObject; // maps 'modulename.typename' to TRTTIType
+    class constructor Init;
   public
     class function Create: TRTTIContext; static;
     procedure Free;
@@ -46,10 +82,8 @@ type
   { TRttiObject }
 
   TRttiObject = class abstract
-  protected
-    //function GetHandle: Pointer; virtual; abstract;
   public
-    //property Handle: Pointer read GetHandle;
+    //property Handle: Pointer read GetHandle;  not supported in pas2js
     function GetAttributes: TCustomAttributeArray; virtual;
   end;
 
@@ -61,6 +95,85 @@ type
   public
     property Name: string read GetName;
   end;
+
+  { TRttiMember }
+
+  TMemberVisibility=(
+    mvPrivate,
+    mvProtected,
+    mvPublic,
+    mvPublished);
+
+  TRttiMember = class(TRttiNamedObject)
+  private
+    FTypeInfo: TTypeMember;
+    FParent: TRttiType;
+  protected
+    function GetName: string; override;
+    function GetVisibility: TMemberVisibility; virtual;
+  public
+    constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
+    function GetAttributes: TCustomAttributeArray; override;
+    property Visibility: TMemberVisibility read GetVisibility;
+    property Parent: TRttiType read FParent;
+  end;
+
+  { TRttiField }
+
+  TRttiField = class(TRttiMember)
+  private
+    function GetFieldType: TRttiType;
+  public
+    property FieldType: TRttiType read GetFieldType;
+    //function GetValue(Instance: Pointer): TValue;
+    //procedure SetValue(Instance: Pointer; const AValue: TValue);
+    //function ToString: string; override;
+  end;
+  TRttiFieldArray = array of TRttiField;
+
+  { TRttiMethod }
+
+  TRttiMethod = class(TRttiMember)
+  private
+    function GetIsClassMethod: boolean;
+    function GetIsConstructor: boolean;
+    function GetIsDestructor: boolean;
+    function GetIsExternal: boolean;
+    function GetIsStatic: boolean;
+    function GetIsVarArgs: boolean;
+    function GetMethodKind: TMethodKind;
+    function GetReturnType: TRttiType;
+  public
+    property ReturnType: TRttiType read GetReturnType;
+    property MethodKind: TMethodKind read GetMethodKind;
+    property IsConstructor: boolean read GetIsConstructor;
+    property IsDestructor: boolean read GetIsDestructor;
+    property IsClassMethod: boolean read GetIsClassMethod;
+    property IsExternal: boolean read GetIsExternal;
+    property IsStatic: boolean read GetIsStatic;// true = has Self argument
+    property IsVarArgs: boolean read GetIsVarArgs;
+    //function GetParameters:
+  end;
+  TRttiMethodArray = array of TRttiMethod;
+
+  { TRttiProperty }
+
+  TRttiProperty = class(TRttiMember)
+  private
+    function GetPropertyType: TRttiType;
+    function GetIsWritable: boolean;
+    function GetIsReadable: boolean;
+  protected
+    function GetVisibility: TMemberVisibility; override;
+  public
+    //function GetValue(Instance: Pointer): TValue;
+    //procedure SetValue(Instance: Pointer; const AValue: TValue);
+    property PropertyType: TRttiType read GetPropertyType;
+    property IsReadable: boolean read GetIsReadable;
+    property IsWritable: boolean read GetIsWritable;
+    property Visibility: TMemberVisibility read GetVisibility;
+  end;
+  TRttiPropertyArray = array of TRttiProperty;
 
   { TRttiType }
 
@@ -85,11 +198,17 @@ type
     constructor Create(ATypeInfo : PTypeInfo);
     destructor Destroy; override;
     function GetAttributes: TCustomAttributeArray; override;
-    //function GetProperties: specialize TArray<TRttiProperty>; virtual;
-    //function GetProperty(const AName: string): TRttiProperty; virtual;
-    //function GetMethods: specialize TArray<TRttiMethod>; virtual;
-    //function GetMethod(const aName: String): TRttiMethod; virtual;
-    //function GetDeclaredMethods: specialize TArray<TRttiMethod>; virtual;
+    function GetField(const AName: string): TRttiField; virtual;
+    function GetMethods(const aName: String): TRttiMethodArray; virtual;
+    function GetMethod(const aName: String): TRttiMethod; virtual;
+    function GetProperty(const AName: string): TRttiProperty; virtual;
+    //function GetIndexedProperty(const AName: string): TRttiIndexedProperty; virtual;
+
+    function GetDeclaredProperties: TRttiPropertyArray; virtual;
+    //function GetDeclaredIndexedProperties: TRttiIndexedPropertyArray; virtual;
+    function GetDeclaredMethods: TRttiMethodArray; virtual;
+    function GetDeclaredFields: TRttiFieldArray; virtual;
+
     property IsInstance: boolean read GetIsInstance;
     //property isManaged: boolean read GetIsManaged;
     property IsOrdinal: boolean read GetIsOrdinal;
@@ -99,6 +218,24 @@ type
     //property AsInstance: TRttiInstanceType read GetAsInstance;
     property TypeKind: TTypeKind read GetTypeKind;
     //property TypeSize: integer read GetTypeSize;
+  end;
+
+  { TRttiStructuredType }
+
+  TRttiStructuredType = class abstract(TRttiType)
+  end;
+
+  { TRttiInstanceType }
+
+  TRttiInstanceType = class(TRttiStructuredType)
+  private
+    function GetClassTypeInfo: TTypeInfoClass;
+    function GetMetaClassType: TClass;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+    property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
+    property MetaClassType: TClass read GetMetaClassType;
+    //function GetDeclaredProperties: TRttiPropertyArray;
   end;
 
   EInvoke = EJS;
@@ -127,6 +264,9 @@ function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;
 
 implementation
 
+var
+  GRttiContext: TRTTIContext;
+
 procedure CreateVirtualCorbaInterface(InterfaceTypeInfo: Pointer;
   const MethodImplementation: TVirtualInterfaceInvokeEvent; out IntfVar); assembler;
 asm
@@ -146,7 +286,254 @@ asm
   IntfVar.set(i);
 end;
 
+{ TValue }
+
+function TValue.GetTypeKind: TTypeKind;
+begin
+  if TypeInfo=nil then
+    Result:=tkUnknown
+  else
+    Result:=FTypeInfo.Kind;
+end;
+
+class function TValue.FromJSValue(v: JSValue): TValue;
+var
+  i: NativeInt;
+begin
+  Result.FData:=v;
+  case jsTypeOf(v) of
+  'number':
+    if JS.isInteger(v) then
+      begin
+      i:=NativeInt(v);
+      if (i>=low(integer)) and (i<=high(integer)) then
+        Result.FTypeInfo:=system.TypeInfo(Integer)
+      else
+        Result.FTypeInfo:=system.TypeInfo(NativeInt);
+      end
+    else
+      Result.FTypeInfo:=system.TypeInfo(Double);
+  'string':  Result.FTypeInfo:=system.TypeInfo(String);
+  'boolean': Result.FTypeInfo:=system.TypeInfo(Boolean);
+  'object':
+    begin
+    if v=nil then
+      Result.FTypeInfo:=system.TypeInfo(Pointer)
+    else if JS.isClass(v) and JS.isExt(v,TObject) then
+      Result.FTypeInfo:=system.TypeInfo(TClass(v))
+    else if JS.isObject(v) and JS.isExt(v,TObject) then
+      Result.FTypeInfo:=system.TypeInfo(TObject(v))
+    else
+      Result.FTypeInfo:=system.TypeInfo(Pointer);
+    if (Result.FTypeInfo=JS.Undefined) or (Result.FTypeInfo=nil) then
+      Result.FTypeInfo:=system.TypeInfo(Pointer);
+    end
+  else
+    Result.FTypeInfo:=system.TypeInfo(JSValue);
+  end;
+end;
+
+function TValue.IsObject: boolean;
+begin
+  Result:=IsEmpty or (TypeInfo.Kind=tkClass);
+end;
+
+function TValue.AsObject: TObject;
+begin
+  if IsObject or (IsClass and not js.isObject(FData)) then
+    Result := TObject(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.IsObjectInstance: boolean;
+begin
+  Result:=(TypeInfo<>nil) and (TypeInfo.Kind=tkClass);
+end;
+
+function TValue.IsArray: boolean;
+begin
+  Result := Kind in [tkArray, tkDynArray];
+end;
+
+function TValue.IsClass: boolean;
+var
+  k: TTypeKind;
+begin
+  k:=Kind;
+  Result :=  (k = tkClassRef)
+         or ((k in [tkClass,tkUnknown]) and not JS.IsObject(FData));
+end;
+
+function TValue.AsClass: TClass;
+begin
+  if IsClass then
+    Result := TClass(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.IsOrdinal: boolean;
+var
+  k: TTypeKind;
+begin
+  k:=Kind;
+  Result := (k in [tkInteger, tkBool]) or
+            ((k in [tkClass, tkClassRef, tkUnknown]) and not JS.isObject(FData));
+end;
+
+function TValue.AsOrdinal: NativeInt;
+begin
+  if IsOrdinal then
+    Result:=NativeInt(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.AsBoolean: boolean;
+begin
+  if (Kind = tkBool) then
+    Result:=boolean(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.AsInteger: Integer;
+begin
+  if JS.isInteger(FData) then
+    Result:=NativeInt(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.AsNativeInt: NativeInt;
+begin
+  if JS.isInteger(FData) then
+    Result:=NativeInt(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.AsInterface: IInterface;
+var
+  k: TTypeKind;
+begin
+  k:=Kind;
+  if k = tkInterface then
+    Result := IInterface(FData)// ToDo
+  else if (k in [tkClass, tkClassRef, tkUnknown]) and not JS.isObject(FData) then
+    Result := Nil
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.AsString: string;
+begin
+  if js.isString(FData) then
+    Result:=String(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.AsUnicodeString: UnicodeString;
+begin
+  Result:=AsString;
+end;
+
+function TValue.AsExtended: Extended;
+begin
+  if js.isNumber(FData) then
+    Result:=Double(FData)
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+end;
+
+function TValue.ToString: String;
+begin
+  case Kind of
+    tkString: Result := AsString;
+    tkInteger: Result := IntToStr(AsNativeInt);
+    tkBool: Result := BoolToStr(AsBoolean, True);
+  else
+    Result := '';
+  end;
+end;
+
+function TValue.GetArrayLength: SizeInt;
+begin
+  if not IsArray then
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+  Result:=length(TJSValueDynArray(FData));
+end;
+
+function TValue.GetArrayElement(aIndex: SizeInt): TValue;
+var
+  StaticTI: TTypeInfoStaticArray;
+  DynIT: TTypeInfoDynArray;
+begin
+  case Kind of
+  tkDynArray:
+    begin
+    DynIT:=TTypeInfoDynArray(FTypeInfo);
+    Result.FTypeInfo:=DynIT.ElType;
+    if DynIT.DimCount<>1 then
+      raise EInvalidCast.Create(SErrInvalidTypecast);
+    end;
+  tkArray:
+    begin
+    StaticTI:=TTypeInfoStaticArray(FTypeInfo);
+    if length(StaticTI.Dims)<>1 then
+      raise EInvalidCast.Create(SErrInvalidTypecast);
+    Result.FTypeInfo:=StaticTI.ElType;
+    end;
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
+  end;
+  Result.FData:=TJSValueDynArray(FData)[aIndex];
+end;
+
+function TValue.IsType(ATypeInfo: PTypeInfo): boolean;
+begin
+  Result := ATypeInfo = TypeInfo;
+end;
+
+function TValue.GetIsEmpty: boolean;
+begin
+  if (TypeInfo=nil) or (FData=Undefined) or (FData=nil) then
+    exit(true);
+  case TypeInfo.Kind of
+  tkDynArray:
+    Result:=TJSArray(FData).Length=0;
+  else
+    Result:=false;
+  end;
+end;
+
+{ TRttiInstanceType }
+
+function TRttiInstanceType.GetClassTypeInfo: TTypeInfoClass;
+begin
+  Result:=TTypeInfoClass(FTypeInfo);
+end;
+
+function TRttiInstanceType.GetMetaClassType: TClass;
+begin
+  Result:=TTypeInfoClass(FTypeInfo).ClassType;
+end;
+
+constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
+    raise EInvalidCast.Create('');
+  inherited Create(ATypeInfo);
+end;
+
 { TRTTIContext }
+
+class constructor TRTTIContext.Init;
+begin
+  GRttiContext:=TRTTIContext.Create;
+end;
 
 class function TRTTIContext.Create: TRTTIContext;
 begin
@@ -166,7 +553,7 @@ begin
   FPool:=nil;
 end;
 
-function TRTTIContext.GetType(aTypeInfo: Pointer): TRTTIType;
+function TRTTIContext.GetType(aTypeInfo: PTypeInfo): TRTTIType;
 var
   t: TTypeinfo absolute aTypeInfo;
   Name: String;
@@ -202,6 +589,102 @@ end;
 function TRttiNamedObject.GetName: string;
 begin
   Result:='';
+end;
+
+{ TRttiMember }
+
+function TRttiMember.GetName: string;
+begin
+  Result:=FTypeInfo.Name;
+end;
+
+function TRttiMember.GetVisibility: TMemberVisibility;
+begin
+  Result:=mvPublished;
+end;
+
+constructor TRttiMember.Create(AParent: TRttiType; ATypeInfo: TTypeMember);
+begin
+  inherited Create();
+  FParent := AParent;
+  FTypeInfo:=ATypeInfo;
+end;
+
+function TRttiMember.GetAttributes: TCustomAttributeArray;
+begin
+  Result:=inherited GetAttributes;
+end;
+
+{ TRttiField }
+
+function TRttiField.GetFieldType: TRttiType;
+begin
+  Result := GRttiContext.GetType(FTypeInfo);
+end;
+
+{ TRttiMethod }
+
+function TRttiMethod.GetIsClassMethod: boolean;
+begin
+  Result:=TTypeMemberMethod(FTypeInfo).MethodKind in [mkClassFunction,mkClassProcedure];
+end;
+
+function TRttiMethod.GetIsConstructor: boolean;
+begin
+  Result:=TTypeMemberMethod(FTypeInfo).MethodKind=mkConstructor;
+end;
+
+function TRttiMethod.GetIsDestructor: boolean;
+begin
+  Result:=TTypeMemberMethod(FTypeInfo).MethodKind=mkDestructor;
+end;
+
+function TRttiMethod.GetIsExternal: boolean;
+begin
+  Result:=(TTypeMemberMethod(FTypeInfo).ProcSig.Flags and 4)>0; // pfExternal
+end;
+
+function TRttiMethod.GetIsStatic: boolean;
+begin
+  Result:=(TTypeMemberMethod(FTypeInfo).ProcSig.Flags and 1)>0; // pfStatic
+end;
+
+function TRttiMethod.GetIsVarArgs: boolean;
+begin
+  Result:=(TTypeMemberMethod(FTypeInfo).ProcSig.Flags and 2)>0; // pfVarargs
+end;
+
+function TRttiMethod.GetMethodKind: TMethodKind;
+begin
+  Result:=TTypeMemberMethod(FTypeInfo).MethodKind;;
+end;
+
+function TRttiMethod.GetReturnType: TRttiType;
+begin
+  Result := GRttiContext.GetType(TTypeMemberMethod(FTypeInfo).ProcSig.ResultType);
+end;
+
+{ TRttiProperty }
+
+function TRttiProperty.GetPropertyType: TRttiType;
+begin
+  Result := GRttiContext.GetType(FTypeInfo);
+end;
+
+function TRttiProperty.GetIsWritable: boolean;
+begin
+  Result := TTypeMemberProperty(FTypeInfo).Setter<>'';
+end;
+
+function TRttiProperty.GetIsReadable: boolean;
+begin
+  Result := TTypeMemberProperty(FTypeInfo).Getter<>'';
+end;
+
+function TRttiProperty.GetVisibility: TMemberVisibility;
+begin
+  // At this moment only pulished rtti-property-info is supported by pas2js
+  Result := mvPublished;
 end;
 
 { TRttiType }
@@ -258,6 +741,44 @@ begin
   Result:=FAttributes;
 end;
 
+function TRttiType.GetDeclaredProperties: TRttiPropertyArray;
+begin
+  Result:=nil;
+end;
+
+function TRttiType.GetProperty(const AName: string): TRttiProperty;
+begin
+  Result:=nil;
+  if AName='' then ;
+end;
+
+function TRttiType.GetMethods(const aName: String): TRttiMethodArray;
+begin
+  Result:=nil;
+end;
+
+function TRttiType.GetMethod(const aName: String): TRttiMethod;
+begin
+  Result:=nil;
+  if aName='' then ;
+end;
+
+function TRttiType.GetDeclaredMethods: TRttiMethodArray;
+begin
+  Result:=nil;
+end;
+
+function TRttiType.GetDeclaredFields: TRttiFieldArray;
+begin
+  Result:=nil;
+end;
+
+function TRttiType.GetField(const AName: string): TRttiField;
+begin
+  Result:=nil;
+  if AName='' then ;
+end;
+
 { TVirtualInterface }
 
 constructor TVirtualInterface.Create(InterfaceTypeInfo: Pointer); assembler;
@@ -307,12 +828,17 @@ function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;
   AIsConstructor: Boolean): TValue;
 begin
   if ACallConv=ccReg then ;
-  if AResultType=nil then ;
   if AIsStatic then ;
   if AIsConstructor then
     raise EInvoke.Create('not supported');
   if isFunction(ACodeAddress) then
-    Result := TJSFunction(ACodeAddress).apply(nil, AArgs)
+    begin
+    Result.FData := TJSFunction(ACodeAddress).apply(nil, AArgs);
+    if AResultType<>nil then
+      Result.FTypeInfo:=AResultType
+    else
+      Result.FTypeInfo:=TypeInfo(JSValue);
+    end
   else
     raise EInvoke.Create(SErrInvokeInvalidCodeAddr);
 end;

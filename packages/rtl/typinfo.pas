@@ -32,7 +32,7 @@ type
     tkSet,      // 5
     tkDouble,   // 6
     tkBool,     // 7
-    tkProcVar,  // 8
+    tkProcVar,  // 8  function or procedure
     tkMethod,   // 9  proc var of object
     tkArray,    // 10 static array
     tkDynArray, // 11
@@ -41,7 +41,7 @@ type
     tkClassRef, // 14
     tkPointer,  // 15
     tkJSValue,  // 16
-    tkRefToProcVar, // 17
+    tkRefToProcVar, // 17  variable of procedure type
     tkInterface, // 18
     //tkObject,
     //tkSString,tkLString,tkAString,tkWString,

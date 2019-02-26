@@ -37,6 +37,7 @@ const
   SCantWritePropertyS           = 'Cannot write property "%s"';
   SErrPropertyNotFound          = 'Unknown property: "%s"';
   SIndexedPropertyNeedsParams   = 'Indexed property "%s" needs parameters';
+  SErrInvalidTypecast           = 'Invalid class typecast';
 
   SErrInvalidInteger            = 'Invalid integer value: "%s"';
   SErrInvalidFloat              = 'Invalid floating-point value: "%s"';

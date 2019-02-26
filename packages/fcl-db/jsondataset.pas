@@ -518,11 +518,6 @@ begin
 end;
 
 procedure TSortedJSONIndex.CreateComparer(aIndex: TJSONIndexDef);
-
-Var
-  L : TFPList;
-  I : Integer;
-
 begin
   FreeAndNil(FComparer);
   FComparer:=TRecordComparer.Create(Dataset,aindex);
@@ -1415,7 +1410,7 @@ end;
 procedure TBaseJSONDataSet.InternalPost;
 
 Var
-  I,OldC,NewCurrent,Idx : integer;
+  I,NewCurrent,Idx : integer;
   B : TBookmark;
 
 begin
@@ -1742,7 +1737,6 @@ function TBaseJSONDataSet.Lookup(const KeyFields: string; const KeyValues: JSVal
 
 Var
   RI,I : Integer;
-  BM : TBookMark;
   l : TFPList;
   Vals : TJSValueDynArray;
 

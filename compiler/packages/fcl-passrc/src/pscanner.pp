@@ -3273,10 +3273,8 @@ begin
       DoLog(mtWarning,nIllegalStateForWarnDirective,SIllegalStateForWarnDirective,[Identifier]);
       exit;
       end;
-    end;
-
-  if Number>=0 then
     SetWarnMsgState(Number,State);
+    end;
 end;
 
 procedure TPascalScanner.HandleDefine(Param: String);

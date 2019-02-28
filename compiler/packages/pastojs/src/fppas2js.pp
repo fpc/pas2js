@@ -6749,9 +6749,7 @@ begin
           Result:=Call;
           exit;
           end;
-        eopAnd,
-        eopOr,
-        eopXor:
+        eopAnd:
           begin
           if aResolver<>nil then
             begin
@@ -6767,19 +6765,49 @@ begin
             UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
               or (GetExpressionValueType(El.right,AContext)=jstNumber);
           if UseBitwiseOp then
-            Case El.OpCode of
-              eopAnd : C:=TJSBitwiseAndExpression;
-              eopOr : C:=TJSBitwiseOrExpression;
-              eopXor : C:=TJSBitwiseXOrExpression;
+            C:=TJSBitwiseAndExpression
+          else
+            C:=TJSLogicalAndExpression;
+          end;
+        eopOr:
+          begin
+          if aResolver<>nil then
+            begin
+            UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
+                       or (RightResolved.BaseType in btAllJSInteger));
+            if UseBitwiseOp
+                and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                  or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+              aResolver.LogMsg(20190228220145,mtWarning,nBitWiseOperationsAre32Bit,
+                sBitWiseOperationsAre32Bit,[],El);
             end
           else
-            Case El.OpCode of
-              eopAnd : C:=TJSLogicalAndExpression;
-              eopOr : C:=TJSLogicalOrExpression;
-              eopXor : C:=TJSBitwiseXOrExpression;
-            else
-              DoError(20161024191234,nBinaryOpcodeNotSupported,sBinaryOpcodeNotSupported,['logical XOR'],El);
-            end;
+            UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
+              or (GetExpressionValueType(El.right,AContext)=jstNumber);
+          if UseBitwiseOp then
+            C:=TJSBitwiseOrExpression
+          else
+            C:=TJSLogicalOrExpression;
+          end;
+        eopXor:
+          begin
+          if aResolver<>nil then
+            begin
+            UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
+                       or (RightResolved.BaseType in btAllJSInteger));
+            if UseBitwiseOp
+                and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                  or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+              aResolver.LogMsg(20190228220225,mtWarning,nBitWiseOperationsAre32Bit,
+                sBitWiseOperationsAre32Bit,[],El);
+            end
+          else
+            UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
+              or (GetExpressionValueType(El.right,AContext)=jstNumber);
+          if UseBitwiseOp then
+            C:=TJSBitwiseXOrExpression
+          else
+            C:=TJSBitwiseXOrExpression;
           end;
         eopPower:
           begin

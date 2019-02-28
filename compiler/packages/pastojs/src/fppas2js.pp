@@ -519,6 +519,7 @@ const
   nCantCallExtBracketAccessor = 4025;
   nJSNewNotSupported = 4026;
   nHelperClassMethodForExtClassMustBeStatic = 4027;
+  nBitWiseOperationIs32Bit = 4028;
 // resourcestring patterns of messages
 resourcestring
   sPasElementNotSupported = 'Pascal element not supported: %s';
@@ -548,6 +549,7 @@ resourcestring
   sCantCallExtBracketAccessor = 'cannot call external bracket accessor, use a property instead';
   sJSNewNotSupported = 'Pascal class does not support the "new" constructor';
   sHelperClassMethodForExtClassMustBeStatic = 'Helper class method for external class must be static';
+  sBitWiseOperationIs32Bit = 'Bitwise operation is 32-bit';
 
 const
   ExtClassBracketAccessor = '[]'; // external name '[]' marks the array param getter/setter
@@ -565,6 +567,9 @@ type
     pbifnArray_Static_Clone,
     pbifnAs,
     pbifnAsExt,
+    pbifnBitwiseNativeIntAnd,
+    pbifnBitwiseNativeIntOr,
+    pbifnBitwiseNativeIntXor,
     pbifnCheckMethodCall,
     pbifnCheckVersion,
     pbifnClassInstanceFree,
@@ -721,6 +726,9 @@ const
     '$clone',
     'as', // rtl.as
     'asExt', // rtl.asExt
+    'and', // pbifnBitwiseNativeIntAnd,
+    'or', // pbifnBitwiseNativeIntOr,
+    'xor', // pbifnBitwiseNativeIntXor,
     'checkMethodCall',
     'checkVersion',
     '$destroy',
@@ -6680,146 +6688,164 @@ begin
 
     C:=BinClasses[El.OpCode];
     if C=nil then
-      Case El.OpCode of
-        eopAs :
+    Case El.OpCode of
+      eopAs :
+        begin
+        // "A as B"
+        Call:=CreateCallExpression(El);
+        LeftTypeEl:=LeftResolved.LoTypeEl;
+        RightTypeEl:=RightResolved.LoTypeEl;
+        if LeftTypeEl is TPasClassType then
           begin
-          // "A as B"
-          Call:=CreateCallExpression(El);
-          LeftTypeEl:=LeftResolved.LoTypeEl;
-          RightTypeEl:=RightResolved.LoTypeEl;
-          if LeftTypeEl is TPasClassType then
-            begin
-            if RightTypeEl is TPasClassType then
-              case TPasClassType(LeftTypeEl).ObjKind of
+          if RightTypeEl is TPasClassType then
+            case TPasClassType(LeftTypeEl).ObjKind of
+            okClass:
+              case TPasClassType(RightTypeEl).ObjKind of
               okClass:
-                case TPasClassType(RightTypeEl).ObjKind of
-                okClass:
-                  // ClassInstVar is ClassType
-                  if TPasClassType(RightResolved.LoTypeEl).IsExternal then
-                    // B is external class -> "rtl.asExt(A,B)"
-                    Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAsExt),El)
-                  else
-                    // otherwise -> "rtl.as(A,B)"
-                    Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
-                okInterface:
-                  begin
-                  // ClassInstVar as IntfType
-                  case TPasClassType(RightTypeEl).InterfaceType of
-                  citCom:
-                    begin
-                    // COM:  $ir.ref(rtl.queryIntfT(objVar,intftype),"id")
-                    Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfQueryIntfT),El);
-                    Call.AddArg(A);
-                    Call.AddArg(B);
-                    Call:=CreateIntfRef(Call,AContext,El);
-                    Result:=Call;
-                    exit;
-                    end;
-                  citCorba:
-                    // CORBA:  rtl.getIntfT(objVar,intftype)
-                    Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfGetIntfT),El);
-                  else RaiseNotSupported(El,AContext,20180401225752);
-                  end;
-                  end
+                // ClassInstVar is ClassType
+                if TPasClassType(RightResolved.LoTypeEl).IsExternal then
+                  // B is external class -> "rtl.asExt(A,B)"
+                  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAsExt),El)
                 else
-                  NotSupportedRes(20180327214535);
-                end;
-              okInterface:
-                case TPasClassType(RightTypeEl).ObjKind of
-                okClass:
-                  // IntfVar as ClassType ->  rtl.intfAsClass(intfvar,classtype)
-                  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfAsClass),El);
-                okInterface:
-                  // IntfVar as IntfType -> "rtl.as(A,B)"
+                  // otherwise -> "rtl.as(A,B)"
                   Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
-                else
-                  NotSupportedRes(20180327214545);
+              okInterface:
+                begin
+                // ClassInstVar as IntfType
+                case TPasClassType(RightTypeEl).InterfaceType of
+                citCom:
+                  begin
+                  // COM:  $ir.ref(rtl.queryIntfT(objVar,intftype),"id")
+                  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfQueryIntfT),El);
+                  Call.AddArg(A);
+                  Call.AddArg(B);
+                  Call:=CreateIntfRef(Call,AContext,El);
+                  Result:=Call;
+                  exit;
+                  end;
+                citCorba:
+                  // CORBA:  rtl.getIntfT(objVar,intftype)
+                  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfGetIntfT),El);
+                else RaiseNotSupported(El,AContext,20180401225752);
                 end;
+                end
               else
-                NotSupportedRes(20180327214559);
-              end
-            else if RightTypeEl is TPasClassOfType then
-              begin
-              // ClassInstVar is ClassOfType -> "rtl.as(A,B)"
-              Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
+                NotSupportedRes(20180327214535);
               end;
+            okInterface:
+              case TPasClassType(RightTypeEl).ObjKind of
+              okClass:
+                // IntfVar as ClassType ->  rtl.intfAsClass(intfvar,classtype)
+                Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfAsClass),El);
+              okInterface:
+                // IntfVar as IntfType -> "rtl.as(A,B)"
+                Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
+              else
+                NotSupportedRes(20180327214545);
+              end;
+            else
+              NotSupportedRes(20180327214559);
+            end
+          else if RightTypeEl is TPasClassOfType then
+            begin
+            // ClassInstVar is ClassOfType -> "rtl.as(A,B)"
+            Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
             end;
-          Call.AddArg(A);
-          Call.AddArg(B);
-          Result:=Call;
-          exit;
           end;
-        eopAnd:
+        Call.AddArg(A);
+        Call.AddArg(B);
+        Result:=Call;
+        exit;
+        end;
+      eopAnd:
+        begin
+        if aResolver<>nil then
           begin
-          if aResolver<>nil then
+          UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
+                     or (RightResolved.BaseType in btAllJSInteger));
+          if UseBitwiseOp
+              and (LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+              and (RightResolved.BaseType in [btIntDouble,btUIntDouble]) then
             begin
-            UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
-                       or (RightResolved.BaseType in btAllJSInteger));
-            if UseBitwiseOp
-                and (LeftResolved.BaseType in [btIntDouble,btUIntDouble])
-                and (RightResolved.BaseType in [btIntDouble,btUIntDouble]) then
-              aResolver.LogMsg(20190124233439,mtWarning,nBitWiseOperationsAre32Bit,
-                sBitWiseOperationsAre32Bit,[],El);
-            end
-          else
-            UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
-              or (GetExpressionValueType(El.right,AContext)=jstNumber);
-          if UseBitwiseOp then
-            C:=TJSBitwiseAndExpression
-          else
-            C:=TJSLogicalAndExpression;
-          end;
-        eopOr:
-          begin
-          if aResolver<>nil then
-            begin
-            UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
-                       or (RightResolved.BaseType in btAllJSInteger));
-            if UseBitwiseOp
-                and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
-                  or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
-              aResolver.LogMsg(20190228220145,mtWarning,nBitWiseOperationsAre32Bit,
-                sBitWiseOperationsAre32Bit,[],El);
-            end
-          else
-            UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
-              or (GetExpressionValueType(El.right,AContext)=jstNumber);
-          if UseBitwiseOp then
-            C:=TJSBitwiseOrExpression
-          else
-            C:=TJSLogicalOrExpression;
-          end;
-        eopXor:
-          begin
-          if aResolver<>nil then
-            begin
-            UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
-                       or (RightResolved.BaseType in btAllJSInteger));
-            if UseBitwiseOp
-                and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
-                  or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
-              aResolver.LogMsg(20190228220225,mtWarning,nBitWiseOperationsAre32Bit,
-                sBitWiseOperationsAre32Bit,[],El);
-            end
-          else
-            UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
-              or (GetExpressionValueType(El.right,AContext)=jstNumber);
-          if UseBitwiseOp then
-            C:=TJSBitwiseXOrExpression
-          else
-            C:=TJSBitwiseXOrExpression;
-          end;
-        eopPower:
-          begin
-          Call:=CreateCallExpression(El);
-          Call.Expr:=CreatePrimitiveDotExpr('Math.pow',El);
-          Call.AddArg(A);
-          Call.AddArg(B);
-          Result:=Call;
+            Call:=CreateCallExpression(El);
+            Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntAnd)]);
+            Call.AddArg(A);
+            Call.AddArg(B);
+            Result:=Call;
+            exit;
+            end;
           end
         else
-          if C=nil then
-            DoError(20161024191244,nBinaryOpcodeNotSupported,sBinaryOpcodeNotSupported,[OpcodeStrings[El.OpCode]],El);
+          UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
+            or (GetExpressionValueType(El.right,AContext)=jstNumber);
+        if UseBitwiseOp then
+          C:=TJSBitwiseAndExpression
+        else
+          C:=TJSLogicalAndExpression;
+        end;
+      eopOr:
+        begin
+        if aResolver<>nil then
+          begin
+          UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
+                     or (RightResolved.BaseType in btAllJSInteger));
+          if UseBitwiseOp
+              and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+            begin
+            Call:=CreateCallExpression(El);
+            Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntOr)]);
+            Call.AddArg(A);
+            Call.AddArg(B);
+            Result:=Call;
+            exit;
+            end;
+          end
+        else
+          UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
+            or (GetExpressionValueType(El.right,AContext)=jstNumber);
+        if UseBitwiseOp then
+          C:=TJSBitwiseOrExpression
+        else
+          C:=TJSLogicalOrExpression;
+        end;
+      eopXor:
+        begin
+        if aResolver<>nil then
+          begin
+          UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
+                     or (RightResolved.BaseType in btAllJSInteger));
+          if UseBitwiseOp
+              and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+            begin
+            Call:=CreateCallExpression(El);
+            Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntXor)]);
+            Call.AddArg(A);
+            Call.AddArg(B);
+            Result:=Call;
+            exit;
+            end;
+          end
+        else
+          UseBitwiseOp:=(GetExpressionValueType(El.left,AContext)=jstNumber)
+            or (GetExpressionValueType(El.right,AContext)=jstNumber);
+        if UseBitwiseOp then
+          C:=TJSBitwiseXOrExpression
+        else
+          C:=TJSBitwiseXOrExpression;
+        end;
+      eopPower:
+        begin
+        Call:=CreateCallExpression(El);
+        Call.Expr:=CreatePrimitiveDotExpr('Math.pow',El);
+        Call.AddArg(A);
+        Call.AddArg(B);
+        Result:=Call;
+        end;
+      else
+        if C=nil then
+          DoError(20161024191244,nBinaryOpcodeNotSupported,sBinaryOpcodeNotSupported,[OpcodeStrings[El.OpCode]],El);
       end;
     if (Result=Nil) and (C<>Nil) then
       begin
@@ -6828,11 +6854,18 @@ begin
       R.B:=B; B:=nil;
       Result:=R;
 
-      if El.OpCode=eopDiv then
+      case El.OpCode of
+      eopDiv:
         begin
         // convert "a div b" to "Math.floor(a/b)"
         Result:=CreateMathFloor(El,Result);
         end;
+      eopShl,eopShr:
+        if (aResolver<>nil) and (LeftResolved.BaseType in [btIntDouble,btUIntDouble]) then
+          aResolver.LogMsg(20190228220225,mtWarning,nBitWiseOperationIs32Bit,
+            sBitWiseOperationIs32Bit,[],El);
+      end;
+
       end;
   finally
     if Result=nil then

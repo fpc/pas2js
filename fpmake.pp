@@ -128,7 +128,7 @@ end;
 
 Var
   P : TPackage;
-  UnitDir,DemoDir,BD: String;
+  UnitDir,DemoDir,BD, TmpCfg: String;
 
 begin
   With Installer do
@@ -195,6 +195,7 @@ begin
     P.Targets.AddImplicitUnit('webidltopas',False).ResourceStrings:=True;
     // Determine unit files location
     BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));
+    TmpCfg:='compiler/utils/pas2js/dist/pas2js.cfg';
     Case Installer.RunMode of
     rmCompile,rmBuild:
       begin
@@ -212,8 +213,8 @@ begin
       UnitDir:=UnitDir+'pas2js'+PathDelim;
       // Config file
       // Create config file
-      CreateConfigFile(BD+'pas2js.cfg',ExtractRelativePath(IncludeTrailingPathDelimiter(Defaults.BinInstallDir),IncludeTrailingPathDelimiter(UnitDir)));
-      P.InstallFiles.Add(BD+'pas2js.cfg',Defaults.BinInstallDir);
+      CreateConfigFile(TmpCfg,ExtractRelativePath(IncludeTrailingPathDelimiter(Defaults.BinInstallDir),IncludeTrailingPathDelimiter(UnitDir)));
+      P.InstallFiles.Add(TmpCfg,Defaults.BinInstallDir);
       P.InstallFiles.Add('compiler/utils/pas2js/dist/rtl.js',IncludeTrailingPathDelimiter(UnitDir)+'rtl');
       AddPackageFiles(P.InstallFiles,'chartjs',UnitDir);
       AddPackageFiles(P.InstallFiles,'dataabstract',UnitDir);
@@ -232,6 +233,8 @@ begin
       AddDemoFiles(P.InstallFiles,'jquery',DemoDir);
       AddDemoFiles(P.InstallFiles,'rtl',DemoDir);
       end;
+    rmClean:
+      P.CleanFiles.Add(TmpCfg);
     rmDistClean:
       if FileExists(BD+'pas2js.cfg') then
         P.CleanFiles.Add(BD+'pas2js.cfg');

@@ -3,6 +3,20 @@ program fpmake;
 
 uses {$ifdef unix}cthreads,{$endif} sysutils, fpmkunit;
 
+function FilenameIsAbsolute(const TheFilename: string):boolean;
+begin
+  {$IFDEF WINDOWS}
+  // windows
+  Result:=((length(TheFilename)>=2) and (TheFilename[1] in ['A'..'Z','a'..'z'])
+           and (TheFilename[2]=':'))
+     or ((length(TheFilename)>=2)
+         and (TheFilename[1]='\') and (TheFilename[2]='\'));
+  {$ELSE}
+  // unix
+  Result:=(TheFilename<>'') and (TheFilename[1]='/');
+  {$ENDIF}
+end;
+
 Procedure CreateConfigFile(CfgFile,BaseDir : String);
 
 Var
@@ -32,30 +46,31 @@ begin
   end;
   if (BaseDir<>'') then
     BaseDir:=ExcludeTrailingPathDelimiter(BaseDir);
-  if (BaseDir<>'') then
-    BaseDir:=ExcludeLeadingPathDelimiter(BaseDir);
   Addln('#');
   Addln('# Minimal config file for pas2js compiler');
   Addln('#');
-  Addln('# not yet implemented: -d is the same as #DEFINE');
-  Addln('# not yet implemented: -u is the same as #UNDEF');
+  Addln('# -d is the same as #DEFINE');
+  Addln('# -u is the same as #UNDEF');
   Addln('#');
   Addln('# Write always a nice logo ;)');
   Addln('-l');
   Addln('');
-  Addln('# Display Hints, Warnings and Notes');
+  Addln('# Display Warnings, Notes and Hints');
   Addln('-vwnh');
   Addln('# If you don''t want so much verbosity use');
   Addln('#-vw');
   Addln('');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/rtl');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/fcl-base');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/fcl-db');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/fpcunit');
+  if FilenameIsAbsolute(BaseDir) then
+    Addln('-Fu'+BaseDir+'/*')
+  else
+    Addln('-Fu$CfgDir/'+ExcludeLeadingPathDelimiter(BaseDir)+'/*');
   Addln('');
   Addln('#IFDEF nodejs');
   Addln('-Jirtl.js');
   Addln('#ENDIF');
+  Addln('');
+  Addln('# Put all generated JavaScript into one file');
+  Addln('-Jc');
   Addln('');
   Addln('# end.');
   Close(F);
@@ -108,7 +123,7 @@ end;
 
 Var
   P : TPackage;
-  UnitDir,DemoDir,BD : String;
+  UnitDir,DemoDir,BD: String;
 
 begin
   With Installer do
@@ -120,7 +135,7 @@ begin
     P.Description := 'Convert pascal sources to javascript.';
     P.Email := 'michael@freepascal.org';
     P.NeedLibC:= false;
-    P.Version:='3.1.1';
+    P.Version:='3.3.1';
     P.SourcePath.Add('compiler/utils/pas2js');
     P.UnitPath.Add('compiler/utils/pas2js');
     P.UnitPath.Add('compiler/packages/pastojs/src');
@@ -175,33 +190,43 @@ begin
     P.Targets.AddImplicitUnit('webidltopas',False).ResourceStrings:=True;
     // Determine unit files location
     BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));
-    UnitDir:=ExcludeTrailingPathDelimiter(Defaults.UnitInstallDir);
-    UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
-    UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
-    UnitDir:=ExtractFilePath(UnitDir);
-    UnitDir:=UnitDir+'pas2js'+PathDelim;
     Case Installer.RunMode of
+    rmCompile,rmBuild:
+      begin
+      if not FileExists(BD+'pas2js.cfg') then
+        CreateConfigFile(BD+'pas2js.cfg',SetDirSeparators('../../packages'));
+      end;
     rmInstall,rmArchive,rmZipInstall:
       begin
+      // UnitDir = some\path\units\i386-win32\..\..\..\pas2js\
+      UnitDir:=ExcludeTrailingPathDelimiter(Defaults.UnitInstallDir);
+      UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
+      UnitDir:=ExcludeTrailingPathDelimiter(ExtractFilePath(UnitDir));
+      UnitDir:=ExtractFilePath(UnitDir);
+      UnitDir:=UnitDir+'pas2js'+PathDelim;
       // Config file
       // Create config file
       CreateConfigFile(BD+'pas2js.cfg',ExtractRelativePath(IncludeTrailingPathDelimiter(Defaults.BinInstallDir),IncludeTrailingPathDelimiter(UnitDir)));
       P.InstallFiles.Add(BD+'pas2js.cfg',Defaults.BinInstallDir);
       P.InstallFiles.Add('compiler/utils/pas2js/dist/rtl.js',IncludeTrailingPathDelimiter(UnitDir)+'rtl');
-      AddPackageFiles(P.InstallFiles,'rtl',UnitDir);
+      AddPackageFiles(P.InstallFiles,'chartjs',UnitDir);
+      AddPackageFiles(P.InstallFiles,'dataabstract',UnitDir);
       AddPackageFiles(P.InstallFiles,'fcl-base',UnitDir);
       AddPackageFiles(P.InstallFiles,'fcl-db',UnitDir);
       AddPackageFiles(P.InstallFiles,'fpcunit',UnitDir);
+      AddPackageFiles(P.InstallFiles,'jspdf',UnitDir);
+      AddPackageFiles(P.InstallFiles,'nodejs',UnitDir);
+      AddPackageFiles(P.InstallFiles,'rtl',UnitDir);
       // Demo files
       DemoDir:=IncludeTrailingPathDelimiter(Defaults.ExamplesInstallDir);
-      AddDemoFiles(P.InstallFiles,'rtl',DemoDir);
       AddDemoFiles(P.InstallFiles,'fcldb',DemoDir);
       AddDemoFiles(P.InstallFiles,'fpcunit',DemoDir);
       AddDemoFiles(P.InstallFiles,'fpreport',DemoDir);
       AddDemoFiles(P.InstallFiles,'hotreload',DemoDir);
       AddDemoFiles(P.InstallFiles,'jquery',DemoDir);
+      AddDemoFiles(P.InstallFiles,'rtl',DemoDir);
       end;
-    rmClean:
+    rmDistClean:
       if FileExists(BD+'pas2js.cfg') then
         P.CleanFiles.Add(BD+'pas2js.cfg');
     end;

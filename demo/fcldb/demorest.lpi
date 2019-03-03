@@ -51,6 +51,7 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Other>
+      <CustomOptions Value="-Jc -Jirtl.js"/>
       <ExecuteBefore>
         <Command Value="$MakeExe(pas2js) -Tbrowser -Jirtl.js -Jc $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>

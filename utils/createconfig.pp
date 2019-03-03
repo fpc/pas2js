@@ -9,8 +9,7 @@ Var
   F : Text;
   CfgFile : String;
   BaseDir : String;
-  
-  
+
 Procedure AddLn(S : String);
 
 begin
@@ -46,29 +45,26 @@ begin
   Addln('# Minimal config file for pas2js compiler');
   Addln('#');
   Addln('');
-  Addln('# not yet implemented: -d is the same as #DEFINE');
-  Addln('# not yet implemented: -u is the same as #UNDEF');
+  Addln('# -d is the same as #DEFINE');
+  Addln('# -u is the same as #UNDEF');
   Addln('');
   Addln('# Write always a nice logo ;)');
   Addln('-l');
   Addln('');
-  Addln('# Display Hints, Warnings and Notes');
+  Addln('# Display Warnings, Notes and Hints');
   Addln('-vwnh');
   Addln('# If you don''t want so much verbosity use');
   Addln('#-vw');
   Addln('');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/packages/rtl');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/packages/fcl-base');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/packages/fcl-db');
-  Addln('-Fu$CfgDir/'+BASEDIR+'/packages/fpcunit');
+  Addln('-Fu$CfgDir/'+BASEDIR+'/packages/*');
   Addln('');
   Addln('#IFDEF nodejs');
   Addln('-Jirtl.js');
   Addln('#ENDIF');
   Addln('');
-  Addln('# end.');
-  Addln('EOCF');
+  Addln('# Put all generated JavaScript into one js file:');
+  Addln('-Jc');
   Addln('');
-  Addln('# end');
+  Addln('# end.');
   Close(F);
 end.

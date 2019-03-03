@@ -17,7 +17,7 @@ begin
   {$ENDIF}
 end;
 
-Procedure CreateConfigFile(CfgFile,BaseDir : String);
+Procedure CreateConfigFile(CfgFile,BaseDir : String; rtl_js_dir: string = '');
 
 Var
   F : Text;
@@ -45,7 +45,7 @@ begin
       end;
   end;
   if (BaseDir<>'') then
-    BaseDir:=ExcludeTrailingPathDelimiter(BaseDir);
+    BaseDir:=IncludeTrailingPathDelimiter(BaseDir);
   Addln('#');
   Addln('# Minimal config file for pas2js compiler');
   Addln('#');
@@ -61,9 +61,14 @@ begin
   Addln('#-vw');
   Addln('');
   if FilenameIsAbsolute(BaseDir) then
-    Addln('-Fu'+BaseDir+'/*')
+    Addln('-Fu'+BaseDir+'*')
   else
-    Addln('-Fu$CfgDir/'+ExcludeLeadingPathDelimiter(BaseDir)+'/*');
+    Addln('-Fu$CfgDir'+PathDelim+BaseDir+'*');
+  if rtl_js_dir<>'' then
+    if FilenameIsAbsolute(rtl_js_dir) then
+      AddLn('-Fu'+rtl_js_dir)
+    else
+      AddLn('-Fu$CfgDir'+PathDelim+rtl_js_dir);
   Addln('');
   Addln('#IFDEF nodejs');
   Addln('-Jirtl.js');
@@ -194,7 +199,8 @@ begin
     rmCompile,rmBuild:
       begin
       if not FileExists(BD+'pas2js.cfg') then
-        CreateConfigFile(BD+'pas2js.cfg',SetDirSeparators('../../packages'));
+        CreateConfigFile(BD+'pas2js.cfg',SetDirSeparators('../../packages'),
+                         SetDirSeparators('../../compiler/utils/pas2js/dist/'));
       end;
     rmInstall,rmArchive,rmZipInstall:
       begin
@@ -233,7 +239,3 @@ begin
     Run;
     end;
 end.
-
-
-
-

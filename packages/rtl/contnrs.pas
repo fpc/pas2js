@@ -1819,7 +1819,7 @@ end;
 Function TBucketList.BucketFor(AItem: JSValue): Integer;
 begin
   // JSValues on average have a granularity of 4
-  Result:=(PtrInt(AItem) shr 2) and FBucketMask;
+  Result:=(longword(AItem) shr 2) and FBucketMask;
 end;
 
 constructor TBucketList.Create(ABuckets: TBucketListSizes);

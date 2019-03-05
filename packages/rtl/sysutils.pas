@@ -273,7 +273,8 @@ Type
 Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
 Function FloatToStr(Value: Double): String;
 Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;
-Function TryStrToFloat(const S : String; Out res : Double) : Boolean;
+Function TryStrToFloat(const S : String; Out res : Extended) : Boolean; overload;
+Function TryStrToFloat(const S : String; Out res : Double) : Boolean; overload;
 Function StrToFloatDef(const S : String; Const aDef : Double) : Double;
 Function StrToFloat(const S : String) : Double;
 Function FormatFloat (Fmt : String; aValue : Double) : String;
@@ -660,7 +661,7 @@ begin
   Result:=Ch in CSet;
 end;
 
-Function CharInSet(Ch: Char;Const CSet : array of char) : Boolean;
+function CharInSet(Ch: Char; const CSet: array of char): Boolean;
 
 Var
   I : integer;
@@ -706,7 +707,7 @@ begin
   Result:=str(Value);
 end;
 
-Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
+function FloatToDecimal(Value: double; Precision, Decimals: integer): TFloatRec;
 
 Const
   Rounds = '123456789:';
@@ -853,7 +854,12 @@ begin
   Result:=FloatToStrF(Value,ffGeneral,15,0);
 end;
 
-Function TryStrToFloat(const S : String; Out res : Double) : Boolean;
+function TryStrToFloat(const S: String; out res: Extended): Boolean;
+begin
+  Result:=TryStrToFloat(S,double(res));
+end;
+
+function TryStrToFloat(const S: String; out res: Double): Boolean;
 
 Var
   J : JSValue;
@@ -872,14 +878,13 @@ begin
     Res:=Double(J);
 end;
 
-Function StrToFloatDef(const S : String; Const aDef : Double) : Double;
-
+function StrToFloatDef(const S: String; const aDef: Double): Double;
 begin
   if not TryStrToFloat(S,Result) then
     Result:=aDef;
 end;
 
-Function StrToFloat(const S : String) : Double;
+function StrToFloat(const S: String): Double;
 begin
   if not TryStrToFloat(S,Result) then
     Raise EConvertError.CreateFmt(SErrInvalidFloat,[S]);
@@ -1722,7 +1727,8 @@ Begin
      end;
 end;
 
-Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;
+function FloatToStrF(const Value: double; format: TFloatFormat; Precision,
+  Digits: Integer): String;
 
 Var
   DS: string;
@@ -1745,7 +1751,7 @@ Begin
     RemoveLeadingNegativeSign(Result,DS);
 end;
 
-function Format (const Fmt: String; const Args: array of jsvalue): String;
+function Format(const Fmt: String; const Args: array of JSValue): String;
 
 Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
     Hs,ToAdd : String;
@@ -2132,7 +2138,8 @@ end;
 Const
   RESpecials = '([\[\]\(\)\\\.\*])';
 
-Function StringReplace(aOriginal, aSearch, aReplace : string; Flags : TStringReplaceFlags) : String;
+function StringReplace(aOriginal, aSearch, aReplace: string;
+  Flags: TStringReplaceFlags): String;
 
 Var
   REFlags : String;
@@ -2148,7 +2155,7 @@ begin
   Result:=TJSString(aOriginal).replace(TJSRegexp.new(REString,REFlags),aReplace);
 end;
 
-Function QuoteString(aOriginal : String; AQuote : Char) : String;
+function QuoteString(aOriginal: String; AQuote: Char): String;
 
 begin
   Result:=AQuote+StringReplace(aOriginal,aQuote,aQuote+aQuote,[rfReplaceAll])+AQuote;
@@ -2237,7 +2244,8 @@ begin
   Result:=Res;
 end;
 
-function WrapText(const Line, BreakStr: string; const BreakChars: Array of char;  MaxCol: Integer): string;
+function WrapText(const Line, BreakStr: string;
+  const BreakChars: array of char; MaxCol: Integer): string;
 
 const
   Quotes = ['''', '"'];
@@ -2346,7 +2354,7 @@ begin
     Result:=0;
 end;
 
-Function DateTimeToJSDate(aDateTime : TDateTime) : TJSDate;
+function DateTimeToJSDate(aDateTime: TDateTime): TJSDate;
 
 Var
   Y,M,D,h,n,s,z : Word;
@@ -2357,7 +2365,7 @@ begin
   Result:=TJSDate.New(Y,M,D,h,n,s,z);
 end;
 
-Function JSDatetoDateTime(ADate: TJSDate) : TDateTime;
+function JSDateToDateTime(aDate: TJSDate): TDateTime;
 
 begin
   Result:=EncodeDate(ADate.FullYear,ADate.Month+1,ADate.Date) +
@@ -2375,7 +2383,7 @@ begin
     Result := trunc(Date) + Abs(frac(Time));
 end;
 
-Function TryEncodeDate(Year,Month,Day : Word; Out Date : TDateTime) : Boolean;
+function TryEncodeDate(Year, Month, Day: Word; out Date: TDateTime): Boolean;
 
 var
   c, ya: LongWord;
@@ -2401,7 +2409,8 @@ begin
    end
 end;
 
-function TryEncodeTime(Hour, Min, Sec, MSec:word; Out Time : TDateTime) : boolean;
+function TryEncodeTime(Hour, Min, Sec, MSec: Word; out Time: TDateTime
+  ): Boolean;
 
 begin
   Result:=(Hour<24) and (Min<60) and (Sec<60) and (MSec<1000);
@@ -3033,7 +3042,7 @@ begin
     ErrorMsg:=Format(SErrInvalidTimeFormat,[S]);
 end ;
 
-function StrToTime(const s: String; separator : char): TDateTime;
+function StrToTime(const S: String; separator: char): TDateTime;
 
 Var
   Msg : String;
@@ -3044,7 +3053,7 @@ begin
     Raise EConvertError.Create(Msg);
 end;
 
-function StrToTime(const s: String): TDateTime;
+function StrToTime(const S: String): TDateTime;
 begin
    result:= StrToTime(s, TimeSeparator);
 end;
@@ -3126,7 +3135,7 @@ begin
     end;
 end;
 
-function StrToDateTime(const s: String): TDateTime;
+function StrToDateTime(const S: String): TDateTime;
 
 var
   TimeStr, DateStr: String;
@@ -3144,7 +3153,8 @@ begin
   end;
 end;
 
-Function FormatDateTime(const FormatStr: string; const DateTime: TDateTime) : String;
+function FormatDateTime(const FormatStr: string; const DateTime: TDateTime
+  ): string;
 
   procedure StoreStr(APos,Len: Integer);
   begin
@@ -3511,7 +3521,7 @@ begin
   DateTime:=tmp;
 end;
 
-Function FloatToDateTime (Const Value : Extended) : TDateTime;
+function FloatToDateTime(const Value: Extended): TDateTime;
 begin
   If (Value<MinDateTime) or (Value>MaxDateTime) then
     Raise EConvertError.CreateFmt (SInvalidDateTime,[FloatToStr(Value)]);
@@ -3604,14 +3614,13 @@ begin
      and (TObject(Obj).InheritsFrom(AClass));
 end;
 
-function Supports(const Instance: IInterface; const IID: TGUID; out Intf
+function Supports(const Instance: IInterface; const IID: TGuid; out Intf
   ): Boolean;
 begin
   Result:=(Instance<>nil) and (Instance.QueryInterface(IID,Intf)=S_OK);
 end;
 
-function Supports(const Instance: TObject; const IID: TGUID; out Intf
-  ): Boolean;
+function Supports(const Instance: TObject; const IID: TGuid; out Intf): Boolean;
 begin
   Result:=(Instance<>nil) and Instance.GetInterface(IID,Intf);
 end;
@@ -3629,14 +3638,14 @@ begin
   Result:=Supports(Instance,AClass,Temp);
 end;
 
-function Supports(const Instance: IInterface; const IID: TGUID): Boolean;
+function Supports(const Instance: IInterface; const IID: TGuid): Boolean;
 var
   Temp: IInterface;
 begin
   Result:=Supports(Instance,IID,Temp);
 end;
 
-function Supports(const Instance: TObject; const IID: TGUID): Boolean;
+function Supports(const Instance: TObject; const IID: TGuid): Boolean;
 var
   Temp: TJSObject;
 begin
@@ -3656,7 +3665,7 @@ begin
   end;
 end;
 
-function Supports(const AClass: TClass; const IID: TGUID): Boolean;
+function Supports(const AClass: TClass; const IID: TGuid): Boolean;
 var
   maps: JSValue;
 begin
@@ -3678,7 +3687,7 @@ begin
   Result:=false;
 end;
 
-function TryStringToGUID(const s: string; out Guid: TGUID): Boolean;
+function TryStringToGUID(const s: string; out Guid: TGuid): Boolean;
 var
   re: TJSRegexp;
 begin
@@ -3696,18 +3705,18 @@ begin
   Result:=true;
 end;
 
-function StringToGUID(const S: string): TGUID;
+function StringToGUID(const S: string): TGuid;
 begin
   if not TryStringToGUID(S, Result) then
     raise EConvertError.CreateFmt(SInvalidGUID, [S]);
 end;
 
-function GUIDToString(const guid: TGUID): string;
+function GUIDToString(const guid: TGuid): string;
 begin
   Result:=System.GUIDToString(guid);
 end;
 
-function IsEqualGUID(const guid1, guid2: TGUID): Boolean;
+function IsEqualGUID(const guid1, guid2: TGuid): Boolean;
 var
   i: integer;
 begin
@@ -3717,7 +3726,7 @@ begin
   Result:=true;
 end;
 
-function GuidCase(const guid: TGUID; const List: array of TGuid): Integer;
+function GuidCase(const guid: TGuid; const List: array of TGuid): Integer;
 begin
   for Result := High(List) downto 0 do
     if IsEqualGUID(guid, List[Result]) then
@@ -3725,7 +3734,7 @@ begin
   Result := -1;
 end;
 
-Function CreateGUID(out GUID : TGUID) : Integer;
+function CreateGUID(out GUID: TGUID): Integer;
 
   Function R(B: Integer) : NativeInt;
 
@@ -3756,7 +3765,7 @@ end;
   Integer/Ordinal related
   ---------------------------------------------------------------------}
 
-Function TryStrToInt(const S : String; Out res : Integer) : Boolean;
+function TryStrToInt(const S: String; out res: Integer): Boolean;
 
 Var
   NI : NativeInt;
@@ -3767,7 +3776,7 @@ begin
     res:=NI;
 end;
 
-Function TryStrToInt(const S : String; Out res : NativeInt) : Boolean;
+function TryStrToInt(const S: String; out res: NativeInt): Boolean;
 
 Var
   Radix : Integer = 10;
@@ -3789,7 +3798,7 @@ begin
     res:=NativeInt(J);
 end;
 
-Function StrToIntDef(const S : String; Const aDef : Integer) : Integer;
+function StrToIntDef(const S: String; const aDef: Integer): Integer;
 
 Var
   R : NativeInt;
@@ -3801,7 +3810,7 @@ begin
     Result:=aDef;
 end;
 
-Function StrToIntDef(const S : String; Const aDef : NativeInt) : NativeInt;
+function StrToIntDef(const S: String; const aDef: NativeInt): NativeInt;
 
 Var
   R : NativeInt;
@@ -3813,7 +3822,7 @@ begin
     Result:=aDef;
 end;
 
-Function StrToInt(const S : String) : Integer;
+function StrToInt(const S: String): Integer;
 
 Var
   R : NativeInt;
@@ -3824,14 +3833,14 @@ begin
   Result:=R;
 end;
 
-Function StrToNativeInt(const S : String) : NativeInt;
+function StrToNativeInt(const S: String): NativeInt;
 
 begin
   if not TryStrToInt(S,Result) then
     Raise EConvertError.CreateFmt(SErrInvalidInteger,[S]);
 end;
 
-Function StrToInt64(const S : String) : NativeLargeInt;
+function StrToInt64(const S: String): NativeLargeInt;
 
 Var
   N : NativeInt;
@@ -3842,7 +3851,7 @@ begin
   Result:=N;
 end;
 
-Function TryStrToInt64(const S : String; Out res : NativeLargeInt) : Boolean;
+function TryStrToInt64(const S: String; out res: NativeLargeInt): Boolean;
 
 Var
   R : nativeint;
@@ -3853,7 +3862,8 @@ begin
     Res:=R;
 end;
 
-Function StrToInt64Def(const S : String; ADefault : NativeLargeInt) : NativeLargeInt;
+function StrToInt64Def(const S: String; ADefault: NativeLargeInt
+  ): NativeLargeInt;
 
 
 begin
@@ -3861,7 +3871,7 @@ begin
     Result:=ADefault;
 end;
 
-Function StrToQWord(const S : String) : NativeLargeUInt;
+function StrToQWord(const S: String): NativeLargeUInt;
 
 Var
   N : NativeInt;
@@ -3872,7 +3882,7 @@ begin
   Result:=N;
 end;
 
-Function TryStrToQWord(const S : String; Out res : NativeLargeUInt) : Boolean;
+function TryStrToQWord(const S: String; out res: NativeLargeUInt): Boolean;
 
 Var
   R : nativeint;
@@ -3883,7 +3893,8 @@ begin
     Res:=R;
 end;
 
-Function StrToQWordDef(const S : String; ADefault : NativeLargeUInt) : NativeLargeUInt;
+function StrToQWordDef(const S: String; ADefault: NativeLargeUInt
+  ): NativeLargeUInt;
 
 begin
   if Not TryStrToQword(S,Result) then
@@ -3891,7 +3902,7 @@ begin
 end;
 
 
-Function StrToUInt64(const S : String) : NativeLargeUInt;
+function StrToUInt64(const S: String): NativeLargeUInt;
 
 Var
   N : NativeInt;
@@ -3902,7 +3913,7 @@ begin
   Result:=N;
 end;
 
-Function TryStrToUInt64(const S : String; Out res : NativeLargeUInt) : Boolean;
+function TryStrToUInt64(const S: String; out res: NativeLargeUInt): Boolean;
 
 Var
   R : nativeint;
@@ -3913,7 +3924,8 @@ begin
     Res:=R;
 end;
 
-Function StrToUInt64Def(const S : String; ADefault : NativeLargeUInt) : NativeLargeUInt;
+function StrToUInt64Def(const S: String; ADefault: NativeLargeUInt
+  ): NativeLargeUInt;
 
 
 begin
@@ -3921,7 +3933,7 @@ begin
     Result:=ADefault;
 end;
 
-Function TryStrToDWord(const S : String; Out res : DWord) : Boolean;
+function TryStrToDWord(const S: String; out res: DWord): Boolean;
 
 Var
   R : nativeint;
@@ -3932,7 +3944,7 @@ begin
     Res:=R;
 end;
 
-Function StrToDWord(const S : String) : DWord;
+function StrToDWord(const S: String): DWord;
 
 begin
   if not TryStrToDWord(S,Result) then
@@ -3940,7 +3952,7 @@ begin
 end;
 
 
-Function StrToDWordDef(const S : String; ADefault : DWord) : DWord;
+function StrToDWordDef(const S: String; ADefault: DWord): DWord;
 
 begin
   if Not TryStrToDWord(S,Result) then
@@ -4268,7 +4280,7 @@ begin
     Result := '';
 end;
 
-function ExtractRelativepath (Const BaseName,DestName : PathStr): PathStr;
+function ExtractRelativepath(const BaseName, DestName: PathStr): PathStr;
 
 Var
   OneLevelBack,Source, Dest   : PathStr;
@@ -4303,7 +4315,7 @@ begin
   Result:=Result+ExtractFileName(DestName);
 end;
 
-Function SetDirSeparators (Const FileName : PathStr) : PathStr;
+function SetDirSeparators(const FileName: PathStr): PathStr;
 
 Var
   I : integer;
@@ -4315,7 +4327,7 @@ begin
       Result[i]:=PathDelim;
 end;
 
-Function GetDirs (DirName : PathStr) : TPathStrArray;
+function GetDirs(DirName: PathStr): TPathStrArray;
 
 Var
   I,J,L : Longint;
@@ -4343,7 +4355,7 @@ begin
   SetLength(Result,L);
 end;
 
-function IncludeTrailingPathDelimiter(Const Path : PathStr) : PathStr;
+function IncludeTrailingPathDelimiter(const Path: PathStr): PathStr;
 
 Var
   l : Integer;
@@ -4355,7 +4367,7 @@ begin
     Result:=Result+PathDelim;
 end;
 
-function ExcludeTrailingPathDelimiter(Const Path: PathStr): PathStr;
+function ExcludeTrailingPathDelimiter(const Path: PathStr): PathStr;
 
 Var
   L : Integer;
@@ -4367,7 +4379,7 @@ begin
   Result:=Copy(Path,1,L);
 end;
 
-function IncludeLeadingPathDelimiter(Const Path : PathStr) : PathStr;
+function IncludeLeadingPathDelimiter(const Path: PathStr): PathStr;
 
 Var
   l : Integer;
@@ -4379,7 +4391,7 @@ begin
     Result:=PathDelim+Result;
 end;
 
-function ExcludeLeadingPathDelimiter(Const Path: PathStr): PathStr;
+function ExcludeLeadingPathDelimiter(const Path: PathStr): PathStr;
 
 Var
   L : Integer;
@@ -4391,7 +4403,7 @@ begin
     Delete(Result,1,1);
 end;
 
-function IsPathDelimiter(Const Path: PathStr; Index: Integer): Boolean;
+function IsPathDelimiter(const Path: PathStr; Index: Integer): Boolean;
 
 begin
   Result:=(Index>0) and (Index<=Length(Path)) and CharInSet(Path[Index],AllowDirectorySeparators);

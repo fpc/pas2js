@@ -569,6 +569,8 @@ type
     pbifnAsExt,
     pbifnBitwiseNativeIntAnd,
     pbifnBitwiseNativeIntOr,
+    pbifnBitwiseNativeIntShl,
+    pbifnBitwiseNativeIntShr,
     pbifnBitwiseNativeIntXor,
     pbifnCheckMethodCall,
     pbifnCheckVersion,
@@ -728,6 +730,8 @@ const
     'asExt', // rtl.asExt
     'and', // pbifnBitwiseNativeIntAnd,
     'or', // pbifnBitwiseNativeIntOr,
+    'shl', // pbifnBitwiseNativeIntShl,
+    'shr', // pbifnBitwiseNativeIntShr,
     'xor', // pbifnBitwiseNativeIntXor,
     'checkMethodCall',
     'checkVersion',
@@ -7050,10 +7054,17 @@ begin
           FreeAndNil(B);
           exit;
           end;
-          // ToDo: BigInt shl const
         end;
-      aResolver.LogMsg(20190228220225,mtWarning,nBitWiseOperationIs32Bit,
-        sBitWiseOperationIs32Bit,[],El);
+      // use rtl.shl(a,b)
+      Call:=CreateCallExpression(El);
+      Result:=Call;
+      if El.OpCode=eopShl then
+        Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntShl)])
+      else
+        Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntShr)]);
+      Call.AddArg(A); A:=nil;
+      Call.AddArg(B); B:=nil;
+      exit;
       end;
     end
   else if (LeftResolved.BaseType=btCurrency) or (RightResolved.BaseType=btCurrency) then

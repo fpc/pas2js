@@ -3727,8 +3727,11 @@ begin
     '  s = ''end'';',
     '  s = "end";',
     '  return Result;',
-    '};'
-    ]),
+    '};',
+    'this.Fly = function () {',
+    '  return;',
+    '};',
+    '']),
     LinesToStr([
     ''
     ]));

@@ -332,7 +332,7 @@ type
     // Format JSON date to from DT for Field F
     function FormatDateTimeField(DT : TDateTime; F: TField): String; virtual;
     // Create fieldmapper. A descendent MUST implement this.
-    Function CreateFieldMapper : TJSONFieldMapper; virtual; abstract;
+    Function CreateFieldMapper : TJSONFieldMapper; virtual;
     // If True, then the dataset will free MetaData and FRows when it is closed.
     Property OwnsData : Boolean Read FownsData Write FOwnsData;
     // set to true if unknown field types should be handled as string fields.
@@ -1567,6 +1567,14 @@ begin
     end
   else
     Result:=FormatDateTime(ptrn,DT);
+end;
+
+function TBaseJSONDataSet.CreateFieldMapper: TJSONFieldMapper;
+begin
+  if FRowType=rtJSONArray then
+    Result:=TJSONArrayFieldMapper.Create
+  else
+    Result:=TJSONObjectFieldMapper.Create;
 end;
 
 function TBaseJSONDataSet.GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;

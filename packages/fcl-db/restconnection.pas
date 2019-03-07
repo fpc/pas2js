@@ -22,9 +22,10 @@ Type
     FPageParam: String;
     function GetDataProxy: TDataProxy;
   Protected
-    Function GetUpdateBaseURL : String; virtual;
-    Function GetReadBaseURL : String; virtual;
-    Function GetPageURL(aRequest : TDataRequest) : String;
+    Procedure SetupRequest(aXHR : TJSXMLHttpRequest); virtual;
+    Function GetUpdateBaseURL(aRequest: TRecordUpdateDescriptor) : String; virtual;
+    Function GetReadBaseURL(aRequest: TDataRequest) : String; virtual;
+    Function GetPageURL(aRequest : TDataRequest) : String; virtual;
     Function GetRecordUpdateURL(aRequest : TRecordUpdateDescriptor) : String;
   Public
     Function DoGetDataProxy : TDataProxy; virtual;
@@ -129,12 +130,17 @@ begin
   Result:=FDataProxy;
 end;
 
-function TRESTConnection.GetUpdateBaseURL: String;
+procedure TRESTConnection.SetupRequest(aXHR: TJSXMLHttpRequest);
+begin
+  // Do nothing
+end;
+
+function TRESTConnection.GetUpdateBaseURL(aRequest: TRecordUpdateDescriptor): String;
 begin
   Result:=BaseURL;
 end;
 
-function TRESTConnection.GetReadBaseURL: String;
+function TRESTConnection.GetReadBaseURL(aRequest: TDataRequest): String;
 begin
   Result:=BaseURL;
 end;
@@ -145,7 +151,7 @@ Var
   URL : String;
 
 begin
-  URL:=GetReadBaseURL;
+  URL:=GetReadBaseURL(aRequest);
   if (PageParam<>'') then
     begin
     if Pos('?',URL)<>0 then
@@ -168,7 +174,7 @@ Var
 begin
   KeyField:='';
   Result:='';
-  Base:=GetUpdateBaseURL;
+  Base:=GetUpdateBaseURL(aRequest);
   if aRequest.Status in [usModified,usDeleted] then
     begin
     I:=aRequest.Dataset.Fields.Count-1;
@@ -286,6 +292,7 @@ begin
     else
       begin
       R.FXHR.open('GET',URL,true);
+      Connection.SetupRequest(R.FXHR);
       R.FXHR.send;
       Result:=True;
       end;

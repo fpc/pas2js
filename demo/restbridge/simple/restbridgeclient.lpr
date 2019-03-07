@@ -99,9 +99,11 @@ Var
   sHTML : String;
 
 begin
+  // Prepend dataset name to id?
   sHtml:=Format('<tr id="row-%d"><td>%d</td>',[DataSet.RecNo,aRowNo]);
   For I:=0 to Dataset.Fields.Count-1 do
     sHTML:=sHTML+'<td>'+Dataset.Fields[i].AsString+'</td>'+sLineBreak;
+  sHTML:=sHtml+'</tr>';
   Result:=sHTML;
 end;
 

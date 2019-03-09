@@ -86,6 +86,9 @@ Type
     FChannel : TROHTTPClientChannel;
     FOnLoginFailed: TDAFailedEvent;
     FOnLogin: TDALoginSuccessEvent;
+    FOnLogout: TDASuccessEvent;
+    FOnLogoutailed: TDAFailedEvent;
+    FOnLogoutFailed: TDAFailedEvent;
     FStreamerType: TDAStreamerType;
     FURL: String;
     procedure ClearConnection;
@@ -112,6 +115,7 @@ Type
     // Call this to login. This is an asynchronous call, check the result using OnLoginOK and OnLoginFailed calls.
     Procedure Login(aUserName, aPassword : String);
     Procedure LoginEx(aLoginString : String);
+    Procedure Logout;
     // You can set this. If you didn't set this, and URL is filled, an instance will be created.
     Property DataService : TDADataAbstractService Read GetDataService Write FDataService;
     //  You can set this. If you didn't set this, and URL is filled, an instance will be created.
@@ -129,6 +133,10 @@ Type
     Property OnLogin : TDALoginSuccessEvent Read FOnLogin Write FOnLogin;
     // Called when login call failed. When call was executed but user is wrong OnLogin is called !
     Property OnLoginCallFailed : TDAFailedEvent Read FOnLoginFailed Write FOnLoginFailed;
+    // Called when logout call is executed.
+    Property OnLogout : TDASuccessEvent Read FOnLogout Write FOnLogout;
+    // Called when logout call failed.
+    Property OnLogOutCallFailed : TDAFailedEvent Read FOnLogoutailed Write FOnLogoutFailed;
     // Streamertype : format of the data package in the message.
     Property StreamerType : TDAStreamerType Read FStreamerType Write FStreamerType;
   end;
@@ -203,7 +211,7 @@ begin
     end;
 end;
 
-function TDAConnection.DetectMessageType(Const aURL : String) : TDAMessageType;
+function TDAConnection.DetectMessageType(const aURL: String): TDAMessageType;
 
 Var
   S : String;
@@ -282,6 +290,11 @@ end;
 procedure TDAConnection.LoginEx(aLoginString: String);
 begin
   EnsureLoginService.LoginEx(aLoginString,FOnLogin,FOnLoginFailed);
+end;
+
+procedure TDAConnection.Logout;
+begin
+  EnsureLoginService.Logout(FOnLogout,FOnLogoutFailed);
 end;
 
 { TDADataset }

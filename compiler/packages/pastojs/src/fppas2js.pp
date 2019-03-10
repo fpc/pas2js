@@ -1279,6 +1279,13 @@ type
     procedure InternalAdd(Item: TPasIdentifier);
     procedure OnClearHashItem(Item, Dummy: pointer);
   protected
+    type
+      THasAnoFuncData = record
+        Expr: TProcedureExpr;
+      end;
+      PHasAnoFuncData = ^THasAnoFuncData;
+    procedure OnHasAnonymousEl(El: TPasElement; arg: pointer);
+  protected
     // overloads: fix name clashes in JS
     FOverloadScopes: TFPList; // list of TPasIdentifierScope
     function HasOverloadIndex(El: TPasElement; WithElevatedLocal: boolean = false): boolean; virtual;
@@ -1402,6 +1409,7 @@ type
       false): string; override;
     function HasTypeInfo(El: TPasType): boolean; override;
     function ProcHasImplElements(Proc: TPasProcedure): boolean; override;
+    function HasAnonymousFunctions(El: TPasImplElement): boolean;
     function GetTopLvlProcScope(El: TPasElement): TPas2JSProcedureScope;
     function IsTObjectFreeMethod(El: TPasExpr): boolean; virtual;
     function IsExternalBracketAccessor(El: TPasElement): boolean;
@@ -2643,6 +2651,14 @@ begin
     PasIdentifier:=PasIdentifier.NextSameIdentifier;
     Ident.Free;
     end;
+end;
+
+procedure TPas2JSResolver.OnHasAnonymousEl(El: TPasElement; arg: pointer);
+var
+  Data: PHasAnoFuncData absolute arg;
+begin
+  if (El=nil) or (Data^.Expr<>nil) or (El.ClassType<>TProcedureExpr) then exit;
+  Data^.Expr:=TProcedureExpr(El);
 end;
 
 function TPas2JSResolver.HasOverloadIndex(El: TPasElement;
@@ -5431,6 +5447,17 @@ begin
     Scope:=Scope.ImplProc.CustomData as TPas2JSProcedureScope;
   if Scope.BodyJS<>'' then
     Result:=not Scope.EmptyJS;
+end;
+
+function TPas2JSResolver.HasAnonymousFunctions(El: TPasImplElement): boolean;
+var
+  Data: THasAnoFuncData;
+begin
+  if El=nil then
+    exit(false);
+  Data:=default(THasAnoFuncData);
+  El.ForEachCall(@OnHasAnonymousEl,@Data);
+  Result:=Data.Expr<>nil;
 end;
 
 function TPas2JSResolver.GetTopLvlProcScope(El: TPasElement
@@ -14086,7 +14113,8 @@ begin
             Call.AddArg(CreatePrimitiveDotExpr(ClassPath,PosEl));
             end;
 
-          if (ImplProc.Body.Functions.Count>0) then
+          if (ImplProc.Body.Functions.Count>0)
+              or aResolver.HasAnonymousFunctions(ImplProc.Body.Body) then
             begin
             // has nested procs -> add "var self = this;"
             FuncContext.AddLocalVar(GetBIName(pbivnSelf),FuncContext.ThisPas);

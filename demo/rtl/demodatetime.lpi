@@ -25,11 +25,6 @@
         <Mode0 Name="default"/>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="1">
       <Unit0>
         <Filename Value="demodatetime.pas"/>
@@ -40,7 +35,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="demodatetime"/>
+      <Filename Value="demodatetime.js" ApplyConventions="False"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
@@ -49,7 +44,6 @@
     <Parsing>
       <SyntaxOptions>
         <AllowLabel Value="False"/>
-        <CPPInline Value="False"/>
         <UseAnsiStrings Value="False"/>
       </SyntaxOptions>
     </Parsing>
@@ -59,12 +53,12 @@
       </Debugging>
     </Linking>
     <Other>
+      <CustomOptions Value="-Jc -Jminclude -Jirtl.js"/>
+      <CompilerPath Value="$(pas2js)"/>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tnodejs -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
       </ExecuteBefore>
     </Other>
-    <CompileReasons Compile="False" Build="False" Run="False"/>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

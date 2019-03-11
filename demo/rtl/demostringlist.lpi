@@ -15,11 +15,9 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <CustomData Count="4">
-      <Item0 Name="PasJSPort" Value="0"/>
-      <Item1 Name="PasJSURL"/>
-      <Item2 Name="PasJSWebBrowserProject" Value="1"/>
-      <Item3 Name="PJSProjectHTMLFile" Value="demostringlist.html"/>
+    <CustomData Count="2">
+      <Item0 Name="PJSProjectHTMLFile" Value="demostringlist.html"/>
+      <Item1 Name="PasJSWebBrowserProject" Value="1"/>
     </CustomData>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
@@ -31,11 +29,6 @@
       <FormatVersion Value="2"/>
       <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="2">
       <Unit0>
         <Filename Value="demostringlist.pas"/>
@@ -50,20 +43,31 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="demostringlist"/>
+      <Filename Value="demostringlist.js"/>
     </Target>
     <SearchPaths>
+      <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="js"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <AllowLabel Value="False"/>
+        <UseAnsiStrings Value="False"/>
+      </SyntaxOptions>
+    </Parsing>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+      </Debugging>
+    </Linking>
     <Other>
-      <CompilerPath Value=""/>
+      <CustomOptions Value="-Jc -Jminclude -Jirtl.js"/>
+      <CompilerPath Value="$(pas2js)"/>
       <ExecuteBefore>
-        <Command Value="&quot;$MakeExe(IDE,pas2js)&quot; -Jirtl.js -Jc -Jminclude -Tbrowser &quot;-Fu$(ProjUnitPath)&quot; $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
         <ScanForMakeMsgs Value="True"/>
       </ExecuteBefore>
     </Other>
-    <CompileReasons Compile="False" Build="False" Run="False"/>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

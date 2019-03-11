@@ -13,11 +13,9 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <CustomData Count="4">
+    <CustomData Count="2">
       <Item0 Name="PJSProjectHTMLFile" Value="democomponents.html"/>
-      <Item1 Name="PasJSPort" Value="0"/>
-      <Item2 Name="PasJSURL"/>
-      <Item3 Name="PasJSWebBrowserProject" Value="1"/>
+      <Item1 Name="PasJSWebBrowserProject" Value="1"/>
     </CustomData>
     <BuildModes Count="1">
       <Item1 Name="Default" Default="True"/>
@@ -26,9 +24,6 @@
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <LaunchingApplication Use="True" PathPlusParams="$(Pas2JSBrowser) $(Pas2JSProjectURL)"/>
-      </local>
       <FormatVersion Value="2"/>
       <Modes Count="1">
         <Mode0 Name="default">
@@ -38,11 +33,6 @@
         </Mode0>
       </Modes>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="1">
       <Unit0>
         <Filename Value="democomponents.lpr"/>
@@ -53,18 +43,29 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="democomponents"/>
+      <Filename Value="democomponents.js" ApplyConventions="False"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <AllowLabel Value="False"/>
+        <UseAnsiStrings Value="False"/>
+      </SyntaxOptions>
+    </Parsing>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+      </Debugging>
+    </Linking>
     <Other>
+      <CustomOptions Value="-Jc -Jminclude -Jirtl.js"/>
+      <CompilerPath Value="$(pas2js)"/>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tbrowser -Jc -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
       </ExecuteBefore>
     </Other>
-    <CompileReasons Compile="False" Build="False" Run="False"/>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

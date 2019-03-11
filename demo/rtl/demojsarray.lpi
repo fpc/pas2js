@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="10"/>
+    <Version Value="11"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
@@ -20,16 +20,11 @@
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default"/>
+      </Modes>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-        <MaxVersion Major="1"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="1">
       <Unit0>
         <Filename Value="demojsarray.pas"/>
@@ -40,18 +35,29 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="demojsarray"/>
+      <Filename Value="demojsarray.js" ApplyConventions="False"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <AllowLabel Value="False"/>
+        <UseAnsiStrings Value="False"/>
+      </SyntaxOptions>
+    </Parsing>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+      </Debugging>
+    </Linking>
     <Other>
+      <CustomOptions Value="-Jc -Jminclude -Jirtl.js"/>
+      <CompilerPath Value="$(pas2js)"/>
       <ExecuteBefore>
-        <Command Value="$MakeExe(pas2js) -Jirtl.js -Tnodejs -Fu$(ProjUnitPath) -o$NameOnly($(ProjFile)).js $Name($(ProjFile))"/>
         <ScanForFPCMsgs Value="True"/>
       </ExecuteBefore>
     </Other>
-    <CompileReasons Compile="False" Build="False" Run="False"/>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

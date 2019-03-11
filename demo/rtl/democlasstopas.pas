@@ -1,6 +1,6 @@
 program democlasstopas;
 
-uses Web,Classes, JS, class2pas, browserconsole;
+uses Web, Classes, JS, browserconsole, class2pas;
 
 procedure ShowRTLProps(aClassName,aJSClassName : String; O : TJSObject);
 Var

@@ -359,6 +359,7 @@ procedure TDADataset.CreateFieldDefs(a: TJSArray);
 Var
   I : Integer;
   F : TDAField;
+  FO : TJSObject absolute F;
   fn,dt : string;
   fs : Integer;
   FT : TFieldType;
@@ -370,9 +371,19 @@ begin
     begin
     F:=TDAField(A.Elements[i]);
     fn:=F.Name;
-    fs:=F.Size;
-    dt:=F.type_;
-    req:=F.Required;
+    // The JSON streamer does not create all properties :(
+    if FO.hasOwnProperty('size') then
+      fs:=F.Size
+    else
+      fs:=0;
+    if FO.hasOwnProperty('type') then
+      dt:=F.type_
+    else
+      dt:='string';
+    if FO.hasOwnProperty('required') then
+      req:=F.Required
+    else
+      Req:=false;
     Ft:=DataTypeToFieldType(dT);
     if (ft=ftBlob) and (fs=0) then
       fs:=1;
@@ -480,6 +491,8 @@ begin
   else
     Msg:=Fail;
   Success:=rrFail;
+  ErrorMsg:=Msg;
+  DoAfterRequest;
 end;
 
 procedure TDADataRequest.doSuccess(res: JSValue);
@@ -501,12 +514,13 @@ begin
   if (DADS.DAConnection.EnsureMessageType=mtJSON) then
     S:=TROUtil.Frombase64(S);
   Case DADS.DAConnection.StreamerType of
-    stJSON : DStr:=TDABIN2DataStreamer.new;
+    stJSON : DStr:=TDAJSONDataStreamer.new;
     stBIN: DStr:=TDABIN2DataStreamer.new;
   end;
   DStr.Stream:=S;
   DStr.initializeRead;
   DT:=TDADataTable.New;
+  DT.name:=DADS.TableName;
   DStr.ReadDataset(DT);
   Rows:=TJSArray.New;
   for I:=0 to length(DT.rows)-1 do

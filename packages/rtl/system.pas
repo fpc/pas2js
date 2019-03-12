@@ -99,6 +99,8 @@ type
 
   { TObject }
 
+  {$DispatchField Msg} // enable checking message methods for record field name "Msg"
+  {$DispatchStrField MsgStr}
   TObject = class
   private
     class var FClassName: String; external name '$classname';
@@ -124,6 +126,12 @@ type
 
     procedure AfterConstruction; virtual;
     procedure BeforeDestruction; virtual;
+
+    // message handling routines
+    procedure Dispatch(var aMessage); virtual;
+    procedure DispatchStr(var aMessage); virtual;
+    procedure DefaultHandler(var aMessage); virtual;
+    procedure DefaultHandlerStr(var aMessage); virtual;
 
     function GetInterface(const iid: TGuid; out obj): boolean;
     function GetInterface(const iidstr: String; out obj): boolean; inline;
@@ -393,7 +401,9 @@ type
 var
   JSArguments: TJSArguments; external name 'arguments';
 
-// function parseInt(s: String; Radix: NativeInt): NativeInt; external name 'parseInt'; // may result NaN
+function isNumber(const v: JSValue): boolean; external name 'rtl.isNumber';
+function isObject(const v: JSValue): boolean; external name 'rtl.isObject'; // true if not null and a JS Object
+function isString(const v: JSValue): boolean; external name 'rtl.isString';
 function isNaN(i: JSValue): boolean; external name 'isNaN'; // may result NaN
 
 // needed by ClassNameIs, the real SameText is in SysUtils
@@ -822,6 +832,66 @@ end;
 procedure TObject.BeforeDestruction;
 begin
 
+end;
+
+procedure TObject.Dispatch(var aMessage);
+// aMessage is a record with an integer field 'Msg'
+var
+  aClass: TClass;
+  Msg: TJSObj absolute aMessage;
+  Id: jsvalue;
+begin
+  if not isObject(Msg) then exit;
+  Id:=Msg['Msg'];
+  if not isNumber(Id) then exit;
+  aClass:=ClassType;
+  while aClass<>nil do
+    begin
+    asm
+      var Handlers = aClass.$msgint;
+      if (rtl.isObject(Handlers) && Handlers.hasOwnProperty(Id)){
+        this[Handlers[Id]](aMessage);
+        return;
+      }
+    end;
+    aClass:=aClass.ClassParent;
+    end;
+  DefaultHandler(aMessage);
+end;
+
+procedure TObject.DispatchStr(var aMessage);
+// aMessage is a record with a string field 'MsgStr'
+var
+  aClass: TClass;
+  Msg: TJSObj absolute aMessage;
+  Id: jsvalue;
+begin
+  if not isObject(Msg) then exit;
+  Id:=Msg['MsgStr'];
+  if not isString(Id) then exit;
+  aClass:=ClassType;
+  while aClass<>nil do
+    begin
+    asm
+      var Handlers = aClass.$msgstr;
+      if (rtl.isObject(Handlers) && Handlers.hasOwnProperty(Id)){
+        this[Handlers[Id]](aMessage);
+        return;
+      }
+    end;
+    aClass:=aClass.ClassParent;
+    end;
+  DefaultHandlerStr(aMessage);
+end;
+
+procedure TObject.DefaultHandler(var aMessage);
+begin
+  if jsvalue(aMessage) then ;
+end;
+
+procedure TObject.DefaultHandlerStr(var aMessage);
+begin
+  if jsvalue(aMessage) then ;
 end;
 
 function TObject.GetInterface(const iid: TGuid; out obj): boolean;

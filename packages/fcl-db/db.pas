@@ -662,7 +662,7 @@ type
   TBlobStreamMode = (bmRead, bmWrite, bmReadWrite);
 //  TBlobType = ftBlob..ftMemo;
 
-  TBlobField = class(TBinaryField)
+  TBlobField = class(TField)
   private
     FModified : Boolean;
     // Wrapper that retrieves FDataType as a TBlobType

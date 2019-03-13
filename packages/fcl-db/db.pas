@@ -670,6 +670,7 @@ type
     // Wrapper that calls SetFieldType
     //   procedure SetBlobType(AValue: TBlobType);
   protected
+    class procedure CheckTypeSize(AValue: Longint); override;
     function GetBlobSize: Longint; virtual;
     function GetIsNull: Boolean; override;
     procedure GetText(var AText: string; ADisplayText{%H-}: Boolean); override;
@@ -7027,6 +7028,11 @@ end;
 
 
 
+class procedure TBlobField.CheckTypeSize(AValue: Longint);
+begin
+  If AValue<0 then
+    DatabaseErrorFmt(SInvalidFieldSize,[AValue]);
+end;
 
 function TBlobField.GetBlobSize: Longint;
 

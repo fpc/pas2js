@@ -86,6 +86,9 @@ Type
     FChannel : TROHTTPClientChannel;
     FOnLoginFailed: TDAFailedEvent;
     FOnLogin: TDALoginSuccessEvent;
+    FOnLogout: TDASuccessEvent;
+    FOnLogoutailed: TDAFailedEvent;
+    FOnLogoutFailed: TDAFailedEvent;
     FStreamerType: TDAStreamerType;
     FURL: String;
     procedure ClearConnection;
@@ -112,6 +115,7 @@ Type
     // Call this to login. This is an asynchronous call, check the result using OnLoginOK and OnLoginFailed calls.
     Procedure Login(aUserName, aPassword : String);
     Procedure LoginEx(aLoginString : String);
+    Procedure Logout;
     // You can set this. If you didn't set this, and URL is filled, an instance will be created.
     Property DataService : TDADataAbstractService Read GetDataService Write FDataService;
     //  You can set this. If you didn't set this, and URL is filled, an instance will be created.
@@ -129,6 +133,10 @@ Type
     Property OnLogin : TDALoginSuccessEvent Read FOnLogin Write FOnLogin;
     // Called when login call failed. When call was executed but user is wrong OnLogin is called !
     Property OnLoginCallFailed : TDAFailedEvent Read FOnLoginFailed Write FOnLoginFailed;
+    // Called when logout call is executed.
+    Property OnLogout : TDASuccessEvent Read FOnLogout Write FOnLogout;
+    // Called when logout call failed.
+    Property OnLogOutCallFailed : TDAFailedEvent Read FOnLogoutailed Write FOnLogoutFailed;
     // Streamertype : format of the data package in the message.
     Property StreamerType : TDAStreamerType Read FStreamerType Write FStreamerType;
   end;
@@ -203,7 +211,7 @@ begin
     end;
 end;
 
-function TDAConnection.DetectMessageType(Const aURL : String) : TDAMessageType;
+function TDAConnection.DetectMessageType(const aURL: String): TDAMessageType;
 
 Var
   S : String;
@@ -284,6 +292,11 @@ begin
   EnsureLoginService.LoginEx(aLoginString,FOnLogin,FOnLoginFailed);
 end;
 
+procedure TDAConnection.Logout;
+begin
+  EnsureLoginService.Logout(FOnLogout,FOnLogoutFailed);
+end;
+
 { TDADataset }
 
 function TDADataset.DataTypeToFieldType(s : String) : TFieldType;
@@ -346,6 +359,7 @@ procedure TDADataset.CreateFieldDefs(a: TJSArray);
 Var
   I : Integer;
   F : TDAField;
+  FO : TJSObject absolute F;
   fn,dt : string;
   fs : Integer;
   FT : TFieldType;
@@ -357,9 +371,19 @@ begin
     begin
     F:=TDAField(A.Elements[i]);
     fn:=F.Name;
-    fs:=F.Size;
-    dt:=F.type_;
-    req:=F.Required;
+    // The JSON streamer does not create all properties :(
+    if FO.hasOwnProperty('size') then
+      fs:=F.Size
+    else
+      fs:=0;
+    if FO.hasOwnProperty('type') then
+      dt:=F.type_
+    else
+      dt:='string';
+    if FO.hasOwnProperty('required') then
+      req:=F.Required
+    else
+      Req:=false;
     Ft:=DataTypeToFieldType(dT);
     if (ft=ftBlob) and (fs=0) then
       fs:=1;
@@ -467,6 +491,8 @@ begin
   else
     Msg:=Fail;
   Success:=rrFail;
+  ErrorMsg:=Msg;
+  DoAfterRequest;
 end;
 
 procedure TDADataRequest.doSuccess(res: JSValue);
@@ -488,12 +514,13 @@ begin
   if (DADS.DAConnection.EnsureMessageType=mtJSON) then
     S:=TROUtil.Frombase64(S);
   Case DADS.DAConnection.StreamerType of
-    stJSON : DStr:=TDABIN2DataStreamer.new;
+    stJSON : DStr:=TDAJSONDataStreamer.new;
     stBIN: DStr:=TDABIN2DataStreamer.new;
   end;
   DStr.Stream:=S;
   DStr.initializeRead;
   DT:=TDADataTable.New;
+  DT.name:=DADS.TableName;
   DStr.ReadDataset(DT);
   Rows:=TJSArray.New;
   for I:=0 to length(DT.rows)-1 do

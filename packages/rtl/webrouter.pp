@@ -1251,7 +1251,8 @@ Var
   end;
 
 begin
-  if Result and isDefined(Window) and isDefined(Window.Navigator) then
+  Result:=False;
+  if isDefined(Window) and isDefined(Window.Navigator) then
     begin
     ua:=Window.Navigator.userAgent;
     Result:=Not (
@@ -1261,9 +1262,9 @@ begin
                  or IsB('Chrome')
                  or isB('Windows Phone')
                  );
-    If Result then
-      Result:=isDefined(Window.history) and isDefined(Window.history);
     end;
+  If Result then
+    Result:=isDefined(Window.history) and isDefined(Window.history);
 end;
 
 { ---------------------------------------------------------------------

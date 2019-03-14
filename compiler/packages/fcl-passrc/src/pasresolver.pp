@@ -2013,7 +2013,7 @@ type
     function IsClassField(El: TPasElement): boolean;
     function GetFunctionType(El: TPasElement): TPasFunctionType;
     function IsMethod(El: TPasProcedure): boolean;
-    function IsHelperMethod(El: TPasElement): boolean;
+    function IsHelperMethod(El: TPasElement): boolean; virtual;
     function IsHelper(El: TPasElement): boolean;
     function IsExternalClass_Name(aClass: TPasClassType; const ExtName: string): boolean;
     function IsProcedureType(const ResolvedEl: TPasResolverResult; HasValue: boolean): boolean;

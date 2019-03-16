@@ -20534,6 +20534,8 @@ function TPasToJSConverter.CreateReferencePath(El: TPasElement;
  - auto created local var
  otherwise use absolute path
 }
+var
+  aResolver: TPas2JSResolver;
 
   function IsLocalVar: boolean;
   begin
@@ -20542,7 +20544,7 @@ function TPasToJSConverter.CreateReferencePath(El: TPasElement;
       exit(true);
     if El.ClassType=TPasResultElement then
       exit(true);
-    if AContext.Resolver=nil then
+    if aResolver=nil then
       exit(true);
     if El.Parent=nil then
       RaiseNotSupported(El,AContext,20170203121306,GetObjName(El));
@@ -20614,7 +20616,7 @@ function TPasToJSConverter.CreateReferencePath(El: TPasElement;
   var
     AbsolResolved: TPasResolverResult;
   begin
-    AContext.Resolver.ComputeElement(TPasVariable(El).AbsoluteExpr,AbsolResolved,[rcNoImplicitProc]);
+    aResolver.ComputeElement(TPasVariable(El).AbsoluteExpr,AbsolResolved,[rcNoImplicitProc]);
     Result:=CreateReferencePath(AbsolResolved.IdentEl,AContext,Kind,Full,Ref);
   end;
 
@@ -20663,25 +20665,26 @@ begin
   //writeln('TPasToJSConverter.CreateReferencePath START El=',GetObjName(El),' Parent=',GetObjName(El.Parent),' Context=',GetObjName(AContext),' SelfContext=',GetObjName(AContext.GetSelfContext));
   //AContext.WriteStack;
   {$ENDIF}
+  aResolver:=AContext.Resolver;
   if (El is TPasType) and (AContext<>nil) then
-    El:=AContext.Resolver.ResolveAliasType(TPasType(El));
+    El:=aResolver.ResolveAliasType(TPasType(El));
 
   ElClass:=El.ClassType;
   if ElClass.InheritsFrom(TPasVariable) and (TPasVariable(El).AbsoluteExpr<>nil)
-      and (AContext.Resolver<>nil) then
+      and (aResolver<>nil) then
     exit(GetAbsoluteAlias);
 
   if AContext is TDotContext then
     begin
     Dot:=TDotContext(AContext);
-    if Dot.Resolver<>nil then
+    if aResolver<>nil then
       begin
       if ElClass.InheritsFrom(TPasVariable) then
         begin
         //writeln('TPasToJSConverter.CreateReferencePath Left=',GetResolverResultDbg(Dot.LeftResolved),' Right=class var ',GetObjName(El));
         if ([vmClass,vmStatic]*ClassVarModifiersType*TPasVariable(El).VarModifiers<>[])
             and (Dot.Access=caAssign)
-            and Dot.Resolver.ResolvedElIsClassOrRecordInstance(Dot.LeftResolved) then
+            and aResolver.ResolvedElIsClassOrRecordInstance(Dot.LeftResolved) then
           begin
           // writing a class var
           Append_GetClass(El);
@@ -20690,7 +20693,7 @@ begin
       else if IsClassFunction(El) then
         begin
         if (not TPasProcedure(El).IsStatic)
-            and Dot.Resolver.ResolvedElIsClassOrRecordInstance(Dot.LeftResolved) then
+            and aResolver.ResolvedElIsClassOrRecordInstance(Dot.LeftResolved) then
           // accessing a class method from an object, 'this' must be the class/record
           Append_GetClass(El);
         end;
@@ -20805,7 +20808,7 @@ begin
             writeln('TPasToJSConverter.CreateReferencePath missing JS var for Self: El=',GetElementDbgPath(El),':',El.ClassName,' CurParentEl=',GetElementDbgPath(ParentEl),':',ParentEl.ClassName,' AContext:');
             AContext.WriteStack;
             if Ref<>nil then
-              writeln('TPasToJSConverter.CreateReferencePath Ref=',GetObjName(Ref.Element),' at ',AContext.Resolver.GetElementSourcePosStr(Ref.Element));
+              writeln('TPasToJSConverter.CreateReferencePath Ref=',GetObjName(Ref.Element),' at ',aResolver.GetElementSourcePosStr(Ref.Element));
             {AllowWriteln-}
             {$ENDIF}
             RaiseNotSupported(El,AContext,20180125004049);

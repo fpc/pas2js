@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <ProjectOptions>
-    <Version Value="10"/>
+  <ProjectOptions BuildModesCount="1">
+    <Version Value="12"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
         <MainUnitHasScaledStatement Value="False"/>
+        <CompatibilityMode Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
@@ -14,22 +15,18 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <BuildModes Count="1">
-      <Item1 Name="Default" Default="True"/>
+    <BuildModes>
+      <Item1 Name="default" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
     </PublishOptions>
     <RunParams>
-      <local>
-        <FormatVersion Value="1"/>
-      </local>
+      <FormatVersion Value="2"/>
+      <Modes Count="1">
+        <Mode0 Name="default"/>
+      </Modes>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="2">
       <Unit0>
         <Filename Value="reportdemo.lpr"/>
@@ -50,13 +47,28 @@
       <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <AllowLabel Value="False"/>
+        <UseAnsiStrings Value="False"/>
+      </SyntaxOptions>
+    </Parsing>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+      </Debugging>
+    </Linking>
     <Other>
+      <CustomOptions Value="-Jc -Jminclude -Jirtl.js"/>
+      <CompilerPath Value="$(pas2js)"/>
       <ExecuteBefore>
         <Command Value="$MakeExe(pas2js) -Tbrowser -Jirtl.js -Jc -Jm -Jminclude $Name($(ProjFile))"/>
-        <ScanForFPCMsgs Value="True"/>
+        <Parsers Count="1">
+          <Item1 Value="Pas2JS"/>
+        </Parsers>
+        <CompileReasons Compile="False" Build="False" Run="False"/>
       </ExecuteBefore>
     </Other>
-    <CompileReasons Compile="False" Build="False" Run="False"/>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

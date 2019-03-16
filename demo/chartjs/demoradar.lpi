@@ -9,6 +9,7 @@
         <MainUnitHasTitleStatement Value="False"/>
         <MainUnitHasScaledStatement Value="False"/>
         <Runnable Value="False"/>
+        <CompatibilityMode Value="True"/>
       </Flags>
       <MainUnit Value="0"/>
       <Title Value="demoradar"/>
@@ -30,11 +31,6 @@
       <FormatVersion Value="2"/>
       <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="2">
       <Unit0>
         <Filename Value="demoradar.lpr"/>

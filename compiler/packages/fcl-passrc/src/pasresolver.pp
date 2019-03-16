@@ -9473,7 +9473,8 @@ begin
   if DeclEl is TPasProcedure then
     begin
     Proc:=TPasProcedure(DeclEl);
-    if (Access=rraAssign) and (Proc.ProcType is TPasFunctionType)
+    if (Access=rraAssign)
+        and (Proc.ProcType is TPasFunctionType)
         and (Params.Parent.ClassType=TPasImplAssign)
         and (TPasImplAssign(Params.Parent).left=Params) then
       begin
@@ -9489,6 +9490,7 @@ begin
         end;
       end;
     end;
+
   ComputeElement(NameExpr,ResolvedEl,[rcSetReferenceFlags]);
   {$IFDEF VerbosePasResolver}
   writeln('TPasResolver.ResolveArrayParamsExprName NameExp=',GetObjName(NameExpr),' ',GetResolverResultDbg(ResolvedEl));
@@ -9499,11 +9501,33 @@ end;
 procedure TPasResolver.ResolveArrayParamsArgs(Params: TParamsExpr;
   const ResolvedValue: TPasResolverResult; Access: TResolvedRefAccess);
 
+  procedure ReadAccessParamValue;
+  var
+    Left: TPasExpr;
+    Ref: TResolvedReference;
+  begin
+    if Access=rraAssign then
+      begin
+      // ArrayStringPointer[]:=
+      // -> writing the element needs reading the value
+      Left:=Params.Value;
+      if (Left is TBinaryExpr) and (TBinaryExpr(Left).OpCode=eopSubIdent) then
+        Left:=TBinaryExpr(Left).right;
+      if Left.CustomData is TResolvedReference then
+        begin
+        Ref:=TResolvedReference(Left.CustomData);
+        if Ref.Access=rraAssign then
+          Ref.Access:=rraReadAndAssign;
+        end;
+      end;
+  end;
+
   function CheckStringOrPointerIndex(IsStringIndex: boolean): boolean;
   var
     ArgExp: TPasExpr;
     ResolvedArg: TPasResolverResult;
   begin
+    ReadAccessParamValue;
     if not IsStringIndex then
       begin
       // pointer
@@ -9572,6 +9596,7 @@ begin
       if ResolvedValue.IdentEl is TPasType then
         RaiseMsg(20170216152215,nIllegalQualifierAfter,sIllegalQualifierAfter,
           ['[',ResolvedValue.IdentEl.ElementTypeName],Params);
+      ReadAccessParamValue;
       CheckCallArrayCompatibility(TPasArrayType(TypeEl),Params,true,true);
       for i:=0 to length(Params.Params)-1 do
         AccessExpr(Params.Params[i],rraRead);

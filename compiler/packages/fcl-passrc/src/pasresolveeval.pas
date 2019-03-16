@@ -184,6 +184,7 @@ const
   // free 3118
   nImplictConversionUnicodeToAnsi = 3119;
   nWrongTypeXInArrayConstructor = 3120;
+  nMethodHidesNonVirtualMethodExactly = 3125;
 
   // using same IDs as FPC
   nVirtualMethodXHasLowerVisibility = 3250; // was 3050
@@ -315,6 +316,7 @@ resourcestring
   // was 3118
   sImplictConversionUnicodeToAnsi = 'Implicit string type conversion with potential data loss from "UnicodeString" to "AnsiString"';
   sWrongTypeXInArrayConstructor = 'Wrong type "%s" in array constructor';
+  sMethodHidesNonVirtualMethodExactly = 'method hides identifier at "%s". Use reintroduce';
 
 type
   { TResolveData - base class for data stored in TPasElement.CustomData }

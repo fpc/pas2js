@@ -1,12 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="11"/>
+    <Version Value="12"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
         <MainUnitHasScaledStatement Value="False"/>
+        <Runnable Value="False"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
       <MainUnit Value="0"/>
@@ -14,46 +15,55 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <BuildModes Count="1">
-      <Item1 Name="Default" Default="True"/>
+    <CustomData Count="2">
+      <Item0 Name="PasJSPort" Value="0"/>
+      <Item1 Name="PasJSWebBrowserProject" Value="1"/>
+    </CustomData>
+    <BuildModes>
+      <Item Name="Default" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
+      <UseFileFilters Value="True"/>
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="1">
-        <Mode0 Name="default"/>
-      </Modes>
+      <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
-    <Units Count="1">
-      <Unit0>
+    <Units>
+      <Unit>
         <Filename Value="hotreload.lpr"/>
         <IsPartOfProject Value="True"/>
-      </Unit0>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
-    <Target>
+    <Target FileExt=".js">
       <Filename Value="hotreload"/>
     </Target>
     <SearchPaths>
-      <IncludeFiles Value="$(ProjOutDir)"/>
-      <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
+      <UnitOutputDirectory Value="js"/>
     </SearchPaths>
+    <Parsing>
+      <SyntaxOptions>
+        <AllowLabel Value="False"/>
+        <UseAnsiStrings Value="False"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <TargetOS Value="browser"/>
+    </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+        <UseLineInfoUnit Value="False"/>
+      </Debugging>
+    </Linking>
     <Other>
-      <ExecuteBefore>
-        <Command Value="$makeexe(pas2js) -Tbrowser -Jirtl.js -Jc $Name($(ProjFile))"/>
-        <ScanForFPCMsgs Value="True"/>
-      </ExecuteBefore>
+      <CustomOptions Value="-Jeutf-8 -Jirtl.js -Jc -Jminclude"/>
+      <CompilerPath Value="$(pas2js)"/>
     </Other>
-    <CompileReasons Compile="False" Build="False" Run="False"/>
   </CompilerOptions>
   <Debugging>
     <Exceptions Count="3">

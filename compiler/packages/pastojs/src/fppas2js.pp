@@ -20660,8 +20660,6 @@ var
 begin
   Result:='';
   {$IFDEF VerbosePas2JS}
-  if SameText(El.Name,'Fly') then
-    writeln('AAA1 TPasToJSConverter.CreateReferencePath START El=',GetObjName(El),' Parent=',GetObjName(El.Parent),' Context=',GetObjName(AContext),' SelfContext=',GetObjName(AContext.GetSelfContext));
   //writeln('TPasToJSConverter.CreateReferencePath START El=',GetObjName(El),' Parent=',GetObjName(El.Parent),' Context=',GetObjName(AContext),' SelfContext=',GetObjName(AContext.GetSelfContext));
   //AContext.WriteStack;
   {$ENDIF}
@@ -20745,7 +20743,6 @@ begin
   else
     begin
     // need full path
-      writeln('AAA2 TPasToJSConverter.CreateReferencePath ');
     if El.Parent=nil then
       RaiseNotSupported(El,AContext,20170201172141,GetObjName(El));
     El:=ImplToDecl(El);
@@ -20765,7 +20762,6 @@ begin
       if IsClassRec then
         begin
         // parent is a class or record declaration
-          writeln('AAA3 TPasToJSConverter.CreateReferencePath ',GetObjName(ParentEl));
         if (ParentEl.ClassType=TPasClassType)
             and (TPasClassType(ParentEl).HelperForType<>nil)
             and aResolver.IsHelperForMember(El) then

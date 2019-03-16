@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
   <ProjectOptions>
-    <Version Value="11"/>
+    <Version Value="12"/>
     <General>
       <Flags>
         <SaveOnlyProjectUnits Value="True"/>
@@ -10,7 +10,6 @@
         <MainUnitHasScaledStatement Value="False"/>
         <Runnable Value="False"/>
       </Flags>
-      <MainUnit Value="0"/>
       <Title Value="basic"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
@@ -19,8 +18,8 @@
       <Item0 Name="MaintainHTML" Value="1"/>
       <Item1 Name="PasJSWebBrowserProject" Value="1"/>
     </CustomData>
-    <BuildModes Count="1" Active="Default">
-      <Item1 Name="Default" Default="True"/>
+    <BuildModes Active="Default">
+      <Item Name="Default" Default="True"/>
     </BuildModes>
     <PublishOptions>
       <Version Value="2"/>
@@ -30,20 +29,16 @@
       <FormatVersion Value="2"/>
       <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
-    <Units Count="2">
-      <Unit0>
+    <Units>
+      <Unit>
         <Filename Value="basic.lpr"/>
         <IsPartOfProject Value="True"/>
-        <CursorPos X="126" Y="6"/>
+        <IsVisibleTab Value="True"/>
+        <CursorPos X="55" Y="16"/>
         <UsageCount Value="20"/>
         <Loaded Value="True"/>
-      </Unit0>
-      <Unit1>
+      </Unit>
+      <Unit>
         <Filename Value="basic.html"/>
         <IsPartOfProject Value="True"/>
         <CustomData Count="1">
@@ -51,7 +46,7 @@
         </CustomData>
         <UsageCount Value="20"/>
         <DefaultSyntaxHighlighter Value="HTML"/>
-      </Unit1>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -79,7 +74,7 @@
       </Debugging>
     </Linking>
     <Other>
-      <CustomOptions Value="-Jc -Jirtl.js -Jminclude -Jeutf-8 -Tbrowser"/>
+      <CustomOptions Value="-Jc -Jirtl.js -Jminclude -Jeutf-8"/>
       <CompilerPath Value="$(pas2js)"/>
     </Other>
   </CompilerOptions>

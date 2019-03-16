@@ -149,16 +149,19 @@ end;
 procedure TRESTConnection.SetupRequest(aXHR: TJSXMLHttpRequest);
 begin
   // Do nothing
+  if aXHR=nil then ;
 end;
 
 function TRESTConnection.GetUpdateBaseURL(aRequest: TRecordUpdateDescriptor): String;
 begin
   Result:=BaseURL;
+  if aRequest=nil then ;
 end;
 
 function TRESTConnection.GetReadBaseURL(aRequest: TDataRequest): String;
 begin
   Result:=BaseURL;
+  if aRequest=nil then ;
 end;
 
 function TRESTConnection.GetPageURL(aRequest: TDataRequest): String;

@@ -3996,18 +3996,21 @@ end;
 
 Function BuiltInDate(Const Args : TExprParameterArray) : TFPExpressionResult;
 begin
+  if Args=nil then ;
   Result.ResultType:=rtDateTime;
   Result.resValue:=Date;
 end;
 
 Function BuiltInTime(Const Args : TExprParameterArray) : TFPExpressionResult;
 begin
+  if Args=nil then ;
   Result.ResultType:=rtDateTime;
   Result.resValue:=Time;
 end;
 
 Function BuiltInNow(Const Args : TExprParameterArray) : TFPExpressionResult;
 begin
+  if Args=nil then ;
   Result.ResultType:=rtDateTime;
   Result.resValue:=Now;
 end;

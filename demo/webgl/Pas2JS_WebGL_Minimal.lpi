@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <ProjectOptions>
-    <Version Value="11"/>
+  <ProjectOptions BuildModesCount="1">
+    <Version Value="12"/>
     <General>
       <Flags>
         <MainUnitHasCreateFormStatements Value="False"/>
         <MainUnitHasTitleStatement Value="False"/>
         <MainUnitHasScaledStatement Value="False"/>
         <Runnable Value="False"/>
+        <CompatibilityMode Value="True"/>
       </Flags>
       <SessionStorage Value="InProjectDir"/>
-      <MainUnit Value="0"/>
       <Title Value="project1"/>
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
@@ -18,7 +18,7 @@
     <CustomData Count="1">
       <Item0 Name="PasJSWebBrowserProject" Value="1"/>
     </CustomData>
-    <BuildModes Count="1">
+    <BuildModes>
       <Item1 Name="Default" Default="True"/>
     </BuildModes>
     <PublishOptions>
@@ -28,11 +28,6 @@
       <FormatVersion Value="2"/>
       <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="1">
-      <Item1>
-        <PackageName Value="pas2js_rtl"/>
-      </Item1>
-    </RequiredPackages>
     <Units Count="1">
       <Unit0>
         <Filename Value="Pas2JS_WebGL_Minimal.pas"/>
@@ -66,7 +61,7 @@
     </Linking>
     <Other>
       <CustomOptions Value="-Jeutf-8 -Jirtl.js -Jc -Jminclude"/>
-      <CompilerPath Value="$MakeExe(IDE,pas2js)"/>
+      <CompilerPath Value="$(pas2js)"/>
     </Other>
   </CompilerOptions>
   <Debugging>

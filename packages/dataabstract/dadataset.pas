@@ -92,8 +92,11 @@ Type
     FStreamerType: TDAStreamerType;
     FURL: String;
     procedure ClearConnection;
+    function GetChannel: TROHTTPClientChannel;
+    function GetClientID: String;
     Function GetDataService : TDADataAbstractService;
     function GetLoginService: TDASimpleLoginService;
+    function GetMessage: TROMessage;
     procedure SetDataserviceName(AValue: String);
     procedure SetLoginServiceName(AValue: String);
     procedure SetMessageType(AValue: TDAMessageType);
@@ -120,6 +123,11 @@ Type
     Property DataService : TDADataAbstractService Read GetDataService Write FDataService;
     //  You can set this. If you didn't set this, and URL is filled, an instance will be created.
     Property LoginService : TDASimpleLoginService Read GetLoginService Write FLoginService;
+    // You can get this to use in other service constructors
+    Property Channel : TROHTTPClientChannel Read GetChannel;
+    Property Message : TROMessage Read GetMessage;
+    // Get client ID
+    Property ClientID : String Read GetClientID;
   Published
     // If set, this is the message type that will be used when auto-creating the service. Setting this while dataservice is Non-Nil will remove the reference
     Property MessageType : TDAMessageType Read FMessageType Write SetMessageType;
@@ -163,6 +171,12 @@ begin
   Result:=FLoginService;
 end;
 
+function TDAConnection.GetMessage: TROMessage;
+begin
+  CreateChannelAndMessage;
+  Result:=FMessage;
+end;
+
 procedure TDAConnection.SetDataserviceName(AValue: String);
 begin
   if FDataserviceName=AValue then Exit;
@@ -189,6 +203,20 @@ begin
   FDataservice:=Nil;
   FChannel:=Nil;
   FMessage:=Nil;
+end;
+
+function TDAConnection.GetChannel: TROHTTPClientChannel;
+begin
+  CreateChannelAndMessage;
+  Result:=FChannel;
+end;
+
+function TDAConnection.GetClientID: String;
+begin
+  if Assigned(FMessage) then
+    Result:=FMessage.ClientID
+  else
+    Result:='';
 end;
 
 procedure TDAConnection.SetURL(AValue: String);

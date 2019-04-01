@@ -77,10 +77,16 @@ Type
     Procedure writeTo(aMessage : TROMessage);
   end;
 
+  { TROEnumType }
+
   TROEnumType = class external name 'RemObjects.SDK.ROEnumType' (TROComplexType)
+  private
+    FEnumValues: TStringDynArray;
   Public
+    value : string;
     Procedure fromObject(aObject : TJSObject); overload;
     Function toObject(aStoreType : Boolean) : TJSObject;overload;
+    property enumValues : TStringDynArray read FEnumValues;
   end;
 
   TROStructType = class external name 'RemObjects.SDK.ROStructType' (TROComplexType)

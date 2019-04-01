@@ -3,7 +3,7 @@ program demowebcompiler;
 {$mode objfpc}
 
 uses
-  JS, Classes, SysUtils, Web, webfilecache, pas2jswebcompiler;
+  Classes, SysUtils, Web, webfilecache, pas2jswebcompiler;
 
 Type
 
@@ -181,17 +181,6 @@ function TWebCompilerDemo.CompileClick(aEvent: TJSMouseEvent): boolean;
         E['class']:='alert alert-danger alert-dismissible fade in';
         E.innerHTML:=CloseLink+'<strong>Failure</strong> failed to compile program, please check error messages.';
       end;
-    PResult.appendChild(E);
-  end;
-
-  Procedure ShowSuccess;
-  Var
-    E : TJSHTMLElement;
-
-  begin
-    E:=TJSHTMLElement(document.createElement('div'));
-    E['class']:='alert alert-success alert-dismissible fade in';
-    E.innerHTML:='<strong>Succes!</strong> program compiled succesfully';
     PResult.appendChild(E);
   end;
 

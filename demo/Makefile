@@ -6,6 +6,12 @@ TARGETS=democomponents demobrowseconsole demoajax demoxhr restbridgeclient \
   chartjs_democustompoints chartjs_demopolararea promiseall promisestory1 \
   promisestory2 promisestory demodb demoload demorest fpcunitbrowsertest \
   sampleda webgl1 pdfbasic hotreload
+ifneq ($(SKIPWEBCOMPILER),1)
+TARGETS:=$(TARGETS) demowebcompiler
+BASEDIR=$(CURDIR)/../compiler/packages
+COMPILERDIR=$(CURDIR)/../compiler/utils/pas2js
+COMPILERUNITPATH=$(BASEDIR)/compat;$(BASEDIR)/fcl-json/src;$(BASEDIR)/fcl-passrc/src;$(BASEDIR)/pastojs/src;$(BASEDIR)/fcl-js/src
+endif
   
 .PHONY: $(TARGETS)
 P2JS=pas2js
@@ -27,7 +33,7 @@ demoxhr: ./rtl/demoxhr.lpr
 restbridgeclient: ./restbridge/simple/restbridgeclient.lpr
 	$(P2JS) $<
 demowebcompiler: ./webcompiler/demowebcompiler.lpr
-	$(P2JS) $<
+	$(P2JS) -Sc -TBrowser "-Fu$(COMPILERUNITPATH)" "-Fu$(COMPILERDIR)" $<
 fpreportdemo: ./fpreport/reportdemo.lpr
 	$(P2JS) $<
 chartjs_demoprogressbar: ./chartjs/demoprogressbar.lpr

@@ -3183,7 +3183,11 @@ begin
       DoError(SErrNameMustBeString,[I+1]);
     Inc(I);
     J:=VarRecToJSON(Elements[i],'Object');
+{$ifdef FPC}    
     Add(UTF8Encode(AName),J);
+{$else}    
+    Add(AName,J);
+{$endif}
     Inc(I);
     end;
 end;

@@ -1,0 +1,122 @@
+#!/bin/bash
+
+function info {
+  echo "Info: $*"
+}
+
+function usage {
+  echo "usage $0 [options] [FPC [SVN]]"
+}
+
+set -e
+while test $# != 0 
+do
+  f=$1
+  case $f in
+    '-c') shift
+          FPC=$1;;
+    '-d') shift
+          DIR=$1;;
+    '-z') shift
+          SVN=$f;;
+    '-h') usage
+          exit;; 
+    *) 
+      if [ -z "$FPC" ]; then
+        FPC=$f
+      else 
+        if [ -z "$SVN" ]; then
+          SVN=$f
+        else
+          usage 
+        fi
+      fi
+  esac
+  shift
+done
+
+if [ -z "$FPC" ]; then
+  FPC=fpc
+fi
+if [ -z "$SVN" ]; then
+  SVN=https://svn.freepascal.org/svn/projects/pas2js/trunk
+fi
+if [ -z "$DIR" ]; then
+  DIR=~/P2JS
+fi
+info Changing directory to $DIR
+mkdir -p $DIR
+cd $DIR
+if [ -d daily ]; then
+  info Removing previous dir
+  rm -rf daily
+fi
+info Checking out SVN $SVN
+svn co -q $SVN daily
+info 
+svndir="$DIR/daily"
+pkgsrcdir="$svndir/compiler/packages"
+unitpath="$pkgsrcdir/fcl-js/src/;$pkgsrcdir/fcl-json/src/;$pkgsrcdir/fcl-passrc/src/;$pkgsrcdir/pastojs/src/"
+opts="-B -O1 -Scghi -vewnh"
+compilerdir=$svndir/compiler/utils/pas2js
+bindir=$svndir/bin/
+outdir=$svndir/output
+if [ -d "$bindir" ]; then
+  info Removing previous binaries from "$bindir"
+  rm -rf "$bindir"/*
+else
+  info Creating output dir "$bindir"
+  mkdir -p "$bindir"
+fi
+if [ -d "$outdir" ]; then
+  info Removing previous binaries from "$outdir"
+  rm -rf "$outdir"/*
+else
+  info Creating output dir "$outdir"
+  mkdir -p "$outdir"
+fi
+
+# pas2js
+info Build pas2js in $compilerdir
+cd "$compilerdir"
+$FPC -Fu"$unitpath" $opts -FE$outdir pas2js.pp
+strip $outdir/pas2js
+info Copying to build dir.
+cp $outdir/pas2js $bindir/
+
+# libpas2js
+info Build libpas2js in $compilerdir
+cd "$compilerdir"
+$FPC -Fu"$unitpath" -fPIC $opts -FE$outdir pas2jslib.pp
+strip $outdir/libpas2jslib.so
+info Copying to build dir.
+cp $outdir/libpas2jslib.so $bindir/
+
+# compileserver
+info Build compileserver in $compilerdir
+cd "$compilerdir"
+$FPC -Fu"$unitpath" $opts -FE$outdir compileserver.pp
+strip $outdir/compileserver
+info Copying to build dir.
+cp $outdir/compileserver $bindir/
+
+# webidl
+info Build compileserver in $compilerdir
+cd "$compilerdir"
+$FPC -Fu"$unitpath" $opts -FE$outdir webidl2pas.pp
+strip $outdir/webidl2pas
+info Copying to build dir.
+cp $outdir/webidl2pas $bindir/
+# all done
+info Compiled binaries:
+ls -l $bindir
+
+info Build demos in $snvdir/demo without webcompiler
+cd "$svndir/demo"
+make SKIPWEBCOMPILER=1  P2JS=$svndir/output/pas2js
+
+info Build webcompiler in demos dir
+cd "$svndir/demo"
+make demowebcompiler P2JS=$svndir/output/pas2js
+
+

@@ -1,4 +1,6 @@
 #!/bin/bash
+# Some variables
+BASEURL="https://svn.freepascal.org/svn/projects/pas2js/"
 
 function info {
   echo "Info: $*"
@@ -6,27 +8,37 @@ function info {
 
 function usage {
   echo "usage $0 [options] [FPC [SVN]]"
+  echo '-c compiler        set compiler to use'
+  echo '-d directory       set base directory for checkout'
+  echo '-h help            this help message'
+  echo '-o OPTS            extra compiler options'
+  echo '-z URL             set url for checkout. Can be relative to pas2js repo'
 }
-
+function doCompile {
+  info "Compiler command line: $*"
+  $FPC $*
+}
 set -e
 while test $# != 0 
 do
   f=$1
   case $f in
     '-c') shift
-          FPC=$1;;
+          FPC="$1";;
     '-d') shift
-          DIR=$1;;
+          DIR="$1";;
     '-z') shift
-          SVN=$f;;
+          SVN="$1";;
+    '-o') shift
+          EXTRAOPTS="$1";;
     '-h') usage
           exit;; 
     *) 
       if [ -z "$FPC" ]; then
-        FPC=$f
+        FPC=$1
       else 
         if [ -z "$SVN" ]; then
-          SVN=$f
+          SVN=$1
         else
           usage 
         fi
@@ -34,89 +46,142 @@ do
   esac
   shift
 done
-
+#
+# Collect some info , set defaults
+#
+info FPC $FPC
+info SVN $SVN
+info DIR $DIR
 if [ -z "$FPC" ]; then
   FPC=fpc
 fi
 if [ -z "$SVN" ]; then
-  SVN=https://svn.freepascal.org/svn/projects/pas2js/trunk
+  SVN=${BASEURL}trunk
+else 
+  PROT=$(echo $SVN |  sed -n '/.*:\/\//p')
+  if [ -z "$PROT" ]; then
+    SVN="${BASEURL}${SVN}"
+  fi
 fi
 if [ -z "$DIR" ]; then
-  DIR=~/P2JS
+  DIR=$TMP
+  if [ -z "$DIR" ]; then
+    DIR=$TEMP
+  fi
+  if [ -z "$DIR" ]; then  
+    DIR=~/tmp
+  fi
 fi
-info Changing directory to $DIR
+
+FPCVER=$($FPC -iV)
+FPCVER30=$(echo $FPCVER | grep '3.0')
+FPCCPU=$($FPC -iTP)
+#
+# Get started
+#
+info "SVN URL: $SVN"
+info "Compiler version: $FPCVER"
+info "Base directory: $DIR"
+info ""
+info ""
+#
+# Change to base dir
+#
+info Changing directory to base dir $DIR
 mkdir -p $DIR
 cd $DIR
 if [ -d daily ]; then
   info Removing previous dir
   rm -rf daily
 fi
-info Checking out SVN $SVN
-svn co -q $SVN daily
-info 
-svndir="$DIR/daily"
-pkgsrcdir="$svndir/compiler/packages"
-unitpath="$pkgsrcdir/fcl-js/src/;$pkgsrcdir/fcl-json/src/;$pkgsrcdir/fcl-passrc/src/;$pkgsrcdir/pastojs/src/"
-opts="-B -O1 -Scghi -vewnh"
-compilerdir=$svndir/compiler/utils/pas2js
-bindir=$svndir/bin/
-outdir=$svndir/output
-if [ -d "$bindir" ]; then
-  info Removing previous binaries from "$bindir"
-  rm -rf "$bindir"/*
-else
-  info Creating output dir "$bindir"
-  mkdir -p "$bindir"
+#
+# Export sources
+#
+info "Exporting SVN $SVN to $DIR/daily"
+svn export -q $SVN daily
+BUILDDIR="$DIR/daily"
+PKGDIR="$BUILDDIR/compiler/packages"
+UNITPATH="$PKGDIR/fcl-js/src/;$PKGDIR/fcl-json/src/;$PKGDIR/fcl-passrc/src/;$PKGDIR/pastojs/src/"
+if [ ! -z "$FPCVER30" ]; then
+  UNITPATH="${UNITPATH};$PKGDIR/compat"
 fi
-if [ -d "$outdir" ]; then
-  info Removing previous binaries from "$outdir"
-  rm -rf "$outdir"/*
+OPTS="-B -O1 -Scghi -v0 -ve $EXTRAOPT"
+if [ "$FPCCPU" = "x86_64" ]; then
+  LIBOPT="-fPIC"
+fi
+COMPDIR=$BUILDDIR/compiler/utils/pas2js
+BINDIR=$BUILDDIR/bin/
+OUTDIR=$BUILDDIR/output
+if [ -d "$BINDIR" ]; then
+  info Removing previous binaries from "$BINDIR"
+  rm -rf "$BINDIR"/*
 else
-  info Creating output dir "$outdir"
-  mkdir -p "$outdir"
+  info Creating output dir "$BINDIR"
+  mkdir -p "$BINDIR"
+fi
+if [ -d "$OUTDIR" ]; then
+  info Removing previous binaries from "$OUTDIR"
+  rm -rf "$OUTDIR"/*
+else
+  info Creating output dir "$OUTDIR"
+  mkdir -p "$OUTDIR"
 fi
 
 # pas2js
-info Build pas2js in $compilerdir
-cd "$compilerdir"
-$FPC -Fu"$unitpath" $opts -FE$outdir pas2js.pp
-strip $outdir/pas2js
+info
+info Build pas2js in $COMPDIR
+info "---"
+cd "$COMPDIR"
+doCompile -Fu"$UNITPATH" $OPTS -FE$OUTDIR pas2js.pp
+strip $OUTDIR/pas2js
 info Copying to build dir.
-cp $outdir/pas2js $bindir/
+cp $OUTDIR/pas2js $BINDIR/
 
 # libpas2js
-info Build libpas2js in $compilerdir
-cd "$compilerdir"
-$FPC -Fu"$unitpath" -fPIC $opts -FE$outdir pas2jslib.pp
-strip $outdir/libpas2jslib.so
+info ""
+info Build libpas2js in $COMPDIR
+info "---"
+cd "$COMPDIR"
+doCompile -Fu"$UNITPATH" $OPTS $LIBOPT -FE$OUTDIR pas2jslib.pp
+strip $OUTDIR/libpas2jslib.so
 info Copying to build dir.
-cp $outdir/libpas2jslib.so $bindir/
+cp $OUTDIR/libpas2jslib.so $BINDIR/
 
 # compileserver
-info Build compileserver in $compilerdir
-cd "$compilerdir"
-$FPC -Fu"$unitpath" $opts -FE$outdir compileserver.pp
-strip $outdir/compileserver
-info Copying to build dir.
-cp $outdir/compileserver $bindir/
+if [ ! -z "$FPCVER30" ]; then
+  info ""
+  info Version 3.0.x detected: Skipping compileserver build.
+  info "---"
+else
+  info ""
+  info Build compileserver in $COMPDIR
+  info "---"
+  cd "$COMPDIR"
+  doCompile -Fu"$UNITPATH" $OPTS -FE$OUTDIR compileserver.pp
+  strip $OUTDIR/compileserver
+  info Copying to build dir.
+  cp $OUTDIR/compileserver $BINDIR/
+fi
 
 # webidl
-info Build compileserver in $compilerdir
-cd "$compilerdir"
-$FPC -Fu"$unitpath" $opts -FE$outdir webidl2pas.pp
-strip $outdir/webidl2pas
+info ""
+info Build webidl2pas in $COMPDIR
+info "---"
+cd "$COMPDIR"
+doCompile -Fu"$UNITPATH" $OPTS -FE$OUTDIR -Fu$PKGDIR/webidl/src webidl2pas.pp
+strip $OUTDIR/webidl2pas
 info Copying to build dir.
-cp $outdir/webidl2pas $bindir/
+cp $OUTDIR/webidl2pas $BINDIR/
 # all done
 info Compiled binaries:
-ls -l $bindir
+ls -l $BINDIR
 
 info Build demos in $snvdir/demo without webcompiler
-cd "$svndir/demo"
-make SKIPWEBCOMPILER=1  P2JS=$svndir/output/pas2js
+cd "$BUILDDIR/demo"
+make SKIPWEBCOMPILER=1  P2JS=$BUILDDIR/output/pas2js
 
 info Build webcompiler in demos dir
-cd "$svndir/demo"
-make demowebcompiler P2JS=$svndir/output/pas2js
+cd "$BUILDDIR/demo"
+make demowebcompiler P2JS=$BUILDDIR/output/pas2js
 
 

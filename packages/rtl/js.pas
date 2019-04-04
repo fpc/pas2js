@@ -724,6 +724,7 @@ type
     class function resolve(value : JSValue): TJSPromise; overload;
     class function resolve : TJSPromise; overload;
     function _then (onAccepted : TJSPromiseResolver) : TJSPromise; external name 'then';
+    function _then (onAccepted,OnRejected: TJSPromiseResolver) : TJSPromise; external name 'then';
     function catch (onRejected : TJSPromiseResolver) : TJSPromise;
     function _finally(value : TJSPromiseFinallyHandler): TJSPromise;
   end;

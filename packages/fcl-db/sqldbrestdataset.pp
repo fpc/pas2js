@@ -28,6 +28,8 @@ Type
 
   TSQLDBRestConnection = Class(TRestConnection)
   private
+    FConnectionsResourceName: String;
+    FCustomViewResourceName: String;
     FDataProperty: String;
     FmetaDataProperty: String;
     FMetaDataResourceName: String;
@@ -55,6 +57,8 @@ Type
     Property MetaDataResourceName : String Read FMetaDataResourceName Write FMetaDataResourceName Stored DoStoreMetadata;
     Property UserName : String Read FUserName Write FUserName;
     Property Password : String Read FPassword Write FPassword;
+    Property ConnectionsResourceName : String Read FConnectionsResourceName Write FConnectionsResourceName;
+    Property CustomViewResourceName : String Read FCustomViewResourceName Write FCustomViewResourceName;
   end;
 
   { TSQLDBRestDataset }
@@ -62,9 +66,16 @@ Type
   TSQLDBRestDataset = Class(TJSONDataset)
   private
     FConnection: TSQLDBRestConnection;
+    FDatabaseConnection: String;
     FResourceName: String;
+    FSQL: TStrings;
+    function CleanSQL: String;
+    function CustomViewResourceName: String;
+    procedure DoSQLChange(Sender: TObject);
+    function MyURL: String;
     procedure SetConnection(AValue: TSQLDBRestConnection);
     procedure SetResourceName(AValue: String);
+    procedure SetSQL(AValue: TStrings);
   Protected
     function DataPacketReceived(ARequest: TDataRequest): Boolean; override;
     function GetStringFieldLength(F: TJSObject; AName: String; AIndex: Integer): integer;virtual;
@@ -72,8 +83,13 @@ Type
     Function DoGetDataProxy: TDataProxy; override;
     Procedure MetaDataToFieldDefs; override;
   Public
+    Constructor Create(aOwner : TComponent); override;
+    Destructor Destroy; override;
+  Published
     Property Connection: TSQLDBRestConnection Read FConnection Write SetConnection;
     Property ResourceName : String Read FResourceName Write SetResourceName;
+    Property SQL : TStrings Read FSQL Write SetSQL;
+    property DatabaseConnection : String Read FDatabaseConnection Write FDatabaseConnection;
   end;
 
 implementation
@@ -178,9 +194,14 @@ begin
 end;
 
 function TSQLDBRestConnection.GetReadBaseURL(aRequest: TDataRequest): String;
+
+Var
+  DS : TSQLDBRestDataset;
+
 begin
   Result:=inherited GetReadBaseURL(aRequest);
-  Result:=IncludeTrailingPathDelimiter(Result)+TSQLDBRestDataset(aRequest.Dataset).ResourceName;
+  DS:=TSQLDBRestDataset(aRequest.Dataset);
+  Result:=IncludeTrailingPathDelimiter(Result)+DS.MyURL;
 end;
 
 procedure TSQLDBRestConnection.DoResources(Sender: TObject);
@@ -256,11 +277,53 @@ begin
     FConnection.FreeNotification(Self);
 end;
 
+function TSQLDBRestDataset.MyURL: String;
+
+begin
+  Result:=DatabaseConnection;
+  if (Result<>'') and (Result[Length(Result)]<>'/') then
+    Result:=Result+'/';
+  Result:=Result+ResourceName;
+  if SameText(ResourceName,CustomViewResourceName) then
+    Result:=Result+'?SQL='+ EncodeURIComponent(CleanSQL);
+end;
+
+procedure TSQLDBRestDataset.DoSQLChange(Sender: TObject);
+begin
+  if Trim(FSQL.Text)<>'' then
+    FResourceName:=CustomViewResourceName;
+end;
+
 procedure TSQLDBRestDataset.SetResourceName(AValue: String);
 begin
   if FResourceName=AValue then Exit;
   CheckInactive;
+  if Not SameText(aValue,CustomViewResourceName) then
+    FSQL.Clear;
   FResourceName:=AValue;
+end;
+
+function TSQLDBRestDataset.CustomViewResourceName : String;
+
+begin
+  if Assigned(Connection) then
+    Result:=Connection.CustomViewResourceName
+  else
+    Result:='customView';
+end;
+
+function TSQLDBRestDataset.CleanSQL: String;
+
+begin
+  Result:=StringReplace(SQL.Text,#13#10,' ',[rfReplaceAll]);
+  Result:=StringReplace(Result,#10,' ',[rfReplaceAll]);
+  Result:=StringReplace(Result,#10,' ',[rfReplaceAll]);
+end;
+
+procedure TSQLDBRestDataset.SetSQL(AValue: TStrings);
+begin
+  if FSQL=AValue then Exit;
+  FSQL.Assign(AValue);
 end;
 
 function TSQLDBRestDataset.DoGetDataProxy: TDataProxy;
@@ -370,6 +433,19 @@ begin
       fs:=0;
     FieldDefs.Add(N,ft,fs);
     end;
+end;
+
+constructor TSQLDBRestDataset.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  FSQL:=TStringList.Create;
+  TStringList(FSQL).OnChange:=@DoSQLChange;
+end;
+
+destructor TSQLDBRestDataset.Destroy;
+begin
+  FreeAndNil(FSQL);
+  inherited Destroy;
 end;
 
 function TSQLDBRestDataset.DataPacketReceived(ARequest: TDataRequest): Boolean;

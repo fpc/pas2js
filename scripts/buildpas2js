@@ -98,11 +98,14 @@ FPCCPU=$($FPC -iTP)
 case "$OSTYPE" in
   linux*)
     SNAPSHOTOS=linux
+    LIBEXT=so
     ;;
   darwin*)
     SNAPSHOTOS=macos
+    LIBEXT=dylib
     ;; 
   *) SNAPSHOTOS=unknown
+    LIBEXT=dll
     ;;
 esac    
 #
@@ -177,7 +180,9 @@ doStrip $BINDIR/pas2js
 header Build libpas2js in $COMPDIR
 cd "$COMPDIR"
 doCompile -Fu"$UNITPATH" $OPTS $LIBOPT -FE$BINDIR pas2jslib.pp
-doStrip $BINDIR/libpas2jslib.so
+if [ "$OSTYPE" ne "darwin" ]; then
+  doStrip $BINDIR/libpas2jslib.$LIBEXT
+fi
 
 # compileserver
 if [ ! -z "$FPCVER30" ]; then

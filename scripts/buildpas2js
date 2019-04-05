@@ -244,14 +244,16 @@ cat > pas2js.cfg << EOC
 #ENDIF
 EOC
 cd $OUTDIR
-ZIPFILE=$BUILDDIR/pas2js-snapshot-$SNAPSHOT.zip
-TSFILE=$BUILDDIR/pas2js-snapshot-$SNAPSHOT-date.txt
-MDFILE=$BUILDDIR/pas2js-snapshot-$SNAPSHOT.md5
+BASENAME=pas2js-snapshot
+SUFFIX=$SNAPSHOT-$SNAPSHOTOS-$FPCCPU
+ZIPFILE=$BUILDDIR/$BASENAME-$SUFFIX.zip
+TSFILE=$BUILDDIR/$BASENAME-$SUFFIX-date.txt
+MDFILE=$BUILDDIR/$BASENAME-$SUFFIX.md5
 info Creating zip file $ZIPFILE
 zip -qr $ZIPFILE $SNAPSHOTDIR
 cd $BUILDDIR
 md5sum -b $ZIPFILE > $MDFILE
-date >$BUILDDIR/pas2js-snaphot-$SNAPSHOT-date.txt
+date > $TSFILE
 info "Zip file:       " $ZIPFILE
 info "Timestamp file: " $TSFILE
 info "Checksum file:  " $MDFILE

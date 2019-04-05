@@ -14,7 +14,7 @@ COMPILERUNITPATH=$(BASEDIR)/compat;$(BASEDIR)/fcl-json/src;$(BASEDIR)/fcl-passrc
 endif
   
 .PHONY: $(TARGETS)
-P2JS=pas2js
+P2JS=pas2js -Fu../packages/*
 
 all: $(TARGETS)
 

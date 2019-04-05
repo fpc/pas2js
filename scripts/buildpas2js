@@ -3,7 +3,18 @@
 BASEURL="https://svn.freepascal.org/svn/projects/pas2js/"
 
 function info {
-  echo "Info: $*"
+  if [ -z "$QUIET" ]; then
+    echo "Info: $*"
+  fi
+}
+
+function header {
+  if [ -z "$QUIET" ]; then
+    echo ""
+    echo "Info: $*"
+    echo "---"
+    echo "" 
+  fi
 }
 
 function usage {
@@ -12,11 +23,19 @@ function usage {
   echo '-d directory       set base directory for checkout'
   echo '-h help            this help message'
   echo '-o OPTS            extra compiler options'
-  echo '-z URL             set url for checkout. Can be relative to pas2js repo'
+  echo "-q                 be more quiet"
+  echo '-s name            build snapshot with name'
+  echp '-nd                skip demo test compilation'
+  echo '-z URL             set url for checkout. Can be relative to pas2js repo' 
 }
+
 function doCompile {
   info "Compiler command line: $*"
   $FPC $*
+}
+function doStrip {
+  info "Stripping binary: $*"
+  strip $*
 }
 set -e
 while test $# != 0 
@@ -31,6 +50,10 @@ do
           SVN="$1";;
     '-o') shift
           EXTRAOPTS="$1";;
+    '-q') QUIET=1;;      
+    '-s') shift
+          SNAPSHOT="$1";;
+    '-nd') SKIPDEMO=1;;      
     '-h') usage
           exit;; 
     *) 
@@ -49,9 +72,6 @@ done
 #
 # Collect some info , set defaults
 #
-info FPC $FPC
-info SVN $SVN
-info DIR $DIR
 if [ -z "$FPC" ]; then
   FPC=fpc
 fi
@@ -72,17 +92,26 @@ if [ -z "$DIR" ]; then
     DIR=~/tmp
   fi
 fi
-
 FPCVER=$($FPC -iV)
-FPCVER30=$(echo $FPCVER | grep '3.0')
+FPCVER30=$(echo $FPCVER | (grep '3.0' || echo))
 FPCCPU=$($FPC -iTP)
+case "$OSTYPE" in
+  linux*)
+    SNAPSHOTOS=linux
+    ;;
+  darwin*)
+    SNAPSHOTOS=macos
+    ;; 
+  *) SNAPSHOTOS=unknown
+    ;;
+esac    
 #
 # Get started
 #
 info "SVN URL: $SVN"
 info "Compiler version: $FPCVER"
 info "Base directory: $DIR"
-info ""
+info "Snaphot: $SNAPSHOT"
 info ""
 #
 # Change to base dir
@@ -105,13 +134,31 @@ UNITPATH="$PKGDIR/fcl-js/src/;$PKGDIR/fcl-json/src/;$PKGDIR/fcl-passrc/src/;$PKG
 if [ ! -z "$FPCVER30" ]; then
   UNITPATH="${UNITPATH};$PKGDIR/compat"
 fi
-OPTS="-B -O1 -Scghi -v0 -ve $EXTRAOPT"
+OPTS="-FU. -B -O1 -Scghi -v0 -ve $EXTRAOPT"
 if [ "$FPCCPU" = "x86_64" ]; then
   LIBOPT="-fPIC"
 fi
 COMPDIR=$BUILDDIR/compiler/utils/pas2js
-BINDIR=$BUILDDIR/bin/
+#
+# Output dir is basis for zip
+#
 OUTDIR=$BUILDDIR/output
+INSTALLDIR=$OUTDIR
+if [ ! -z "$SNAPSHOT" ]; then
+  SNAPSHOTDIR="pas2js-snapshot-$SNAPSHOTOS-$FPCCPU"
+  INSTALLDIR="$OUTDIR/$SNAPSHOTDIR"
+fi
+if [ -d "$INSTALLDIR" ]; then
+  info "Output dir $INSTALLDIR exists. Cleaning up"
+  rm -rf "$INSTALLDIR"/*
+else
+  info "Creating output dir $INSTALLDIR"
+  mkdir -p "$INSTALLDIR"
+fi
+#
+# Binaries are put here
+#
+BINDIR=$INSTALLDIR/bin/
 if [ -d "$BINDIR" ]; then
   info Removing previous binaries from "$BINDIR"
   rm -rf "$BINDIR"/*
@@ -119,69 +166,92 @@ else
   info Creating output dir "$BINDIR"
   mkdir -p "$BINDIR"
 fi
-if [ -d "$OUTDIR" ]; then
-  info Removing previous binaries from "$OUTDIR"
-  rm -rf "$OUTDIR"/*
-else
-  info Creating output dir "$OUTDIR"
-  mkdir -p "$OUTDIR"
-fi
 
 # pas2js
-info
-info Build pas2js in $COMPDIR
-info "---"
+header Build pas2js in $COMPDIR
 cd "$COMPDIR"
-doCompile -Fu"$UNITPATH" $OPTS -FE$OUTDIR pas2js.pp
-strip $OUTDIR/pas2js
-info Copying to build dir.
-cp $OUTDIR/pas2js $BINDIR/
+doCompile -Fu"$UNITPATH" $OPTS -FE$BINDIR pas2js.pp
+doStrip $BINDIR/pas2js
 
 # libpas2js
-info ""
-info Build libpas2js in $COMPDIR
-info "---"
+header Build libpas2js in $COMPDIR
 cd "$COMPDIR"
-doCompile -Fu"$UNITPATH" $OPTS $LIBOPT -FE$OUTDIR pas2jslib.pp
-strip $OUTDIR/libpas2jslib.so
-info Copying to build dir.
-cp $OUTDIR/libpas2jslib.so $BINDIR/
+doCompile -Fu"$UNITPATH" $OPTS $LIBOPT -FE$BINDIR pas2jslib.pp
+doStrip $BINDIR/libpas2jslib.so
 
 # compileserver
 if [ ! -z "$FPCVER30" ]; then
-  info ""
-  info Version 3.0.x detected: Skipping compileserver build.
-  info "---"
+  header Version 3.0.x detected: Skipping compileserver build.
 else
-  info ""
-  info Build compileserver in $COMPDIR
-  info "---"
+  header Build compileserver in $COMPDIR
   cd "$COMPDIR"
-  doCompile -Fu"$UNITPATH" $OPTS -FE$OUTDIR compileserver.pp
-  strip $OUTDIR/compileserver
-  info Copying to build dir.
-  cp $OUTDIR/compileserver $BINDIR/
+  doCompile -Fu"$UNITPATH" $OPTS -FE$BINDIR compileserver.pp
+  doStrip $BINDIR/compileserver
 fi
 
 # webidl
-info ""
-info Build webidl2pas in $COMPDIR
-info "---"
+header Build webidl2pas in $COMPDIR
 cd "$COMPDIR"
-doCompile -Fu"$UNITPATH" $OPTS -FE$OUTDIR -Fu$PKGDIR/webidl/src webidl2pas.pp
-strip $OUTDIR/webidl2pas
-info Copying to build dir.
-cp $OUTDIR/webidl2pas $BINDIR/
+doCompile -Fu"$UNITPATH" $OPTS -FE$BINDIR -Fu$PKGDIR/webidl/src webidl2pas.pp
+doStrip $BINDIR/webidl2pas
 # all done
-info Compiled binaries:
+header Compiled binaries:
 ls -l $BINDIR
 
-info Build demos in $snvdir/demo without webcompiler
-cd "$BUILDDIR/demo"
-make SKIPWEBCOMPILER=1  P2JS=$BUILDDIR/output/pas2js
+#
+# Copy files for snapZip snapshot
+#
+if [ ! -z "$SNAPSHOT" ]; then
+  header Copying packages and demos for snapshot
+  cp -rp $BUILDDIR/demo $INSTALLDIR/demo
+  cp -rp $BUILDDIR/packages $INSTALLDIR/packages
+fi
+#
+# Test demos
+#
+if [ -z "$SKIPDEMO" ]; then
+  header Build demos in $snvdir/demo without webcompiler
+  cd "$BUILDDIR/demo"
+  make SKIPWEBCOMPILER=1  P2JS=$BINDIR/pas2js
 
-info Build webcompiler in demos dir
-cd "$BUILDDIR/demo"
-make demowebcompiler P2JS=$BUILDDIR/output/pas2js
+  header Build webcompiler in demos dir
+  cd "$BUILDDIR/demo"
+  make demowebcompiler P2JS=$BINDIR/pas2js
+fi
 
+if [ -z "$SNAPSHOT" ]; then
+  header That\'s all folks!
+  exit;
+fi
 
+header Building snapshot
+cd $BINDIR
+info Creating config file
+cat > pas2js.cfg << EOC
+# Logo and options
+-l
+-vwnh
+# If you don't want so much verbosity use
+#-vw
+
+# Allow C-operators
+-Sc
+
+-Fu\$CfgDir/../packages/*
+
+#IFDEF nodejs
+-Jirtl.js
+#ENDIF
+EOC
+cd $OUTDIR
+ZIPFILE=$BUILDDIR/pas2js-snapshot-$SNAPSHOT.zip
+TSFILE=$BUILDDIR/pas2js-snapshot-$SNAPSHOT-date.txt
+MDFILE=$BUILDDIR/pas2js-snapshot-$SNAPSHOT.md5
+info Creating zip file $ZIPFILE
+zip -qr $ZIPFILE $SNAPSHOTDIR
+cd $BUILDDIR
+md5sum -b $ZIPFILE > $MDFILE
+date >$BUILDDIR/pas2js-snaphot-$SNAPSHOT-date.txt
+info "Zip file:       " $ZIPFILE
+info "Timestamp file: " $TSFILE
+info "Checksum file:  " $MDFILE

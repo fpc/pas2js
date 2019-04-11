@@ -6,7 +6,7 @@ Unit webbluetooth;
 
 interface
 
-uses SysUtils, JS,web;
+uses JS,web;
 
 Type
   // Forward class definitions

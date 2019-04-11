@@ -4336,6 +4336,8 @@ begin
   w('  -?     : Show this help');
   w('  -h     : Show this help');
   Log.LogLn;
+  w('Environment variable PAS2JS_OPTS is parsed after default config and before command line parameters.');
+  Log.LogLn;
   w('Macros: Format is $Name, $Name$ or $Name()');
   for i:=0 to ParamMacros.Count-1 do begin
     ParamMacro:=ParamMacros[i];

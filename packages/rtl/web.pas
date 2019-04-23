@@ -1005,53 +1005,301 @@ Type
     procedure warn(Obj1 : JSValue); varargs;
   end;
 
-  { TJSCryptoKey }
-
-  TJSCryptoKey = class external name 'CryptoKey'  (TJSObject)
-  private
-    FAlgorithm: JSValue; external name 'algorithm';
-    FExtractable: Boolean; external name 'extractable';
-    FType: string; external name 'type';
-    FUsages: TStringDynArray; external name 'usages';
-  Public
-    property _type : string read FType;
-    property extractable: Boolean read FExtractable;
-    property algorithm : JSValue read FAlgorithm;
-    property usages : TStringDynArray Read FUsages;
-  end;
-  
-  { TJSSubtleCrypto }
-
 //  TJSBufferSource = class external name 'BufferSource' end;
 //  TJSTypedArray = class external name 'TypedArray' end;
 
-  TJSSubtleCrypto = class external name 'SubtleCrypto'  (TJSObject)
-  Public
-    function decrypt(algorithm : JSValue; aKey : TJSCryptoKey; aData : TJSBufferSource) : TJSPromise;
-    function deriveKey(algorithm : JSValue; aMasterKey : TJSCryptoKey; aDerivedAlgo : JSValue; extractable : Boolean; Usages : TStringDynArray) : TJSPromise;
-    function digest(algorithm : string; Buffer : TJSArrayBuffer) : TJSPromise; overload;
-    function digest(algorithm : string; Buffer : TJSTypedArray) : TJSPromise; overload;
-    function encrypt(algorithm : JSValue; aKey : TJSCryptoKey; aData : TJSBufferSource) : TJSPromise;
-    function exportKey(algorithm : String; AKey : TJSCryptoKey) : TJSPromise;
-    function generateKey(algorithm : JSValue; extractable : Boolean; Usages : TStringDynArray) : TJSPromise;
-    function importKey(format : String; KeyData : TJSArrayBuffer; algorithm : String; extractable : Boolean; Usages : TStringDynArray) : TJSPromise;
-    function sign(algorithm : string; Key : TJSCryptoKey; aText : TJSArrayBuffer) : TJSPromise; overload;
-    function unwrapKey(algorithm : string; wrappedKey : TJSArrayBuffer; Key: TJSCryptoKey;
-                       unwrapAlgo : string; unwrappedKeyAlgo : string; 
-                       extractable : Boolean; Usages : TStringDynArray) : TJSPromise;
-   function verify(algorithm : String; key : TJSCryptoKey; Signature : TJSArrayBuffer; 
-                   textToVerify : TJSArrayBuffer): TJSPromise;
-   function wrapKey(aFormat : string; Key,WrappingKey : TJSCryptoKey; WrapAlgorithm : String) : TJSPromise;                   
+  // Forward class definitions
+  TJSCryptoKey = Class;
+  TJSSubtleCrypto = Class;
+  KeyType = String;
+  KeyUsage = String;
+  NamedCurve = String;
+  BigInteger = TJSUint8Array;
+  KeyFormat = String;
+  // Union of object, DOMString
+  AlgorithmIdentifier = JSValue; 
+  
+  { --------------------------------------------------------------------
+    Algorithm
+    --------------------------------------------------------------------}
+  
+  Algorithm = record
+    name : String;
   end;
   
+  { --------------------------------------------------------------------
+    AesCbcParams
+    --------------------------------------------------------------------}
+  
+  AesCbcParams = record
+    iv : TJSBufferSource;
+  end;
+  
+  { --------------------------------------------------------------------
+    AesCtrParams
+    --------------------------------------------------------------------}
+  
+  AesCtrParams = record
+    counter : TJSBufferSource;
+    length_ : Byte;external name 'length';
+  end;
+  
+  { --------------------------------------------------------------------
+    AesGcmParams
+    --------------------------------------------------------------------}
+  
+  AesGcmParams = record
+    iv : TJSBufferSource;
+    additionalData : TJSBufferSource;
+    tagLength : Byte;
+  end;
+  
+  { --------------------------------------------------------------------
+    HmacImportParams
+    --------------------------------------------------------------------}
+  
+  HmacImportParams = record
+    hash : AlgorithmIdentifier;
+  end;
+  
+  { --------------------------------------------------------------------
+    Pbkdf2Params
+    --------------------------------------------------------------------}
+  
+  Pbkdf2Params = record
+    salt : TJSBufferSource;
+    iterations : NativeInt;
+    hash : AlgorithmIdentifier;
+  end;
+  
+  { --------------------------------------------------------------------
+    RsaHashedImportParams
+    --------------------------------------------------------------------}
+  
+  RsaHashedImportParams = record
+    hash : AlgorithmIdentifier;
+  end;
+  
+  { --------------------------------------------------------------------
+    AesKeyGenParams
+    --------------------------------------------------------------------}
+  
+  AesKeyGenParams = record
+    length_ : Integer;external name 'length';
+  end;
+  
+  { --------------------------------------------------------------------
+    HmacKeyGenParams
+    --------------------------------------------------------------------}
+  
+  HmacKeyGenParams = record
+    hash : AlgorithmIdentifier;
+    length_ : Integer;external name 'length';
+  end;
+  
+  { --------------------------------------------------------------------
+    RsaHashedKeyGenParams
+    --------------------------------------------------------------------}
+  
+  RsaHashedKeyGenParams = record
+    modulusLength : Integer;
+    publicExponent : BigInteger;
+    hash : AlgorithmIdentifier;
+  end;
+  
+  { --------------------------------------------------------------------
+    RsaOaepParams
+    --------------------------------------------------------------------}
+  
+  RsaOaepParams = record
+    label_ : TJSBufferSource;external name 'label';
+  end;
+  
+  { --------------------------------------------------------------------
+    RsaPssParams
+    --------------------------------------------------------------------}
+  
+  RsaPssParams = record
+    saltLength : Integer;
+  end;
+  
+  { --------------------------------------------------------------------
+    DhKeyGenParams
+    --------------------------------------------------------------------}
+  
+  DhKeyGenParams = record
+    prime : BigInteger;
+    generator : BigInteger;
+  end;
+  
+  { --------------------------------------------------------------------
+    EcKeyGenParams
+    --------------------------------------------------------------------}
+  
+  EcKeyGenParams = record
+    _namedCurve : NamedCurve;external name 'namedCurve';
+  end;
+  
+  { --------------------------------------------------------------------
+    AesDerivedKeyParams
+    --------------------------------------------------------------------}
+  
+  AesDerivedKeyParams = record
+    length_ : Integer;external name 'length';
+  end;
+  
+  { --------------------------------------------------------------------
+    HmacDerivedKeyParams
+    --------------------------------------------------------------------}
+  
+  HmacDerivedKeyParams = record
+    length_ : Integer;external name 'length';
+  end;
+  
+  { --------------------------------------------------------------------
+    EcdhKeyDeriveParams
+    --------------------------------------------------------------------}
+  
+  EcdhKeyDeriveParams = record
+    public : TJSCryptoKey;
+  end;
+  
+  { --------------------------------------------------------------------
+    DhKeyDeriveParams
+    --------------------------------------------------------------------}
+  
+  DhKeyDeriveParams = record
+    public : TJSCryptoKey;
+  end;
+  
+  { --------------------------------------------------------------------
+    DhImportKeyParams
+    --------------------------------------------------------------------}
+  
+  DhImportKeyParams = record
+    prime : BigInteger;
+    generator : BigInteger;
+  end;
+  
+  { --------------------------------------------------------------------
+    EcdsaParams
+    --------------------------------------------------------------------}
+  
+  EcdsaParams = record
+    hash : AlgorithmIdentifier;
+  end;
+  
+  { --------------------------------------------------------------------
+    EcKeyImportParams
+    --------------------------------------------------------------------}
+  
+  EcKeyImportParams = record
+    _namedCurve : NamedCurve;external name 'namedCurve';
+  end;
+  
+  { --------------------------------------------------------------------
+    HkdfParams
+    --------------------------------------------------------------------}
+  
+  HkdfParams = record
+    hash : AlgorithmIdentifier;
+    salt : TJSBufferSource;
+    info : TJSBufferSource;
+  end;
+  
+  { --------------------------------------------------------------------
+    RsaOtherPrimesInfo
+    --------------------------------------------------------------------}
+  
+  RsaOtherPrimesInfo = record
+    r : String;
+    d : String;
+    t : String;
+  end;
+  
+  { --------------------------------------------------------------------
+    JsonWebKey
+    --------------------------------------------------------------------}
+  
+  TStringDynArray = Array of String;
+  TRsaOtherPrimesInfoDynArray = Array of RsaOtherPrimesInfo;
+  JsonWebKey = record
+    kty : String;
+    use : String;
+    key_ops : TStringDynArray;
+    alg : String;
+    ext : boolean;
+    crv : String;
+    x : String;
+    y : String;
+    d : String;
+    n : String;
+    e : String;
+    p : String;
+    q : String;
+    dp : String;
+    dq : String;
+    qi : String;
+    oth : TRsaOtherPrimesInfoDynArray;
+    k : String;
+  end;
+  
+  { --------------------------------------------------------------------
+    CryptoKeyPair
+    --------------------------------------------------------------------}
+  
+  CryptoKeyPair = record
+    publicKey : TJSCryptoKey;
+    privateKey : TJSCryptoKey;
+  end;
+  
+  { --------------------------------------------------------------------
+    TJSCryptoKey
+    --------------------------------------------------------------------}
+  
+  TKeyUsageDynArray = Array of KeyUsage;
+  TJSCryptoKey = class external name 'CryptoKey' 
+  Private
+    Ftype_ : KeyType; external name 'type'; 
+    Fextractable : boolean; external name 'extractable'; 
+    Falgorithm : TJSObject; external name 'algorithm'; 
+    Fusages : TKeyUsageDynArray; external name 'usages'; 
+  Public
+    
+    Property type_ : KeyType Read Ftype_; 
+    Property extractable : boolean Read Fextractable; 
+    Property algorithm : TJSObject Read Falgorithm; 
+    Property usages : TKeyUsageDynArray Read Fusages; 
+  end;
+  
+  { --------------------------------------------------------------------
+    TJSSubtleCrypto
+    --------------------------------------------------------------------}
+  
+  TJSSubtleCrypto = class external name 'SubtleCrypto' 
+  Private
+  Public
+    function encrypt(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+    function decrypt(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+    function sign(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+    function verify(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; signature : TJSBufferSource; data : TJSBufferSource): TJSPromise;
+    function digest(algorithm : AlgorithmIdentifier; data : TJSBufferSource): TJSPromise;
+    function generateKey(algorithm : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
+    function deriveKey(algorithm : AlgorithmIdentifier; baseKey : TJSCryptoKey; derivedKeyType : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
+    function deriveBits(algorithm : AlgorithmIdentifier; baseKey : TJSCryptoKey; length_ : NativeInt): TJSPromise;
+    function importKey(format : KeyFormat; keyData : TJSObject; algorithm : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
+    function exportKey(format : KeyFormat; key : TJSCryptoKey): TJSPromise;
+    function wrapKey(format : KeyFormat; key : TJSCryptoKey; wrappingKey : TJSCryptoKey; wrapAlgorithm : AlgorithmIdentifier): TJSPromise;
+    function unwrapKey(format : KeyFormat; wrappedKey : TJSBufferSource; unwrappingKey : TJSCryptoKey; unwrapAlgorithm : AlgorithmIdentifier; unwrappedKeyAlgorithm : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
+  end;
   { TJSCrypto }
 
   TJSCrypto = class external name 'Crypto'  (TJSObject)
   private
-    FsubtleCrypto: TJSSubtleCrypto;
+    Fsubtle: TJSSubtleCrypto; external name 'subtle';
   Public
     procedure getRandomValues (anArray : TJSTypedArray);
-    property subtleCrypto : TJSSubtleCrypto Read FsubtleCrypto;
+    property subtle : TJSSubtleCrypto Read Fsubtle;
   end;
   
   { TJSHistory }

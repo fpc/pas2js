@@ -556,6 +556,7 @@ type
     procedure Loaded; virtual;
     procedure Loading; virtual;
     procedure SetWriting(Value: Boolean); virtual;
+    procedure SetReading(Value: Boolean); virtual;
     procedure Notification(AComponent: TComponent;  Operation: TOperation); virtual;
     procedure PaletteCreated; virtual;
     procedure SetAncestor(Value: Boolean);
@@ -3384,6 +3385,14 @@ begin
     Include(FComponentState,csWriting)
   else
     Exclude(FComponentState,csWriting);
+end;
+
+procedure TComponent.SetReading(Value: Boolean);
+begin
+  If Value then
+    Include(FComponentState,csReading)
+  else
+    Exclude(FComponentState,csReading);
 end;
 
 

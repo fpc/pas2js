@@ -555,6 +555,7 @@ type
     function GetOwner: TPersistent; override;
     procedure Loaded; virtual;
     procedure Loading; virtual;
+    procedure SetWriting(Value: Boolean); virtual;
     procedure Notification(AComponent: TComponent;  Operation: TOperation); virtual;
     procedure PaletteCreated; virtual;
     procedure SetAncestor(Value: Boolean);
@@ -3375,6 +3376,14 @@ Procedure TComponent.Loading;
 
 begin
   Include(FComponentState,csLoading);
+end;
+
+procedure TComponent.SetWriting(Value: Boolean);
+begin
+  If Value then
+    Include(FComponentState,csWriting)
+  else
+    Exclude(FComponentState,csWriting);
 end;
 
 

@@ -282,6 +282,7 @@ type
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
+    function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     // Determine filter value type based on field type
     function FieldTypeToExpressionType(aDataType: TFieldType): TResultType; virtual;
     // Callback for IsNull filter function.
@@ -643,7 +644,7 @@ var
 
 begin
   D1:=Dataset.ConvertDateTimeField(String(GetFieldValue(Rowindex)),Self.Field);
-  D2:=TDateTime(aValue);
+  D2:=Dataset.ConvertDateTimeField(String(aValue),Self.Field);
   Result:=Round(D1-D2);
 end;
 
@@ -1085,6 +1086,15 @@ begin
   FRowType:=AValue;
 end;
 
+function TBaseJSONDataSet.ConvertDateTimeToNative(aField : TField; aValue: TDateTime): JSValue;
+begin
+  if jsISNan(aValue) then
+    Result:=Null
+  else
+    Result:=FormatDateTimeField(aValue,aField)
+
+end;
+
 
 function TBaseJSONDataSet.AllocRecordBuffer: TDataRecord;
 begin
@@ -1174,7 +1184,7 @@ begin
   Result:=TFPExpressionParser;
 end;
 
-function TBaseJSONDataSet.GetFilterIsNull(Const Args : TExprParameterArray) : TFPExpressionResult;
+function TBaseJSONDataSet.GetFilterIsNull(const Args: TExprParameterArray): TFPExpressionResult;
 
 begin
   Result.ResultType:=rtBoolean;
@@ -1201,7 +1211,7 @@ begin
   end;
 end;
 
-function TBaseJSONDataSet.GetFilterField(Const AName : String) : TFPExpressionResult;
+function TBaseJSONDataSet.GetFilterField(const AName: String): TFPExpressionResult;
 
 Var
   F : TField;
@@ -1265,7 +1275,7 @@ begin
   end;
 end;
 
-function TBaseJSONDataSet.GetRecord(Var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult;
+function TBaseJSONDataSet.GetRecord(var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult;
 
 Var
   BkmIdx : Integer;
@@ -1689,7 +1699,7 @@ begin
   inherited;
 end;
 
-Function TBaseJSONDataSet.CreateIndexDefs : TJSONIndexDefs;
+function TBaseJSONDataSet.CreateIndexDefs: TJSONIndexDefs;
 
 begin
   Result:=TJSONIndexDefs.Create(Self,Self,TJSONIndexDef);
@@ -1722,7 +1732,10 @@ begin
   Result:=-1;
   Comp:=RecordComparerClass.Create(Self,KeyFields,KeyValues,Options);
   try
-    I:=FCurrent;
+    if loFromCurrent in Options then
+      I:=FCurrent
+    else
+      I:=0;
     RI:=FCurrentIndex.GetRecordIndex(I);
     While (Result=-1) and (RI<>-1) do
       begin

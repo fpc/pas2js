@@ -1092,7 +1092,6 @@ begin
     Result:=Null
   else
     Result:=FormatDateTimeField(aValue,aField)
-
 end;
 
 
@@ -1557,15 +1556,9 @@ begin
                Ptrn:=(F as TJSONDateTimeField).DateTimeFormat;
   end;
   If (Ptrn='') then
-    Case F.DataType of
-      ftDate : Result:=StrToDate(S);
-      ftTime : Result:=StrToTime(S);
-      ftDateTime : Result:=StrToDateTime(S);
-    end
+    Result := DefaultConvertToDateTime(F,S,True)
   else
-    begin
     Result:=ScanDateTime(ptrn,S,1);
-    end;
 end;
 
 function TBaseJSONDataSet.FormatDateTimeField(DT: TDateTime; F: TField
@@ -1585,11 +1578,7 @@ begin
                 Ptrn:=TJSONDateTimeField(F).DateTimeFormat;
   end;
   If (Ptrn='') then
-    Case F.DataType of
-      ftDate : Result:=DateToStr(DT);
-      ftTime : Result:=TimeToStr(DT);
-      ftDateTime : Result:=DateTimeToStr(DT);
-    end
+    Result := DateTimeToRFC3339(DT)
   else
     Result:=FormatDateTime(ptrn,DT);
 end;

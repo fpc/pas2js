@@ -137,7 +137,7 @@ UNITPATH="$PKGDIR/fcl-js/src/;$PKGDIR/fcl-json/src/;$PKGDIR/fcl-passrc/src/;$PKG
 if [ ! -z "$FPCVER30" ]; then
   UNITPATH="${UNITPATH};$PKGDIR/compat"
 fi
-OPTS="-FU. -B -O1 -Scghi -v0 -ve $EXTRAOPT"
+OPTS="-FU. -B -O1 -Schi -v0 -ve $EXTRAOPT"
 if [ "$FPCCPU" = "x86_64" ]; then
   LIBOPT="-fPIC"
 fi

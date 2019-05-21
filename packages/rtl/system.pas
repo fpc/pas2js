@@ -59,6 +59,7 @@ type
   PtrUInt = NativeUInt;
   ValSInt = NativeInt;
   ValUInt = NativeUInt;
+  CodePointer = Pointer;
   ValReal = Double;
   Real = type Double;
   Extended = type Double;
@@ -94,6 +95,12 @@ type
     D4: array[0..7] of byte;
   end;
   TGUIDString = type string;
+
+  PMethod = ^TMethod;
+  TMethod = record
+    Code : CodePointer;
+    Data : Pointer;
+  end;
 
   TClass = class of TObject;
 

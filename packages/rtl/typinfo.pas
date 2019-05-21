@@ -440,6 +440,11 @@ function GetSetPropArray(Instance: TObject; const PropInfo: TTypeMemberProperty)
 procedure SetSetPropArray(Instance: TObject; const PropName: String; const Arr: TIntegerDynArray); overload;
 procedure SetSetPropArray(Instance: TObject; const PropInfo: TTypeMemberProperty; const Arr: TIntegerDynArray); overload;
 
+function GetBoolProp(Instance: TObject; const PropName: String): boolean;
+function GetBoolProp(Instance: TObject; const PropInfo: TTypeMemberProperty): boolean;
+procedure SetBoolProp(Instance: TObject; const PropName: String; Value: boolean);
+procedure SetBoolProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: boolean);
+
 function GetStrProp(Instance: TObject; const PropName: String): String;
 function GetStrProp(Instance: TObject; const PropInfo: TTypeMemberProperty): String;
 procedure SetStrProp(Instance: TObject; const PropName: String; Value: String);
@@ -450,22 +455,22 @@ function GetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty): 
 procedure SetStringProp(Instance: TObject; const PropName: String; Value: String); deprecated; // use GetStrProp
 procedure SetStringProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: String); deprecated; // use GetStrProp
 
-function GetBoolProp(Instance: TObject; const PropName: String): boolean;
-function GetBoolProp(Instance: TObject; const PropInfo: TTypeMemberProperty): boolean;
-procedure SetBoolProp(Instance: TObject; const PropName: String; Value: boolean);
-procedure SetBoolProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: boolean);
+function  GetFloatProp(Instance: TObject; const PropName: string): Double;
+function  GetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty) : Double;
+procedure SetFloatProp(Instance: TObject; const PropName: string; Value: Double);
+procedure SetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty;  Value : Double);
 
 function GetObjectProp(Instance: TObject; const PropName: String): TObject;
-function GetObjectProp(Instance: TObject; const PropName: String; MinClass : TClass): TObject;
+function GetObjectProp(Instance: TObject; const PropName: String; MinClass: TClass): TObject;
 function GetObjectProp(Instance: TObject; const PropInfo: TTypeMemberProperty):  TObject;
-function GetObjectProp(Instance: TObject; const PropInfo: TTypeMemberProperty; MinClass : TClass):  TObject;
+function GetObjectProp(Instance: TObject; const PropInfo: TTypeMemberProperty; MinClass: TClass):  TObject;
 procedure SetObjectProp(Instance: TObject; const PropName: String; Value: TObject) ;
 procedure SetObjectProp(Instance: TObject; const PropInfo: TTypeMemberProperty; Value: TObject);
 
-Function  GetFloatProp(Instance: TObject; const PropName: string): Double;
-Function  GetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty) : Double;
-Procedure SetFloatProp(Instance: TObject; const PropName: string; Value: Double);
-Procedure SetFloatProp(Instance: TObject; PropInfo : TTypeMemberProperty;  Value : Double);
+function GetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty): TMethod;
+function GetMethodProp(Instance: TObject; const PropName: string): TMethod;
+//procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;  const Value : TMethod);
+//procedure SetMethodProp(Instance: TObject; const PropName: string; const Value: TMethod);
 
 implementation
 
@@ -1376,27 +1381,42 @@ begin
   SetJSValueProp(Instance,PropInfo,Value);
 end;
 
+function GetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty
+  ): TMethod;
+var
+  v: JSValue;
+begin
+  Result.Code:=nil;
+  Result.Data:=nil;
+  v:=GetJSValueProp(Instance,PropInfo);
+  if not isFunction(v) then exit;
+  Result.Data:=Pointer(TJSObject(v)['scope']);
+  Result.Code:=CodePointer(TJSObject(v)['fn']);
+end;
+
+function GetMethodProp(Instance: TObject; const PropName: string): TMethod;
+begin
+  Result:=GetMethodProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
 function GetFloatProp(Instance: TObject; PropInfo: TTypeMemberProperty): Double;
 begin
   Result:=Double(GetJSValueProp(Instance,PropInfo));
 end;
 
 function GetFloatProp(Instance: TObject; const PropName: string): Double;
-
 begin
   Result:=GetFloatProp(Instance,FindPropInfo(Instance,PropName));
 end;
 
 procedure SetFloatProp(Instance: TObject; const PropName: string; Value: Double
   );
-
 begin
   SetFloatProp(Instance,FindPropInfo(Instance,PropName),Value);
 end;
 
 procedure SetFloatProp(Instance: TObject; PropInfo: TTypeMemberProperty;
   Value: Double);
-
 begin
   SetJSValueProp(Instance,PropInfo,Value);
 end;

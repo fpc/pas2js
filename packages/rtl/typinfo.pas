@@ -469,8 +469,8 @@ procedure SetObjectProp(Instance: TObject; const PropInfo: TTypeMemberProperty; 
 
 function GetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty): TMethod;
 function GetMethodProp(Instance: TObject; const PropName: string): TMethod;
-//procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;  const Value : TMethod);
-//procedure SetMethodProp(Instance: TObject; const PropName: string; const Value: TMethod);
+procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;  const Value : TMethod);
+procedure SetMethodProp(Instance: TObject; const PropName: string; const Value: TMethod);
 
 implementation
 
@@ -1397,6 +1397,23 @@ end;
 function GetMethodProp(Instance: TObject; const PropName: string): TMethod;
 begin
   Result:=GetMethodProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function createCallback(scope: Pointer; fn: CodePointer): TJSFunction; external name 'rtl.createCallback';
+
+procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;
+  const Value: TMethod);
+var
+  cb: TJSFunction;
+begin
+  cb:=createCallback(Value.Data,Value.Code);
+  SetJSValueProp(Instance,PropInfo,cb);
+end;
+
+procedure SetMethodProp(Instance: TObject; const PropName: string;
+  const Value: TMethod);
+begin
+  SetMethodProp(Instance,FindPropInfo(Instance,PropName),Value);
 end;
 
 function GetFloatProp(Instance: TObject; PropInfo: TTypeMemberProperty): Double;

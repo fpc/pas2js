@@ -472,6 +472,16 @@ function GetMethodProp(Instance: TObject; const PropName: string): TMethod;
 procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;  const Value : TMethod);
 procedure SetMethodProp(Instance: TObject; const PropName: string; const Value: TMethod);
 
+function GetInterfaceProp(Instance: TObject; const PropName: string): IInterface;
+function GetInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty): IInterface;
+procedure SetInterfaceProp(Instance: TObject; const PropName: string; const Value: IInterface);
+procedure SetInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty; const Value: IInterface);
+
+function GetRawInterfaceProp(Instance: TObject; const PropName: string): Pointer;
+function GetRawInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty): Pointer;
+procedure SetRawInterfaceProp(Instance: TObject; const PropName: string; const Value: Pointer);
+procedure SetRawInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty; const Value: Pointer);
+
 implementation
 
 function GetClassMembers(aTIStruct: TTypeInfoStruct): TTypeMemberDynArray;
@@ -926,6 +936,7 @@ begin
   else if (pfGetFunction and PropInfo.Flags)>0 then
     begin
     if length(PropInfo.Params)>0 then
+      // array property
       Result:=gkFunctionWithParams
     else
       Result:=gkFunction;
@@ -949,6 +960,7 @@ begin
   else if (pfSetProcedure and PropInfo.Flags)>0 then
     begin
     if length(PropInfo.Params)>0 then
+      // array property
       Result:=skProcedureWithParams
     else
       Result:=skProcedure;
@@ -1414,6 +1426,97 @@ procedure SetMethodProp(Instance: TObject; const PropName: string;
   const Value: TMethod);
 begin
   SetMethodProp(Instance,FindPropInfo(Instance,PropName),Value);
+end;
+
+function GetInterfaceProp(Instance: TObject; const PropName: string
+  ): IInterface;
+begin
+  Result:=GetInterfaceProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function GetInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty
+  ): IInterface;
+type
+  TGetter = function: IInterface of object;
+  TGetterWithIndex = function(Index: JSValue): IInterface of object;
+var
+  gk: TGetterKind;
+begin
+  if Propinfo.TypeInfo.Kind<>tkInterface then
+    raise Exception.Create('Cannot get RAW interface from IInterface interface');
+  gk:=GetPropGetterKind(PropInfo);
+  case gk of
+    gkNone:
+      raise EPropertyError.CreateFmt(SCantReadPropertyS, [PropInfo.Name]);
+    gkField:
+      Result:=IInterface(TJSObject(Instance)[PropInfo.Getter]);
+    gkFunction:
+      if (pfHasIndex and PropInfo.Flags)>0 then
+        Result:=TGetterWithIndex(TJSObject(Instance)[PropInfo.Getter])(PropInfo.Index)
+      else
+        Result:=TGetter(TJSObject(Instance)[PropInfo.Getter])();
+    gkFunctionWithParams:
+      raise EPropertyError.CreateFmt(SIndexedPropertyNeedsParams, [PropInfo.Name]);
+  end;
+end;
+
+procedure SetInterfaceProp(Instance: TObject; const PropName: string;
+  const Value: IInterface);
+begin
+  SetInterfaceProp(Instance,FindPropInfo(Instance,PropName),Value);
+end;
+
+procedure SetInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty;
+  const Value: IInterface);
+type
+  TSetter = procedure(Value: IInterface) of object;
+  TSetterWithIndex = procedure(Index: JSValue; Value: IInterface) of object;
+procedure setIntfP(Instance: TObject; const PropName: string; value: jsvalue); external name 'rtl.setIntfP';
+var
+  sk: TSetterKind;
+  Setter: String;
+begin
+  if Propinfo.TypeInfo.Kind<>tkInterface then
+    raise Exception.Create('Cannot set RAW interface from IInterface interface');
+  sk:=GetPropSetterKind(PropInfo);
+  Setter:=PropInfo.Setter;
+  case sk of
+    skNone:
+      raise EPropertyError.CreateFmt(SCantWritePropertyS, [PropInfo.Name]);
+    skField:
+      setIntfP(Instance,Setter,Value);
+    skProcedure:
+      if (pfHasIndex and PropInfo.Flags)>0 then
+        TSetterWithIndex(TJSObject(Instance)[Setter])(PropInfo.Index,Value)
+      else
+        TSetter(TJSObject(Instance)[Setter])(Value);
+    skProcedureWithParams:
+      raise EPropertyError.CreateFmt(SIndexedPropertyNeedsParams, [PropInfo.Name]);
+  end;
+end;
+
+function GetRawInterfaceProp(Instance: TObject; const PropName: string
+  ): Pointer;
+begin
+  Result:=GetRawInterfaceProp(Instance,FindPropInfo(Instance,PropName));
+end;
+
+function GetRawInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty
+  ): Pointer;
+begin
+  Result:=Pointer(GetJSValueProp(Instance,PropInfo));
+end;
+
+procedure SetRawInterfaceProp(Instance: TObject; const PropName: string;
+  const Value: Pointer);
+begin
+  SetRawInterfaceProp(Instance,FindPropInfo(Instance,PropName),Value);
+end;
+
+procedure SetRawInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty;
+  const Value: Pointer);
+begin
+  SetJSValueProp(Instance,PropInfo,Value);
 end;
 
 function GetFloatProp(Instance: TObject; PropInfo: TTypeMemberProperty): Double;

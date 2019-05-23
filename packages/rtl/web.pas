@@ -1161,7 +1161,7 @@ Type
     --------------------------------------------------------------------}
   
   EcdhKeyDeriveParams = record
-    public : TJSCryptoKey;
+    public_ : TJSCryptoKey;
   end;
   
   { --------------------------------------------------------------------
@@ -1169,7 +1169,7 @@ Type
     --------------------------------------------------------------------}
   
   DhKeyDeriveParams = record
-    public : TJSCryptoKey;
+    public_ : TJSCryptoKey;
   end;
   
   { --------------------------------------------------------------------
@@ -3250,6 +3250,9 @@ Type
     onclose : TJSEventHandler;
     onmessage : TJSEventHandler;
     binaryType : String;
+    constructor new(url : String); overload;
+    constructor new(url : String; protocol: String); overload;
+    constructor new(url : String; protocols: array of String); overload;
     Procedure close; overload;
     Procedure close(code : Cardinal); overload;
     Procedure close(code : Cardinal; reason : String); overload;

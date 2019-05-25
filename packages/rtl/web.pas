@@ -3231,6 +3231,23 @@ Type
     TJSWebSocket
     --------------------------------------------------------------------}
 
+  TJSMessagePortArray = Array of TJSMessagePort;
+
+  { TJSMessageEvent }
+
+  TJSMessageEvent = class(TEventListenerEvent)
+  private
+    FData: JSValue; external name 'data';
+    FLastEventID: String; external name 'lastEventID';
+    FOrigin: String;  external name 'origin';
+    FPorts: TJSMessagePortArray; external name 'ports';
+  Public
+    Property Data : JSValue Read FData;
+    Property LastEventID : String Read FLastEventID;
+    Property Origin : String Read FOrigin;
+    Property Ports : TJSMessagePortArray Read FPorts;
+  end;
+
   TJSWebSocket = class external name 'WebSocket'  (TJSEventTarget)
   Private
     Furl : String; external name 'url';

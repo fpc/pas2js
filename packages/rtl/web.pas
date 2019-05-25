@@ -3235,7 +3235,7 @@ Type
 
   { TJSMessageEvent }
 
-  TJSMessageEvent = class(TEventListenerEvent)
+  TJSMessageEvent = class external name 'MessageEvent' (TEventListenerEvent)
   private
     FData: JSValue; external name 'data';
     FLastEventID: String; external name 'lastEventID';

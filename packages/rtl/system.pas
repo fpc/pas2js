@@ -317,7 +317,8 @@ const
 function Abs(const A: integer): integer; overload; external name 'Math.abs';
 function Abs(const A: NativeInt): integer; overload; external name 'Math.abs';
 function Abs(const A: Double): Double; overload; external name 'Math.abs';
-function ArcTan(const A, B: Double): Double; external name 'Math.atan';
+function ArcTan(const A: Double): Double; external name 'Math.atan';
+function ArcTan2(const A,B: Double): Double; external name 'Math.atan2';
 function Cos(const A: Double): Double; external name 'Math.cos';
 function Exp(const A: Double): Double; external name 'Math.exp';
 function Frac(const A: Double): Double; assembler;

@@ -282,6 +282,7 @@ type
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
+    procedure ActivateIndex(Build : Boolean);
     function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     // Determine filter value type based on field type
     function FieldTypeToExpressionType(aDataType: TFieldType): TResultType; virtual;
@@ -1031,32 +1032,35 @@ end;
 
 procedure TBaseJSONDataSet.SetActiveIndex(AValue: String);
 
+
+begin
+  if FActiveIndex=AValue then Exit;
+  FActiveIndex:=AValue;
+  if (csLoading in ComponentState) then
+    exit;
+  ActivateIndex(Active);
+end;
+
+procedure TBaseJSONDataSet.ActivateIndex(Build : Boolean);
+
 Var
   Idx : TJSONIndexDef;
 
 begin
-  if FActiveIndex=AValue then Exit;
-  if (csLoading in ComponentState) then
-    FActiveIndex:=AValue
+  if (FActiveIndex<>'') then
+    Idx:=FIndexes.Find(FActiveIndex) as TJSONIndexDef
+  else
+    Idx:=nil;
+  if Idx=Nil then
+    FCurrentIndex:=FDefaultIndex
   else
     begin
-    if (AValue<>'') then
-      Idx:=FIndexes.Find(aValue) as TJSONIndexDef
-    else
-      Idx:=nil;
-    FActiveIndex:=AValue;
-    if Not (csLoading in ComponentState) then
-    if Idx=Nil then
-      FCurrentIndex:=FDefaultIndex
-    else
-      begin
-      if Idx.Index=Nil then
-        Idx.BuildIndex(Self);
-      FCurrentIndex:=Idx.Index;
-      end;
-    if Active then
-      Resync([rmCenter]);
+    if (Idx.Index=Nil) and Build then
+      Idx.BuildIndex(Self);
+    FCurrentIndex:=Idx.Index;
     end;
+  if Active then
+    Resync([rmCenter]);
 end;
 
 procedure TBaseJSONDataSet.AddToRows(AValue: TJSArray);
@@ -1167,6 +1171,8 @@ procedure TBaseJSONDataSet.AppendToIndexes;
 
 begin
   FDefaultIndex.AppendToIndex;
+  if Assigned(FCurrentIndex) and (FCurrentIndex<>FDefaultIndex) then
+    FCurrentIndex.AppendToIndex;
 end;
 
 procedure TBaseJSONDataSet.CreateIndexes;
@@ -1174,7 +1180,8 @@ procedure TBaseJSONDataSet.CreateIndexes;
 begin
   FDefaultIndex:=TDefaultJSONIndex.Create(Self,FRows);
   AppendToIndexes;
-  FCurrentIndex:=FDefaultIndex;
+  if FCurrentIndex=Nil then
+    FCurrentIndex:=FDefaultIndex;
 end;
 
 function TBaseJSONDataSet.FilterExpressionClass : TFPExpressionParserClass;
@@ -1428,6 +1435,8 @@ begin
     CreateFields;
   BindFields (True);
   InitDateTimeFields;
+  if FActiveIndex<>'' then
+    ActivateIndex(True);
   FCurrent := -1;
 end;
 

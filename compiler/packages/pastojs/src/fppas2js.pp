@@ -16723,7 +16723,7 @@ end;
 
 function TPasToJSConverter.CreateRTTIMemberProperty(Prop: TPasProperty;
   AContext: TConvertContext): TJSElement;
-// create  $r.addProperty("propname",flags,result,"getter","setter",{options})
+// create  $r.addProperty("propname",flags,proptype,"getter","setter",{options})
 var
   Call: TJSCallExpression;
   OptionsEl: TJSObjectLiteral;

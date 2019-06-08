@@ -172,6 +172,7 @@ type
   protected
     Function GetCount: Integer; virtual;
     Procedure CreateIndex; Virtual; abstract;
+    Procedure ClearIndex;
     Property List : TJSArray Read FList;
     Property Rows : TJSArray Read FRows;
     Property Dataset : TBaseJSONDataset Read FDataset;
@@ -234,6 +235,7 @@ type
   Private
     FIndex : TSortedJSONIndex;
   Protected
+    Procedure ClearIndex;
     Property Index : TSortedJSONIndex Read FIndex Write FIndex;
   Public
     Procedure BuildIndex(aDataset : TBaseJSONDataset);
@@ -437,11 +439,18 @@ uses DateUtils;
 
 { TJSONIndexDef }
 
+procedure TJSONIndexDef.ClearIndex;
+begin
+  FreeAndNil(FIndex);
+end;
+
 procedure TJSONIndexDef.BuildIndex(aDataset : TBaseJSONDataset);
 
 begin
   if Findex=Nil then
-    FIndex:=TSortedJSONIndex.Create(aDataset,aDataset.Rows);
+    FIndex:=TSortedJSONIndex.Create(aDataset,aDataset.Rows)
+  else
+    FIndex.ClearIndex;
   FIndex.CreateComparer(Self);
   FIndex.CreateIndex;
 end;
@@ -953,6 +962,11 @@ begin
   Result:=FList.Length;
 end;
 
+procedure TJSONIndex.ClearIndex;
+begin
+  FList.Length:=0;
+end;
+
 function TJSONIndex.GetRecordIndex(aListIndex : Integer): NativeInt;
 begin
   if isUndefined(FList[aListIndex]) then
@@ -1151,16 +1165,19 @@ begin
 end;
 
 procedure TBaseJSONDataSet.FreeData;
+
+Var
+ I : integer;
+
 begin
   If FOwnsData then
     begin
     FRows:=Nil;
     FMetaData:=Nil;
     end;
-  if (FCurrentIndex<>FDefaultIndex) then
-    FreeAndNil(FCurrentIndex)
-  else
-    FCurrentIndex:=Nil;
+  For I:=0 to FIndexes.Count-1 do
+    FIndexes[i].ClearIndex;
+  FCurrentIndex:=Nil;
   FreeAndNil(FDefaultindex);
   FreeAndNil(FFieldMapper);
   FCurrentIndex:=Nil;
@@ -1334,7 +1351,7 @@ end;
 
 procedure TBaseJSONDataSet.InternalClose;
 begin
-  // disconnet and destroy field objects
+  // disconnect and destroy field objects
   BindFields (False);
   if DefaultFields then
     DestroyFields;
@@ -1690,10 +1707,10 @@ end;
 
 destructor TBaseJSONDataSet.Destroy;
 begin
+  Close;
   FreeAndNil(FFilterExpression);
   FreeAndNil(FIndexes);
   FEditIdx:=-1;
-  FreeData;
   inherited;
 end;
 

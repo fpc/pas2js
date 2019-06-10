@@ -5,7 +5,7 @@ unit browserconsole;
 interface
 
 uses
-  js,web;
+  js,web, sysutils;
 
 Const
   BrowserLineBreak = #10;
@@ -84,14 +84,17 @@ Var
   CL: String;
 
 begin
-  // Maybe add some way to limit line length
-  CL:=LastLine.InnerText;
+  CL:=LastLine.InnerHtml;
   CL:=CL+String(S);
-  LastLine.InnerText:=CL;
+  cl:=StringReplace(cl,' ','&nbsp;',[rfReplaceAll]);
+  cl:=StringReplace(cl,#13#10,'<br>',[rfReplaceAll]);
+  cl:=StringReplace(cl,#10,'<br>',[rfReplaceAll]);
+  cl:=StringReplace(cl,#10,'<br>',[rfReplaceAll]);
+  LastLine.InnerHtml:=CL;
   if NewLine then
     begin
     if ConsoleLinesToBrowserLog then
-      console.log(CL);
+      console.log(LastLine.InnerText);
     AppendLine;
     end;
 end;

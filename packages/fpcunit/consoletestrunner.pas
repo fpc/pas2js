@@ -28,7 +28,12 @@ unit ConsoleTestRunner;
 interface
 
 uses
-  NodeJSApp, Classes, SysUtils,
+  {$IFDEF NODEJS}
+  NodeJSApp,
+  {$else}
+  BrowserApp,
+  {$endif}
+  Classes, SysUtils,
   FPCUnit, TestRegistry, TestDecorator,
   //testutils,
   FPCUnitReport,
@@ -56,13 +61,27 @@ var
 type
   { TTestRunner }
 
-  TTestRunner = class(TNodeJSApplication)
+  { TRunForm }
+  // For compatibility with browser testrunner
+  TRunForm = class(TComponent)
   private
+    FOnRun: TNotifyEvent;
+  Public
+    Procedure Initialize; virtual;
+    Property OnRun : TNotifyEvent Read FOnRun Write FOnRun;
+  end;
+  TRunFormClass = class of TRunForm;
+
+  TTestRunner = class({$IFDEF NODEJS}TNodeJSApplication{$ELSE}TBrowserApplication {$ENDIF})
+  private
+    FRunFormClass: TRunFormClass;
+    FLastTest : TTest;
     FShowProgress: boolean;
     FFileName: string;
     FStyleSheet: string;
     FLongOpts: TStrings;
     FFormatParam: TFormat;
+    procedure DoRunAgain(Sender: TObject);
   protected
     property FileName: string read FFileName write FFileName;
     property LongOpts: TStrings read FLongOpts write FLongOpts;
@@ -80,6 +99,7 @@ type
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
+    Property RunFormClass : TRunFormClass Read FRunFormClass Write FRunFormClass;
   end;
 
 implementation
@@ -200,6 +220,8 @@ var
   TS : TDecoratorTestSuite;
   T : TTest;
 
+  R : TRunForm;
+
 begin
   S := CheckOptions(GetShortOpts, LongOpts);
   if (S <> '') then
@@ -217,7 +239,12 @@ begin
       //Write(GetSuiteAsXml(GetTestRegistry));
       Write(GetSuiteAsPlain(GetTestRegistry));
     end;
-
+  If Assigned(RunFormClass) then
+    begin
+    R:=RunFormClass.Create(Self);
+    R.OnRun:=@DoRunAgain;
+    R.Initialize;
+    end;
   //run the tests
   if HasOption('suite') then
   begin
@@ -261,11 +288,13 @@ begin
 end;
 
 procedure TTestRunner.DoTestRun(ATest: TTest);
+
 var
   ResultsWriter: TCustomResultsWriter;
   ProgressWriter: TProgressWriter;
   TestResult: TTestResult;
 begin
+  FLastTest:=aTest;
   ResultsWriter := GetResultsWriter;
   ResultsWriter.Filename := FileName;
   TestResult := TTestResult.Create;
@@ -384,6 +413,19 @@ begin
   FreeAndNil(FLongOpts);
   inherited Destroy;
 end;
+
+procedure TTestRunner.DoRunAgain(Sender : TObject);
+
+begin
+  if Assigned(FLastTest) then
+    DoTestRun(FLastTest);
+end;
+
+procedure TRunForm.Initialize;
+begin
+  // Do nothing
+end;
+
 
 end.
 

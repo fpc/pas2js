@@ -45,6 +45,7 @@ type
     Property OnRun : TNotifyEvent Read FOnRun Write FOnRun;
   end;
   TRunFormClass = class of TRunForm;
+
   { TTestRunner }
 
   TTestRunner = class(TBrowserApplication)
@@ -182,7 +183,6 @@ begin
     R.OnRun:=@DoRunAgain;
     R.Initialize;
     end;
-  RunTests;
   Terminate;
 end;
 

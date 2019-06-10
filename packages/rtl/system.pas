@@ -50,6 +50,13 @@ const
                                Base types
 *****************************************************************************}
 type
+  Int8 = ShortInt;
+  UInt8 = Byte;
+  Int16 = SmallInt;
+  UInt16 = Word;
+  Int32 = Longint;
+  UInt32 = LongWord;
+
   Integer = LongInt;
   Cardinal = LongWord;
   DWord = LongWord;
@@ -67,6 +74,7 @@ type
   TDateTime = type double;
   TTime = type TDateTime;
   TDate = type TDateTime;
+
 
   Int64 = type NativeInt unimplemented; // only 53 bits at runtime
   UInt64 = type NativeUInt unimplemented; // only 52 bits at runtime

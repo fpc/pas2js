@@ -389,9 +389,9 @@ type
   Public
     class var BYTES_PER_ELEMENT : NativeInt;
     class var name : string;
-    class function from(aValue : jsValue) : TJSTypedArray;
-    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSTypedArray;
-    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSTypedArray;
+//    class function from(aValue : jsValue) : TJSTypedArray;
+//    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSTypedArray;
+//    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSTypedArray;
     class function _of(aValue : jsValue) : TJSTypedArray; varargs; external name 'of';
     function copyWithin(aTarget : NativeInt) : TJSTypedArray;overload;
     function copyWithin(aTarget, aStart : NativeInt) : TJSTypedArray;overload;
@@ -466,7 +466,7 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt8Array; reintroduce;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt8Array; reintroduce;
     class function _of(aValue : jsValue) : TJSInt8Array; varargs; external name 'of'; reintroduce;
-    procedure _set(anArray : Array of ShortInt); external name 'set'; reintroduce;
+    procedure _set(anArray : Array of ShortInt); external name 'set'; reintroduce; overload;
     procedure _set(anArray : Array of ShortInt; anOffset : NativeInt); external name 'set';
     property values[Index : NativeInt] : Shortint Read getTypedValue Write setTypedValue; default;
   end;
@@ -482,12 +482,12 @@ type
     constructor new (buffer : TJSArrayBuffer);
     constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
     constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
-    class function from(aValue : jsValue) : TJSUInt8Array; reintroduce;
-    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8Array; reintroduce;
-    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8Array; reintroduce;
-    class function _of(aValue : jsValue) : TJSUInt8Array; varargs; external name 'of'; reintroduce;
-    procedure _set(anArray : Array of Byte); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';
+    class function from(aValue : jsValue) : TJSUInt8Array; reintroduce; overload;
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8Array; reintroduce;overload;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8Array; reintroduce;overload;
+    class function _of(aValue : jsValue) : TJSUInt8Array; varargs; external name 'of'; reintroduce; overload;
+    procedure _set(anArray : Array of Byte); external name 'set'; reintroduce; overload;
+    procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set'; overload;
     Property values[Index : NativeInt] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -503,11 +503,11 @@ type
     constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
     constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
     class function from(aValue : jsValue) : TJSUInt8ClampedArray; reintroduce;
-    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8ClampedArray; reintroduce;
-    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8ClampedArray; reintroduce;
-    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs; external name 'of'; reintroduce;
-    procedure _set(anArray : Array of Byte); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8ClampedArray; reintroduce;overload;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8ClampedArray; reintroduce;overload;
+    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs; external name 'of'; reintroduce;overload;
+    procedure _set(anArray : Array of Byte); external name 'set'; reintroduce;overload;
+    procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';overload;
     Property values[Index : NativeInt] : Byte Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -523,11 +523,11 @@ type
     constructor new (buffer : TJSArrayBuffer; aByteOffset: NativeInt);
     constructor new (buffer : TJSArrayBuffer; aByteOffset, aLength: NativeInt);
     class function from(aValue : jsValue) : TJSInt16Array; reintroduce;
-    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt16Array; reintroduce;
-    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt16Array; reintroduce;
-    class function _of(aValue : jsValue) : TJSInt16Array; varargs; external name 'of'; reintroduce;
-    procedure _set(anArray : Array of SmallInt); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of SmallInt; anOffset : NativeInt); external name 'set';
+    class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt16Array; reintroduce;overload;
+    class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt16Array; reintroduce;overload;
+    class function _of(aValue : jsValue) : TJSInt16Array; varargs; external name 'of'; reintroduce;overload;
+    procedure _set(anArray : Array of SmallInt); external name 'set'; reintroduce;overload;
+    procedure _set(anArray : Array of SmallInt; anOffset : NativeInt); external name 'set';overload;
     Property values[Index : NativeInt] : SmallInt Read getTypedValue Write setTypedValue; default;
   end;
 
@@ -669,7 +669,6 @@ type
     procedure setUint16(aByteOffset : NativeInt; aValue : Word; aLittleEndian : Boolean); overload;
     procedure setUint32(aByteOffset : NativeInt; aValue : LongWord); overload;
     procedure setUint32(aByteOffset : NativeInt; aValue: LongWord; aLittleEndian : Boolean); overload;
- 
     Property byteLength : NativeInt Read fLength;
     Property byteOffset : NativeInt read fOffset;
     property buffer : TJSArrayBuffer Read fBuffer;

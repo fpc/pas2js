@@ -62,15 +62,6 @@ type
   { TTestRunner }
 
   { TRunForm }
-  // For compatibility with browser testrunner
-  TRunForm = class(TComponent)
-  private
-    FOnRun: TNotifyEvent;
-  Public
-    Procedure Initialize; virtual;
-    Property OnRun : TNotifyEvent Read FOnRun Write FOnRun;
-  end;
-  TRunFormClass = class of TRunForm;
 
   TTestRunner = class({$IFDEF NODEJS}TNodeJSApplication{$ELSE}TBrowserApplication {$ENDIF})
   private
@@ -421,11 +412,8 @@ begin
     DoTestRun(FLastTest);
 end;
 
-procedure TRunForm.Initialize;
-begin
-  // Do nothing
-end;
-
-
+initialization
+  DefaultFormat:=fplain;
+  DefaultRunAllTests:=True;
 end.
 

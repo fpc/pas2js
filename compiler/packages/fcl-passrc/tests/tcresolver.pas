@@ -450,6 +450,7 @@ type
     Procedure TestProc_TypeCastFunctionResult;
     Procedure TestProc_ImplicitCalls;
     Procedure TestProc_Absolute;
+    Procedure TestProc_LocalInit;
 
     // anonymous procs
     Procedure TestAnonymousProc_Assign;
@@ -7346,6 +7347,25 @@ begin
   'begin',
   'end;',
   'begin']);
+  ParseProgram;
+end;
+
+procedure TTestResolver.TestProc_LocalInit;
+begin
+  StartProgram(false);
+  Add([
+  'type TBytes = array of byte;',
+  'procedure DoIt;',
+  'const c = 4;',
+  'var',
+  '  w: word = c;',
+  '  b: byte = 1+c;',
+  '  p: pointer = nil;',
+  '  buf: TBytes = nil;',
+  'begin',
+  'end;',
+  'begin']);
+  ParseProgram;
 end;
 
 procedure TTestResolver.TestAnonymousProc_Assign;

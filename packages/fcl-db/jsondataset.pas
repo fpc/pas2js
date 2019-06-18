@@ -1460,7 +1460,7 @@ end;
 procedure TBaseJSONDataSet.InternalPost;
 
 Var
-  I,NewCurrent,Idx : integer;
+  I,NewIdx,NewCurrent,Idx : integer;
   B : TBookmark;
 
 begin
@@ -1472,23 +1472,24 @@ begin
     if GetBookMarkFlag(ActiveBuffer)=bfEOF then
       begin // Append
       FDefaultIndex.Append(Idx);
-      // Must replace this by updating all indexes
       for I:=0 to FIndexes.Count-1 do
-        begin
-        NewCurrent:=FIndexes[i].Findex.Append(Idx);
-        if FIndexes[i].Findex<>FCurrentIndex then
-          NewCurrent:=-1;
-        end;
+	    if Assigned(FIndexes[i].Findex) then
+          begin
+          NewIdx:=FIndexes[i].Findex.Append(Idx);
+          if FIndexes[i].Findex=FCurrentIndex then
+            NewCurrent:=NewIdx;
+          end;
       end
     else  // insert
       begin
       FCurrent:=FDefaultIndex.Insert(FCurrent,Idx);
       for I:=0 to FIndexes.Count-1 do
-        begin
-        NewCurrent:=FIndexes[i].Findex.Append(Idx);
-        if FIndexes[i].Findex<>FCurrentIndex then
-          NewCurrent:=-1;
-        end;
+	    if Assigned(FIndexes[i].Findex) then
+          begin
+          NewIdx:=FIndexes[i].Findex.Append(Idx);
+          if FIndexes[i].Findex=FCurrentIndex then
+            NewCurrent:=NewIdx;
+          end;
       end;
     end
   else
@@ -1504,9 +1505,10 @@ begin
     for I:=0 to FIndexes.Count-1 do
       begin
       // Determine old index.
-      NewCurrent:=FCurrentIndex.Update(Idx);
-      if FIndexes[i].Findex<>FCurrentIndex then
-        NewCurrent:=-1;
+      NewIdx:=FCurrentIndex.Update(Idx);
+      if Assigned(FIndexes[i].Findex) then
+        if FIndexes[i].Findex=FCurrentIndex then
+          NewCurrent:=NewIdx;
       end;
     end;
   // We have an active index, set current to that index.

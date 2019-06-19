@@ -17,7 +17,7 @@ unit Classes;
 interface
 
 uses
-  RTLConsts, Types, SysUtils;
+  RTLConsts, Types, SysUtils, JS;
 
 type
   TNotifyEvent = procedure(Sender: TObject) of object;
@@ -606,12 +606,230 @@ type
   end;
   TComponentClass = Class of TComponent;
 
+  TSeekOrigin = (soBeginning, soCurrent, soEnd);
+
+  { TStream }
+
+  TStream = class(TObject)
+  private
+    FEndian: TEndian;
+    function MakeInt(B: TBytes; aSize: Integer; Signed: Boolean): NativeInt;
+    function MakeBytes(B: NativeInt; aSize: Integer; Signed: Boolean): TBytes;
+  protected
+    procedure InvalidSeek; virtual;
+    procedure Discard(const Count: NativeInt);
+    procedure DiscardLarge(Count: NativeInt; const MaxBufferSize: Longint);
+    procedure FakeSeekForward(Offset: NativeInt; const Origin: TSeekOrigin; const Pos: NativeInt);
+    function  GetPosition: NativeInt; virtual;
+    procedure SetPosition(const Pos: NativeInt); virtual;
+    function  GetSize: NativeInt; virtual;
+    procedure SetSize(const NewSize: NativeInt); virtual;
+    procedure SetSize64(const NewSize: NativeInt); virtual;
+    procedure ReadNotImplemented;
+    procedure WriteNotImplemented;
+    function ReadMaxSizeData(Buffer : TBytes; aSize,aCount : NativeInt) : NativeInt;
+    Procedure ReadExactSizeData(Buffer : TBytes; aSize,aCount : NativeInt);
+    function WriteMaxSizeData(Const Buffer : TBytes; aSize,aCount : NativeInt) : NativeInt;
+    Procedure WriteExactSizeData(Const Buffer : TBytes; aSize,aCount : NativeInt);
+  public
+    function Read(var Buffer: TBytes; Count: Longint): Longint; overload;
+    function Read(Buffer : TBytes; aOffset, Count: Longint): Longint; virtual; abstract; overload;
+
+    function Write(const Buffer: TBytes; Count: Longint): Longint; virtual; overload;
+    function Write(const Buffer: TBytes; Offset, Count: Longint): Longint; virtual; abstract; overload;
+
+    function Seek(const Offset: NativeInt; Origin: TSeekOrigin): NativeInt; virtual; abstract; overload;
+
+    function ReadData(Buffer: TBytes; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: Boolean): NativeInt; overload;
+    function ReadData(var Buffer: Boolean; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: WideChar): NativeInt; overload;
+    function ReadData(var Buffer: WideChar; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: Int8): NativeInt; overload;
+    function ReadData(var Buffer: Int8; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: UInt8): NativeInt; overload;
+    function ReadData(var Buffer: UInt8; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: Int16): NativeInt; overload;
+    function ReadData(var Buffer: Int16; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: UInt16): NativeInt; overload;
+    function ReadData(var Buffer: UInt16; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: Int32): NativeInt; overload;
+    function ReadData(var Buffer: Int32; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: UInt32): NativeInt; overload;
+    function ReadData(var Buffer: UInt32; Count: NativeInt): NativeInt; overload;
+    // NativeLargeint. Stored as a float64, Read as float64.
+    function ReadData(var Buffer: NativeLargeInt): NativeInt; overload;
+    function ReadData(var Buffer: NativeLargeInt; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: NativeLargeUInt): NativeInt; overload;
+    function ReadData(var Buffer: NativeLargeUInt; Count: NativeInt): NativeInt; overload;
+    function ReadData(var Buffer: Double): NativeInt; overload;
+    function ReadData(var Buffer: Double; Count: NativeInt): NativeInt; overload;
+    procedure ReadBuffer(var Buffer: TBytes; Count: NativeInt); overload;
+    procedure ReadBuffer(var Buffer: TBytes; Offset, Count: NativeInt); overload;
+
+    procedure ReadBufferData(var Buffer: Boolean); overload;
+    procedure ReadBufferData(var Buffer: Boolean; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: WideChar); overload;
+    procedure ReadBufferData(var Buffer: WideChar; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: Int8); overload;
+    procedure ReadBufferData(var Buffer: Int8; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: UInt8); overload;
+    procedure ReadBufferData(var Buffer: UInt8; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: Int16); overload;
+    procedure ReadBufferData(var Buffer: Int16; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: UInt16); overload;
+    procedure ReadBufferData(var Buffer: UInt16; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: Int32); overload;
+    procedure ReadBufferData(var Buffer: Int32; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: UInt32); overload;
+    procedure ReadBufferData(var Buffer: UInt32; Count: NativeInt); overload;
+    // NativeLargeint. Stored as a float64, Read as float64.
+    procedure ReadBufferData(var Buffer: NativeLargeInt); overload;
+    procedure ReadBufferData(var Buffer: NativeLargeInt; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: NativeLargeUInt); overload;
+    procedure ReadBufferData(var Buffer: NativeLargeUInt; Count: NativeInt); overload;
+    procedure ReadBufferData(var Buffer: Double); overload;
+    procedure ReadBufferData(var Buffer: Double; Count: NativeInt); overload;
+    procedure WriteBuffer(const Buffer: TBytes; Count: NativeInt); overload;
+    procedure WriteBuffer(const Buffer: TBytes; Offset, Count: NativeInt); overload;
+
+    function WriteData(const Buffer: TBytes; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: Boolean): NativeInt; overload;
+    function WriteData(const Buffer: Boolean; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: WideChar): NativeInt; overload;
+    function WriteData(const Buffer: WideChar; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: Int8): NativeInt; overload;
+    function WriteData(const Buffer: Int8; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: UInt8): NativeInt; overload;
+    function WriteData(const Buffer: UInt8; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: Int16): NativeInt; overload;
+    function WriteData(const Buffer: Int16; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: UInt16): NativeInt; overload;
+    function WriteData(const Buffer: UInt16; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: Int32): NativeInt; overload;
+    function WriteData(const Buffer: Int32; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: UInt32): NativeInt; overload;
+    function WriteData(const Buffer: UInt32; Count: NativeInt): NativeInt; overload;
+    // NativeLargeint. Stored as a float64, Read as float64.
+    function WriteData(const Buffer: NativeLargeInt): NativeInt; overload;
+    function WriteData(const Buffer: NativeLargeInt; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: NativeLargeUInt): NativeInt; overload;
+    function WriteData(const Buffer: NativeLargeUInt; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: Double): NativeInt; overload;
+    function WriteData(const Buffer: Double; Count: NativeInt): NativeInt; overload;
+{$IFDEF FPC_HAS_TYPE_EXTENDED}
+    function WriteData(const Buffer: Extended): NativeInt; overload;
+    function WriteData(const Buffer: Extended; Count: NativeInt): NativeInt; overload;
+    function WriteData(const Buffer: TExtended80Rec): NativeInt; overload;
+    function WriteData(const Buffer: TExtended80Rec; Count: NativeInt): NativeInt; overload;
+{$ENDIF}
+    procedure WriteBufferData(Buffer: Int32); overload;
+    procedure WriteBufferData(Buffer: Int32; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: Boolean); overload;
+    procedure WriteBufferData(Buffer: Boolean; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: WideChar); overload;
+    procedure WriteBufferData(Buffer: WideChar; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: Int8); overload;
+    procedure WriteBufferData(Buffer: Int8; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: UInt8); overload;
+    procedure WriteBufferData(Buffer: UInt8; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: Int16); overload;
+    procedure WriteBufferData(Buffer: Int16; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: UInt16); overload;
+    procedure WriteBufferData(Buffer: UInt16; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: UInt32); overload;
+    procedure WriteBufferData(Buffer: UInt32; Count: NativeInt); overload;
+    // NativeLargeint. Stored as a float64, Read as float64.
+    procedure WriteBufferData(Buffer: NativeLargeInt); overload;
+    procedure WriteBufferData(Buffer: NativeLargeInt; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: NativeLargeUInt); overload;
+    procedure WriteBufferData(Buffer: NativeLargeUInt; Count: NativeInt); overload;
+    procedure WriteBufferData(Buffer: Double); overload;
+    procedure WriteBufferData(Buffer: Double; Count: NativeInt); overload;
+    function CopyFrom(Source: TStream; Count: NativeInt): NativeInt;
+{    function ReadComponent(Instance: TComponent): TComponent;
+    function ReadComponentRes(Instance: TComponent): TComponent;
+    procedure WriteComponent(Instance: TComponent);
+    procedure WriteComponentRes(const ResName: string; Instance: TComponent);
+    procedure WriteDescendent(Instance, Ancestor: TComponent);
+    procedure WriteDescendentRes(const ResName: string; Instance, Ancestor: TComponent);
+    procedure WriteResourceHeader(const ResName: string; {!!!:out} var FixupInfo: Longint);
+    procedure FixupResourceHeader(FixupInfo: Longint);
+    procedure ReadResHeader; }
+    function ReadByte : Byte;
+    function ReadWord : Word;
+    function ReadDWord : Cardinal;
+    function ReadQWord : NativeLargeUInt;
+    procedure WriteByte(b : Byte);
+    procedure WriteWord(w : Word);
+    procedure WriteDWord(d : Cardinal);
+    procedure WriteQWord(q : NativeLargeUInt);
+    property Position: NativeInt read GetPosition write SetPosition;
+    property Size: NativeInt read GetSize write SetSize64;
+    Property Endian: TEndian Read FEndian Write FEndian;
+  end;
+
+  { TCustomMemoryStream abstract class }
+
+    TCustomMemoryStream = class(TStream)
+    private
+      FMemory: TJSArrayBuffer;
+      FDataView : TJSDataView;
+      FDataArray : TJSUint8Array;
+      FSize, FPosition: PtrInt;
+      FSizeBoundsSeek : Boolean;
+      function GetDataArray: TJSUint8Array;
+      function GetDataView: TJSDataview;
+    protected
+      Function GetSize : NativeInt; Override;
+      function GetPosition: NativeInt; Override;
+      procedure SetPointer(Ptr: TJSArrayBuffer; ASize: PtrInt);
+      Property DataView : TJSDataview Read GetDataView;
+      Property DataArray : TJSUint8Array Read GetDataArray;
+    public
+      Class Function MemoryToBytes(Mem : TJSArrayBuffer) : TBytes; overload;
+      Class Function MemoryToBytes(Mem : TJSUint8Array) : TBytes; overload;
+      Class Function BytesToMemory(aBytes : TBytes) : TJSArrayBuffer;
+      function Read(Buffer : TBytes; Offset, Count: LongInt): LongInt; override;
+      function Seek(const Offset: NativeInt; Origin: TSeekOrigin): NativeInt; override;
+      procedure SaveToStream(Stream: TStream);
+      property Memory: TJSArrayBuffer read FMemory;
+      Property SizeBoundsSeek : Boolean Read FSizeBoundsSeek Write FSizeBoundsSeek;
+    end;
+
+  { TMemoryStream }
+
+    TMemoryStream = class(TCustomMemoryStream)
+    private
+      FCapacity: PtrInt;
+      procedure SetCapacity(NewCapacity: PtrInt);
+    protected
+      function Realloc(var NewCapacity: PtrInt): TJSArrayBuffer; virtual;
+      property Capacity: PtrInt read FCapacity write SetCapacity;
+    public
+      destructor Destroy; override;
+      procedure Clear;
+      procedure LoadFromStream(Stream: TStream);
+      procedure SetSize(const NewSize: NativeInt); override;
+      function Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+    end;
+
+  { TBytesStream }
+
+    TBytesStream = class(TMemoryStream)
+    private
+      function GetBytes: TBytes;
+    public
+      constructor Create(const ABytes: TBytes); virtual; overload;
+      property Bytes: TBytes read GetBytes;
+    end;
+
+
+
 Procedure RegisterClass(AClass : TPersistentClass);
 Function GetClass(AClassName : string) : TPersistentClass;
 
 implementation
-
-uses JS;
 
 { TInterfacedPersistent }
 
@@ -3721,6 +3939,1342 @@ function TComponent.GetEnumerator: TComponentEnumerator;
 begin
   Result:=TComponentEnumerator.Create(Self);
 end;
+
+{ ---------------------------------------------------------------------
+  TStream
+  ---------------------------------------------------------------------}
+
+Resourcestring
+  SStreamInvalidSeek = 'Seek is not implemented for class %s';
+  SStreamNoReading = 'Stream reading is not implemented for class %s';
+  SStreamNoWriting = 'Stream writing is not implemented for class %s';
+  SReadError = 'Could not read data from stream';
+  SWriteError = 'Could not write data to stream';
+  SMemoryStreamError = 'Could not allocate memory';
+  SerrInvalidStreamSize = 'Invalid Stream size';
+
+procedure TStream.ReadNotImplemented;
+begin
+  raise EStreamError.CreateFmt(SStreamNoReading, [ClassName]);
+end;
+
+procedure TStream.WriteNotImplemented;
+begin
+  raise EStreamError.CreateFmt(SStreamNoWriting, [ClassName]);
+end;
+
+function TStream.Read(var Buffer: TBytes; Count: Longint): Longint;
+begin
+  Result:=Read(Buffer,0,Count);
+end;
+
+
+
+function TStream.Write(const Buffer: TBytes; Count: Longint): Longint;
+begin
+  Result:=Self.Write(Buffer,0,Count);
+end;
+
+
+
+function TStream.GetPosition: NativeInt;
+
+begin
+   Result:=Seek(0,soCurrent);
+end;
+
+procedure TStream.SetPosition(const Pos: NativeInt);
+
+begin
+   Seek(pos,soBeginning);
+end;
+
+procedure TStream.SetSize64(const NewSize: NativeInt);
+
+begin
+  // Required because can't use overloaded functions in properties
+  SetSize(NewSize);
+end;
+
+function TStream.GetSize: NativeInt;
+
+var
+   p : NativeInt;
+
+begin
+   p:=Seek(0,soCurrent);
+   GetSize:=Seek(0,soEnd);
+   Seek(p,soBeginning);
+end;
+
+procedure TStream.SetSize(const NewSize: NativeInt);
+
+begin
+  if NewSize<0 then
+    Raise EStreamError.Create(SerrInvalidStreamSize);
+end;
+
+procedure TStream.Discard(const Count: NativeInt);
+
+const
+  CSmallSize      =255;
+  CLargeMaxBuffer =32*1024; // 32 KiB
+
+var
+  Buffer: TBytes;
+
+begin
+  if Count=0 then
+    Exit;
+  if (Count<=CSmallSize) then
+    begin
+    SetLength(Buffer,CSmallSize);
+    ReadBuffer(Buffer,Count)
+    end
+  else
+    DiscardLarge(Count,CLargeMaxBuffer);
+end;
+
+procedure TStream.DiscardLarge(Count: NativeInt; const MaxBufferSize: Longint);
+
+var
+  Buffer: TBytes;
+
+begin
+  if Count=0 then
+     Exit;
+  if Count>MaxBufferSize then
+    SetLength(Buffer,MaxBufferSize)
+  else
+    SetLength(Buffer,Count);
+  while (Count>=Length(Buffer)) do
+    begin
+    ReadBuffer(Buffer,Length(Buffer));
+    Dec(Count,Length(Buffer));
+    end;
+  if Count>0 then
+    ReadBuffer(Buffer,Count);
+end;
+
+procedure TStream.InvalidSeek;
+
+begin
+  raise EStreamError.CreateFmt(SStreamInvalidSeek, [ClassName]);
+end;
+
+procedure TStream.FakeSeekForward(Offset: NativeInt;  const Origin: TSeekOrigin; const Pos: NativeInt);
+
+begin
+  if Origin=soBeginning then
+     Dec(Offset,Pos);
+  if (Offset<0) or (Origin=soEnd) then
+    InvalidSeek;
+  if Offset>0 then
+    Discard(Offset);
+ end;
+
+function TStream.ReadData({var} Buffer: TBytes; Count: NativeInt): NativeInt;
+begin
+ Result:=Read(Buffer,0,Count);
+end;
+
+
+function TStream.ReadMaxSizeData(Buffer : TBytes; aSize,aCount : NativeInt) : NativeInt;
+
+Var
+  CP : NativeInt;
+
+begin
+  if aCount<=aSize then
+    Result:=read(Buffer,aCount)
+  else
+    begin
+    Result:=Read(Buffer,aSize);
+    CP:=Position;
+    Result:=Result+Seek(aCount-aSize,soCurrent)-CP;
+    end
+end;
+
+function TStream.WriteMaxSizeData(const Buffer : TBytes; aSize,aCount : NativeInt) : NativeInt;
+Var
+  CP : NativeInt;
+
+begin
+  if aCount<=aSize then
+    Result:=Self.Write(Buffer,aCount)
+  else
+    begin
+    Result:=Self.Write(Buffer,aSize);
+    CP:=Position;
+    Result:=Result+Seek(aCount-aSize,soCurrent)-CP;
+    end
+end;
+
+procedure TStream.WriteExactSizeData(const Buffer : TBytes; aSize, aCount: NativeInt);
+begin
+  // Embarcadero docs mentions no exception. Does not seem very logical
+  WriteMaxSizeData(Buffer,aSize,ACount);
+end;
+
+procedure TStream.ReadExactSizeData(Buffer : TBytes; aSize, aCount: NativeInt);
+begin
+  if ReadMaxSizeData(Buffer,aSize,ACount)<>aCount then
+     Raise EReadError.Create(SReadError);
+end;
+
+
+function TStream.ReadData(var Buffer: Boolean): NativeInt;
+
+Var
+  B : Byte;
+
+begin
+  Result:=ReadData(B,1);
+  if Result=1 then
+    Buffer:=B<>0;
+end;
+
+function TStream.ReadData(var Buffer: Boolean; Count: NativeInt): NativeInt;
+
+Var
+  B : TBytes;
+
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,1,Count);
+  if Result>0 then
+    Buffer:=B[0]<>0
+end;
+
+
+function TStream.ReadData(var Buffer: WideChar): NativeInt;
+begin
+  Result:=ReadData(Buffer,2);
+end;
+
+function TStream.ReadData(var Buffer: WideChar; Count: NativeInt): NativeInt;
+
+Var
+  W : Word;
+
+begin
+  Result:=ReadData(W,Count);
+  if Result=2 then
+    Buffer:=WideChar(W);
+end;
+
+function TStream.ReadData(var Buffer: Int8): NativeInt;
+begin
+  Result:=ReadData(Buffer,1);
+end;
+
+Function TStream.MakeInt(B : TBytes; aSize : Integer; Signed : Boolean) : NativeInt;
+
+Var
+  Mem : TJSArrayBuffer;
+  A : TJSUInt8Array;
+  D : TJSDataView;
+  isLittle : Boolean;
+
+begin
+  IsLittle:=(Endian=TEndian.Little);
+  Mem:=TJSArrayBuffer.New(Length(B));
+  A:=TJSUInt8Array.new(Mem);
+  A._set(B);
+  D:=TJSDataView.New(Mem);
+  if Signed then
+    case aSize of
+      1 : Result:=D.getInt8(0);
+      2 : Result:=D.getInt16(0,IsLittle);
+      4 : Result:=D.getInt32(0,IsLittle);
+      // Todo : fix sign
+      8 : Result:=Round(D.getFloat64(0,IsLittle));
+    end
+  else
+    case aSize of
+      1 : Result:=D.getUInt8(0);
+      2 : Result:=D.getUInt16(0,IsLittle);
+      4 : Result:=D.getUInt32(0,IsLittle);
+      8 : Result:=Round(D.getFloat64(0,IsLittle));
+    end
+end;
+
+function TStream.MakeBytes(B: NativeInt; aSize: Integer; Signed: Boolean): TBytes;
+
+
+Var
+  Mem : TJSArrayBuffer;
+  A : TJSUInt8Array;
+  D : TJSDataView;
+  isLittle : Boolean;
+
+begin
+  IsLittle:=(Endian=TEndian.Little);
+  Mem:=TJSArrayBuffer.New(aSize);
+  D:=TJSDataView.New(Mem);
+  if Signed then
+    case aSize of
+      1 : D.setInt8(0,B);
+      2 : D.setInt16(0,B,IsLittle);
+      4 : D.setInt32(0,B,IsLittle);
+      8 : D.setFloat64(0,B,IsLittle);
+    end
+  else
+    case aSize of
+      1 : D.SetUInt8(0,B);
+      2 : D.SetUInt16(0,B,IsLittle);
+      4 : D.SetUInt32(0,B,IsLittle);
+      8 : D.setFloat64(0,B,IsLittle);
+    end;
+  SetLength(Result,aSize);
+  A:=TJSUInt8Array.new(Mem);
+  Result:=TMemoryStream.MemoryToBytes(A);
+end;
+
+
+function TStream.ReadData(var Buffer: Int8; Count: NativeInt): NativeInt;
+
+Var
+  B : TBytes;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,1,Count);
+  if Result>=1 then
+    Buffer:=MakeInt(B,1,True);
+end;
+
+function TStream.ReadData(var Buffer: UInt8): NativeInt;
+begin
+  Result:=ReadData(Buffer,1);
+end;
+
+function TStream.ReadData(var Buffer: UInt8; Count: NativeInt): NativeInt;
+Var
+  B : TBytes;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,1,Count);
+  if Result>=1 then
+    Buffer:=MakeInt(B,1,False);
+end;
+
+function TStream.ReadData(var Buffer: Int16): NativeInt;
+begin
+  Result:=ReadData(Buffer,2);
+end;
+
+function TStream.ReadData(var Buffer: Int16; Count: NativeInt): NativeInt;
+Var
+  B : TBytes;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,2,Count);
+  if Result>=2 then
+    Buffer:=MakeInt(B,2,True);
+end;
+
+function TStream.ReadData(var Buffer: UInt16): NativeInt;
+begin
+  Result:=ReadData(Buffer,2);
+end;
+
+function TStream.ReadData(var Buffer: UInt16; Count: NativeInt): NativeInt;
+Var
+  B : TBytes;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,2,Count);
+  if Result>=2 then
+    Buffer:=MakeInt(B,2,False);
+end;
+
+function TStream.ReadData(var Buffer: Int32): NativeInt;
+begin
+  Result:=ReadData(Buffer,4);
+end;
+
+function TStream.ReadData(var Buffer: Int32; Count: NativeInt): NativeInt;
+Var
+  B : TBytes;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,4,Count);
+  if Result>=4 then
+    Buffer:=MakeInt(B,4,True);
+end;
+
+function TStream.ReadData(var Buffer: UInt32): NativeInt;
+begin
+  Result:=ReadData(Buffer,4);
+end;
+
+function TStream.ReadData(var Buffer: UInt32; Count: NativeInt): NativeInt;
+
+Var
+  B : TBytes;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,4,Count);
+  if Result>=4 then
+    Buffer:=MakeInt(B,4,False);
+end;
+
+
+function TStream.ReadData(var Buffer: NativeInt): NativeInt;
+
+begin
+  Result:=ReadData(Buffer,8);
+end;
+
+function TStream.ReadData(var Buffer: NativeInt; Count: NativeInt): NativeInt;
+
+Var
+  B : TBytes;
+
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,8,8);
+  if Result>=8 then
+    Buffer:=MakeInt(B,8,True);
+end;
+
+function TStream.ReadData(var Buffer: NativeLargeUInt): NativeInt;
+begin
+  Result:=ReadData(Buffer,8);
+end;
+
+function TStream.ReadData(var Buffer: NativeLargeUInt; Count: NativeInt): NativeInt;
+
+Var
+  B : TBytes;
+  B1 : Integer;
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,4,4);
+  if Result>=4 then
+    begin
+    B1:=MakeInt(B,4,False);
+    Result:=Result+ReadMaxSizeData(B,4,4);
+    Buffer:=MakeInt(B,4,False);
+    Buffer:=(Buffer shl 32) or B1;
+    end;
+end;
+
+function TStream.ReadData(var Buffer: Double): NativeInt;
+begin
+  Result:=ReadData(Buffer,8);
+end;
+
+function TStream.ReadData(var Buffer: Double; Count: NativeInt): NativeInt;
+
+Var
+  B : TBytes;
+  Mem : TJSArrayBuffer;
+  A : TJSUInt8Array;
+  D : TJSDataView;
+
+begin
+  SetLength(B,Count);
+  Result:=ReadMaxSizeData(B,8,Count);
+  if Result>=8 then
+    begin
+    Mem:=TJSArrayBuffer.New(8);
+    A:=TJSUInt8Array.new(Mem);
+    A._set(B);
+    D:=TJSDataView.New(Mem);
+    Buffer:=D.getFloat64(0);
+    end;
+end;
+
+procedure TStream.ReadBuffer(var Buffer: TBytes; Count: NativeInt);
+begin
+  ReadBuffer(Buffer,0,Count);
+end;
+
+procedure TStream.ReadBuffer(var Buffer: TBytes; Offset, Count: NativeInt);
+begin
+  if Read(Buffer,OffSet,Count)<>Count then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Boolean);
+begin
+  ReadBufferData(Buffer,1);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Boolean; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: WideChar);
+begin
+  ReadBufferData(Buffer,2);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: WideChar; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Int8);
+begin
+  ReadBufferData(Buffer,1);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Int8; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: UInt8);
+begin
+  ReadBufferData(Buffer,1);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: UInt8; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Int16);
+begin
+  ReadBufferData(Buffer,2);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Int16; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: UInt16);
+begin
+  ReadBufferData(Buffer,2);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: UInt16; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Int32);
+begin
+  ReadBufferData(Buffer,4);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Int32; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: UInt32);
+begin
+  ReadBufferData(Buffer,4);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: UInt32; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: NativeLargeInt);
+begin
+  ReadBufferData(Buffer,8)
+end;
+
+procedure TStream.ReadBufferData(var Buffer: NativeLargeInt; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: NativeLargeUInt);
+begin
+  ReadBufferData(Buffer,8);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: NativeLargeUInt; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+
+procedure TStream.ReadBufferData(var Buffer: Double);
+begin
+  ReadBufferData(Buffer,8);
+end;
+
+procedure TStream.ReadBufferData(var Buffer: Double; Count: NativeInt);
+begin
+  if (ReadData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SReadError);
+end;
+
+procedure TStream.WriteBuffer(const Buffer: TBytes; Count: NativeInt);
+begin
+  WriteBuffer(Buffer,0,Count);
+end;
+
+procedure TStream.WriteBuffer(const Buffer: TBytes; Offset, Count: NativeInt);
+begin
+  if Self.Write(Buffer,Offset,Count)<>Count then
+     Raise EStreamError.Create(SWriteError);
+end;
+
+function TStream.WriteData(const Buffer: TBytes; Count: NativeInt): NativeInt;
+begin
+  Result:=Self.Write(Buffer, 0, Count);
+end;
+
+function TStream.WriteData(const Buffer: Boolean): NativeInt;
+begin
+  Result:=WriteData(Buffer,1);
+end;
+
+function TStream.WriteData(const Buffer: Boolean; Count: NativeInt): NativeInt;
+
+Var
+  B : Int8;
+
+begin
+  B:=Ord(Buffer);
+  Result:=WriteData(B,Count);
+end;
+
+function TStream.WriteData(const Buffer: WideChar): NativeInt;
+
+begin
+  Result:=WriteData(Buffer,2);
+end;
+
+function TStream.WriteData(const Buffer: WideChar; Count: NativeInt): NativeInt;
+Var
+  U : UInt16;
+begin
+  U:=Ord(Buffer);
+  Result:=WriteData(U,Count);
+end;
+
+function TStream.WriteData(const Buffer: Int8): NativeInt;
+
+begin
+  Result:=WriteData(Buffer,1);
+end;
+
+function TStream.WriteData(const Buffer: Int8; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,1,True),1,Count);
+end;
+
+function TStream.WriteData(const Buffer: UInt8): NativeInt;
+begin
+  Result:=WriteData(Buffer,1);
+end;
+
+function TStream.WriteData(const Buffer: UInt8; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,1,False),1,Count);
+end;
+
+function TStream.WriteData(const Buffer: Int16): NativeInt;
+begin
+  Result:=WriteData(Buffer,2);
+end;
+
+function TStream.WriteData(const Buffer: Int16; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,2,True),2,Count);
+end;
+
+function TStream.WriteData(const Buffer: UInt16): NativeInt;
+begin
+  Result:=WriteData(Buffer,2);
+end;
+
+function TStream.WriteData(const Buffer: UInt16; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,2,True),2,Count);
+end;
+
+function TStream.WriteData(const Buffer: Int32): NativeInt;
+begin
+  Result:=WriteData(Buffer,4);
+end;
+
+function TStream.WriteData(const Buffer: Int32; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,4,True),4,Count);
+end;
+
+function TStream.WriteData(const Buffer: UInt32): NativeInt;
+begin
+  Result:=WriteData(Buffer,4);
+end;
+
+function TStream.WriteData(const Buffer: UInt32; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,4,False),4,Count);
+end;
+
+function TStream.WriteData(const Buffer: NativeLargeInt): NativeInt;
+begin
+  Result:=WriteData(Buffer,8);
+end;
+
+function TStream.WriteData(const Buffer: NativeLargeInt; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,8,True),8,Count);
+end;
+
+function TStream.WriteData(const Buffer: NativeLargeUInt): NativeInt;
+begin
+  Result:=WriteData(Buffer,8);
+end;
+
+function TStream.WriteData(const Buffer: NativeLargeUInt; Count: NativeInt): NativeInt;
+begin
+  Result:=WriteMaxSizeData(MakeBytes(Buffer,8,False),8,Count);
+end;
+
+function TStream.WriteData(const Buffer: Double): NativeInt;
+begin
+  Result:=WriteData(Buffer,8);
+end;
+
+function TStream.WriteData(const Buffer: Double; Count: NativeInt): NativeInt;
+
+Var
+  Mem : TJSArrayBuffer;
+  A : TJSUint8array;
+  D : TJSDataview;
+  B : TBytes;
+  I : Integer;
+
+begin
+  Mem:=TJSArrayBuffer.New(8);
+  D:=TJSDataView.new(Mem);
+  D.setFloat64(0,Buffer);
+  SetLength(B,8);
+  A:=TJSUint8array.New(Mem);
+  For I:=0 to 7 do
+    B[i]:=A[i];
+  Result:=WriteMaxSizeData(B,8,Count);
+end;
+
+
+procedure TStream.WriteBufferData(Buffer: Int32);
+begin
+  WriteBufferData(Buffer,4);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Int32; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Boolean);
+begin
+  WriteBufferData(Buffer,1);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Boolean; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: WideChar);
+begin
+  WriteBufferData(Buffer,2);
+end;
+
+procedure TStream.WriteBufferData(Buffer: WideChar; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Int8);
+begin
+  WriteBufferData(Buffer,1);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Int8; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: UInt8);
+begin
+  WriteBufferData(Buffer,1);
+end;
+
+procedure TStream.WriteBufferData(Buffer: UInt8; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Int16);
+begin
+  WriteBufferData(Buffer,2);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Int16; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: UInt16);
+begin
+  WriteBufferData(Buffer,2);
+end;
+
+procedure TStream.WriteBufferData(Buffer: UInt16; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: UInt32);
+begin
+  WriteBufferData(Buffer,4);
+end;
+
+procedure TStream.WriteBufferData(Buffer: UInt32; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: NativeInt);
+begin
+  WriteBufferData(Buffer,8);
+end;
+
+procedure TStream.WriteBufferData(Buffer: NativeInt; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: NativeLargeUInt);
+begin
+  WriteBufferData(Buffer,8);
+end;
+
+procedure TStream.WriteBufferData(Buffer: NativeLargeUInt; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Double);
+begin
+  WriteBufferData(Buffer,8);
+end;
+
+procedure TStream.WriteBufferData(Buffer: Double; Count: NativeInt);
+begin
+  if (WriteData(Buffer,Count)<>Count) then
+    Raise EStreamError.Create(SWriteError);
+end;
+
+
+
+function TStream.CopyFrom(Source: TStream; Count: NativeInt): NativeInt;
+
+var
+   Buffer: TBytes;
+   BufferSize, i: LongInt;
+
+const
+   MaxSize = $20000;
+begin
+   Result:=0;
+   if Count=0 then
+     Source.Position:=0;   // This WILL fail for non-seekable streams...
+   BufferSize:=MaxSize;
+   if (Count>0) and (Count<BufferSize) then
+     BufferSize:=Count;    // do not allocate more than needed
+   SetLength(Buffer,BufferSize);
+   if Count=0 then
+     repeat
+       i:=Source.Read(Buffer,BufferSize);
+       if i>0 then
+         WriteBuffer(Buffer,i);
+       Inc(Result,i);
+     until i<BufferSize
+   else
+     while Count>0 do
+       begin
+       if Count>BufferSize then
+         i:=BufferSize
+       else
+         i:=Count;
+       Source.ReadBuffer(Buffer,i);
+       WriteBuffer(Buffer,i);
+       Dec(count,i);
+       Inc(Result,i);
+       end;
+end;
+
+(*
+function TStream.ReadComponent(Instance: TComponent): TComponent;
+
+  var
+    Reader: TReader;
+
+  begin
+
+    Reader := TReader.Create(Self, 4096);
+    try
+      Result := Reader.ReadRootComponent(Instance);
+    finally
+      Reader.Free;
+    end;
+
+  end;
+
+function TStream.ReadComponentRes(Instance: TComponent): TComponent;
+
+  begin
+
+    ReadResHeader;
+    Result := ReadComponent(Instance);
+
+  end;
+
+procedure TStream.WriteComponent(Instance: TComponent);
+
+  begin
+
+    WriteDescendent(Instance, nil);
+
+  end;
+
+procedure TStream.WriteComponentRes(const ResName: string; Instance: TComponent);
+
+  begin
+
+    WriteDescendentRes(ResName, Instance, nil);
+
+  end;
+
+procedure TStream.WriteDescendent(Instance, Ancestor: TComponent);
+
+  var
+     Driver : TAbstractObjectWriter;
+     Writer : TWriter;
+
+  begin
+
+     Driver := TBinaryObjectWriter.Create(Self, 4096);
+     Try
+       Writer := TWriter.Create(Driver);
+       Try
+         Writer.WriteDescendent(Instance, Ancestor);
+       Finally
+         Writer.Destroy;
+       end;
+     Finally
+       Driver.Free;
+     end;
+
+  end;
+
+procedure TStream.WriteDescendentRes(const ResName: string; Instance, Ancestor: TComponent);
+
+  var
+    FixupInfo: Longint;
+
+  begin
+
+    { Write a resource header }
+    WriteResourceHeader(ResName, FixupInfo);
+    { Write the instance itself }
+    WriteDescendent(Instance, Ancestor);
+    { Insert the correct resource size into the resource header }
+    FixupResourceHeader(FixupInfo);
+
+  end;
+
+
+procedure TStream.WriteResourceHeader(const ResName: string; {!!!: out} var FixupInfo: Longint);
+  var
+    ResType, Flags : word;
+  begin
+     ResType:=NtoLE(word($000A));
+     Flags:=NtoLE(word($1030));
+     { Note: This is a Windows 16 bit resource }
+     { Numeric resource type }
+     WriteByte($ff);
+     { Application defined data }
+     WriteWord(ResType);
+     { write the name as asciiz }
+     WriteBuffer(ResName[1],length(ResName));
+     WriteByte(0);
+     { Movable, Pure and Discardable }
+     WriteWord(Flags);
+     { Placeholder for the resource size }
+     WriteDWord(0);
+     { Return current stream position so that the resource size can be
+       inserted later }
+     FixupInfo := Position;
+  end;
+
+procedure TStream.FixupResourceHeader(FixupInfo: Longint);
+
+  var
+     ResSize,TmpResSize : Longint;
+
+  begin
+
+    ResSize := Position - FixupInfo;
+    TmpResSize := NtoLE(longword(ResSize));
+
+    { Insert the correct resource size into the placeholder written by
+      WriteResourceHeader }
+    Position := FixupInfo - 4;
+    WriteDWord(TmpResSize);
+    { Seek back to the end of the resource }
+    Position := FixupInfo + ResSize;
+
+  end;
+
+procedure TStream.ReadResHeader;
+  var
+    ResType, Flags : word;
+  begin
+     try
+       { Note: This is a Windows 16 bit resource }
+       { application specific resource ? }
+       if ReadByte<>$ff then
+         raise EInvalidImage.Create(SInvalidImage);
+       ResType:=LEtoN(ReadWord);
+       if ResType<>$000a then
+         raise EInvalidImage.Create(SInvalidImage);
+       { read name }
+       while ReadByte<>0 do
+         ;
+       { check the access specifier }
+       Flags:=LEtoN(ReadWord);
+       if Flags<>$1030 then
+         raise EInvalidImage.Create(SInvalidImage);
+       { ignore the size }
+       ReadDWord;
+     except
+       on EInvalidImage do
+         raise;
+       else
+         raise EInvalidImage.create(SInvalidImage);
+     end;
+  end;
+*)
+
+function TStream.ReadByte : Byte;
+
+begin
+  ReadBufferData(Result,1);
+end;
+
+function TStream.ReadWord : Word;
+
+begin
+  ReadBufferData(Result,2);
+end;
+
+function TStream.ReadDWord : Cardinal;
+
+begin
+  ReadBufferData(Result,4);
+end;
+
+function TStream.ReadQWord: NativeLargeUInt;
+
+begin
+  ReadBufferData(Result,8);
+end;
+
+
+procedure TStream.WriteByte(b : Byte);
+
+begin
+  WriteBufferData(b,1);
+end;
+
+procedure TStream.WriteWord(w : Word);
+
+begin
+  WriteBufferData(W,2);
+end;
+
+procedure TStream.WriteDWord(d : Cardinal);
+
+begin
+  WriteBufferData(d,4);
+end;
+
+procedure TStream.WriteQWord(q: NativeLargeUInt);
+begin
+  WriteBufferData(q,8);
+end;
+
+{****************************************************************************}
+{*                             TCustomMemoryStream                          *}
+{****************************************************************************}
+
+procedure TCustomMemoryStream.SetPointer(Ptr: TJSArrayBuffer; ASize: PtrInt);
+
+begin
+  FMemory:=Ptr;
+  FSize:=ASize;
+  FDataView:=Nil;
+  FDataArray:=Nil;
+end;
+
+
+Class Function TCustomMemoryStream.MemoryToBytes(Mem : TJSArrayBuffer) : TBytes; overload;
+
+begin
+  Result:=MemoryToBytes(TJSUint8Array.New(Mem));
+end;
+
+class function TCustomMemoryStream.MemoryToBytes(Mem: TJSUint8Array): TBytes;
+
+Var
+  I : Integer;
+
+begin
+  // This must be improved, but needs some asm or TJSFunction.call() to implement answers in
+  // https://stackoverflow.com/questions/29676635/convert-uint8array-to-array-in-javascript
+  for i:=0 to mem.length-1 do
+    Result[i]:=Mem[i];
+end;
+
+class function TCustomMemoryStream.BytesToMemory(aBytes: TBytes): TJSArrayBuffer;
+
+Var
+  a : TJSUint8Array;
+
+begin
+  Result:=TJSArrayBuffer.new(Length(aBytes));
+  A:=TJSUint8Array.New(Result);
+  A._set(aBytes);
+end;
+
+function TCustomMemoryStream.GetDataArray: TJSUint8Array;
+begin
+  if FDataArray=Nil then
+    FDataArray:=TJSUint8Array.new(Memory);
+  Result:=FDataArray;
+end;
+
+function TCustomMemoryStream.GetDataView: TJSDataview;
+begin
+  if FDataView=Nil then
+    FDataView:=TJSDataView.New(Memory);
+  Result:=FDataView;
+end;
+
+function TCustomMemoryStream.GetSize: NativeInt;
+
+begin
+  Result:=FSize;
+end;
+
+function TCustomMemoryStream.GetPosition: NativeInt;
+begin
+  Result:=FPosition;
+end;
+
+
+function TCustomMemoryStream.Read(Buffer : TBytes; offset, Count: LongInt): LongInt;
+
+Var
+  I,Src,Dest : Integer;
+
+begin
+  Result:=0;
+  If (FSize>0) and (FPosition<Fsize) and (FPosition>=0) then
+    begin
+    Result:=Count;
+    If (Result>(FSize-FPosition)) then
+      Result:=(FSize-FPosition);
+    Src:=FPosition;
+    Dest:=Offset;
+    I:=0;
+    While I<Result do
+      begin
+      Buffer[Dest]:=DataView.getUint8(Src);
+      inc(Src);
+      inc(Dest);
+      inc(I);
+      end;
+    FPosition:=Fposition+Result;
+    end;
+end;
+
+
+function TCustomMemoryStream.Seek(const Offset: NativeInt; Origin: TSeekOrigin): NativeInt;
+
+begin
+  Case Origin of
+    soBeginning : FPosition:=Offset;
+    soEnd       : FPosition:=FSize+Offset;
+    soCurrent   : FPosition:=FPosition+Offset;
+  end;
+  if SizeBoundsSeek and (FPosition>FSize) then
+    FPosition:=FSize;
+  Result:=FPosition;
+  {$IFDEF DEBUG}
+  if Result < 0 then
+    raise Exception.Create('TCustomMemoryStream');
+  {$ENDIF}
+end;
+
+
+procedure TCustomMemoryStream.SaveToStream(Stream: TStream);
+
+begin
+  if FSize>0 then
+    Stream.WriteBuffer(TMemoryStream.MemoryToBytes(Memory),FSize);
+end;
+
+
+
+{****************************************************************************}
+{*                             TMemoryStream                                *}
+{****************************************************************************}
+
+
+Const TMSGrow = 4096; { Use 4k blocks. }
+
+procedure TMemoryStream.SetCapacity(NewCapacity: PtrInt);
+
+begin
+  SetPointer (Realloc(NewCapacity),Fsize);
+  FCapacity:=NewCapacity;
+end;
+
+
+function TMemoryStream.Realloc(var NewCapacity: PtrInt): TJSArrayBuffer;
+
+Var
+  GC : PtrInt;
+  DestView : TJSUInt8array;
+
+begin
+  If NewCapacity<0 Then
+    NewCapacity:=0
+  else
+    begin
+      GC:=FCapacity + (FCapacity div 4);
+      // if growing, grow at least a quarter
+      if (NewCapacity>FCapacity) and (NewCapacity < GC) then
+        NewCapacity := GC;
+      // round off to block size.
+      NewCapacity := (NewCapacity + (TMSGrow-1)) and not (TMSGROW-1);
+    end;
+  // Only now check !
+  If NewCapacity=FCapacity then
+    Result:=FMemory
+  else if NewCapacity=0 then
+    Result:=Nil
+  else
+    begin
+    // New buffer
+    Result:=TJSArrayBuffer.New(NewCapacity);
+    If (Result=Nil)  then
+      Raise EStreamError.Create(SMemoryStreamError);
+    // Transfer
+    DestView:=TJSUInt8array.New(Result);
+    Destview._Set(Self.DataArray);
+    end;
+end;
+
+
+destructor TMemoryStream.Destroy;
+
+begin
+  Clear;
+  Inherited Destroy;
+end;
+
+
+procedure TMemoryStream.Clear;
+
+begin
+  FSize:=0;
+  FPosition:=0;
+  SetCapacity (0);
+end;
+
+
+procedure TMemoryStream.LoadFromStream(Stream: TStream);
+
+begin
+  Stream.Position:=0;
+  SetSize(Stream.Size);
+  If FSize>0 then Stream.ReadBuffer(MemoryToBytes(FMemory),FSize);
+end;
+
+procedure TMemoryStream.SetSize(const NewSize: NativeInt);
+
+begin
+  SetCapacity (NewSize);
+  FSize:=NewSize;
+  IF FPosition>FSize then
+    FPosition:=FSize;
+end;
+
+function TMemoryStream.Write(Const Buffer : TBytes; OffSet, Count: LongInt): LongInt;
+
+Var NewPos : PtrInt;
+
+begin
+  If (Count=0) or (FPosition<0) then
+    exit(0);
+  NewPos:=FPosition+Count;
+  If NewPos>Fsize then
+    begin
+    IF NewPos>FCapacity then
+      SetCapacity (NewPos);
+    FSize:=Newpos;
+    end;
+  DataArray._set(Copy(Buffer,Offset,Count),FPosition);
+  FPosition:=NewPos;
+  Result:=Count;
+end;
+
+{****************************************************************************}
+{*                              TBytesStream                                *}
+{****************************************************************************}
+
+constructor TBytesStream.Create(const ABytes: TBytes);
+begin
+  inherited Create;
+  SetPointer(TMemoryStream.BytesToMemory(aBytes),Length(ABytes));
+  FCapacity:=Length(ABytes);
+end;
+
+function TBytesStream.GetBytes: TBytes;
+begin
+  Result:=TMemoryStream.MemoryToBytes(Memory);
+end;
+
 
 
 { ---------------------------------------------------------------------

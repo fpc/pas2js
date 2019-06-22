@@ -1161,7 +1161,7 @@ Type
     --------------------------------------------------------------------}
   
   EcdhKeyDeriveParams = record
-    public_ : TJSCryptoKey;
+    public_ : TJSCryptoKey; external name 'public';
   end;
   
   { --------------------------------------------------------------------
@@ -1169,7 +1169,7 @@ Type
     --------------------------------------------------------------------}
   
   DhKeyDeriveParams = record
-    public_ : TJSCryptoKey;
+    public_ : TJSCryptoKey;  external name 'public';
   end;
   
   { --------------------------------------------------------------------

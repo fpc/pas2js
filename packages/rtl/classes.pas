@@ -183,6 +183,8 @@ type
   end;
 
   { TPersistent }
+  
+{$M+}
 
   TPersistent = class(TObject)
   private

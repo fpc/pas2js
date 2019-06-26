@@ -11021,6 +11021,7 @@ begin
     RaiseInconsistency(20170210120659,El);
   Param:=El.Params[0];
   AContext.Resolver.ComputeElement(Param,ResolvedEl,[]);
+  writeln('AAA1 TPasToJSConverter.ConvertBuiltIn_LowHigh ',GetResolverResultDbg(ResolvedEl));
   case ResolvedEl.BaseType of
     btContext:
       begin

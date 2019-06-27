@@ -174,7 +174,7 @@ Type
   TJQueryAjaxScriptHandler = Reference to function (aScript,aStatus : String; aXHR : TJQXHR) : Boolean;
   TJQueryAjaxHandler = Reference to procedure;
 
-  TJQuery = class external name 'JQuery' (TJSObject)
+  TJQuery = class external name 'jQuery' (TJSObject)
   private
     FCSSHooks: TJSObject; external name 'cssHooks';
     FCSSNumber: TJSObject; external name 'cssNumber';
@@ -439,7 +439,7 @@ Type
 Function JQuery(Const aSelector :  String) : TJQuery; external name 'jQuery';
 Function JQuery(Const aSelector :  String; Context : TJSElement) : TJQuery; external name 'jQuery';
 Function JQuery(Const aElement : TJSElement) : TJQuery; external name 'jQuery';
-Function JQuery(Const aElement : Array of TJSElement) : TJQuery; external name 'JQuery';
+Function JQuery(Const aElement : Array of TJSElement) : TJQuery; external name 'jQuery';
 Function JQuery(Const aElement : TJSObject) : TJQuery; external name 'jQuery';
 Function JQuery(Const aQuery : TJQuery) : TJQuery; external name 'jQuery';
 Function JQuery() : TJQuery; external name 'jQuery';

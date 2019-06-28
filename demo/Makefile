@@ -17,11 +17,16 @@ endif
 P2JSOPT=-Fu../packages/\*
 P2JS=pas2js 
 BROWSERP2JS=$(P2JS) $(P2JSOPT) -Jirtl.js -Jc -Tbrowser
+CHARTJSDIR=chartjs/js
+CHARTOUTPUT=-FE$(CHARTJSDIR)
+CHARTCMD=$(BROWSERP2JS) $(CHARTOUTPUT)
 
 all: $(TARGETS)
 
 info:
 	@echo Available targets: $(TARGETS)
+$(CHARTJSDIR):
+	mkdir $(CHARTJSDIR)
 
 democomponents: ./rtl/democomponents.lpr
 	$(BROWSERP2JS) $<
@@ -38,39 +43,39 @@ demowebcompiler: ./webcompiler/demowebcompiler.lpr
 fpreportdemo: ./fpreport/reportdemo.lpr
 	$(BROWSERP2JS) $<
 chartjs_demoprogressbar: ./chartjs/demoprogressbar.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD)  $<
 chartjs_demodate: ./chartjs/demodate.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demoscatter: ./chartjs/demoscatter.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demomixed: ./chartjs/demomixed.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demobar: ./chartjs/demobar.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demoarea: ./chartjs/demoarea.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demobubble: ./chartjs/demobubble.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD)  $<
 chartjs_demopie: ./chartjs/demopie.lpr
-	$(BROWSERP2JS) -Sc $<
+	$(CHARTCMD) -Sc $<
 chartjs_demodatalabelling: ./chartjs/demodatalabelling.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demodoughnut: ./chartjs/demodoughnut.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demointeractions: ./chartjs/demointeractions.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demoline: ./chartjs/demoline.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demotime: ./chartjs/demotime.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demoscriptablebubble: ./chartjs/demoscriptablebubble.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demoradar: ./chartjs/demoradar.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_democustompoints: ./chartjs/democustompoints.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 chartjs_demopolararea: ./chartjs/demopolararea.lpr
-	$(BROWSERP2JS) $<
+	$(CHARTCMD) $<
 promiseall: ./promise/demoall.lpr
 	$(BROWSERP2JS) $<
 promisestory1: ./promise/story2.lpr

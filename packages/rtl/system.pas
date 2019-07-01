@@ -138,6 +138,9 @@ type
     class property ClassParent: TClass read FClassParent;
     class function InheritsFrom(aClass: TClass): boolean; assembler;
     class property UnitName: String read FUnitName;
+    Class function MethodName(aCode : Pointer) : String;
+    Class function MethodAddress(aName : String) : Pointer;
+    Class Function ClassInfo : Pointer;
 
     procedure AfterConstruction; virtual;
     procedure BeforeDestruction; virtual;
@@ -838,6 +841,43 @@ end;
 class function TObject.InheritsFrom(aClass: TClass): boolean; assembler;
 asm
   return (aClass!=null) && ((this==aClass) || aClass.isPrototypeOf(this));
+end;
+
+
+Class function TObject.MethodName(aCode : Pointer) : String;
+
+begin
+end;
+
+Class function TObject.MethodAddress(aName : String) : Pointer;
+
+// We must do this in asm, because the typinfo unit is not available.
+begin
+asm
+  var i = 0;
+  var TI = this.$rtti;
+  var N = "";
+  var MN = "";
+  N = aName.toLowerCase();
+  while ((MN === "") && (TI != null)) {
+    i = 0;
+    while ((MN === "") && (i < TI.methods.length)) {
+      if (TI.getMethod(i).name.toLowerCase() === N) MN = TI.getMethod(i).name;
+      i += 1;
+    };
+    if (MN === "") TI = TI.ancestor;
+  };
+  if (MN !== "") Result = this[MN];
+  return Result;
+end;
+end;
+
+Class Function TObject.ClassInfo : Pointer;
+
+begin
+  // This works different from FPC/Delphi.
+  // We get the actual type info.
+  Result:=TypeInfo(Self);
 end;
 
 procedure TObject.AfterConstruction;

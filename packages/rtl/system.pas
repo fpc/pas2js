@@ -140,6 +140,7 @@ type
     class property UnitName: String read FUnitName;
     Class function MethodName(aCode : Pointer) : String;
     Class function MethodAddress(aName : String) : Pointer;
+    Class Function FieldAddress(aName : String) : Pointer;
     Class Function ClassInfo : Pointer;
 
     procedure AfterConstruction; virtual;
@@ -847,12 +848,35 @@ end;
 Class function TObject.MethodName(aCode : Pointer) : String;
 
 begin
+  Result:='';
+  if aCode=Nil then
+    exit;
+asm
+  var i = 0;
+  var TI = this.$rtti;
+  // Callback ?
+  if ((typeof aCode["fn"] === "string") && (typeof aCode["scope"] === "object")) return aCode["fn"];
+  // Not a callback, check rtti
+  while ((Result === "") && (TI != null)) {
+    i = 0;
+    while ((Result === "") && (i < TI.methods.length)) {
+      if (this[TI.getMethod(i).name] === aCode)
+        Result=TI.getMethod(i).name;
+      i += 1;
+    };
+    if (Result === "") TI = TI.ancestor;
+  };
+  return Result;
+end;
 end;
 
 Class function TObject.MethodAddress(aName : String) : Pointer;
 
 // We must do this in asm, because the typinfo unit is not available.
 begin
+  Result:=Nil;
+  if AName='' then
+    exit;
 asm
   var i = 0;
   var TI = this.$rtti;
@@ -870,6 +894,31 @@ asm
   if (MN !== "") Result = this[MN];
   return Result;
 end;
+end;
+
+class function TObject.FieldAddress(aName: String): Pointer;
+
+begin
+  Result:=Nil;
+  asm
+    var aClass = null;
+    var i = 0;
+    var ClassTI = null;
+    var myName = aName.toLowerCase();
+    var MemberTI = null;
+    aClass = this.$class;
+    while (aClass !== null) {
+      ClassTI = aClass.$rtti;
+      for (var $l1 = 0, $end2 = ClassTI.fields.length - 1; $l1 <= $end2; $l1++) {
+        i = $l1;
+        MemberTI = ClassTI.getField(i);
+        if (MemberTI.name.toLowerCase() === myName) {
+           return MemberTI;
+        };
+      };
+      aClass = aClass.$ancestor ? aClass.$ancestor : null;
+    };
+  end;
 end;
 
 Class Function TObject.ClassInfo : Pointer;

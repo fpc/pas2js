@@ -54,6 +54,20 @@ const
 
   SInvalidGUID                  = '"%s" is not a valid GUID value';
 
+  SEmptyStreamIllegalReader       = 'Illegal Nil stream for TReader constructor';
+  SInvalidPropertyValue           = 'Invalid value for property';
+  SInvalidImage                   = 'Invalid stream format';
+  SUnknownProperty                = 'Unknown property: "%s"';
+  SUnknownPropertyType            = 'Unknown property type %d';
+  SAncestorNotFound               = 'Ancestor class for "%s" not found.';
+  SUnsupportedPropertyVariantType = 'Unsupported property variant type %d';
+  SPropertyException              = 'Error reading %s%s%s: %s';
+  SInvalidPropertyPath            = 'Invalid property path';
+  SReadOnlyProperty               = 'Property is read-only';
+  SClassNotFound                  = 'Class "%s" not found';
+
+  SEmptyStreamIllegalWriter     = 'Illegal Nil stream for TWriter constructor';
+
 implementation
 
 end.

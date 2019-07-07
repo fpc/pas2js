@@ -86,10 +86,12 @@ Var
 begin
   CL:=LastLine.InnerHtml;
   CL:=CL+String(S);
+  cl:=StringReplace(cl,'<','&lt;',[rfReplaceAll]);
+  cl:=StringReplace(cl,'>','&gt;',[rfReplaceAll]);
   cl:=StringReplace(cl,' ','&nbsp;',[rfReplaceAll]);
   cl:=StringReplace(cl,#13#10,'<br>',[rfReplaceAll]);
   cl:=StringReplace(cl,#10,'<br>',[rfReplaceAll]);
-  cl:=StringReplace(cl,#10,'<br>',[rfReplaceAll]);
+  cl:=StringReplace(cl,#13,'<br>',[rfReplaceAll]);
   LastLine.InnerHtml:=CL;
   if NewLine then
     begin

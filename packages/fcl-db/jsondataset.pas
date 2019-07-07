@@ -1339,8 +1339,12 @@ begin
 end;
 
 function TBaseJSONDataSet.GetRecordCount: Integer;
+  
 begin
-  Result:=FCurrentIndex.Count;
+  if Assigned(FCurrentIndex) then
+    Result:=FCurrentIndex.Count
+  else
+    Result:=0;
 end;
 
 function TBaseJSONDataSet.GetRecordSize: Word;

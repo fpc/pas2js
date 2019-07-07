@@ -250,7 +250,8 @@ begin
     O:=TJSObject(A[0]);
     For I:=0 to Fields.Count-1 do
       begin
-      if O.hasOwnProperty(Fields[i].FieldName) then
+      FN:=Fields[i].FieldName;
+      if O.hasOwnProperty(FN) then
         FieldMapper.SetJSONDataForField(Fields[i],Rows[RecordIndex],O[FN]);
       end;
     end;

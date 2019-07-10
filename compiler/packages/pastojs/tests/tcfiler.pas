@@ -160,6 +160,7 @@ type
     procedure TestPC_Class;
     procedure TestPC_ClassForward;
     procedure TestPC_ClassConstructor;
+    procedure TestPC_ClassDestructor;
     procedure TestPC_Initialization;
     procedure TestPC_BoolSwitches;
     procedure TestPC_ClassInterface;
@@ -2128,6 +2129,37 @@ begin
   'var b: TBird;',
   'begin',
   '  b:=TBird.Create;',
+  'end;',
+  'end.'
+  ]);
+  WriteReadUnit;
+end;
+
+procedure TTestPrecompile.TestPC_ClassDestructor;
+begin
+  StartUnit(false);
+  Add([
+  'interface',
+  'type',
+  '  TObject = class',
+  '    destructor Destroy; virtual;',
+  '  end;',
+  '  TBird = class',
+  '    destructor Destroy; override;',
+  '  end;',
+  'procedure DoIt;',
+  'implementation',
+  'destructor TObject.Destroy;',
+  'begin',
+  'end;',
+  'destructor TBird.Destroy;',
+  'begin',
+  '  inherited;',
+  'end;',
+  'procedure DoIt;',
+  'var b: TBird;',
+  'begin',
+  '  b.Destroy;',
   'end;',
   'end.'
   ]);

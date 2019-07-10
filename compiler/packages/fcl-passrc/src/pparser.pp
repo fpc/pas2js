@@ -6295,6 +6295,21 @@ end;
 // Starts on first token after Record or (. Ends on AEndToken
 procedure TPasParser.ParseRecordFieldList(ARec: TPasRecordType;
   AEndToken: TToken; AllowMethods: Boolean);
+var
+  isClass : Boolean;
+
+  procedure EnableIsClass;
+  begin
+    isClass:=True;
+    Scanner.SetTokenOption(toOperatorToken);
+  end;
+
+  procedure DisableIsClass;
+  begin
+    if not isClass then exit;
+    isClass:=false;
+    Scanner.UnSetTokenOption(toOperatorToken);
+  end;
 
 Var
   VariantName : String;
@@ -6302,21 +6317,24 @@ Var
   Proc: TPasProcedure;
   ProcType: TProcType;
   Prop : TPasProperty;
-  isClass : Boolean;
   NamePos: TPasSourcePos;
   OldCount, i: Integer;
+  LastToken: TToken;
+  CurEl: TPasElement;
 begin
   if AllowMethods then
     v:=visPublic
   else
     v:=visDefault;
   isClass:=False;
+  LastToken:=tkrecord;
   while CurToken<>AEndToken do
     begin
     SaveComments;
     Case CurToken of
       tkType:
         begin
+        DisableIsClass;
         if Not AllowMethods then
           ParseExc(nErrRecordTypesNotAllowed,SErrRecordTypesNotAllowed);
         ExpectToken(tkIdentifier);
@@ -6324,6 +6342,7 @@ begin
         end;
       tkConst:
         begin
+        DisableIsClass;
         if Not AllowMethods then
           ParseExc(nErrRecordConstantsNotAllowed,SErrRecordConstantsNotAllowed);
         ExpectToken(tkIdentifier);
@@ -6346,6 +6365,8 @@ begin
         end;
       tkClass:
         begin
+        if LastToken=tkclass then
+          ParseExc(nParserTypeSyntaxError,SParserTypeSyntaxError);
         if Not AllowMethods then
           begin
           NextToken;
@@ -6356,18 +6377,16 @@ begin
             ParseExc(nErrRecordMethodsNotAllowed,SErrRecordMethodsNotAllowed);
           end;
           end;
-        if isClass then
-          ParseExc(nParserTypeSyntaxError,SParserTypeSyntaxError);
-        isClass:=True;
-        Scanner.SetTokenOption(toOperatorToken);
+        EnableIsClass;
         end;
       tkProperty:
         begin
+        DisableIsClass;
         if Not AllowMethods then
           ParseExc(nErrRecordPropertiesNotAllowed,SErrRecordPropertiesNotAllowed);
         ExpectToken(tkIdentifier);
-        Prop:=ParseProperty(ARec,CurtokenString,v,isClass);
-        Arec.Members.Add(Prop);
+        Prop:=ParseProperty(ARec,CurtokenString,v,LastToken=tkclass);
+        ARec.Members.Add(Prop);
         Engine.FinishScope(stDeclaration,Prop);
         end;
       tkOperator,
@@ -6375,9 +6394,10 @@ begin
       tkConstructor,
       tkFunction :
         begin
+        DisableIsClass;
         if Not AllowMethods then
           ParseExc(nErrRecordMethodsNotAllowed,SErrRecordMethodsNotAllowed);
-        ProcType:=GetProcTypeFromToken(CurToken,isClass);
+        ProcType:=GetProcTypeFromToken(CurToken,LastToken=tkclass);
         Proc:=ParseProcedureOrFunctionDecl(ARec,ProcType,v);
         if Proc.Parent is TPasOverloadedProc then
           TPasOverloadedProc(Proc.Parent).Overloads.Add(Proc)
@@ -6399,10 +6419,17 @@ begin
         OldCount:=ARec.Members.Count;
         ParseInlineVarDecl(ARec, ARec.Members, v, AEndToken=tkBraceClose);
         for i:=OldCount to ARec.Members.Count-1 do
-          Engine.FinishScope(stDeclaration,TPasVariable(ARec.Members[i]));
+          begin
+          CurEl:=TPasElement(ARec.Members[i]);
+          if isClass then
+            With TPasVariable(CurEl) do
+              VarModifiers:=VarModifiers + [vmClass];
+          Engine.FinishScope(stDeclaration,TPasVariable(CurEl));
+          end;
         end;
       tkCase :
         begin
+        DisableIsClass;
         ARec.Variants:=TFPList.Create;
         NextToken;
         VariantName:=CurTokenString;
@@ -6425,13 +6452,10 @@ begin
     else
       ParseExc(nParserTypeSyntaxError,SParserTypeSyntaxError);
     end;
-    If CurToken<>tkClass then
-      begin
-      isClass:=False;
-      Scanner.UnSetTokenOption(toOperatorToken);
-      end;
-    if CurToken<>AEndToken then
-      NextToken;
+    if CurToken=AEndToken then
+      break;
+    LastToken:=CurToken;
+    NextToken;
     end;
 end;
 

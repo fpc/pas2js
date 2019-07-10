@@ -8170,6 +8170,7 @@ begin
   '  r.V1:=trec.VC;',
   '  r.VC:=r.V1;',
   '  trec.VC:=trec.c1;',
+  '  trec.ca[1]:=trec.c2;',
   '']);
   ParseProgram;
 end;

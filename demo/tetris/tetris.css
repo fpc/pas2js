@@ -1,0 +1,57 @@
+body {
+  text-align: left;
+  background: #ffffff;
+}
+
+#tetris {
+  display: flex;
+  font: "16px Roboto";
+}
+
+#my-canvas {
+  background: #ffffff;
+  margin-left: 10px;
+  margin-top: 10px;
+  width: 300px;
+  height: 480px;
+}
+
+.btn-primary {
+  margin: 10px;
+  background-color: lightskyblue;
+  border-radius: 3px;
+  border: 2px solid;
+  height: 30px;
+  padding-right: 15px;
+  padding-left: 15px;
+  font-weight: bold;
+}
+
+.envelope {
+  border-width: medium;
+  border-color: grey;
+  margin-left: 10px;
+  margin-top: 10px;
+  display: flex;
+  border-spacing: 5px;
+  border-style: solid;
+  border-radius: 4px;
+  padding: 3px;
+  font-weight: bold;
+  color: #194a8d;
+}
+
+.label {
+  margin-right:20px;
+}
+#score-envelope {
+}
+#level-envelope {
+}
+
+#status-envelope {
+}
+
+#controls-envelope {
+  display: block; !important
+}

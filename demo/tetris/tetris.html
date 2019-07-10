@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="wideth=device-width, initial-scale=1">
+  <link rel="stylesheet" type="text/css" href="tetris.css">
+  <title>Tetris using pas2js</title>
+  <script src="tetris.js"></script>
+</head>
+<body>
+  <div id="tetris">
+    <div id="gameboard">
+      <canvas id="my-canvas"></canvas>
+    </div>
+    <div id="info">
+      <div id="logo">
+        <img id="logo-img" src="tetrislogo.png" width="161" height="54"/>
+      </div>
+      <div id="score-envelope" class="envelope">
+        <div id="score-label" class="label">Score:</div>
+        <div id="score">0</div>
+      </div>
+      <div id="level-envelope" class="envelope">
+        <div id="level-label" class="label">Level:</div>
+        <div id="level">1</div>
+      </div>
+      <div id="status-envelope" class="envelope">
+        <div id="status-label" class="label">Game status:</div>
+        <div id="status">Playing</div>
+      </div>
+      <div id="controls-envelope" class="envelope">
+        <div id="controls-label" class="label">Controls:</div>
+        <div id="controls">
+          <p><span id="control-left">Arrow-Left:</span> Move left</p>
+          <p><span id="control-right">Arrow-Right:</span> Move right</p>
+          <p><span id="control-down">Arrow-Down:</span> Move down</p>
+          <p><span id="control-rotate">Arrow-up:</span> Rotate block</p>
+          <p><span id="control-drop">Arrow-up:</span> Drop block</p>
+        </div>
+      </div>
+      <button id="btn-reset" class="btn-primary">Restart</button>
+    </div>
+  </div>
+  Sources: <a target="new" href="tetris.lpr">Program</a> <a target="new" href="utetris.pp">unit</a>.
+  <script>
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

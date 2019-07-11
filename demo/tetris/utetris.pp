@@ -41,6 +41,8 @@ Type
 
   TTetris = Class(TComponent)
   private
+    function DoMouseClick(aEvent: TJSMouseEvent): boolean;
+    function MoveBlockLeftRight(isRight: Boolean): Boolean;
   Private
     FCanvasID: String;
     FGameOver : Boolean;
@@ -91,7 +93,6 @@ Type
     Procedure DropBlock;
     Procedure RotateBlock;
     Procedure ClearBoard;
-    function DrawTetrisLogo(e : TEventListenerEvent) : Boolean;
     function HandleKeyPress(k : TJSKeyBoardEvent) : Boolean;
     Property GameOver : Boolean Read FGameOver Write SetGameOver;
   Public
@@ -150,8 +151,15 @@ begin
     end;
 end;
 
+Const
+  ControlCount = 5;
+  ControlNames : Array[1..5] of string = ('left','right','down','rotate','drop');
 
 procedure TTetris.SetupTetris;
+
+Var
+  i : Integer;
+  el : TJSElement;
 
 begin
   if FCanvasID='' then
@@ -163,6 +171,12 @@ begin
   FElLevel:=TJSHTMLCanvasElement(Document.getElementById('level'));
   FElStatus:=TJSHTMLCanvasElement(Document.getElementById('status'));
   FBtnReset:=TJSHTMLButtonElement(Document.getElementById(FResetID));
+  for I:=1 to ControlCount do
+     begin
+     El:=Document.GetElementById('control-'+ControlNames[i]);
+     if Assigned(El) then
+       TJSHTMLElement(El).onClick:=@DoMouseClick;
+     end;
   if Assigned(FBtnReset) then
     FBtnReset.OnClick:=@DoResetClick;
   FCtx:=TJSCanvasRenderingContext2D(FCanvas.getContext('2d'));
@@ -191,14 +205,25 @@ begin
     end;
 end;
 
-function TTetris.DrawTetrisLogo(e : TEventListenerEvent) : Boolean;
+Function TTetris.MoveBlockLeftRight(isRight : Boolean) : Boolean;
 
 begin
-  if (e=Nil) or (FCTx=Nil)  then exit;
-
-  Fctx.drawImage(Ftetrislogo, 300, 8, 161, 54);
   Result:=False;
+  if isRight then
+    Fdirection:=dRight
+  else
+    Fdirection:=dLEFT;
+  if (HittingTheWall() or checkForHorizontalCollision(FDirection,FCurBlock)) then
+    Exit;
+  DeleteBlock();
+  if isRight then
+    Inc(FCurrPos.X)
+  else
+    Dec(FCurrPos.X);
+  DrawBlock();
+  Result:=True;
 end;
+
 
 function TTetris.HandleKeyPress(k: TJSKeyBoardEvent) : Boolean;
 
@@ -211,27 +236,17 @@ function TTetris.HandleKeyPress(k: TJSKeyBoardEvent) : Boolean;
 
 begin
   Result:=False;
-  if FGameOver then
+  if GameOver then
     exit;
   if (k.Code = TJSKeyNames.ArrowLeft) then
     begin
     DisableKey;
-    Fdirection:=dLEFT;
-    if (HittingTheWall() or checkForHorizontalCollision(dLeft,FCurBlock)) then
-      exit(True);
-    DeleteBlock();
-    Dec(FCurrPos.X);
-    DrawBlock();
+    Result:=not MoveBlockLeftRight(False)
     end
   else if (k.Code = TJSKeyNames.ArrowRight) then
     begin
     DisableKey;
-    Fdirection:=dRIGHT;
-    if (HittingTheWall() or checkForHorizontalCollision(dRight,FCurBlock)) then
-      exit(True);
-    DeleteBlock();
-    inc(FCurrPos.X);
-    DrawBlock();
+    Result:=not MoveBlockLeftRight(True)
     end
   else if (k.Code = TJSKeyNames.ArrowDown) then
     begin
@@ -287,10 +302,8 @@ begin
     begin
     if Coll<>vcWall then
       ShiftBlockDown;
-    FGameOver:=(FCurrPos.Y<=2);
-    if FGameOver then
-      DrawGameStatus
-    else
+    GameOver:=(FCurrPos.Y<=2);
+    if Not GameOver then
       begin
       for I:=0 to BlockSize-1 do
         begin
@@ -605,8 +618,33 @@ begin
   EnableTick;
 end;
 
+function TTetris.DoMouseClick(aEvent: TJSMouseEvent): boolean;
+
+Const
+  SControl = 'control-';
+
+Var
+  S : String;
+begin
+  Result:=true;
+  S:=aEvent.currentTarget.ID;
+  aEvent.preventDefault;
+  if Copy(S,1,Length(SControl))=SControl then
+    begin
+    Delete(S,1,Length(sControl));
+    Case S of
+      'left' : MoveBlockLeftRight(False);
+      'right' : MoveBlockLeftRight(True);
+      'down' : MoveBlockDown;
+      'rotate' : RotateBlock;
+      'drop' : DropBlock;
+    end;
+    end;
+end;
+
 function TTetris.DoResetClick(aEvent: TJSMouseEvent): boolean;
 begin
+  Result:=True;
   FInterval:=1000;
   Start;
 end;

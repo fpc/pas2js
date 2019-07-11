@@ -4375,9 +4375,7 @@ begin
         aValue:= Self
       else
         aValue := nil;
-      asm
-      aOwner[aField.name]=aValue;
-      end;
+      TJSObject(aOwner)[String(TJSObject(aField)['name'])]:=aValue;
       end;
   end;
 end;

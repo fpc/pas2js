@@ -1,8 +1,10 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
-  <meta name="viewport" content="wideth=device-width, initial-scale=1">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.9.0/css/all.min.css">
   <link rel="stylesheet" type="text/css" href="tetris.css">
   <title>Tetris using pas2js</title>
   <script src="tetris.js"></script>
@@ -14,7 +16,7 @@
     </div>
     <div id="info">
       <div id="logo">
-        <img id="logo-img" src="tetrislogo.png" width="161" height="54"/>
+        <img id="logo-img" src="tetrislogo.png" width="80%"/>
       </div>
       <div id="score-envelope" class="envelope">
         <div id="score-label" class="label">Score:</div>
@@ -31,17 +33,19 @@
       <div id="controls-envelope" class="envelope">
         <div id="controls-label" class="label">Controls:</div>
         <div id="controls">
-          <p><span id="control-left">Arrow-Left:</span> Move left</p>
-          <p><span id="control-right">Arrow-Right:</span> Move right</p>
-          <p><span id="control-down">Arrow-Down:</span> Move down</p>
-          <p><span id="control-rotate">Arrow-up:</span> Rotate block</p>
-          <p><span id="control-drop">Space bar:</span> Drop block</p>
+          <p><span id="control-left"><i class="fas fa-arrow-left"></i>&nbsp;Arrow-Left:</span> Move left</p>
+          <p><span id="control-right"><i class="fas fa-arrow-right"></i>&nbsp;Arrow-Right:</span> Move right</p>
+          <p><span id="control-down"><i class="fas fa-arrow-down"></i>&nbsp;Arrow-Down:</span> Move down</p>
+          <p><span id="control-rotate"><i class="fas fa-arrow-up"></i>&nbsp;Arrow-Up:</span> Rotate block</p>
+          <p><span id="control-drop"><i class="fas fa-square"></i>&nbsp;Space bar:</span> Drop block</p>
         </div>
       </div>
       <button id="btn-reset" class="btn-primary">Restart</button>
     </div>
   </div>
-  Sources: <a target="new" href="tetris.lpr">Program</a> <a target="new" href="utetris.pp">unit</a>.
+  <div class="source">
+  Sources: <a target="new" href="tetris.lpr">Program</a>&nbsp; <a target="new" href="utetris.pp">unit</a>.
+  </div>
   <script>
     window.addEventListener("load", rtl.run);
   </script>

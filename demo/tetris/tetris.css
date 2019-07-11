@@ -1,57 +1,114 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
 body {
-  text-align: left;
-  background: #ffffff;
+    font-family: 'Roboto', serif;
 }
 
 #tetris {
-  display: flex;
-  font: "16px Roboto";
+    display: flex;
+    width: 540px;
+    margin: 3em auto;
 }
 
 #my-canvas {
-  background: #ffffff;
-  margin-left: 10px;
-  margin-top: 10px;
-  width: 300px;
-  height: 480px;
+    width: 300px;
+    height: 480px;
 }
 
-.btn-primary {
-  margin: 10px;
-  background-color: lightskyblue;
-  border-radius: 3px;
-  border: 2px solid;
-  height: 30px;
-  padding-right: 15px;
-  padding-left: 15px;
-  font-weight: bold;
+#info {
+    display: grid;
+    grid-row-gap: 0.5em;
+    height: 470px;
+    grid-template-rows: 2fr 1fr 1fr 1fr 6.5fr 1fr;
 }
 
-.envelope {
-  border-width: medium;
-  border-color: grey;
-  margin-left: 10px;
-  margin-top: 10px;
-  display: flex;
-  border-spacing: 5px;
-  border-style: solid;
-  border-radius: 4px;
-  padding: 3px;
-  font-weight: bold;
-  color: #194a8d;
+#info > #logo {
+    grid-row: 1;
+}
+
+#info > #score-envelope {
+    grid-row: 2;
+    border: 2px solid grey;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+#info > #level-envelope {
+    grid-row: 3;
+    border: 2px solid grey;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+#info > #status-envelope {
+    grid-row: 4;
+    border: 2px solid grey;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    font-weight: bold;
+}
+
+#info > #controls-envelope {
+    grid-row: 5;
+    border: 2px solid grey;
+    border-radius: 5px;
+    padding-top: 0.5em;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#info > #btn-reset {
+    grid-row: 6;
+}
+
+#controls > p {
+    border-radius: 5px;
+    background: #b8caf4;
+    margin: 0.4em;
+    padding: 0.5em;
+    cursor: pointer;
+    box-shadow: 0.05em 0.1em rgba(0, 0, 0, 0.1);
 }
 
 .label {
-  margin-right:20px;
-}
-#score-envelope {
-}
-#level-envelope {
-}
-
-#status-envelope {
+    text-transform: uppercase;
+    font-weight: bold;
+    margin-right: 0.5em;
+    padding-left: 0.5em;
 }
 
-#controls-envelope {
-  display: block; !important
+.source {
+    display: flex;
+    width: 540px;
+    margin: -40px auto;
+    
+}
+
+input{
+    border: 0;
+    width: 70%;
+    font-size: 16px;
+    font-weight: bold;
+}
+
+button{
+    background: #2B60DE;
+    color: #eee;
+    font-weight: bold;
+    border: 0;
+    padding: 12px 0;
+    width: 100%;
+    border-radius: 5px;
+    text-transform: uppercase;
+    font-size: 14px;
 }

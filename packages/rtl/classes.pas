@@ -781,58 +781,69 @@ type
 
   { TCustomMemoryStream abstract class }
 
-    TCustomMemoryStream = class(TStream)
-    private
-      FMemory: TJSArrayBuffer;
-      FDataView : TJSDataView;
-      FDataArray : TJSUint8Array;
-      FSize, FPosition: PtrInt;
-      FSizeBoundsSeek : Boolean;
-      function GetDataArray: TJSUint8Array;
-      function GetDataView: TJSDataview;
-    protected
-      Function GetSize : NativeInt; Override;
-      function GetPosition: NativeInt; Override;
-      procedure SetPointer(Ptr: TJSArrayBuffer; ASize: PtrInt);
-      Property DataView : TJSDataview Read GetDataView;
-      Property DataArray : TJSUint8Array Read GetDataArray;
-    public
-      Class Function MemoryToBytes(Mem : TJSArrayBuffer) : TBytes; overload;
-      Class Function MemoryToBytes(Mem : TJSUint8Array) : TBytes; overload;
-      Class Function BytesToMemory(aBytes : TBytes) : TJSArrayBuffer;
-      function Read(Buffer : TBytes; Offset, Count: LongInt): LongInt; override;
-      function Seek(const Offset: NativeInt; Origin: TSeekOrigin): NativeInt; override;
-      procedure SaveToStream(Stream: TStream);
-      property Memory: TJSArrayBuffer read FMemory;
-      Property SizeBoundsSeek : Boolean Read FSizeBoundsSeek Write FSizeBoundsSeek;
-    end;
+  TCustomMemoryStream = class(TStream)
+  private
+    FMemory: TJSArrayBuffer;
+    FDataView : TJSDataView;
+    FDataArray : TJSUint8Array;
+    FSize, FPosition: PtrInt;
+    FSizeBoundsSeek : Boolean;
+    function GetDataArray: TJSUint8Array;
+    function GetDataView: TJSDataview;
+  protected
+    Function GetSize : NativeInt; Override;
+    function GetPosition: NativeInt; Override;
+    procedure SetPointer(Ptr: TJSArrayBuffer; ASize: PtrInt);
+    Property DataView : TJSDataview Read GetDataView;
+    Property DataArray : TJSUint8Array Read GetDataArray;
+  public
+    Class Function MemoryToBytes(Mem : TJSArrayBuffer) : TBytes; overload;
+    Class Function MemoryToBytes(Mem : TJSUint8Array) : TBytes; overload;
+    Class Function BytesToMemory(aBytes : TBytes) : TJSArrayBuffer;
+    function Read(Buffer : TBytes; Offset, Count: LongInt): LongInt; override;
+    function Seek(const Offset: NativeInt; Origin: TSeekOrigin): NativeInt; override;
+    procedure SaveToStream(Stream: TStream);
+    property Memory: TJSArrayBuffer read FMemory;
+    Property SizeBoundsSeek : Boolean Read FSizeBoundsSeek Write FSizeBoundsSeek;
+  end;
 
   { TMemoryStream }
 
-    TMemoryStream = class(TCustomMemoryStream)
-    private
-      FCapacity: PtrInt;
-      procedure SetCapacity(NewCapacity: PtrInt);
-    protected
-      function Realloc(var NewCapacity: PtrInt): TJSArrayBuffer; virtual;
-      property Capacity: PtrInt read FCapacity write SetCapacity;
-    public
-      destructor Destroy; override;
-      procedure Clear;
-      procedure LoadFromStream(Stream: TStream);
-      procedure SetSize(const NewSize: NativeInt); override;
-      function Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
-    end;
+  TMemoryStream = class(TCustomMemoryStream)
+  private
+    FCapacity: PtrInt;
+    procedure SetCapacity(NewCapacity: PtrInt);
+  protected
+    function Realloc(var NewCapacity: PtrInt): TJSArrayBuffer; virtual;
+    property Capacity: PtrInt read FCapacity write SetCapacity;
+  public
+    destructor Destroy; override;
+    procedure Clear;
+    procedure LoadFromStream(Stream: TStream);
+    procedure SetSize(const NewSize: NativeInt); override;
+    function Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+  end;
 
 { TBytesStream }
 
-    TBytesStream = class(TMemoryStream)
-    private
-      function GetBytes: TBytes;
-    public
-      constructor Create(const ABytes: TBytes); virtual; overload;
-      property Bytes: TBytes read GetBytes;
-    end;
+  TBytesStream = class(TMemoryStream)
+  private
+    function GetBytes: TBytes;
+  public
+    constructor Create(const ABytes: TBytes); virtual; overload;
+    property Bytes: TBytes read GetBytes;
+  end;
+
+  { TStringStream }
+
+  TStringStream = class(TMemoryStream)
+  private
+    function GetDataString : String;
+  public
+    constructor Create(const aString: String); virtual; overload;
+    property DataString: String read GetDataString;
+  end;
+
 
   TFilerFlag = (ffInherited, ffChildPos, ffInline);
   TFilerFlags = set of TFilerFlag;
@@ -1201,6 +1212,46 @@ type
     property PropertyPath: string read FPropPath;
   end;
 
+  { TObjectStreamConverter }
+
+  TObjectTextEncoding = (oteDFM,oteLFM);
+
+  TObjectStreamConverter = Class
+  private
+     FIndent: String;
+     FInput : TStream;
+     FOutput : TStream;
+     FEncoding : TObjectTextEncoding;
+  Private
+    // Low level writing
+     procedure OutLn(s: String); virtual;
+     procedure OutStr(s: String); virtual;
+     procedure OutString(s: String); virtual;
+     // Low level reading
+     function ReadWord: word;
+     function ReadDWord: longword;
+     function ReadDouble: Double;
+     function ReadInt(ValueType: TValueType): NativeInt;
+     function ReadInt: NativeInt;
+     function ReadNativeInt: NativeInt;
+     function ReadStr: String;
+     function ReadString(StringType: TValueType): String; virtual;
+     // High-level
+     procedure ProcessBinary; virtual;
+     procedure ProcessValue(ValueType: TValueType; Indent: String); virtual;
+     procedure ReadObject(indent: String); virtual;
+     procedure ReadPropList(indent: String); virtual;
+   Public
+     procedure ObjectBinaryToText(aInput, aOutput: TStream);
+     procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
+     Procedure Execute;
+     Property Input : TStream Read FInput Write FInput;
+     Property Output : TStream Read Foutput Write FOutput;
+     Property Encoding : TObjectTextEncoding Read FEncoding Write FEncoding;
+     Property Indent : String Read FIndent Write Findent;
+   end;
+
+
 type
   TIdentMapEntry = record
     Value: Integer;
@@ -1231,6 +1282,8 @@ function CollectionsEqual(C1, C2: TCollection): Boolean;
 function CollectionsEqual(C1, C2: TCollection; Owner1, Owner2: TComponent): Boolean;
 procedure GetFixupReferenceNames(Root: TComponent; Names: TStrings);
 procedure GetFixupInstanceNames(Root: TComponent; const ReferenceRootName: string; Names: TStrings);
+procedure ObjectBinaryToText(aInput, aOutput: TStream);
+procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
 
 Const
   vaSingle = vaDouble;
@@ -1260,6 +1313,46 @@ type
     constructor Create(AIntegerType: PTypeInfo; AIdentToInt: TIdentToInt;
       AIntToIdent: TIntToIdent);
   end;
+
+{ TStringStream }
+
+function TStringStream.GetDataString: String;
+
+var
+   a : TJSUint16Array;
+
+begin
+  Result:=''; // Silence warning
+  a:=TJSUint16Array.New(Memory.slice(0,Size));
+  asm
+//    Result=String.fromCharCode.apply(null, new Uint16Array(a));
+    Result=String.fromCharCode.apply(null, a);
+  end;
+end;
+
+constructor TStringStream.Create(const aString: String);
+
+  Function StrToBuf(aLen : Integer) : TJSArrayBuffer;
+
+  var
+     I : Integer;
+
+  begin
+    Result:=TJSArrayBuffer.new(aLen*2);// 2 bytes for each char
+    With TJSUint16Array.new(Result) do
+      for i:=0 to aLen-1 do
+        values[i] := TJSString(aString).charCodeAt(i);
+  end;
+
+var
+  Len : Integer;
+
+begin
+  inherited Create;
+  Len:=Length(aString);
+  SetPointer(StrToBuf(len),Len*2);
+  FCapacity:=Len*2;
+end;
 
 constructor TIntConst.Create(AIntegerType: PTypeInfo; AIdentToInt: TIdentToInt;
   AIntToIdent: TIntToIdent);
@@ -6471,6 +6564,25 @@ begin
   VisitResolveList(TReferenceInstancesVisitor.Create(Root,ReferenceRootName,Names));
 end;
 
+procedure ObjectBinaryToText(aInput, aOutput: TStream);
+begin
+  ObjectBinaryToText(aInput,aOutput,oteLFM);
+end;
+
+procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
+
+var
+  Conv : TObjectStreamConverter;
+
+begin
+  Conv:=TObjectStreamConverter.Create;
+  try
+    Conv.ObjectBinaryToText(aInput,aOutput,aEncoding);
+  finally
+    Conv.Free;
+  end;
+end;
+
 procedure RedirectFixupReferences(Root: TComponent; const OldRootName, NewRootName: string);
 
 begin
@@ -9027,6 +9139,348 @@ begin
      H.Free;
      raise;
   end;
+end;
+
+
+procedure TObjectStreamConverter.OutStr(s: String);
+
+Var
+  I : integer;
+
+begin
+  For I:=1 to Length(S) do
+    Output.WriteBufferData(s[i]);
+end;
+
+procedure TObjectStreamConverter.OutLn(s: String);
+begin
+  OutStr(s + LineEnding);
+end;
+
+(*
+procedure TObjectStreamConverter.Outchars(P, LastP : Pointer; CharToOrdFunc: CharToOrdFuncty;  UseBytes: boolean = false);
+
+var
+  res, NewStr: String;
+  w: Cardinal;
+  InString, NewInString: Boolean;
+begin
+ if p = nil then begin
+  res:= '''''';
+ end
+ else
+  begin
+  res := '';
+  InString := False;
+  while P < LastP do
+    begin
+    NewInString := InString;
+    w := CharToOrdfunc(P);
+    if w = ord('''') then
+      begin //quote char
+      if not InString then
+        NewInString := True;
+      NewStr := '''''';
+      end
+    else if (Ord(w) >= 32) and ((Ord(w) < 127) or (UseBytes and (Ord(w)<256))) then
+      begin //printable ascii or bytes
+      if not InString then
+        NewInString := True;
+      NewStr := char(w);
+      end
+    else
+      begin //ascii control chars, non ascii
+      if InString then
+        NewInString := False;
+      NewStr := '#' + IntToStr(w);
+      end;
+    if NewInString <> InString then
+      begin
+      NewStr := '''' + NewStr;
+      InString := NewInString;
+      end;
+    res := res + NewStr;
+    end;
+  if InString then
+    res := res + '''';
+  end;
+ OutStr(res);
+end;
+*)
+
+procedure TObjectStreamConverter.OutString(s: String);
+begin
+  OutStr(S);
+end;
+
+(*
+procedure TObjectStreamConverter.OutUtf8Str(s: String);
+begin
+  if Encoding=oteLFM then
+    OutChars(Pointer(S),PChar(S)+Length(S),@CharToOrd)
+  else
+    OutChars(Pointer(S),PChar(S)+Length(S),@Utf8ToOrd);
+end;
+*)
+
+function TObjectStreamConverter.ReadWord : word; {$ifdef CLASSESINLINE}inline;{$endif CLASSESINLINE}
+begin
+  Input.ReadBufferData(Result);
+end;
+
+function TObjectStreamConverter.ReadDWord : longword; {$ifdef CLASSESINLINE}inline;{$endif CLASSESINLINE}
+begin
+  Input.ReadBufferData(Result);
+end;
+
+function TObjectStreamConverter.ReadNativeInt : NativeInt; {$ifdef CLASSESINLINE}inline;{$endif CLASSESINLINE}
+begin
+  Input.ReadBufferData(Result);
+end;
+
+function TObjectStreamConverter.ReadInt(ValueType: TValueType): NativeInt;
+begin
+  case ValueType of
+    vaInt8: Result := ShortInt(Input.ReadByte);
+    vaInt16: Result := SmallInt(ReadWord);
+    vaInt32: Result := LongInt(ReadDWord);
+    vaNativeInt: Result := Int64(ReadNativeInt);
+  end;
+end;
+
+function TObjectStreamConverter.ReadInt: NativeInt;
+begin
+  Result := ReadInt(TValueType(Input.ReadByte));
+end;
+
+
+function TObjectStreamConverter.ReadDouble : Double;
+
+begin
+  Input.ReadBufferData(Result);
+end;
+
+function TObjectStreamConverter.ReadStr: String;
+
+var
+  l,i: Byte;
+  c : Char;
+
+begin
+  Input.ReadBufferData(L);
+  SetLength(Result,L);
+  For I:=1 to L do
+    begin
+    Input.ReadBufferData(C);
+    Result[i]:=C;
+    end;
+end;
+
+function TObjectStreamConverter.ReadString(StringType: TValueType): String;
+
+var
+  i: Integer;
+  C : Char;
+
+begin
+  Result:='';
+  if StringType<>vaString then
+    Raise EFilerError.Create('Invalid string type passed to ReadString');
+  i:=ReadDWord;
+  SetLength(Result, i);
+  for I:=1 to Length(Result) do
+    begin
+    Input.ReadbufferData(C);
+    Result[i]:=C;
+    end;
+end;
+
+procedure TObjectStreamConverter.ProcessBinary;
+
+var
+  ToDo, DoNow, i: LongInt;
+  lbuf: TBytes;
+  s: String;
+
+begin
+  ToDo := ReadDWord;
+  SetLength(lBuf,32);
+  OutLn('{');
+  while ToDo > 0 do
+    begin
+    DoNow := ToDo;
+    if DoNow > 32 then
+      DoNow := 32;
+    Dec(ToDo, DoNow);
+    s := Indent + '  ';
+    Input.ReadBuffer(lbuf, DoNow);
+    for i := 0 to DoNow - 1 do
+      s := s + IntToHex(lbuf[i], 2);
+    OutLn(s);
+  end;
+  OutLn(indent + '}');
+end;
+
+procedure TObjectStreamConverter.ProcessValue(ValueType: TValueType; Indent: String);
+
+
+var
+  s: String;
+{      len: LongInt; }
+  IsFirst: Boolean;
+{$ifndef FPUNONE}
+  ext: Extended;
+{$endif}
+
+begin
+  case ValueType of
+    vaList: begin
+        OutStr('(');
+        IsFirst := True;
+        while True do begin
+          ValueType := TValueType(Input.ReadByte);
+          if ValueType = vaNull then break;
+          if IsFirst then begin
+            OutLn('');
+            IsFirst := False;
+          end;
+          OutStr(Indent + '  ');
+          ProcessValue(ValueType, Indent + '  ');
+        end;
+        OutLn(Indent + ')');
+      end;
+    vaInt8: OutLn(IntToStr(ShortInt(Input.ReadByte)));
+    vaInt16: OutLn( IntToStr(SmallInt(ReadWord)));
+    vaInt32: OutLn(IntToStr(LongInt(ReadDWord)));
+    vaNativeInt: OutLn(IntToStr(ReadNativeInt));
+    vaDouble: begin
+        ext:=ReadDouble;
+        Str(ext,S);// Do not use localized strings.
+        OutLn(S);
+      end;
+    vaString: begin
+        OutString(''''+StringReplace(ReadString(vaString),'''','''''',[rfReplaceAll])+'''');
+        OutLn('');
+      end;
+    vaIdent: OutLn(ReadStr);
+    vaFalse: OutLn('False');
+    vaTrue: OutLn('True');
+    vaBinary: ProcessBinary;
+    vaSet: begin
+        OutStr('[');
+        IsFirst := True;
+        while True do begin
+          s := ReadStr;
+          if Length(s) = 0 then break;
+          if not IsFirst then OutStr(', ');
+          IsFirst := False;
+          OutStr(s);
+        end;
+        OutLn(']');
+      end;
+    vaNil:
+      OutLn('nil');
+    vaCollection: begin
+        OutStr('<');
+        while Input.ReadByte <> 0 do begin
+          OutLn(Indent);
+          Input.Seek(-1, soCurrent);
+          OutStr(indent + '  item');
+          ValueType := TValueType(Input.ReadByte);
+          if ValueType <> vaList then
+            OutStr('[' + IntToStr(ReadInt(ValueType)) + ']');
+          OutLn('');
+          ReadPropList(indent + '    ');
+          OutStr(indent + '  end');
+        end;
+        OutLn('>');
+      end;
+    {vaSingle: begin OutLn('!!Single!!'); exit end;
+    vaCurrency: begin OutLn('!!Currency!!'); exit end;
+    vaDate: begin OutLn('!!Date!!'); exit end;}
+    else
+      Raise EReadError.CreateFmt(SErrInvalidPropertyType,[Ord(ValueType)]);
+  end;
+end;
+
+
+procedure TObjectStreamConverter.ReadPropList(indent: String);
+
+
+begin
+  while Input.ReadByte <> 0 do begin
+    Input.Seek(-1, soCurrent);
+    OutStr(indent + ReadStr + ' = ');
+    ProcessValue(TValueType(Input.ReadByte), Indent);
+  end;
+end;
+
+procedure TObjectStreamConverter.ReadObject(indent: String);
+
+var
+  b: Byte;
+  ObjClassName, ObjName: String;
+  ChildPos: LongInt;
+
+begin
+  // Check for FilerFlags
+  b := Input.ReadByte;
+  if (b and $f0) = $f0 then begin
+    if (b and 2) <> 0 then ChildPos := ReadInt;
+  end else begin
+    b := 0;
+    Input.Seek(-1, soCurrent);
+  end;
+
+  ObjClassName := ReadStr;
+  ObjName := ReadStr;
+
+  OutStr(Indent);
+  if (b and 1) <> 0 then OutStr('inherited')
+  else
+   if (b and 4) <> 0 then OutStr('inline')
+   else OutStr('object');
+  OutStr(' ');
+  if ObjName <> '' then
+    OutStr(ObjName + ': ');
+  OutStr(ObjClassName);
+  if (b and 2) <> 0 then OutStr('[' + IntToStr(ChildPos) + ']');
+  OutLn('');
+
+  ReadPropList(indent + '  ');
+
+  while Input.ReadByte <> 0 do begin
+    Input.Seek(-1, soCurrent);
+    ReadObject(indent + '  ');
+  end;
+  OutLn(indent + 'end');
+end;
+
+procedure TObjectStreamConverter.ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
+
+begin
+  FInput:=aInput;
+  FOutput:=aOutput;
+  FEncoding:=aEncoding;
+  Execute;
+end;
+
+procedure TObjectStreamConverter.Execute;
+
+begin
+  if FIndent = '' then FInDent:='  ';
+  If Not Assigned(Input) then
+    raise EReadError.Create('Missing input stream');
+  If Not Assigned(Output) then
+    raise EReadError.Create('Missing output stream');
+  if Input.ReadDWord <> FilerSignatureInt then
+    raise EReadError.Create('Illegal stream image');
+  ReadObject('');
+end;
+
+procedure TObjectStreamConverter.ObjectBinaryToText(aInput, aOutput: TStream);
+begin
+  ObjectBinaryToText(aInput,aOutput,oteDFM);
 end;
 
 

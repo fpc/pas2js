@@ -45,6 +45,7 @@ Type
     Procedure ExpectEndofList;
     Procedure ExpectSignature;
     Procedure ExpectEndOfStream;
+    Procedure CheckAsString(const aData : String);
   end;
 
 implementation
@@ -412,6 +413,23 @@ begin
   If (FStream.Position<>FStream.Size) then
     Fail('Expected at end of stream, current position=%d, size=%d',
           [FStream.Position,FStream.Size]);
+end;
+
+procedure TTestStreaming.CheckAsString(const aData: String);
+
+Var
+  SS : TStringStream;
+  DS : String;
+begin
+  FStream.Position:=0;
+  SS:=TStringStream.Create('');
+  try
+    ObjectBinaryToText(FStream,SS);
+    DS:=SS.Datastring;
+  finally
+    SS.Free;
+  end;
+  AssertEquals('Stream to string',aData,DS);
 end;
 
 end.

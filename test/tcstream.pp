@@ -68,7 +68,93 @@ type
     Procedure Setup; override;
   end;
 
+  { TTestStringStream }
+
+  TTestStringStream = class(TTestCase)
+  private
+    FStream: TStringStream;
+  Public
+    Procedure TearDown; override;
+    Procedure DoCreate(S : String);
+    Property Stream : TStringStream Read FStream;
+  Published
+    Procedure TestDataStringEmpty;
+    Procedure TestDataString;
+    Procedure TestWrite;
+    Procedure TestRead;
+    Procedure TestCopyFrom;
+  end;
+
 implementation
+
+{ TTestStringStream }
+
+procedure TTestStringStream.TearDown;
+begin
+  FreeAndNil(FStream);
+  inherited TearDown;
+end;
+
+procedure TTestStringStream.DoCreate(S: String);
+begin
+  FreeAndNil(FStream);
+  FStream:=TStringStream.Create(S);
+end;
+
+procedure TTestStringStream.TestDataStringEmpty;
+begin
+  DoCreate('');
+  AssertEquals('Empty','',Stream.DataString);
+end;
+
+procedure TTestStringStream.TestDataString;
+begin
+  DoCreate('ABCD');
+  AssertEquals('Non-empty','ABCD',Stream.DataString);
+end;
+
+procedure TTestStringStream.TestWrite;
+begin
+  DoCreate('');
+  Stream.WriteBufferData('A');
+  Stream.WriteBufferData('B');
+  Stream.WriteBufferData('C');
+  Stream.WriteBufferData('D');
+  AssertEquals('Write Contents','ABCD',Stream.DataString);
+end;
+
+procedure TTestStringStream.TestRead;
+
+Var
+  S : String;
+  C : Char;
+  I : Integer;
+
+begin
+  S:='ABCD';
+  DoCreate(S);
+  For I:=1 to Length(S) do
+    begin
+    Stream.ReadBufferData(C);
+    AssertEquals(Format('Character at',[i]),S[i],C);
+    end;
+end;
+
+procedure TTestStringStream.TestCopyFrom;
+
+Var
+  S2 : TStringStream;
+
+begin
+  DoCreate('ABCD');
+  S2:=TStringStream.Create('');
+  try
+    S2.CopyFrom(Stream,0);
+    AssertEquals('Copied correctly','ABCD',S2.DataString);
+  finally
+    S2.Free;
+  end;
+end;
 
 { TTestBigendianStream }
 
@@ -755,6 +841,6 @@ end;
 
 initialization
 
-//  RegisterTests([TTestStream,TTestBigendianStream]);
+//  RegisterTests([TTestStream,TTestBigendianStream,TTestStringStream]);
 end.
 

@@ -2322,7 +2322,7 @@ Type
 
   { TJSHTMLImageElement }
 
-  TJSHTMLImageElement = class external name 'HTMLImageElement' (TJSHTMLElement)
+  TJSHTMLImageElement = class external name 'Image' (TJSHTMLElement)
   Private
     FComplete: boolean; external name 'complete';
     FCurrentSrc: String; external name 'currentSrc';
@@ -2331,6 +2331,7 @@ Type
     FX: NativeInt; external name 'x';
     FY: NativeInt; external name 'y';
   Public
+    constructor New(x,y : Cardinal);
     alt: String;
     crossOrigin: String;
     decoding: String;
@@ -3026,7 +3027,7 @@ Type
     SymbolLock = 'SymbolLock';
     Enter = 'Enter';
     Tab = 'Tab';
-    Space = ' ';
+    Space = 'Space';
     ArrowDown = 'ArrowDown';
     ArrowLeft = 'ArrowLeft';
     ArrowRight = 'ArrowRight';

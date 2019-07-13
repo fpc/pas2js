@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectGroup FileVersion="1">
+    <Targets Count="4">
+      <Target0 FileName="Pas2JS_WebGL.lpi"/>
+      <Target1 FileName="Pas2JS_WebGL_Minimal.lpi"/>
+      <Target2 FileName="Pas2JS_WebGL_OBJ.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target2>
+      <Target3 FileName="Pas2JS_WebGL_Terrain.lpi"/>
+    </Targets>
+  </ProjectGroup>
+</CONFIG>

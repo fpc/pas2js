@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectGroup FileVersion="1">
+    <Targets Count="5">
+      <Target0 FileName="story.lpi"/>
+      <Target1 FileName="story2.lpi"/>
+      <Target2 FileName="story3.lpi"/>
+      <Target3 FileName="demoall.lpi"/>
+      <Target4 FileName="askmom.lpi"/>
+    </Targets>
+  </ProjectGroup>
+</CONFIG>

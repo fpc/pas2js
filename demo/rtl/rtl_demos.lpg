@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectGroup FileVersion="1">
+    <Targets Count="14">
+      <Target0 FileName="demoajax.lpi"/>
+      <Target1 FileName="demobrowserconsole.lpi"/>
+      <Target2 FileName="democanvas2d.lpi"/>
+      <Target3 FileName="democlasstopas.lpi"/>
+      <Target4 FileName="democollection.lpi"/>
+      <Target5 FileName="democomponents.lpi"/>
+      <Target6 FileName="demodatetime.lpi"/>
+      <Target7 FileName="demodombuttonevent.lpi"/>
+      <Target8 FileName="demojsarray.lpi"/>
+      <Target9 FileName="demorouter.lpi"/>
+      <Target10 FileName="demortti.lpi"/>
+      <Target11 FileName="demostringlist.lpi"/>
+      <Target12 FileName="demouncaughtexception.lpi"/>
+      <Target13 FileName="demoxhr.lpi"/>
+    </Targets>
+  </ProjectGroup>
+</CONFIG>

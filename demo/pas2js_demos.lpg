@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectGroup FileVersion="1">
+    <Targets Count="19">
+      <Target0 FileName="rtl/rtl_demos.lpg"/>
+      <Target1 FileName="promise/promise_demos.lpg"/>
+      <Target2 FileName="chartjs/chartjs_demos.lpg"/>
+      <Target3 FileName="webgl/webgl_demos.lpg"/>
+      <Target4 FileName="router/demorouter.lpi"/>
+      <Target5 FileName="router/demorouter2.lpi"/>
+      <Target6 FileName="trayicon/trayicon.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target6>
+      <Target7 FileName="dataabstract/sampleda.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target7>
+      <Target8 FileName="fcldb/demodb.lpi"/>
+      <Target9 FileName="fcldb/demoload.lpi"/>
+      <Target10 FileName="fcldb/demorest.lpi"/>
+      <Target11 FileName="fcldb/demorest2.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target11>
+      <Target12 FileName="fcldb/restserver.lpi"/>
+      <Target13 FileName="fpcunit/browsertest.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="default"/>
+      </Target13>
+      <Target14 FileName="dynload/testloader.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target14>
+      <Target15 FileName="hotreload/hotreload.lpi"/>
+      <Target16 FileName="hotreload/server.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target16>
+      <Target17 FileName="jquery/demoadd.lpi"/>
+      <Target18 FileName="jspdf/basic.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target18>
+    </Targets>
+  </ProjectGroup>
+</CONFIG>

@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CONFIG>
+  <ProjectGroup FileVersion="1">
+    <Targets Count="17">
+      <Target0 FileName="demoarea.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target0>
+      <Target1 FileName="demobar.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target1>
+      <Target2 FileName="demobubble.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target2>
+      <Target3 FileName="democustompoints.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target3>
+      <Target4 FileName="demodatalabelling.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target4>
+      <Target5 FileName="demodate.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target5>
+      <Target6 FileName="demodoughnut.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target6>
+      <Target7 FileName="demointeractions.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target7>
+      <Target8 FileName="demoline.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target8>
+      <Target9 FileName="demomixed.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target9>
+      <Target10 FileName="demopie.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target10>
+      <Target11 FileName="demopolararea.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target11>
+      <Target12 FileName="demoprogressbar.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target12>
+      <Target13 FileName="demoradar.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target13>
+      <Target14 FileName="demoscatter.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target14>
+      <Target15 FileName="demoscriptablebubble.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target15>
+      <Target16 FileName="demotime.lpi">
+        <BuildModes Count="1"/>
+        <Mode1 Name="Default"/>
+      </Target16>
+    </Targets>
+  </ProjectGroup>
+</CONFIG>

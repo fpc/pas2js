@@ -1212,6 +1212,85 @@ type
     property PropertyPath: string read FPropPath;
   end;
 
+  TParserToken = (toUnknown,  // everything else
+                  toEOF,      // EOF
+                  toSymbol,   // Symbol (identifier)
+                  toString,   // ''string''
+                  toInteger,  // 123
+                  toFloat,    // 12.3
+                  toMinus,    // -
+                  toSetStart, // [
+                  toListStart, // (
+                  toCollectionStart, // <
+                  toBinaryStart, // {
+                  toSetEnd, // ]
+                  toListEnd, // )
+                  toCollectionEnd, // >
+                  toBinaryEnd, // }
+                  toComma, // ,
+                  toDot, // .
+                  toEqual, // =
+                  toColon // :
+                  );
+
+  TParser = class(TObject)
+  private
+    fStream : TStream;
+    fBuf : Array of Char;
+    FBufLen : integer;
+    fPos : integer;
+    fDeltaPos : integer;
+    fFloatType : char;
+    fSourceLine : integer;
+    fToken : TParserToken;
+    fEofReached : boolean;
+    fLastTokenStr : string;
+    function GetTokenName(aTok : TParserToken) : string;
+    procedure LoadBuffer;
+    procedure CheckLoadBuffer; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    procedure ProcessChar; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    function IsNumber : boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    function IsHexNum : boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    function IsAlpha : boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    function IsAlphaNum : boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    function GetHexValue(c : char) : byte; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+    function GetAlphaNum : string;
+    procedure HandleNewLine;
+    procedure SkipBOM;
+    procedure SkipSpaces;
+    procedure SkipWhitespace;
+    procedure HandleEof;
+    procedure HandleAlphaNum;
+    procedure HandleNumber;
+    procedure HandleHexNumber;
+    function HandleQuotedString : string;
+    Function HandleDecimalCharacter: char;
+    procedure HandleString;
+    procedure HandleMinus;
+    procedure HandleUnknown;
+  public
+    // Input stream is expected to be UTF16 !
+    constructor Create(Stream: TStream);
+    destructor Destroy; override;
+    procedure CheckToken(T: TParserToken);
+    procedure CheckTokenSymbol(const S: string);
+    procedure Error(const Ident: string);
+    procedure ErrorFmt(const Ident: string; const Args: array of JSValue);
+    procedure ErrorStr(const Message: string);
+    procedure HexToBinary(Stream: TStream);
+    function NextToken: TParserToken;
+    function SourcePos: Longint;
+    function TokenComponentIdent: string;
+    function TokenFloat: Double;
+    function TokenInt: NativeInt;
+    function TokenString: string;
+    function TokenSymbolIs(const S: string): Boolean;
+    property FloatType: Char read fFloatType;
+    property SourceLine: Integer read fSourceLine;
+    property Token: TParserToken read fToken;
+  end;
+
+
   { TObjectStreamConverter }
 
   TObjectTextEncoding = (oteDFM,oteLFM);
@@ -1251,6 +1330,34 @@ type
      Property Indent : String Read FIndent Write Findent;
    end;
 
+  { TObjectTextConverter }
+
+  TObjectTextConverter = Class
+  private
+    FParser: TParser;
+  private
+    FInput: TStream;
+    Foutput: TStream;
+    procedure WriteDouble(e: double);
+    procedure WriteDWord(lw: longword);
+    procedure WriteInteger(value: nativeInt);
+    procedure WriteLString(const s: String);
+    procedure WriteQWord(q: nativeint);
+    procedure WriteString(s: String);
+    procedure WriteWord(w: word);
+    procedure WriteWString(const s: WideString);
+    procedure ProcessObject; virtual;
+    procedure ProcessProperty; virtual;
+    procedure ProcessValue; virtual;
+    procedure ProcessWideString(const left: string);
+    Property Parser : TParser Read FParser;
+  Public
+    // Input stream must be UTF16 !
+    procedure ObjectTextToBinary(aInput, aOutput: TStream);
+    Procedure Execute; virtual;
+    Property Input : TStream Read FInput Write FInput;
+    Property Output: TStream Read Foutput Write Foutput;
+  end;
 
 type
   TIdentMapEntry = record
@@ -1284,8 +1391,10 @@ procedure GetFixupReferenceNames(Root: TComponent; Names: TStrings);
 procedure GetFixupInstanceNames(Root: TComponent; const ReferenceRootName: string; Names: TStrings);
 procedure ObjectBinaryToText(aInput, aOutput: TStream);
 procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
+procedure ObjectTextToBinary(aInput, aOutput: TStream);
 
 Const
+  // Some aliases
   vaSingle = vaDouble;
   vaExtended = vaDouble;
   vaLString = vaString;
@@ -1294,6 +1403,7 @@ Const
   vaWString = vaString;
   vaQWord = vaNativeInt;
   vaInt64 = vaNativeInt;
+  toWString = toString;
 
 implementation
 
@@ -9481,6 +9591,823 @@ end;
 procedure TObjectStreamConverter.ObjectBinaryToText(aInput, aOutput: TStream);
 begin
   ObjectBinaryToText(aInput,aOutput,oteDFM);
+end;
+
+{
+    This file is part of the Free Component Library (FCL)
+    Copyright (c) 1999-2007 by the Free Pascal development team
+
+    See the file COPYING.FPC, included in this distribution,
+    for details about the copyright.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+ **********************************************************************}
+
+{****************************************************************************}
+{*                             TParser                                      *}
+{****************************************************************************}
+
+const
+{$ifdef CPU16}
+  { Avoid too big local stack use for
+    MSDOS tiny memory model that uses less than 4096
+    bytes for total stack by default. }
+  ParseBufSize     = 512;
+{$else not CPU16}
+  ParseBufSize     = 4096;
+{$endif not CPU16}
+
+  TokNames : array[TParserToken] of string = (
+    '?',
+    'EOF',
+    'Symbol',
+    'String',
+    'Integer',
+    'Float',
+    '-',
+    '[',
+    '(',
+    '<',
+    '{',
+    ']',
+    ')',
+    '>',
+    '}',
+    ',',
+    '.',
+    '=',
+    ':'
+  );
+
+function TParser.GetTokenName(aTok: TParserToken): string;
+begin
+  Result:=TokNames[aTok]
+end;
+
+procedure TParser.LoadBuffer;
+
+var
+  CharsRead,i: integer;
+
+begin
+  CharsRead:=0;
+  for I:=0 to ParseBufSize-1 do
+    if FStream.ReadData(FBuf[i])<>2 then
+       Inc(CharsRead);
+  Inc(FDeltaPos, CharsRead);
+  FPos := 0;
+  FBufLen := CharsRead;
+  FEofReached:=CharsRead = 0;
+end;
+
+procedure TParser.CheckLoadBuffer; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  if fPos>=FBufLen then
+    LoadBuffer;
+end;
+
+procedure TParser.ProcessChar; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  fLastTokenStr:=fLastTokenStr+fBuf[fPos];
+  inc(fPos);
+  CheckLoadBuffer;
+end;
+
+function TParser.IsNumber: boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  Result:=fBuf[fPos] in ['0'..'9'];
+end;
+
+function TParser.IsHexNum: boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  Result:=fBuf[fPos] in ['0'..'9','A'..'F','a'..'f'];
+end;
+
+function TParser.IsAlpha: boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  Result:=fBuf[fPos] in ['_','A'..'Z','a'..'z'];
+end;
+
+function TParser.IsAlphaNum: boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  Result:=IsAlpha or IsNumber;
+end;
+
+function TParser.GetHexValue(c: char): byte; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
+begin
+  case c of
+    '0'..'9' : Result:=ord(c)-$30;
+    'A'..'F' : Result:=ord(c)-$37; //-$41+$0A
+    'a'..'f' : Result:=ord(c)-$57; //-$61+$0A
+  end;
+end;
+
+function TParser.GetAlphaNum: string;
+begin
+  if not IsAlpha then
+    ErrorFmt(SParserExpected,[GetTokenName(toSymbol)]);
+  Result:='';
+  while IsAlphaNum do
+  begin
+    Result:=Result+fBuf[fPos];
+    inc(fPos);
+    CheckLoadBuffer;
+  end;
+end;
+
+procedure TParser.HandleNewLine;
+begin
+  if fBuf[fPos]=#13 then //CR
+  begin
+    inc(fPos);
+    CheckLoadBuffer;
+  end;
+  if fBuf[fPos]=#10 then
+  begin
+    inc(fPos); //CR LF or LF
+    CheckLoadBuffer;
+  end;
+  inc(fSourceLine);
+  fDeltaPos:=-(fPos-1);
+end;
+
+procedure TParser.SkipBOM;
+
+begin
+  // No BOM support
+end;
+
+procedure TParser.SkipSpaces;
+begin
+  while fBuf[fPos] in [' ',#9] do begin
+    inc(fPos);
+    CheckLoadBuffer;
+  end;
+end;
+
+procedure TParser.SkipWhitespace;
+begin
+  while true do
+  begin
+    case fBuf[fPos] of
+      ' ',#9  : SkipSpaces;
+      #10,#13 : HandleNewLine
+      else break;
+    end;
+  end;
+end;
+
+procedure TParser.HandleEof;
+begin
+  fToken:=toEOF;
+  fLastTokenStr:='';
+end;
+
+procedure TParser.HandleAlphaNum;
+begin
+  fLastTokenStr:=GetAlphaNum;
+  fToken:=toSymbol;
+end;
+
+procedure TParser.HandleNumber;
+type
+  floatPunct = (fpDot,fpE);
+  floatPuncts = set of floatPunct;
+var
+  allowed : floatPuncts;
+begin
+  fLastTokenStr:='';
+  while IsNumber do
+    ProcessChar;
+  fToken:=toInteger;
+  if (fBuf[fPos] in ['.','e','E']) then
+  begin
+    fToken:=toFloat;
+    allowed:=[fpDot,fpE];
+    while (fBuf[fPos] in ['.','e','E','0'..'9']) do
+    begin
+      case fBuf[fPos] of
+        '.'     : if fpDot in allowed then Exclude(allowed,fpDot) else break;
+        'E','e' : if fpE in allowed then
+                  begin
+                    allowed:=[];
+                    ProcessChar;
+                    if (fBuf[fPos] in ['+','-']) then ProcessChar;
+                    if not (fBuf[fPos] in ['0'..'9']) then
+                      ErrorFmt(SParserInvalidFloat,[fLastTokenStr+fBuf[fPos]]);
+                  end
+                  else break;
+      end;
+      ProcessChar;
+    end;
+  end;
+  if (fBuf[fPos] in ['s','S','d','D','c','C']) then //single, date, currency
+  begin
+    fFloatType:=fBuf[fPos];
+    inc(fPos);
+    CheckLoadBuffer;
+    fToken:=toFloat;
+  end
+  else fFloatType:=#0;
+end;
+
+procedure TParser.HandleHexNumber;
+var valid : boolean;
+begin
+  fLastTokenStr:='$';
+  inc(fPos);
+  CheckLoadBuffer;
+  valid:=false;
+  while IsHexNum do
+  begin
+    valid:=true;
+    ProcessChar;
+  end;
+  if not valid then
+    ErrorFmt(SParserInvalidInteger,[fLastTokenStr]);
+  fToken:=toInteger;
+end;
+
+function TParser.HandleQuotedString: string;
+begin
+  Result:='';
+  inc(fPos);
+  CheckLoadBuffer;
+  while true do
+  begin
+    case fBuf[fPos] of
+      #0     : ErrorStr(SParserUnterminatedString);
+      #13,#10 : ErrorStr(SParserUnterminatedString);
+      ''''   : begin
+                 inc(fPos);
+                 CheckLoadBuffer;
+                 if fBuf[fPos]<>'''' then exit;
+               end;
+    end;
+    Result:=Result+fBuf[fPos];
+    inc(fPos);
+    CheckLoadBuffer;
+  end;
+end;
+
+Function TParser.HandleDecimalCharacter : Char;
+
+var
+   i : integer;
+
+begin
+  inc(fPos);
+  CheckLoadBuffer;
+  // read a word number
+  i:=0;
+  while IsNumber and (i<high(word)) do
+    begin
+    i:=i*10+Ord(fBuf[fPos])-ord('0');
+    inc(fPos);
+    CheckLoadBuffer;
+    end;
+  if i>high(word) then i:=0;
+  Result:=Char(i);
+end;
+
+procedure TParser.HandleString;
+
+var
+  s: string;
+
+begin
+  fLastTokenStr:='';
+  while true do
+  begin
+    case fBuf[fPos] of
+      '''' :
+        begin
+          s:=HandleQuotedString;
+          fLastTokenStr:=fLastTokenStr+s;
+        end;
+      '#'  :
+        begin
+          fLastTokenStr:=fLastTokenStr+HandleDecimalCharacter;
+        end;
+      else break;
+    end;
+  end;
+  fToken:=Classes.toString
+end;
+
+procedure TParser.HandleMinus;
+begin
+  inc(fPos);
+  CheckLoadBuffer;
+  if IsNumber then
+  begin
+    HandleNumber;
+    fLastTokenStr:='-'+fLastTokenStr;
+  end
+  else
+  begin
+    fToken:=toMinus;
+    fLastTokenStr:='-';
+  end;
+end;
+
+procedure TParser.HandleUnknown;
+begin
+  fToken:=toUnknown;
+  fLastTokenStr:=fBuf[fPos];
+  inc(fPos);
+  CheckLoadBuffer;
+end;
+
+constructor TParser.Create(Stream: TStream);
+begin
+  fStream:=Stream;
+  SetLength(fBuf,ParseBufSize);
+  fBufLen:=0;
+  fPos:=0;
+  fDeltaPos:=1;
+  fSourceLine:=1;
+  fEofReached:=false;
+  fLastTokenStr:='';
+  fFloatType:=#0;
+  fToken:=toEOF;
+  LoadBuffer;
+  SkipBom;
+  NextToken;
+end;
+
+destructor TParser.Destroy;
+
+Var
+  aCount : Integer;
+
+begin
+  aCount:=Length(fLastTokenStr)*2;
+  fStream.Position:=SourcePos-aCount;
+end;
+
+procedure TParser.CheckToken(T: tParserToken);
+begin
+  if fToken<>T then
+    ErrorFmt(SParserWrongTokenType,[GetTokenName(T),GetTokenName(fToken)]);
+end;
+
+procedure TParser.CheckTokenSymbol(const S: string);
+begin
+  CheckToken(toSymbol);
+  if CompareText(fLastTokenStr,S)<>0 then
+    ErrorFmt(SParserWrongTokenSymbol,[s,fLastTokenStr]);
+end;
+
+procedure TParser.Error(const Ident: string);
+begin
+  ErrorStr(Ident);
+end;
+
+procedure TParser.ErrorFmt(const Ident: string; const Args: array of JSValue);
+begin
+  ErrorStr(Format(Ident,Args));
+end;
+
+procedure TParser.ErrorStr(const Message: string);
+begin
+  raise EParserError.CreateFmt(Message+SParserLocInfo,[SourceLine,fPos+fDeltaPos,SourcePos]);
+end;
+
+procedure TParser.HexToBinary(Stream: TStream);
+
+var
+  outbuf : TBytes;
+  b : byte;
+  i : integer;
+
+begin
+  SetLength(OutBuf,ParseBufSize);
+  i:=0;
+  SkipWhitespace;
+  while IsHexNum do
+  begin
+    b:=(GetHexValue(fBuf[fPos]) shl 4);
+    inc(fPos);
+    CheckLoadBuffer;
+    if not IsHexNum then
+      Error(SParserUnterminatedBinValue);
+    b:=b or GetHexValue(fBuf[fPos]);
+    inc(fPos);
+    CheckLoadBuffer;
+    outbuf[i]:=b;
+    inc(i);
+    if i>=ParseBufSize then
+    begin
+      Stream.WriteBuffer(outbuf,i);
+      i:=0;
+    end;
+    SkipWhitespace;
+  end;
+  if i>0 then
+    Stream.WriteBuffer(outbuf,i);
+  NextToken;
+end;
+
+function TParser.NextToken: TParserToken;
+
+  Procedure SetToken(aToken : TParserToken);
+  begin
+    FToken:=aToken;
+    Inc(fPos);
+  end;
+
+begin
+  SkipWhiteSpace;
+  if fEofReached then
+    HandleEof
+  else
+    case fBuf[fPos] of
+      '_','A'..'Z','a'..'z' : HandleAlphaNum;
+      '$'                   : HandleHexNumber;
+      '-'                   : HandleMinus;
+      '0'..'9'              : HandleNumber;
+      '''','#'              : HandleString;
+      '[' : SetToken(toSetStart);
+      '(' : SetToken(toListStart);
+      '<' : SetToken(toCollectionStart);
+      '{' : SetToken(toBinaryStart);
+      ']' : SetToken(toSetEnd);
+      ')' : SetToken(toListEnd);
+      '>' : SetToken(toCollectionEnd);
+      '}' : SetToken(toBinaryEnd);
+      ',' : SetToken(toComma);
+      '.' : SetToken(toDot);
+      '=' : SetToken(toEqual);
+      ':' : SetToken(toColon);
+      else
+        HandleUnknown;
+    end;
+  Result:=fToken;
+end;
+
+function TParser.SourcePos: Longint;
+begin
+  Result:=fStream.Position-fBufLen+fPos;
+end;
+
+function TParser.TokenComponentIdent: string;
+begin
+  if fToken<>toSymbol then
+    ErrorFmt(SParserExpected,[GetTokenName(toSymbol)]);
+  CheckLoadBuffer;
+  while fBuf[fPos]='.' do
+  begin
+    ProcessChar;
+    fLastTokenStr:=fLastTokenStr+GetAlphaNum;
+  end;
+  Result:=fLastTokenStr;
+end;
+
+Function TParser.TokenFloat: double;
+
+var
+  errcode : integer;
+
+begin
+  Val(fLastTokenStr,Result,errcode);
+  if errcode<>0 then
+    ErrorFmt(SParserInvalidFloat,[fLastTokenStr]);
+end;
+
+Function TParser.TokenInt: NativeInt;
+begin
+  if not TryStrToInt64(fLastTokenStr,Result) then
+    Result:=StrToQWord(fLastTokenStr); //second chance for malformed files
+end;
+
+function TParser.TokenString: string;
+begin
+  case fToken of
+    toFloat : if fFloatType<>#0 then
+                Result:=fLastTokenStr+fFloatType
+              else Result:=fLastTokenStr;
+    else
+      Result:=fLastTokenStr;
+  end;
+end;
+
+
+function TParser.TokenSymbolIs(const S: string): Boolean;
+begin
+  Result:=(fToken=toSymbol) and (CompareText(fLastTokenStr,S)=0);
+end;
+
+
+procedure TObjectTextConverter.WriteWord(w : word); {$ifdef CLASSESINLINE}inline;{$endif CLASSESINLINE}
+begin
+  Output.WriteBufferData(w);
+end;
+
+procedure TObjectTextConverter.WriteDWord(lw : longword); {$ifdef CLASSESINLINE}inline;{$endif CLASSESINLINE}
+begin
+  Output.WriteBufferData(lw);
+end;
+
+procedure TObjectTextConverter.WriteQWord(q : NativeInt); {$ifdef CLASSESINLINE}inline;{$endif CLASSESINLINE}
+begin
+  Output.WriteBufferData(q);
+end;
+
+procedure TObjectTextConverter.WriteDouble(e : double);
+begin
+  Output.WriteBufferData(e);
+end;
+
+procedure TObjectTextConverter.WriteString(s: String);
+
+var
+  i,size : byte;
+
+begin
+  if length(s)>255 then
+    size:=255
+  else
+    size:=length(s);
+  Output.WriteByte(size);
+  For I:=1 to Length(S) do
+     Output.WriteBufferData(s[i]);
+end;
+
+procedure TObjectTextConverter.WriteLString(Const s: String);
+var
+  i : Integer;
+begin
+  WriteDWord(Length(s));
+  For I:=1 to Length(S) do
+    Output.WriteBufferData(s[i]);
+end;
+
+procedure TObjectTextConverter.WriteWString(Const s: WideString);
+
+var
+  i : Integer;
+begin
+  WriteDWord(Length(s));
+  For I:=1 to Length(S) do
+    Output.WriteBufferData(s[i]);
+end;
+
+procedure TObjectTextConverter.WriteInteger(value: NativeInt);
+
+begin
+  if (value >= -128) and (value <= 127) then begin
+    Output.WriteByte(Ord(vaInt8));
+    Output.WriteByte(byte(value));
+  end else if (value >= -32768) and (value <= 32767) then begin
+    Output.WriteByte(Ord(vaInt16));
+    WriteWord(word(value));
+  end else if (value >= -2147483648) and (value <= 2147483647) then begin
+    Output.WriteByte(Ord(vaInt32));
+    WriteDWord(longword(value));
+  end else begin
+    Output.WriteByte(ord(vaInt64));
+    WriteQWord(qword(value));
+  end;
+end;
+
+procedure TObjectTextConverter.ProcessWideString(const left : string);
+
+var
+   ws : string;
+begin
+  ws:=left+parser.TokenString;
+  while (parser.NextToken = classes.toString) and (Parser.TokenString='+') do
+    begin
+    parser.NextToken;   // Get next string fragment
+    if not (parser.Token=Classes.toString) then
+      parser.CheckToken(Classes.toString);
+    ws:=ws+parser.TokenString;
+    end;
+  Output.WriteByte(Ord(vaWstring));
+  WriteWString(ws);
+end;
+
+
+procedure TObjectTextConverter.ProcessValue;
+var
+  flt: double;
+  s: String;
+  stream: TBytesStream;
+begin
+  case parser.Token of
+    toInteger:
+      begin
+        WriteInteger(parser.TokenInt);
+        parser.NextToken;
+      end;
+    toFloat:
+      begin
+        Output.WriteByte(Ord(vaExtended));
+        flt := Parser.TokenFloat;
+        WriteDouble(flt);
+        parser.NextToken;
+      end;
+    classes.toString:
+      ProcessWideString('');
+    toSymbol:
+      begin
+        if CompareText(parser.TokenString, 'True') = 0 then
+          Output.WriteByte(Ord(vaTrue))
+        else if CompareText(parser.TokenString, 'False') = 0 then
+          Output.WriteByte(Ord(vaFalse))
+        else if CompareText(parser.TokenString, 'nil') = 0 then
+          Output.WriteByte(Ord(vaNil))
+        else
+        begin
+          Output.WriteByte(Ord(vaIdent));
+          WriteString(parser.TokenComponentIdent);
+        end;
+        Parser.NextToken;
+      end;
+    // Set
+    toSetStart:
+      begin
+        parser.NextToken;
+        Output.WriteByte(Ord(vaSet));
+        if parser.Token <> toSetEnd then
+          while True do
+          begin
+            parser.CheckToken(toSymbol);
+            WriteString(parser.TokenString);
+            parser.NextToken;
+            if parser.Token = toSetEnd then
+              break;
+            parser.CheckToken(toComma);
+            parser.NextToken;
+          end;
+        Output.WriteByte(0);
+        parser.NextToken;
+      end;
+    // List
+    toListStart:
+      begin
+        parser.NextToken;
+        Output.WriteByte(Ord(vaList));
+        while parser.Token <> toListEnd do
+          ProcessValue;
+        Output.WriteByte(0);
+        parser.NextToken;
+      end;
+    // Collection
+    toCollectionStart:
+      begin
+        parser.NextToken;
+        Output.WriteByte(Ord(vaCollection));
+        while parser.Token <> toCollectionEnd do
+        begin
+          parser.CheckTokenSymbol('item');
+          parser.NextToken;
+          // ConvertOrder
+          Output.WriteByte(Ord(vaList));
+          while not parser.TokenSymbolIs('end') do
+            ProcessProperty;
+          parser.NextToken;   // Skip 'end'
+          Output.WriteByte(0);
+        end;
+        Output.WriteByte(0);
+        parser.NextToken;
+      end;
+    // Binary data
+    toBinaryStart:
+      begin
+        Output.WriteByte(Ord(vaBinary));
+        stream := TBytesStream.Create;
+        try
+          parser.HexToBinary(stream);
+          WriteDWord(stream.Size);
+          Output.WriteBuffer(Stream.Bytes,Stream.Size);
+        finally
+          stream.Free;
+        end;
+        parser.NextToken;
+      end;
+    else
+      parser.Error(SParserInvalidProperty);
+  end;
+end;
+
+procedure TObjectTextConverter.ProcessProperty;
+var
+  name: String;
+begin
+  // Get name of property
+  parser.CheckToken(toSymbol);
+  name := parser.TokenString;
+  while True do begin
+    parser.NextToken;
+    if parser.Token <> toDot then break;
+    parser.NextToken;
+    parser.CheckToken(toSymbol);
+    name := name + '.' + parser.TokenString;
+  end;
+  WriteString(name);
+  parser.CheckToken(toEqual);
+  parser.NextToken;
+  ProcessValue;
+end;
+
+procedure TObjectTextConverter.ProcessObject;
+var
+  Flags: Byte;
+  ObjectName, ObjectType: String;
+  ChildPos: Integer;
+begin
+  if parser.TokenSymbolIs('OBJECT') then
+    Flags :=0  { IsInherited := False }
+  else begin
+    if parser.TokenSymbolIs('INHERITED') then
+      Flags := 1 { IsInherited := True; }
+    else begin
+      parser.CheckTokenSymbol('INLINE');
+      Flags := 4;
+    end;
+  end;
+  parser.NextToken;
+  parser.CheckToken(toSymbol);
+  ObjectName := '';
+  ObjectType := parser.TokenString;
+  parser.NextToken;
+  if parser.Token = toColon then begin
+    parser.NextToken;
+    parser.CheckToken(toSymbol);
+    ObjectName := ObjectType;
+    ObjectType := parser.TokenString;
+    parser.NextToken;
+    if parser.Token = toSetStart then begin
+      parser.NextToken;
+      ChildPos := parser.TokenInt;
+      parser.NextToken;
+      parser.CheckToken(toSetEnd);
+      parser.NextToken;
+      Flags := Flags or 2;
+    end;
+  end;
+  if Flags <> 0 then begin
+    Output.WriteByte($f0 or Flags);
+    if (Flags and 2) <> 0 then
+      WriteInteger(ChildPos);
+  end;
+  WriteString(ObjectType);
+  WriteString(ObjectName);
+
+  // Convert property list
+  while not (parser.TokenSymbolIs('END') or
+    parser.TokenSymbolIs('OBJECT') or
+    parser.TokenSymbolIs('INHERITED') or
+    parser.TokenSymbolIs('INLINE')) do
+    ProcessProperty;
+  Output.WriteByte(0);        // Terminate property list
+
+  // Convert child objects
+  while not parser.TokenSymbolIs('END') do ProcessObject;
+  parser.NextToken;           // Skip end token
+  Output.WriteByte(0);        // Terminate property list
+end;
+
+procedure TObjectTextConverter.ObjectTextToBinary(aInput, aOutput: TStream);
+
+begin
+  FinPut:=aInput;
+  FOutput:=aOutput;
+  Execute;
+end;
+
+procedure TObjectTextConverter.Execute;
+begin
+  If Not Assigned(Input) then
+    raise EReadError.Create('Missing input stream');
+  If Not Assigned(Output) then
+    raise EReadError.Create('Missing output stream');
+  FParser := TParser.Create(Input);
+  try
+    Output.WriteBufferData(FilerSignatureInt);
+    ProcessObject;
+  finally
+    FParser.Free;
+  end;
+end;
+
+procedure ObjectTextToBinary(aInput, aOutput: TStream);
+
+var
+  Conv : TObjectTextConverter;
+
+begin
+  Conv:=TObjectTextConverter.Create;
+  try
+    Conv.ObjectTextToBinary(aInput, aOutput);
+  finally
+    Conv.free;
+  end;
 end;
 
 

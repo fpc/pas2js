@@ -82,24 +82,36 @@ Type
       Procedure TestTMethodComponent2;
       Procedure TestTMethodComponent2Text;
       // Read
+      // ReadText will convert to text by calling text version, and read back after objecttexttobinary.
       Procedure TestTEmptyComponentRead;
+      procedure TestTEmptyComponentReadText;
       Procedure TestTIntegerComponentRead;
+      procedure TestTIntegerComponentReadText;
       Procedure TestTIntegerComponent2Read;
+      Procedure TestTIntegerComponent2ReadText;
       Procedure TestTIntegerComponent3Read;
+      Procedure TestTIntegerComponent3ReadText;
       Procedure TestTIntegerComponent4Read;
       Procedure TestTIntegerComponent5Read;
       Procedure TestTInt64ComponentRead;
+      Procedure TestTInt64ComponentReadText;
       Procedure TestTInt64Component2Read;
+      Procedure TestTInt64Component2ReadText;
       Procedure TestTInt64Component3Read;
+      Procedure TestTInt64Component3ReadText;
       Procedure TestTInt64Component4Read;
+      Procedure TestTInt64Component4ReadText;
       Procedure TestTInt64Component5Read;
       Procedure TestTInt64Component6Read;
       Procedure TestTStringComponentRead;
+      Procedure TestTStringComponentReadText;
       Procedure TestTStringComponent2Read;
       Procedure TestTWideStringComponentRead;
+      Procedure TestTWideStringComponentReadText;
       Procedure TestTWideStringComponent2Read;
       Procedure TestTSingleComponentRead;
       Procedure TestTDoubleComponentRead;
+      Procedure TestTDoubleComponentReadText;
       Procedure TestTExtendedComponentRead;
 //      Procedure TestTCompComponent;
       Procedure TestTCurrencyComponentRead;
@@ -107,24 +119,33 @@ Type
       Procedure TestTDateTimeComponent2Read;
       Procedure TestTDateTimeComponent3Read;
       Procedure TestTEnumComponentRead;
+      Procedure TestTEnumComponentReadText;
       Procedure TestTEnumComponent2Read;
       Procedure TestTEnumComponent3Read;
       Procedure TestTEnumComponent4Read;
       Procedure TestTEnumComponent5Read;
       Procedure TestTSetComponentRead;
+      Procedure TestTSetComponentReadText;
       Procedure TestTSetComponent2Read;
       Procedure TestTSetComponent3Read;
       Procedure TestTSetComponent4Read;
       Procedure TestTMultipleComponentRead;
+      Procedure TestTMultipleComponentReadText;
       Procedure TestTPersistentComponentRead;
+      Procedure TestTPersistentComponentReadText;
       Procedure TestTCollectionComponentRead;
+      Procedure TestTCollectionComponentReadText;
       Procedure TestTCollectionComponent2Read;
+      Procedure TestTCollectionComponent2ReadText;
       Procedure TestTCollectionComponent3Read;
       Procedure TestTCollectionComponent4Read;
       Procedure TestTCollectionComponent5Read;
       Procedure TestTOwnedComponentRead;
+      Procedure TestTOwnedComponentReadText;
       Procedure TestTStreamedOwnedComponentRead;
+      Procedure TestTStreamedOwnedComponentReadText;
       Procedure TestTStreamedOwnedComponentsRead;
+      Procedure TestTStreamedOwnedComponentsReadText;
     end;
 
 
@@ -195,6 +216,22 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTEmptyComponentReadText;
+
+Var
+  C : TEmptyComponent;
+
+begin
+  TestTEmptyComponentText;
+  C:=TEmptyComponent.Create(Nil);
+  try
+    LoadFromtextStream(C);
+    AssertEquals('Name','TestTEmptyComponent',C.Name);
+  finally
+    C.Free;
+  end;
+end;
+
 Procedure TTestComponentStream.TestTIntegerComponent;
 
 
@@ -248,6 +285,23 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTIntegerComponentReadText;
+
+Var
+  C : TIntegerComponent;
+
+begin
+  TestTIntegerComponentText;
+  C:=TIntegerComponent.Create(Nil);
+  Try
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTIntegerComponent',C.Name);
+    AssertEquals('IntProp',3,C.IntProp);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTIntegerComponent2Read;
 
 Var
@@ -265,7 +319,24 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTIntegerComponent2ReadText;
+Var
+  C : TIntegerComponent2;
+
+begin
+  TestTIntegerComponent2Text;
+  C:=TIntegerComponent2.Create(Nil);
+  Try
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTIntegerComponent2',C.Name);
+    AssertEquals('IntProp',1024,C.IntProp);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTIntegerComponent3Read;
+
 Var
   C : TIntegerComponent3;
 
@@ -274,6 +345,22 @@ begin
   C:=TIntegerComponent3.Create(Nil);
   Try
     LoadFromStream(C);
+    AssertEquals('Name','TestTIntegerComponent3',C.Name);
+    AssertEquals('IntProp',262144,C.IntProp);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTIntegerComponent3ReadText;
+Var
+  C : TIntegerComponent3;
+
+begin
+  TestTIntegerComponent3Text;
+  C:=TIntegerComponent3.Create(Nil);
+  Try
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTIntegerComponent3',C.Name);
     AssertEquals('IntProp',262144,C.IntProp);
   Finally
@@ -333,6 +420,23 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTInt64ComponentReadText;
+Var
+  C : TInt64Component;
+
+begin
+  TestTInt64ComponentText;
+  C:=TInt64Component.Create(Nil);
+  Try
+    C.Int64Prop:=0;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTInt64Component',C.Name);
+    AssertEquals('Int64Prop',4,C.Int64Prop);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTInt64Component2Read;
 
 Var
@@ -344,6 +448,24 @@ begin
   Try
     C.Int64Prop:=0;
     LoadFromStream(C);
+    AssertEquals('Name','TestTInt64Component2',C.Name);
+    AssertEquals('Int64Prop',2 shl 9,C.Int64Prop);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTInt64Component2ReadText;
+
+Var
+  C : TInt64Component2;
+
+begin
+  TestTInt64Component2Text;
+  C:=TInt64Component2.Create(Nil);
+  Try
+    C.Int64Prop:=0;
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTInt64Component2',C.Name);
     AssertEquals('Int64Prop',2 shl 9,C.Int64Prop);
   Finally
@@ -369,6 +491,23 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTInt64Component3ReadText;
+Var
+  C : TInt64Component3;
+
+begin
+  TestTInt64Component3Text;
+  C:=TInt64Component3.Create(Nil);
+  Try
+    C.Int64Prop:=0;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTInt64Component3',C.Name);
+    AssertEquals('Int64Prop',2 shl 17,C.Int64Prop);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTInt64Component4Read;
 
 Var
@@ -380,6 +519,23 @@ begin
   Try
     C.Int64Prop:=0;
     LoadFromStream(C);
+    AssertEquals('Name','TestTInt64Component4',C.Name);
+    AssertEquals('Int64Prop',NativeInt(MaxInt)+NativeInt(2 shl 14),C.Int64Prop);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTInt64Component4ReadText;
+Var
+  C : TInt64Component4;
+
+begin
+  TestTInt64Component4Text;
+  C:=TInt64Component4.Create(Nil);
+  Try
+    C.Int64Prop:=0;
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTInt64Component4',C.Name);
     AssertEquals('Int64Prop',NativeInt(MaxInt)+NativeInt(2 shl 14),C.Int64Prop);
   Finally
@@ -441,6 +597,23 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTStringComponentReadText;
+Var
+  C : TStringComponent;
+
+begin
+  TestTStringComponentText;
+  C:=TStringComponent.Create(Nil);
+  Try
+    C.StringProp:='';
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTStringComponent',C.Name);
+    AssertEquals('StringProp','A string',C.StringProp);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTStringComponent2Read;
 
 Var
@@ -470,6 +643,23 @@ begin
   Try
     C.WideStringProp:='abc';
     LoadFromStream(C);
+    AssertEquals('Name','TestTWideStringComponent',C.Name);
+    AssertEquals('WideStringProp','Some WideString',C.WideStringProp);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTWideStringComponentReadText;
+Var
+  C : TWideStringComponent;
+
+begin
+  TestTWideStringComponentText;
+  C:=TWideStringComponent.Create(Nil);
+  Try
+    C.WideStringProp:='abc';
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTWideStringComponent',C.Name);
     AssertEquals('WideStringProp','Some WideString',C.WideStringProp);
   Finally
@@ -525,6 +715,24 @@ begin
     LoadFromStream(C);
     AssertEquals('Name','TestTDoubleComponent',C.Name);
     AssertEquals('DoubleProp',2.34,C.DoubleProp,0.01);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTDoubleComponentReadText;
+Var
+  C : TDoubleComponent;
+
+begin
+  TestTDoubleComponentText;
+  C:=TDoubleComponent.Create(Nil);
+  Try
+    C.DoubleProp:=0;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTDoubleComponent',C.Name);
+    // TODO: extend precision to 0.1
+    AssertEquals('DoubleProp',2.34,C.DoubleProp,0.1);
   Finally
     C.Free;
   end;
@@ -637,6 +845,23 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTEnumComponentReadText;
+Var
+  C : TEnumComponent;
+
+begin
+  TestTEnumComponentText;
+  C:=TEnumComponent.Create(Nil);
+  Try
+    C.Dice:=One;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTEnumComponent',C.Name);
+    AssertTrue('Dice',four=C.Dice);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTEnumComponent2Read;
 
 Var
@@ -729,6 +954,23 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTSetComponentReadText;
+Var
+  C : TSetComponent;
+
+begin
+  TestTSetComponentText;
+  C:=TSetComponent.Create(Nil);
+  Try
+    C.Throw:=[];
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTSetComponent',C.Name);
+    AssertTrue('Throw',[two,five]=C.Throw);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTSetComponent2Read;
 
 Var
@@ -787,6 +1029,7 @@ begin
 end;
 
 procedure TTestComponentStream.TestTMultipleComponentRead;
+
 Var
   C : TMultipleComponent;
 
@@ -799,6 +1042,31 @@ begin
     C.CurrencyProp:=12.3;
     C.StringProp:='abc';
     LoadFromStream(C);
+    AssertEquals('Name','TestTMultipleComponent',C.Name);
+    AssertEquals('IntProp',1,C.IntProp);
+    AssertEquals('StringProp','A String',C.StringProp);
+    AssertEquals('CurrencyProp',2.3,C.CurrencyProp,0.1);
+    AssertTrue('Dice',two=C.Dice);
+    AssertTrue('Throw',[three,four]=C.Throw);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTMultipleComponentReadText;
+
+Var
+  C : TMultipleComponent;
+
+begin
+  TestTMultipleComponentText;
+  C:=TMultipleComponent.Create(Nil);
+  Try
+    c.IntProp:=23;
+    C.Dice:=six;
+    C.CurrencyProp:=12.3;
+    C.StringProp:='abc';
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTMultipleComponent',C.Name);
     AssertEquals('IntProp',1,C.IntProp);
     AssertEquals('StringProp','A String',C.StringProp);
@@ -830,6 +1098,25 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTPersistentComponentReadText;
+Var
+  C : TPersistentComponent;
+
+begin
+  TestTPersistentComponentText;
+  C:=TPersistentComponent.Create(Nil);
+  Try
+    C.Persist.AInteger:=36;
+    C.Persist.AString:='nono';
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTPersistentComponent',C.Name);
+    AssertEquals('Persist.AInteger',3,C.Persist.AInteger);
+    AssertEquals('Persist.AString','A persistent string',C.Persist.AString);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTCollectionComponentRead;
 
 Var
@@ -849,6 +1136,25 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTCollectionComponentReadText;
+
+Var
+  C : TCollectionComponent;
+
+begin
+  TestTCollectionComponentText;
+  C:=TCollectionComponent.Create(Nil);
+  Try
+    C.Coll.Add;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTCollectionComponent',C.Name);
+    // If the stream does not have a collection, it does not get cleared
+    AssertEquals('Coll count',1,C.Coll.Count);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTCollectionComponent2Read;
 
 Var
@@ -860,6 +1166,28 @@ begin
   Try
     C.Coll.Add;
     LoadFromStream(C);
+    AssertEquals('Name','TestTCollectionComponent2',C.Name);
+    AssertEquals('Coll count',3,C.Coll.Count);
+    AssertEquals('Correct class type',TTestItem,C.Coll.Items[0].ClassType);
+    AssertEquals('Coll 0 Property','First',TTestItem(C.Coll.items[0]).StrProp);
+    AssertEquals('Coll 1 Property','Second',TTestItem(C.Coll.Items[1]).StrProp);
+    AssertEquals('Coll 2 Property','Third',TTestItem(C.Coll.Items[2]).StrProp);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTCollectionComponent2ReadText;
+
+Var
+  C : TCollectionComponent2;
+
+begin
+  TestTCollectionComponent2Text;
+  C:=TCollectionComponent2.Create(Nil);
+  Try
+    C.Coll.Add;
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTCollectionComponent2',C.Name);
     AssertEquals('Coll count',3,C.Coll.Count);
     AssertEquals('Correct class type',TTestItem,C.Coll.Items[0].ClassType);
@@ -956,7 +1284,29 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTOwnedComponentReadText;
+
+Var
+  C : TOwnedComponent;
+  C2 : TComponent;
+
+begin
+  TestTOwnedComponentText;
+  C:=TOwnedComponent.Create(Nil);
+  try
+    C2:=C.CompProp;
+    C.CompProp:=nil;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTOwnedComponent',C.Name);
+    AssertEquals('ComponentCount',1,C.ComponentCount);
+    AssertSame('ComponentCount',C2,C.CompProp);
+  finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTStreamedOwnedComponentRead;
+
 Var
   C : TStreamedOwnedComponent;
 
@@ -977,7 +1327,30 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTStreamedOwnedComponentReadText;
+
+Var
+  C : TStreamedOwnedComponent;
+
+begin
+  TestTStreamedOwnedComponentText;
+  C:=TStreamedOwnedComponent.Create(Nil);
+  Try
+    C.Sub.Free;
+    C.Sub:=Nil;
+    LoadFromTextStream(C);
+    AssertEquals('Name','TestTStreamedOwnedComponent',C.Name);
+    AssertNotNull('Have sub',C.Sub);
+    AssertEquals('Correct class',TIntegerComponent,C.Sub.ClassType);
+    AssertEquals('Name','Sub',C.Sub.Name);
+    AssertEquals('Name',3,C.Sub.IntProp);
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTStreamedOwnedComponentsRead;
+
 Var
   C : TStreamedOwnedComponents;
 
@@ -990,6 +1363,34 @@ begin
     C.SubB.Free;
     C.SubB:=Nil;
     LoadFromStream(C);
+    AssertEquals('Name','TestTStreamedOwnedComponents',C.Name);
+    AssertNotNull('Have sub A',C.SubA);
+    AssertEquals('Correct sub A class',TIntegerComponent,C.SubA.ClassType);
+    AssertEquals('Name','SubA',C.SubA.Name);
+    AssertEquals('Name',3,C.SubA.IntProp);
+    AssertNotNull('Have sub B',C.SubB);
+    AssertEquals('Correct sub B class',TStringComponent,C.SubB.ClassType);
+    AssertEquals('Name','SubB',C.SubB.Name);
+    AssertEquals('Name','A string',C.SubB.StringProp);
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTStreamedOwnedComponentsReadText;
+
+Var
+  C : TStreamedOwnedComponents;
+
+begin
+  TestTStreamedOwnedComponentsText;
+  C:=TStreamedOwnedComponents.Create(Nil);
+  Try
+    C.SubA.Free;
+    C.SubA:=Nil;
+    C.SubB.Free;
+    C.SubB:=Nil;
+    LoadFromTextStream(C);
     AssertEquals('Name','TestTStreamedOwnedComponents',C.Name);
     AssertNotNull('Have sub A',C.SubA);
     AssertEquals('Correct sub A class',TIntegerComponent,C.SubA.ClassType);

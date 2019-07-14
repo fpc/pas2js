@@ -66,7 +66,17 @@ const
   SReadOnlyProperty               = 'Property is read-only';
   SClassNotFound                  = 'Class "%s" not found';
 
-  SEmptyStreamIllegalWriter     = 'Illegal Nil stream for TWriter constructor';
+  SEmptyStreamIllegalWriter       = 'Illegal Nil stream for TWriter constructor';
+  SErrInvalidPropertyType         = 'Invalid property type from streamed property: %d';
+  SParserExpected                 = 'Wrong token type: %s expected';
+  SParserInvalidFloat             = 'Invalid floating point number: %s';
+  SParserInvalidInteger           = 'Invalid integer number: %s';
+  SParserUnterminatedString       = 'Unterminated string';
+  SParserWrongTokenType           = 'Wrong token type: %s expected but %s found';
+  SParserWrongTokenSymbol         = 'Wrong token symbol: %s expected but %s found';
+  SParserLocInfo                  = ' (at %d,%d, stream offset %.8x)';
+  SParserUnterminatedBinValue     = 'Unterminated byte value';
+  SParserInvalidProperty          = 'Invalid property';
 
 implementation
 

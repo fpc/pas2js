@@ -14,6 +14,7 @@ Type
   TTestStreaming = Class(TTestCase)
   Private
     FStream : TMemoryStream;
+    FLastText : String;
     Function ReadByte : byte;
     Function ReadWord : Word;
     Function ReadInteger : LongInt;
@@ -28,15 +29,16 @@ Type
     Procedure ResetStream;
     Procedure SaveToStream(C : TComponent);
     Procedure LoadFromStream(C : TComponent);
+    Procedure LoadFromTextStream(C : TComponent);
     Function ReadValue : TValueType;
     Procedure ExpectValue(AValue : TValueType);
     Procedure ExpectFlags(Flags : TFilerFlags; APosition : Integer);
     Procedure ExpectInteger(AValue : Integer);
     Procedure ExpectByte(AValue : Byte);
-    Procedure ExpectInt64(AValue : Int64);
+    Procedure ExpectInt64(AValue : NativeInt);
     Procedure ExpectBareString(AValue : String);
     Procedure ExpectString(AValue : String);
-    Procedure ExpectSingle(AValue : Single);
+    Procedure ExpectSingle(AValue : Double);
     Procedure ExpectExtended(AValue : Extended);
     Procedure ExpectCurrency(AValue : Currency);
     Procedure ExpectIdent(AValue : String);
@@ -46,6 +48,7 @@ Type
     Procedure ExpectSignature;
     Procedure ExpectEndOfStream;
     Procedure CheckAsString(const aData : String);
+    Property LastText : String Read FLastText;
   end;
 
 implementation
@@ -178,11 +181,11 @@ begin
     Fail(Format('Wrong identifier %s, expected %s',[S,AValue]));
 end;
 
-procedure TTestStreaming.ExpectInt64(AValue: Int64);
+procedure TTestStreaming.ExpectInt64(AValue: NativeInt);
 
 Var
   V : TValueType;
-  I : Int64;
+  I : NativeInt;
 
 begin
   V:=ReadValue;
@@ -236,7 +239,7 @@ begin
     Fail('Invalid signature %d, expected %d',[L,E]);
 end;
 
-procedure TTestStreaming.ExpectSingle(AValue: Single);
+procedure TTestStreaming.ExpectSingle(AValue: Double);
 
 Var
   S : Double;
@@ -350,6 +353,27 @@ begin
   FStream.ReadComponent(C);
 end;
 
+procedure TTestStreaming.LoadFromTextStream(C: TComponent);
+
+Var
+  BS : TBytesStream;
+  SS : TStringStream;
+
+begin
+  AssertTrue('Have text data',FLastText<>'');
+  SS:=nil;
+  SS:=TStringStream.Create(LastText);
+  try
+    BS:=TBytesStream.Create(Nil);
+    ObjectTextToBinary(SS,BS);
+    BS.Position:=0;
+    BS.ReadComponent(C);
+  finally
+    SS.Free;
+    BS.Free;
+  end;
+end;
+
 procedure TTestStreaming.TearDown;
 begin
   FreeAndNil(FStream);
@@ -430,6 +454,7 @@ begin
     SS.Free;
   end;
   AssertEquals('Stream to string',aData,DS);
+  FLastText:=DS;
 end;
 
 end.

@@ -2708,7 +2708,7 @@ Type
 
   TCanvasCoordType = double; // Is in fact a number.
 
-  TJSTextMetrics = record
+  TJSTextMetrics = class external name 'TextMetrics' (TJSObject)
     width : TCanvasCoordType;
     actualBoundingBoxLeft : TCanvasCoordType;
     actualBoundingBoxRight : TCanvasCoordType;
@@ -2896,7 +2896,7 @@ Type
     property ResponseHeaders[aName : string] : string Read getResponseHeader;
     property responseXML : TJSDocument read FresponseXML;
     property responseURL : string read FresponseURL;
-    property responseType : string read FResponseType;
+    property responseType : string read FResponseType Write FResponseType;
     property response : JSValue Read FResponse;
     property responseText : string read FResponseText;
     property Status : integer read FStatus;
@@ -3283,6 +3283,118 @@ Type
     Property bufferedAmount : NativeInt Read FbufferedAmount;
     Property extensions : String Read Fextensions;
     Property protocol : String Read Fprotocol;
+  end;
+
+  TJSHTMLAudioTrack = class external name 'AudioTrack' (TJSObject)
+  end;
+
+  TJSHTMLAudioTrackList = class external name 'AudioTrackList' (TJSObject)
+    FLength : Integer; external name 'length';
+    function getitem(aIndex : nativeInt) : TJSHTMLAudioTrack ; external name '[]';
+  Public
+    onaddtrack : TJSEventHandler;
+    onchange : TJSEventHandler;
+    onremovetrack : TJSEventHandler;
+    Property Length : Integer Read FLength;
+    Property tracks [aIndex : NativeInt] : TJSHTMLAudioTrack read Getitem;
+  end;
+
+  TJSHTMLVideoTrack = class external name 'VideoTrack' (TJSObject)
+  end;
+
+  TJSHTMLVideoTrackList = class external name 'VideoTrackList' (TJSObject)
+    FLength : Integer; external name 'length';
+    function getitem(aIndex : nativeInt) : TJSHTMLVideoTrack ; external name '[]';
+  Public
+    onaddtrack : TJSEventHandler;
+    onchange : TJSEventHandler;
+    onremovetrack : TJSEventHandler;
+    Property Length : Integer Read FLength;
+    Property tracks [aIndex : NativeInt] : TJSHTMLVideoTrack read Getitem;
+  end;
+
+  TJSHTMLTextTrack = class external name 'TextTrack' (TJSObject)
+  end;
+
+  TJSHTMLTextTrackList = class external name 'TextTrackList' (TJSObject)
+    FLength : Integer; external name 'length';
+    function getitem(aIndex : nativeInt) : TJSHTMLTextTrack ; external name '[]';
+  Public
+    onaddtrack : TJSEventHandler;
+    onchange : TJSEventHandler;
+    onremovetrack : TJSEventHandler;
+    Property Length : Integer Read FLength;
+    Property tracks [aIndex : NativeInt] : TJSHTMLTextTrack read Getitem;
+  end;
+
+
+  { TJSHTMLMediaElement }
+  TJSMEdiaError = class external name 'MediaError' (TJSObject)
+    code : NativeInt;
+    message : string;
+  end;
+
+  TJSHTMLMediaStream = class external name 'MediaStream' (TJSObject);
+
+  TJSHTMLMediaController = class external name 'MediaController' (TJSObject);
+
+  TJSHTMLMediaElement = Class external name 'HTMLMediaElement' (TJSHTMLElement)
+  private
+    FAudioTracks: TJSHTMLAudioTrackList; external name 'audioTracks';
+    FVideoTracks: TJSHTMLVideoTrackList; external name 'videoTracks';
+    FTextTracks: TJSHTMLTextTrackList; external name 'textTracks';
+    FControlsList: TJSDOMTokenList; external name 'controlslist';
+    FCurrentSrc: String; external name 'currentSrc';
+    FDuration: Double; external name 'duration';
+    FEnded: Boolean;external name 'ended';
+    FError: TJSMEdiaError; external name 'error';
+    FNetworkState: NativeInt; external name 'networkState';
+    FPaused: boolean; external name 'paused';
+    FReadyState: NativeInt; external name 'readyState';
+    FSeeking: boolean; external name 'seeking';
+    FSinkID: string; external name 'sinkId';
+  Public
+    autoplay : Boolean;
+    buffered : Boolean;
+    controls : Boolean;
+    controller : TJSHTMLMediaController;
+    crossOrigin : String;
+    currentTime : Double;
+    defaultMuted : boolean;
+    defaultPlaybackRate : Double;
+    disableRemotePlayback : Boolean;
+    loop : boolean;
+    mediaGroup : string;
+    muted : boolean;
+    preload : string;
+    preservesPitch : boolean;
+    src : string;
+    srcObject : TJSHTMLMediaStream;
+    volume : double;
+    onencrypted : TJSEventHandler;
+    onwaitingforkey : TJSEventHandler;
+    function canPlayType(aType : String) : String;
+    Function captureStream : TJSHTMLMediaStream;
+    Procedure play;
+    Procedure load;
+    Procedure pause;
+
+    Property AudioTracks : TJSHTMLAudioTrackList Read FAudioTracks;
+    Property Controlslist : TJSDOMTokenList Read FControlsList;
+    Property CurrentSrc : String Read FCurrentSrc;
+    Property Duration : Double read FDuration;
+    Property Ended : Boolean read FEnded;
+    Property Error : TJSMEdiaError read FError;
+    property networkState : NativeInt read FNetworkState;
+    property paused : boolean read FPaused;
+    property readyState : NativeInt read FReadyState;
+    property seeking : boolean read FSeeking;
+    property sinkID : string read FSinkID;
+    Property TextTracks : TJSHTMLTextTrackList Read FTextTracks;
+    Property VideoTracks : TJSHTMLVideoTrackList Read FVideoTracks;
+  end;
+
+  TJSHTMLAudioElement = Class external name 'HTMLAudioElement' (TJSHTMLMediaElement)
   end;
 
 var

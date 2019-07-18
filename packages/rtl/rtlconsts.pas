@@ -14,7 +14,7 @@ unit RTLConsts;
 
 interface
 
-const
+Resourcestring
   SArgumentMissing              = 'Missing argument in format "%s"';
   SInvalidFormat                = 'Invalid format specifier : "%s"';
   SInvalidArgIndex              = 'Invalid argument index in format: "%s"';

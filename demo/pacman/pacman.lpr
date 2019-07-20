@@ -15,6 +15,7 @@ procedure TMyApplication.doRun;
 
 begin
   FPacMan:=TPacMan.Create(Self);
+  FPacMan.Start;
   // Your code here
   Terminate;
 end;

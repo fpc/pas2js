@@ -46,6 +46,7 @@ type
   TPacmanAudio = Class
   private
     FOnLoaded: TNotifyEvent;
+    FLoaded : Boolean;
     procedure AudioLoaded;
     function CheckEnd(Event: TEventListenerEvent): boolean;
     function CheckplayOK(Event: TEventListenerEvent): boolean;
@@ -58,6 +59,7 @@ type
     Procedure DisableSound;
     Procedure Pause;
     Procedure Resume;
+    Property Loaded : Boolean Read FLoaded Write FLoaded;
     Property OnLoaded : TNotifyEvent Read FOnLoaded Write FonLoaded;
   end;
 
@@ -157,7 +159,7 @@ type
     // Debug & Test
     // procedure DbgShow();
     // Business code: Actions
-    Procedure playsound(aAudio : TAudio);
+    Procedure PlaySound(aAudio : TAudio);
     procedure DoSpriteTimer;
     // User response code
     function HandleKeyPress(k : TJSKeyBoardEvent) : Boolean;
@@ -723,7 +725,12 @@ begin
   Result:=True;
   AudioDisabled:=Not FCBXSound.checked;
   if AudioDisabled then
-    FAudio.DisableSound;
+    FAudio.DisableSound
+  else If not FAudio.Loaded then
+    begin
+    FAudio.OnLoaded:=Nil;
+    FAudio.LoadAudio;
+    end;
 end;
 
 procedure TPacman.DoAudioLoaded(Sender: TObject);
@@ -746,8 +753,8 @@ begin
     begin
     Delete(S,1,Length(sControl));
     Case S of
-      'left'  : PacManDir:='W';
-      'right' : PacManDir:='E';
+      'left'  : PacManDir:='E';
+      'right' : PacManDir:='W';
       'down'  : PacManDir:='S';
       'up'    : PacManDir:='N';
       'pause' : Pause:=Not Pause;
@@ -1106,7 +1113,8 @@ begin
   // Sprites need the images, so this can only be done in this part
   InitSprites();
   document.onkeydown:=@HandleKeyPress;
-  InitAudio();
+  if not AudioDisabled then
+    InitAudio()
 end;
 
 procedure TPacman.InitAudio;
@@ -1123,6 +1131,7 @@ begin
 end;
 
 procedure TPacman.Start;
+
 begin
   RestartGame;
 end;
@@ -1173,8 +1182,7 @@ begin
   DrawScene;
   PacmanDir:='-';
   DrawPacman();                   // the images have moved, set the pacmanface
-  if not AudioDisabled then
-    FAudio.Play(aStart);
+  PlaySound(aStart);
   ShowText('GET READY !!!',@StartTimer);
   PacmanDir:='-';
 end;
@@ -1215,7 +1223,7 @@ end;
 
 procedure TPacman.playsound(aAudio: TAudio);
 begin
-  if not AudioDisabled then
+  if (not AudioDisabled) and (FAudio.Loaded) then
     FAudio.play(aAudio);
 end;
 
@@ -1352,7 +1360,7 @@ begin
 end;
 
 
-Procedure TPacmanAudio.AudioLoaded;
+procedure TPacmanAudio.AudioLoaded;
 
 Var
   AllLoaded : Boolean;
@@ -1362,11 +1370,9 @@ begin
   allLoaded:=True;
   For a in TAudio do
     AllLoaded:=AllLoaded and FilesOK[a];
-  if allLoaded and Assigned(FonLoaded) then
-    begin
-    Writeln('All Loaded');
+  FLoaded:=allLoaded;
+  if Assigned(FonLoaded) then
     FOnLoaded(Self);
-    end;
 end;
 
 function TPacmanAudio.CheckEnd(Event: TEventListenerEvent): boolean;
@@ -1410,6 +1416,7 @@ begin
     if not FilesOK[a] then
       F.oncanplaythrough:=@CheckPlayOK;
     end;
+  AudioLoaded;
 end;
 
 procedure TPacmanAudio.DisableSound;
@@ -1440,7 +1447,7 @@ begin
     end;
 end;
 
-Procedure TPacmanAudio.Pause;
+procedure TPacmanAudio.Pause;
 
 var
   a : TAudio;

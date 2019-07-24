@@ -3397,6 +3397,26 @@ Type
   TJSHTMLAudioElement = Class external name 'HTMLAudioElement' (TJSHTMLMediaElement)
   end;
 
+  TJSFormDataEntryValue = String;
+  TJSFormDataEntryValueArray = Array of TJSFormDataEntryValue;
+
+  TJSFormData = Class external name 'FormData' (TJSObject)
+    constructor new;
+    constructor new(aForm : TJSHTMLElement);
+    Procedure append(const aName,aValue : String);
+    Procedure append(const aName : String; aBlob : TJSBlob);
+    Procedure delete(const aName : String);
+    Function entries : TJSFormDataEntryValueArray;
+    Function get(const aName : String): TJSFormDataEntryValue;
+    function has(const aName : String): Boolean;
+    Function keys : TStringDynArray; reintroduce;
+    Procedure set_(const aName,aValue : String); external name 'set';
+    Procedure set_(const aName : String; aBlob : TJSBlob); external name 'set';
+    Function getAll(const aName : String) : TJSFormDataEntryValueArray;
+    Function values : TJSValueDynArray;
+    Property Entry[aIndex : String] : TJSFormDataEntryValue read Get;
+  end;
+
 var
   document : TJSDocument; external name 'document';
   window : TJSWindow; external name 'window';

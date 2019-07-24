@@ -1147,6 +1147,7 @@ procedure TPacman.StartTimer;
 
 begin
   FDying:=False;
+  UpdateStatus('Playing');
   SpriteTimer:=window.setInterval(@DoSpriteTimer,TimerInterval);
 end;
 
@@ -1228,6 +1229,7 @@ begin
   dec(LivesLeft);
   UpdateScore();
   PacmanDir:='-';
+  UpdateStatus('You died');
   ShowText('YOU DIE !!!',@CheckGameOver);
 end;
 

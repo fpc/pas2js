@@ -79,6 +79,7 @@ type
     lbBonusCnt: TJSHTMLElement;
     lbLives: TJSHTMLElement;
     lbScore: TJSHTMLElement;
+    lbStatus: TJSHTMLElement;
     lbHiscore: TJSHTMLElement;
     lbGhostCnt: TJSHTMLElement;
     FCanvasEl:TJSHTMLCanvasElement;
@@ -125,6 +126,7 @@ type
     procedure StartTimer;
     procedure ShowText(aText: string; OnDone : TProcedure);
     procedure UpdateScore();
+    procedure UpdateStatus(aText : String);
 // Initializing code
     procedure InitSprite(var aSprite: TSprite; aImg: TJSHTMLImageElement; aSpd: Double);
     procedure InitSprites();
@@ -551,6 +553,11 @@ begin
   lbGhostCnt.InnerText:= inttostr(GhostCnt);
 end;
 
+procedure TPacman.UpdateStatus(aText: String);
+begin
+  lbStatus.InnerText:=aText;
+end;
+
 //==============================================================================
 //  Initialization code
 //==============================================================================
@@ -696,16 +703,22 @@ end;
 
 function TPacman.HandleKeyPress(k: TJSKeyBoardEvent): Boolean;
 
+Var
+  aCode : String;
+
 begin
   Result:=True;
   if FDying then exit;
-  case k.Code of
+  aCode:=k.Key;
+  if aCode='' then
+    aCode:=K.Code;
+  case aCode of
     // For some reason, it is opposite of what you'd expect...
-    TJSKeyNames.ArrowRight : PacManDir:='W';
-    TJSKeyNames.ArrowUp    : PacManDir:='N';
-    TJSKeyNames.ArrowLeft  : PacManDir:='E';
-    TJSKeyNames.ArrowDown  : PacManDir:='S';
-    'KeyP' : Pause:=not Pause;
+    'Right',  TJSKeyNames.ArrowRight : PacManDir:='W';
+    'Up', TJSKeyNames.ArrowUp    : PacManDir:='N';
+    'Left', TJSKeyNames.ArrowLeft  : PacManDir:='E';
+    'Down', TJSKeyNames.ArrowDown  : PacManDir:='S';
+    'P', 'KeyP' : Pause:=not Pause;
   end;
   k.preventDefault;
 end;
@@ -1073,6 +1086,12 @@ end;
 
 procedure TPacman.SetupPacman;
 
+  Function GetElement(aName : String) : TJSHTMLElement;
+
+  begin
+    Result:=TJSHTMLElement(Document.getElementById(aName));
+  end;
+
 Var
   I : integer;
   El :  TJSElement;
@@ -1085,31 +1104,32 @@ begin
   FCanvasEl:=TJSHTMLCanvasElement(Document.getElementById(FCanvasID));
   FCanvas:=TJSCanvasRenderingContext2D(FCanvasEl.getContext('2d'));
   FBtnReset:=TJSHTMLButtonElement(Document.getElementById(FResetID));
-  FCBXSound:=TJSHTMLInputElement(Document.getElementById('cbx-sound'));
+  FCBXSound:=TJSHTMLInputElement(GetElement('cbx-sound'));
   FCBXSound.onchange:=@CheckSound;
   if Assigned(FBtnReset) then
     FBtnReset.OnClick:=@DoResetClick;
   FCanvasEl.width := Round(FCanvasEl.OffsetWidth);
   FCanvasEl.height := Round(FCanvasEl.OffsetHeight);
   for I:=1 to 4 do
-    ImgGhost[i]:=TJSHTMLImageElement(Document.getElementById('ghost'+IntToStr(i))) ;
-  ImgGhost[5]:=TJSHTMLImageElement(Document.getElementById('ghost-scared'));
-  ImgBonus:=TJSHTMLImageElement(Document.getElementById('cherry'));
-  pnBonusBarOuter:=TJSHTMLElement(Document.getElementById('bonus-outer'));
-  pnBonusBarInner:= TJSHTMLElement(Document.getElementById('bonus-inner'));
-  pnScareBarOuter:=TJSHTMLElement(Document.getElementById('scare-outer'));
-  pnScareBarInner:=TJSHTMLElement(Document.getElementById('scare-inner'));
+    ImgGhost[i]:=TJSHTMLImageElement(GetElement('ghost'+IntToStr(i))) ;
+  ImgGhost[5]:=TJSHTMLImageElement(GetElement('ghost-scared'));
+  ImgBonus:=TJSHTMLImageElement(GetElement('cherry'));
   for I:=1 to ControlCount do
      begin
-     El:=Document.GetElementById('control-'+ControlNames[i]);
+     El:=GetElement('control-'+ControlNames[i]);
      if Assigned(El) then
        TJSHTMLElement(El).onClick:=@DoMouseClick;
      end;
-  lbScore:=TJSHTMLCanvasElement(Document.getElementById('score'));
-  lbHiscore:=TJSHTMLCanvasElement(Document.getElementById('highscore'));
-  lbLives:=TJSHTMLCanvasElement(Document.getElementById('lives'));
-  lbBonusCnt:=TJSHTMLCanvasElement(Document.getElementById('bonus'));
-  lbGhostCnt:=TJSHTMLCanvasElement(Document.getElementById('ghosts'));
+  pnBonusBarOuter:=GetElement('bonus-outer');
+  pnBonusBarInner:= GetElement('bonus-inner');
+  pnScareBarOuter:=GetElement('scare-outer');
+  pnScareBarInner:=GetElement('scare-inner');
+  lbScore:=GetElement('score');
+  lbStatus:=GetElement('status');
+  lbHiscore:=GetElement('highscore');
+  lbLives:=GetElement('lives');
+  lbBonusCnt:=GetElement('bonus');
+  lbGhostCnt:=GetElement('ghosts');
   // Sprites need the images, so this can only be done in this part
   InitSprites();
   document.onkeydown:=@HandleKeyPress;
@@ -1170,6 +1190,7 @@ begin
   InitVars(Level1Field);
   InitCells(Level1Field);
   RestartLevel();
+  UpdateStatus('Playing');
 end;
 
 procedure TPacman.RestartLevel();
@@ -1214,14 +1235,16 @@ procedure TPacman.NextLevel();
 begin
   StopTimer;
   ShowText('YOU WIN !!!',@RestartGame);
+  UpdateStatus('You win');
 end;
 
 procedure TPacman.GameOver();
 begin
-  ShowText('YOU LOOSE !!!',@RestartGame);
+  ShowText('YOU LOST !!!',@RestartGame);
+  UpdateStatus('You lost');
 end;
 
-procedure TPacman.playsound(aAudio: TAudio);
+procedure TPacman.PlaySound(aAudio: TAudio);
 begin
   if (not AudioDisabled) and (FAudio.Loaded) then
     FAudio.play(aAudio);
@@ -1410,7 +1433,7 @@ var
 begin
   for a in TAudio do
     begin
-    F:=TJSHTMLAudioElement(document.getElementbyID('audio-'+audionames[a]));
+    F:=TJSHTMLAudioElement(Document.GetElementByID('audio-'+audionames[a]));
     Files[a]:=F;
     FilesOK[a]:=F.readyState>=3;
     if not FilesOK[a] then

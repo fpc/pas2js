@@ -4372,7 +4372,7 @@ procedure TDataSet.GotoBookmark(const ABookmark: TBookmark);
 
 
 begin
-  If Assigned(ABookMark) then
+  If Not IsNull(ABookMark.Data) then
     begin
     CheckBrowseMode;
     DoBeforeScroll;

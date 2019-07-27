@@ -21,6 +21,7 @@ interface
 uses Types, JS;
 
 Type
+  TJSEvent = Class;
   // Forward definitions
   TJSWindow = class;
   TJSDOMTokenList = class;
@@ -66,13 +67,16 @@ Type
   end;
 
   TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean;
+  TJSRawEventHandler = reference to Procedure(Event: TJSEvent);
 
   TJSEventTarget = class external name 'EventTarget' (TJSObject)
   public
     procedure addEventListener(aname : string; aListener : TJSEventHandler);
+    procedure addEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure addEventListener(aname : string; aListener : JSValue);
     function dispatchEvent(event : JSValue) : Boolean;
-    procedure removeEventListener(aname : string; aListener : TJSEventHandler);
+    procedure RemoveEventListener(aname : string; aListener : TJSEventHandler);
+    procedure RemoveEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure removeEventListener(aname : string; aListener : JSValue);
   end;
 
@@ -436,6 +440,7 @@ Type
   public    
     cancelBubble : Boolean;
     constructor new (aType : String; const aInit : TJSEventInit); overload;
+    constructor new (aType : String); overload;
     procedure preventDefault;
     procedure stopImmediatePropagation;
     procedure stopPropagation;
@@ -1843,6 +1848,61 @@ Type
     Property media : String Read FMedia;
   end;
 
+  TJSReadableStream = class external name 'ReadableStream' (TJSObject)
+  private
+    flocked: Boolean; external name 'locked';
+  public
+    property locked: Boolean read flocked;
+    constructor new(underlyingSource: TJSObject);
+    constructor new(underlyingSource, queueingStrategy: TJSObject);
+    function cancel(reason: TJSDOMString): TJSPromise;
+    function getReader(): TJSObject; overload;
+    function getReader(mode: TJSObject): TJSObject; overload;
+    function pipeThrough(transformStream: TJSObject): TJSReadableStream; overload;
+    function pipeThrough(transformStream, options: TJSObject): TJSReadableStream; overload;
+    function pipeTo(destination: TJSObject): TJSPromise; overload;
+    function pipeTo(destination, options: TJSObject): TJSPromise; overload;
+    function tee(): TJSArray; // array containing two TJSReadableStream instances
+  end;
+
+  TJSBody = class external name 'Body' (TJSObject)
+  private
+    fbody: TJSReadableStream; external name 'body';
+    fbodyUsed: Boolean; external name 'bodyUsed';
+  public
+    property body: TJSReadableStream read fbody;
+    property bodyUsed: Boolean read fbodyUsed;
+    function arrayBuffer(): TJSPromise; // resolves to TJSArrayBuffer
+    function blob(): TJSPromise; // resolves to TJSBlob
+    function json(): TJSPromise; // resolves to JSON / TJSValue
+    function text(): TJSPromise; // resolves to USVString, always decoded using UTF-8
+  end;
+
+  TJSResponse = class external name 'Response' (TJSBody)
+  private
+    fheaders: TJSObject;external name 'headers';
+    fok: Boolean; external name 'ok';
+    fredirected: Boolean; external name 'redirected';
+    fstatus: NativeInt; external name 'status';
+    fstatusText: String; external name 'statusText';
+    ftype: String; external name 'type';
+    furl: String; external name 'url';
+    fuseFinalUrl: Boolean; external name 'useFinalUrl';
+  public
+    property headers: TJSObject read fheaders; //
+    property ok: Boolean read fok;
+    property redirected: Boolean read fredirected;
+    property status: NativeInt read fstatus;
+    property statusText: String read fstatusText; //
+    property type_: String read ftype; //
+    property url: String read furl; //
+    property useFinalUrl: Boolean read fuseFinalUrl write fuseFinalUrl;
+    constructor new(body: TJSObject; init: TJSObject); varargs; external name 'new';
+    function clone(): TJSResponse;
+    function error(): TJSResponse;
+    function redirect(url: String; Status: NativeInt): TJSResponse;
+  end;
+
   { TJSWindow }
   TJSDOMHighResTimeStamp = Double;
   TFrameRequestCallback = procedure (aTime: TJSDOMHighResTimeStamp);
@@ -1958,6 +2018,10 @@ Type
     procedure cancelAnimationFrame(aHandle: Integer);
     Procedure close;
     Function confirm(Const aMsg : String) :  boolean;
+    function fetch(resource: String; init: TJSObject): TJSPromise; overload; external name 'fetch';
+    function fetch(resource: String): TJSPromise; overload; external name 'fetch';
+    function fetch(resource: TJSObject; init: TJSObject): TJSPromise; overload; external name 'fetch';
+    function fetch(resource: TJSObject): TJSPromise; overload; external name 'fetch';
     procedure focus;
     Function getComputedStyle(aElement : TJSElement) : TJSCSSStyleDeclaration; overload;
     Function getComputedStyle(aElement,aPseudoElement : TJSElement) : TJSCSSStyleDeclaration; overload;
@@ -1982,7 +2046,7 @@ Type
     Function setTimeout(ahandler : TJSTimerCallBack; aTimeout : NativeUInt) : NativeInt; varargs;
     Function setTimeout(ahandler : TJSTimerCallBack) : NativeInt;
     procedure stop;
-    { public methods }
+    { public properties }
     property console : TJSConsole Read FConsole;
     property closed : boolean read FClosed;
     property crypto : TJSCrypto Read FCrypto;

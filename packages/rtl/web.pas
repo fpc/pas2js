@@ -2448,6 +2448,44 @@ Type
     property willValidate : boolean read FWillValidate;
   end;
 
+  TJSHTMLLabelElement = class external name 'HTMLLabelElement' (TJSHTMLElement)
+  Public
+    For_ : String; external name 'for';
+    form : String;
+  end;
+
+  { TJSHTMLTextAreaElement }
+
+  TJSHTMLTextAreaElement = class external name 'HTMLTextAreaElement' (TJSHTMLElement)
+  private
+    FForm: TJSHTMLFormElement; external name 'form';
+    FTextLength: NativeInt; external name 'textKength';
+    FType: String; external name 'type';
+    FValidationMessage: String; external name 'validationMessage';
+    FValidity: TJSValidityState;  external name 'validity';
+    FWillValidate: boolean; external name 'willValidate';
+  Public
+    defaultValue : string;
+    value : string;
+    rows : cardinal;
+    cols : cardinal;
+    autofocus : boolean;
+    disabled : boolean;
+    maxLength : nativeInt;
+    readOnly : Boolean;
+    required : Boolean;
+    selectionStart : Cardinal;
+    selectionEnd : Cardinal;
+    selectionDirection : String;
+    wrap : string;
+    Property Form : TJSHTMLFormElement Read FForm;
+    Property Type_: String Read FType;
+    Property textLength : NativeInt Read FTextLength;
+    Property validity : TJSValidityState Read FValidity;
+    property willValidate : boolean read FWillValidate;
+    property validationMessage : String Read FValidationMessage;
+  end;
+
   { TJSHTMLEmbedElement }
 
   TJSHTMLEmbedElement = class external name 'HTMLEmbedElement' (TJSHTMLElement)

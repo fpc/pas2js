@@ -13111,6 +13111,7 @@ begin
   Add('  tcontrol(obj):=tcontrol(tcontrol(obj).getit());');
   Add('  tcontrol(obj):=tcontrol(tcontrol(obj).getit(1));');
   Add('  tcontrol(obj):=tcontrol(tcontrol(tcontrol(obj).getit).arr[2]);');
+  Add('  obj:=tcontrol(nil);');
   ConvertProgram;
   CheckSource('TestClass_TypeCast',
     LinesToStr([ // statements
@@ -13149,6 +13150,7 @@ begin
     '$mod.Obj = $mod.Obj.GetIt(0);',
     '$mod.Obj = $mod.Obj.GetIt(1);',
     '$mod.Obj = $mod.Obj.GetIt(0).Arr[2];',
+    '$mod.Obj = null;',
     '']));
 end;
 

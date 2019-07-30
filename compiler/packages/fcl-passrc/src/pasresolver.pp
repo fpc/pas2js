@@ -21092,7 +21092,9 @@ begin
         begin
         if IsBaseType(FromResolved.LoTypeEl,btPointer) then
           Result:=cExact; // untyped pointer to class instance
-        end;
+        end
+      else if FromResolved.BaseType=btNil then
+        Result:=cExact; // nil to class or interface
       end
     else if C=TPasClassOfType then
       begin
@@ -21113,7 +21115,9 @@ begin
         begin
         if IsBaseType(FromResolved.LoTypeEl,btPointer) then
           Result:=cExact; // untyped pointer to class-of
-        end;
+        end
+      else if FromResolved.BaseType=btNil then
+        Result:=cExact; // nil to class-of
       end
     else if C=TPasRecordType then
       begin
@@ -21144,7 +21148,12 @@ begin
         begin
         if IsDynArray(ToResolved.LoTypeEl)
             and IsBaseType(FromResolved.LoTypeEl,btPointer) then
-          Result:=cExact; // untyped pointer to dynnamic array
+          Result:=cExact; // untyped pointer to dynamic array
+        end
+      else if FromResolved.BaseType=btNil then
+        begin
+        if IsDynArray(ToResolved.LoTypeEl) then
+          Result:=cExact; // nil to dynamic array
         end;
       end
     else if (C=TPasProcedureType) or (C=TPasFunctionType) then
@@ -21246,7 +21255,10 @@ begin
           else
             Result:=cCompatible;
           end;
-        end;
+        end
+      else if FromResolved.BaseType=btNil then
+        // typecast nil to procedure type
+        Result:=cExact;
       end
     else if C=TPasPointerType then
       begin

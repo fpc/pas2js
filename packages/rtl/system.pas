@@ -975,7 +975,7 @@ begin
   Id:=Msg['MsgStr'];
   if not isString(Id) then exit;
   aClass:=ClassType;
-  while aClass<>nil do
+  while (aClass<>Nil) do
     begin
     asm
       var Handlers = aClass.$msgstr;
@@ -991,12 +991,12 @@ end;
 
 procedure TObject.DefaultHandler(var aMessage);
 begin
-  if jsvalue(aMessage) then ;
+  if jsvalue(TMethod(aMessage)) then ;
 end;
 
 procedure TObject.DefaultHandlerStr(var aMessage);
 begin
-  if jsvalue(aMessage) then ;
+  if jsvalue(TMethod(aMessage)) then ;
 end;
 
 function TObject.GetInterface(const iid: TGuid; out obj): boolean;

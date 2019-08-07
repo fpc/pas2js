@@ -605,6 +605,8 @@ type
   { TPasArrayType }
 
   TPasArrayType = class(TPasType)
+  protected
+    procedure SetParent(const AValue: TPasElement); override;
   public
     destructor Destroy; override;
     function ElementTypeName: string; override;
@@ -2856,6 +2858,27 @@ begin
   inherited Destroy;
 end;
 
+procedure TPasArrayType.SetParent(const AValue: TPasElement);
+var
+  CurArr: TPasArrayType;
+begin
+  if (AValue=nil) and (Parent<>nil) then
+    begin
+    // parent is cleared
+    // -> clear all references to this array (releasing loops)
+    CurArr:=Self;
+    while CurArr.ElType is TPasArrayType do
+      begin
+      if CurArr.ElType=Self then
+        begin
+        ReleaseAndNil(TPasElement(CurArr.ElType){$IFDEF CheckPasTreeRefCount},'TPasClassType.AncestorType'{$ENDIF});
+        break;
+        end;
+      CurArr:=TPasArrayType(CurArr.ElType);
+      end;
+    end;
+  inherited SetParent(AValue);
+end;
 
 destructor TPasArrayType.Destroy;
 var

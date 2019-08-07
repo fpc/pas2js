@@ -756,6 +756,7 @@ type
 
     // arrays
     Procedure TestDynArrayOfLongint;
+    Procedure TestDynArrayOfSelfFail;
     Procedure TestStaticArray;
     Procedure TestStaticArrayOfChar;
     Procedure TestStaticArrayOfCharDelphi;
@@ -13520,6 +13521,14 @@ begin
   Add('  if a[3]=a[4] then ;');
   Add('  a[a[5]]:=a[a[6]];');
   ParseProgram;
+end;
+
+procedure TTestResolver.TestDynArrayOfSelfFail;
+begin
+  StartProgram(false);
+  Add('type TIntArray = array of TIntArray;');
+  Add('begin');
+  CheckResolverException(sIllegalExpression,nIllegalExpression);
 end;
 
 procedure TTestResolver.TestStaticArray;

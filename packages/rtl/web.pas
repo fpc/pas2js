@@ -2440,6 +2440,7 @@ Type
     formTarget : String;
     menu: TJSHTMLMenuElement;
     _type : String; external name 'type';
+    value : string;
   Public
     property form : TJSHTMLFormElement Read FForm;
     property labels : TJSNodeList Read FLabels;

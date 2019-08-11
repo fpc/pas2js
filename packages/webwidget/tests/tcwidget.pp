@@ -1960,6 +1960,6 @@ begin
 end;
 
 initialization
-//  RegisterTests([TTestWidgetBasicOperations,TTestWebWidgetStyles,TTestWebWidgetReferences]);
+  RegisterTests([TTestWidgetBasicOperations,TTestWebWidgetStyles,TTestWebWidgetReferences]);
 end.
 

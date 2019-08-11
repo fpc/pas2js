@@ -1371,12 +1371,12 @@ begin
 end;
 
 initialization
-  RegisterTests([{TTestViewPort,TTestButtonWidget,TTestPage,
+  RegisterTests([TTestViewPort,TTestButtonWidget,TTestPage,
                  TTestTextInputElement,TTestTextAreaElement,
                  TTestRadioInputElement,TTestCheckBoxInputElement,
                  TTestDateInputElement,TTestFileInputElement,
                  TTestHiddenInputElement, TTestImageElement,
                  TTestImageElement,TTestSelectElement,
-                 TTestLabelWidget,TTestTextWidget,}TTestTextLinesWidget]);
+                 TTestLabelWidget,TTestTextWidget,TTestTextLinesWidget]);
 end.
 

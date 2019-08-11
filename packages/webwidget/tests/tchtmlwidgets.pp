@@ -289,8 +289,236 @@ Type
     Procedure TestMultiSelect;
   end;
 
+  TMyTextWidget = Class(TTextWidget)
+  Public
+    Property Element;
+    Property ParentElement;
+  end;
+
+  { TTestTextWidget }
+
+  TTestTextWidget = Class(TBaseTestWidget)
+  private
+    FMy: TMyTextWidget;
+  Protected
+    Procedure Setup; override;
+    Procedure TearDown; override;
+    Property My : TMyTextWidget Read FMy;
+  Published
+    Procedure TestEmpty;
+    Procedure TestRenderText;
+    Procedure TestRenderedTextChange;
+    Procedure TestRenderHTML;
+    Procedure TestRenderedHTMLChange;
+    procedure TestTextModeChangeRenders;
+    procedure TestEnvelopeChangeRenders;
+  end;
+
+  TMyTextLinesWidget = Class(TTextLinesWidget)
+  Public
+    Property Element;
+    Property ParentElement;
+  end;
+
+  { TTestTextLinesWidget }
+
+  TTestTextLinesWidget = Class(TBaseTestWidget)
+  private
+    FMy: TMyTextLinesWidget;
+  Protected
+    Procedure Setup; override;
+    Procedure TearDown; override;
+    Property My : TMyTextLinesWidget Read FMy;
+  Published
+    Procedure TestEmpty;
+    Procedure TestRenderText;
+    Procedure TestRenderedTextChange;
+    Procedure TestRenderTextLineBreaks;
+    Procedure TestRenderHTML;
+    Procedure TestRenderHTMLLineBreaks;
+    Procedure TestRenderedHTMLChange;
+    procedure TestTextModeChangeRenders;
+    procedure TestEnvelopeChangeRenders;
+  end;
 
 implementation
+
+{ TTestTextLinesWidget }
+
+procedure TTestTextLinesWidget.Setup;
+begin
+  inherited Setup;
+  FMy:=TMyTextLinesWidget.Create(Nil);
+  FMy.ParentID:=SBaseWindowID;
+  FMy.Lines.Add('0&lt;1');
+  FMy.Lines.Add('two');
+end;
+
+procedure TTestTextLinesWidget.TearDown;
+begin
+  FreeAndNil(FMy);
+  inherited TearDown;
+end;
+
+procedure TTestTextLinesWidget.TestEmpty;
+begin
+  AssertNotNull('Have widget',My);
+  AssertNull('widget not rendered',My.Element);
+  AssertTrue('Text mode default text',tmText=My.TextMode);
+  AssertTrue('Envelope tag default paragraph',ttParagraph=My.EnvelopeTag);
+end;
+
+procedure TTestTextLinesWidget.TestRenderText;
+begin
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0&lt;1'+slineBreak+'two'+slineBreak,My.Element.InnerText);
+end;
+
+procedure TTestTextLinesWidget.TestRenderedTextChange;
+begin
+  My.Refresh;
+  My.Lines[1]:='Three';
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0&lt;1'+slineBreak+'Three'+slineBreak,My.Element.InnerText);
+end;
+
+procedure TTestTextLinesWidget.TestRenderTextLineBreaks;
+begin
+  My.ForceLineBreaks:=True;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have text','0&lt;1'+slineBreak+'two'+slineBreak,My.Element.InnerText);
+  AssertEquals('Have HTML','0&amp;lt;1<br>two<br>',My.Element.InnerHtml);
+end;
+
+procedure TTestTextLinesWidget.TestRenderHTML;
+begin
+  My.TextMode:=tmHTML;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0<1 two',My.Element.InnerText);
+  AssertEquals('Have HTML','0&lt;1'+sLineBreak+'two'+sLineBreak,My.Element.InnerHtml);
+end;
+
+procedure TTestTextLinesWidget.TestRenderHTMLLineBreaks;
+
+begin
+  My.TextMode:=tmHTML;
+  My.ForceLineBreaks:=True;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0<1'+slineBreak+'two'+slineBreak,My.Element.InnerText);
+  AssertEquals('Have HTML','0&lt;1<br>two<br>',My.Element.InnerHtml);
+end;
+
+procedure TTestTextLinesWidget.TestRenderedHTMLChange;
+begin
+  TestRenderHTML;
+  My.Lines[1]:='three';
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0<1 three',My.Element.InnerText);
+  AssertEquals('Have HTML','0&lt;1'+sLineBreak+'three'+sLineBreak,My.Element.InnerHtml);
+end;
+
+procedure TTestTextLinesWidget.TestTextModeChangeRenders;
+begin
+  TestRenderText;
+  My.TextMode:=tmHTML;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0<1 two',My.Element.InnerText);
+  AssertEquals('Have HTML','0&lt;1'+sLineBreak+'two'+sLineBreak,My.Element.InnerHtml);
+end;
+
+procedure TTestTextLinesWidget.TestEnvelopeChangeRenders;
+begin
+  TestRenderText;
+  My.EnvelopeTag:=ttSpan;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','SPAN',My.Element.tagName);
+  AssertEquals('Have text','0&lt;1'+slineBreak+'two'+slineBreak,My.Element.InnerText);
+
+end;
+
+{ TTestTextWidget }
+
+procedure TTestTextWidget.Setup;
+begin
+  inherited Setup;
+  FMy:=TMyTextWidget.Create(Nil);
+  FMy.ParentID:=SBaseWindowID;
+  FMy.Text:='0&lt;1';
+end;
+
+procedure TTestTextWidget.TearDown;
+begin
+  FreeAndNil(FMy);
+  inherited TearDown;
+end;
+
+procedure TTestTextWidget.TestEmpty;
+begin
+  AssertNotNull('Have widget',My);
+  AssertNull('widget not rendered',My.Element);
+  AssertTrue('Text mode default text',tmText=My.TextMode);
+  AssertTrue('Envelope tag default paragraph',ttParagraph=My.EnvelopeTag);
+end;
+
+procedure TTestTextWidget.TestRenderText;
+begin
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0&lt;1',My.Element.InnerText);
+end;
+
+procedure TTestTextWidget.TestRenderedTextChange;
+begin
+  TestRenderText;
+  My.Text:='Something else';
+  AssertEquals('Have text','Something else',My.Element.InnerText);
+end;
+
+procedure TTestTextWidget.TestRenderHTML;
+begin
+  My.TextMode:=tmHTML;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','P',My.Element.tagName);
+  AssertEquals('Have text','0<1',My.Element.InnerText);
+  AssertEquals('Have HTML','0&lt;1',My.Element.InnerHtml);
+end;
+
+procedure TTestTextWidget.TestRenderedHTMLChange;
+begin
+  TestRenderHtml;
+  My.Text:='2&gt;1';
+  AssertEquals('Have text','2>1',My.Element.InnerText);
+  AssertEquals('Have HTML','2&gt;1',My.Element.InnerHtml);
+end;
+
+procedure TTestTextWidget.TestTextModeChangeRenders;
+begin
+  TestRenderText;
+  My.TextMode:=tmHTML;
+  AssertEquals('Have text','0<1',My.Element.InnerText);
+  AssertEquals('Have HTML','0&lt;1',My.Element.InnerHtml);
+end;
+
+procedure TTestTextWidget.TestEnvelopeChangeRenders;
+begin
+  TestRenderText;
+  My.EnvelopeTag:=ttSpan;
+  AssertEquals('Have element','SPAN',My.Element.tagName);
+  AssertEquals('Have text','0&lt;1',My.Element.InnerText);
+  AssertEquals('Have HTML','0&amp;lt;1',My.Element.InnerHtml);
+end;
 
 { TTestLabelWidget }
 
@@ -457,7 +685,6 @@ begin
   AssertEquals('SelectionItem[0]','One',My.SelectionItem[0]);
   AssertEquals('SelectionValue[1]','3',My.selectionValue[1]);
   AssertEquals('SelectionItem[1]','Three',My.selectionItem[1]);
-
 end;
 
 { TTestImageElement }
@@ -1144,12 +1371,12 @@ begin
 end;
 
 initialization
-  RegisterTests([TTestViewPort,TTestButtonWidget,TTestPage,
+  RegisterTests([{TTestViewPort,TTestButtonWidget,TTestPage,
                  TTestTextInputElement,TTestTextAreaElement,
                  TTestRadioInputElement,TTestCheckBoxInputElement,
                  TTestDateInputElement,TTestFileInputElement,
                  TTestHiddenInputElement, TTestImageElement,
                  TTestImageElement,TTestSelectElement,
-                 TTestLabelWidget]);
+                 TTestLabelWidget,TTestTextWidget,}TTestTextLinesWidget]);
 end.
 

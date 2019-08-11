@@ -33,7 +33,15 @@ Type
     Function MyTop : TJSHTMLElement;
     Property AddedClasses : String Read FAdd Write FAdd;
   end;
+
+  { TMyChildWidget }
+
   TMyChildWidget = Class(TMyWebWidget);
+
+  TMySimpleChildWidget = Class(TMyChildWidget)
+  Public
+    Class Function AllowChildren : Boolean; override;
+  end;
   TMyParentWidget = Class(TMyWebWidget);
 
   { TMySubContentWidget }
@@ -69,6 +77,7 @@ Type
     Property References;
     Property Subs : TJSHTMLElementArray read FSubs;
     Property UL : TJSHTMLElement read FUL;
+    Property Element;
   end;
 
 
@@ -277,17 +286,41 @@ Type
   TTestWebWidgetReferences = Class(TBaseTestWidget)
   private
     FMy: TMyRefWidget;
+    F : TReferenceItem;
     function GetItems: TWebWidgetReferences;
   Public
     Procedure Setup; override;
     Procedure TearDown; override;
+    Procedure AddSet;
+    Procedure GetDRef;
     Property MyWidget : TMyRefWidget Read FMy;
     Property References : TWebWidgetReferences Read GetItems;
   Published
     Procedure TestEmpty;
+    Procedure TestAdd;
+    Procedure TestIndexOf;
+    Procedure TestIndexOfCaseInsensitive;
+    Procedure TestFind;
+    Procedure TestGet;
+    Procedure SelectSingleBeforeRefresh;
+    Procedure GetSingleByName;
+    Procedure GetSingleNonExist;
+    Procedure GetSingleByNameCaseInsensitive;
+    Procedure SelectMultiBeforeRefresh;
+    procedure GetMultiByName;
+    procedure GetMultiNonExist;
+    Procedure SelectSingleAfterRefresh;
+    Procedure SelectMultiAfterRefresh;
   end;
 
 implementation
+
+{ TMyChildWidget }
+
+class function TMySimpleChildWidget.AllowChildren: Boolean;
+begin
+  Result:=FAlse;
+end;
 
 { TMyRefWidget }
 
@@ -310,15 +343,14 @@ Var
   I : Integer;
 begin
   Result:=inherited DoRenderHTML(aParent, aElement);
-  FUL:=TJSHTMLElement(Document.CreateElement('<ul>'));
+  FUL:=TJSHTMLElement(Document.CreateElement('ul'));
   Result.insertBefore(Ful,FSub);
-  Result.AppendChild(FUL);
   SetLength(FSubs,10);
   For I:=0 to 9 do
     begin
     FSubs[i]:=TJSHTMLElement(Document.CreateElement('li'));
     FSubs[i].InnerText:='item '+IntToStr(I);
-    FUL.AppendChild(FSubs);
+    FUL.AppendChild(FSubs[i]);
     end;
 end;
 
@@ -332,16 +364,189 @@ end;
 procedure TTestWebWidgetReferences.Setup;
 begin
   inherited Setup;
+  FMy:=TMyRefWidget.Create(Nil);
+  FMy.ParentID:=SBaseWindowID;
 end;
 
 procedure TTestWebWidgetReferences.TearDown;
 begin
+  FreeAndNil(FMy);
   inherited TearDown;
+end;
+
+procedure TTestWebWidgetReferences.AddSet;
+begin
+  MyWidget.References.Add('a','div');
+  MyWidget.References.Add('b','ul');
+  MyWidget.References.Add('c','ul>li');
+end;
+
+procedure TTestWebWidgetReferences.GetDRef;
+begin
+  F:=References.GetReference('D');
 end;
 
 procedure TTestWebWidgetReferences.TestEmpty;
 begin
+  AssertNotNull('Have widget',MyWidget);
+  AssertNull('widget not rendered',MyWidget.Element);
+  AssertEquals('No references',0,MyWidget.References.Count);
+  AssertSame('Correct references prop',MyWidget.References,References);
+end;
 
+procedure TTestWebWidgetReferences.TestAdd;
+begin
+  AddSet;
+  AssertEquals('Count',3,references.Count);
+  AssertEquals('0 : Name','a',references[0].name);
+  AssertEquals('0 : Selector','div',references[0].Selector);
+  AssertEquals('1 : Name','b',references[1].name);
+  AssertEquals('1 : Selector','ul',references[1].selector);
+  AssertEquals('2 : Name','c',references[2].name);
+  AssertEquals('2 : Selector','ul>li',references[2].selector);
+end;
+
+procedure TTestWebWidgetReferences.TestIndexOf;
+begin
+  AddSet;
+  AssertEquals('a',0,References.IndexOfReference('a'));
+  AssertEquals('b',1,References.IndexOfReference('b'));
+  AssertEquals('c',2,References.IndexOfReference('c'));
+  AssertEquals('d',-1,References.IndexOfReference('d'));
+end;
+
+procedure TTestWebWidgetReferences.TestIndexOfCaseInsensitive;
+begin
+  AddSet;
+  AssertEquals('a',0,References.IndexOfReference('A'));
+  AssertEquals('b',1,References.IndexOfReference('B'));
+  AssertEquals('c',2,References.IndexOfReference('C'));
+  AssertEquals('d',-1,References.IndexOfReference('D'));
+end;
+
+procedure TTestWebWidgetReferences.TestFind;
+begin
+  AddSet;
+  AssertSame('A',References[0],References.FindReference('A'));
+  AssertSame('a',References[0],References.FindReference('a'));
+  AssertNull('e',References.FindReference('E'));
+end;
+
+procedure TTestWebWidgetReferences.TestGet;
+begin
+  AddSet;
+  AssertSame('A',References[0],References.GetReference('A'));
+  AssertSame('a',References[0],References.GetReference('a'));
+  AssertException('Get unknown',EWidgets,@GetDRef);
+end;
+
+procedure TTestWebWidgetReferences.SelectSingleBeforeRefresh;
+begin
+  MyWidget.References.Add('me','ul');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  AssertEquals('count of References found',1,Length(References[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
+  AssertSame('Reference filled',MyWidget.UL,References[0].Element);
+end;
+
+procedure TTestWebWidgetReferences.GetSingleByName;
+begin
+  MyWidget.References.Add('me','ul');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  AssertEquals('count of References found',1,Length(References[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
+  AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementByName('me'));
+  AssertEquals('Reference filled',1,Length(MyWidget.references.GetElementsByName('me')));
+  AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementsByName('me')[0]);
+end;
+
+procedure TTestWebWidgetReferences.GetSingleNonExist;
+begin
+  MyWidget.References.Add('me','ul');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  AssertNull('Reference filled',MyWidget.references.GetElementByName('a'));
+end;
+
+procedure TTestWebWidgetReferences.GetSingleByNameCaseInsensitive;
+begin
+  MyWidget.References.Add('ME','ul');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  AssertEquals('count of References found',1,Length(References[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
+  AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementByName('me'));
+  AssertEquals('Reference filled',1,Length(MyWidget.references.GetElementsByName('me')));
+  AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementsByName('me')[0]);
+end;
+
+procedure TTestWebWidgetReferences.SelectMultiBeforeRefresh;
+
+Var
+  I : integer;
+
+begin
+  MyWidget.References.Add('me','li');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  AssertEquals('Count of References found',10,Length(References[0].Elements));
+  for I:=0 to Length(MyWidget.FSubs)-1 do
+    AssertSame('1 array Reference filled',MyWidget.Subs[I],References[0].Elements[i]);
+  AssertSame('first Reference filled',MyWidget.Subs[0],References[0].Element);
+end;
+
+procedure TTestWebWidgetReferences.GetMultiByName;
+
+Var
+  I : integer;
+  a : TJSHTMLElementArray;
+
+begin
+  MyWidget.References.Add('me','li');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  a:=References.GetElementsByname('me');
+  AssertEquals('Count of References found',10,Length(a));
+  for I:=0 to Length(MyWidget.FSubs)-1 do
+    AssertSame('1 array Reference filled',MyWidget.Subs[I],a[i]);
+end;
+
+procedure TTestWebWidgetReferences.GetMultiNonExist;
+Var
+  a : TJSHTMLElementArray;
+begin
+  MyWidget.References.Add('me','li');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  MyWidget.Refresh;
+  A:=References.GetElementsByName('no');
+  AssertNotNull('Empty array 1',A);
+  AssertEquals('Empty array 2',0, Length(A));
+end;
+
+procedure TTestWebWidgetReferences.SelectSingleAfterRefresh;
+begin
+  MyWidget.Refresh;
+  MyWidget.References.Add('me','ul');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  AssertEquals('count of References found',1,Length(References[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
+  AssertSame('Reference filled',MyWidget.UL,References[0].Element);
+end;
+
+procedure TTestWebWidgetReferences.SelectMultiAfterRefresh;
+Var
+  I : integer;
+
+begin
+  MyWidget.Refresh;
+  MyWidget.References.Add('me','li');
+  AssertEquals('Ref count',1,MyWidget.References.Count);
+  AssertEquals('Count of References found',10,Length(References[0].Elements));
+  for I:=0 to Length(MyWidget.FSubs)-1 do
+    AssertSame('1 array Reference filled',MyWidget.Subs[I],References[0].Elements[i]);
+  AssertSame('first Reference filled',MyWidget.Subs[0],References[0].Element);
 end;
 
 { TTestWebWidgetStyles }
@@ -755,9 +960,9 @@ begin
   AssertSame('Correct element',El,MyWidget.MyElement);
   AssertSame('Correct content element',El,MyWidget.MyContent);
   AssertTree('div('+SMyChildID+')');
-  AssertEquals('Have element data',el.ID,String(el.dataset['WwElement']));
-  AssertEquals('Have element top data',el.ID,String(el.dataset['WwElementTop']));
-  AssertEquals('Have element content data',el.ID,String(el.dataset['WwElementContent']));
+  AssertEquals('Have element data',el.ID,String(el.dataset['wwElement']));
+  AssertEquals('Have element top data',el.ID,String(el.dataset['wwElementTop']));
+  AssertEquals('Have element content data',el.ID,String(el.dataset['wwElementContent']));
 end;
 
 procedure TTestWidgetBasicOperations.TestSetParent;
@@ -795,9 +1000,9 @@ begin
   AssertSame('Have correct parent element',El,El2.parentElement);
   AssertSame('Have correct parent',El,MyWidget.MyParent);
   AssertEquals('Correct ID',el2.ID,MyWidget.ElementiD);
-  AssertEquals('Have element data',el2.ID,String(el2.dataset['WwElement']));
-  AssertEquals('Have element top data',el2.ID,String(el2.dataset['WwElementTop']));
-  AssertEquals('Have element content data',el2.ID,String(el2.dataset['WwElementContent']));
+  AssertEquals('Have element data',el2.ID,String(el2.dataset['wwElement']));
+  AssertEquals('Have element top data',el2.ID,String(el2.dataset['wwElementTop']));
+  AssertEquals('Have element content data',el2.ID,String(el2.dataset['wwElementContent']));
 end;
 
 procedure TTestWidgetBasicOperations.TestRenderParentID;
@@ -815,9 +1020,9 @@ begin
   AssertSame('Have correct parent element',El,El2.parentElement);
   AssertSame('Have correct parent',El,MyWidget.MyParent);
   AssertEquals('Correct ID',el2.ID,MyWidget.ElementiD);
-  AssertEquals('Have element data',el2.ID,String(el2.dataset['WwElement']));
-  AssertEquals('Have element top data',el2.ID,String(el2.dataset['WwElementTop']));
-  AssertEquals('Have element content data',el2.ID,String(el2.dataset['WwElementContent']));
+  AssertEquals('Have element data',el2.ID,String(el2.dataset['wwElement']));
+  AssertEquals('Have element top data',el2.ID,String(el2.dataset['wwElementTop']));
+  AssertEquals('Have element content data',el2.ID,String(el2.dataset['wwElementContent']));
 end;
 
 procedure TTestWidgetBasicOperations.TestUnRenderParent;
@@ -1755,6 +1960,6 @@ begin
 end;
 
 initialization
-  RegisterTests([TTestWidgetBasicOperations,TTestWebWidgetStyles]);
+//  RegisterTests([TTestWidgetBasicOperations,TTestWebWidgetStyles,TTestWebWidgetReferences]);
 end.
 

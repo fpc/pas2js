@@ -8,20 +8,26 @@ uses
   Classes, SysUtils, webwidget, js, web;
 
 Type
+  TTextMode = (tmText,tmHTML);
 
   { TButtonWidget }
 
   TButtonWidget = Class(TWebWidget)
   private
     FText: String;
+    FTextMode: TTextMode;
     procedure SetText(AValue: String);
+    procedure SetTextMode(AValue: TTextMode);
   Protected
+    procedure ApplyText(aElement: TJSHTMLElement);
     Procedure SetName(const NewName: TComponentName); override;
     Procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
   Public
     Procedure Click;
     Function HTMLTag : String; override;
+  Published
     Property Text : String Read FText Write SetText;
+    Property TextMode : TTextMode Read FTextMode Write SetTextMode;
   end;
 
   { TViewPort }
@@ -473,8 +479,72 @@ Type
     Property LabelFor : TWebWidget Read FLabelFor Write SetLabelFor;
   end;
 
+  TTextTag = (ttParagraph,ttBold,ttItalic,ttUnderline,ttStrikeThrough,ttSpan,ttQuote,ttBlockQuote,ttH1,ttH2,ttH3,ttH4,ttH5,ttH6,ttPre,ttRuby,ttArticle,ttAddress,ttAbbr,ttCustom);
+
+  { TTextWidget }
+
+  { TCustomTextWidget }
+
+  TCustomTextWidget = Class(TCustomWebWidget)
+  private
+    FCustomTag: String;
+    FEnvelopeTag: TTextTag;
+    FTextMode: TTextMode;
+    SerCustomTag: String;
+    procedure SetCustomTag(AValue: String);
+    procedure SetEnvelopeTag(AValue: TTextTag);
+    procedure SetTextMode(AValue: TTextMode);
+  Protected
+    procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
+    procedure ApplyText(aElement : TJSHTMLElement); virtual;
+    Function GetText : String; virtual; abstract;
+  Public
+    Function HTMLTag : String; override;
+  Published
+    Property CustomTag : String Read FCustomTag Write SetCustomTag;
+    Property EnvelopeTag : TTextTag Read FEnvelopeTag Write SetEnvelopeTag;
+    Property TextMode : TTextMode Read FTextMode Write SetTextMode;
+  end;
+
+  TTextWidget = Class(TCustomTextWidget)
+  private
+    FText : String;
+    procedure SetText(AValue: String);
+  Protected
+    Function GetText : String; override;
+  published
+    Property Text : String Read FText Write SetText;
+  end;
+
+  { TTextLinesWidget }
+
+  TTextLinesWidget = Class(TCustomTextWidget)
+  private
+    FLines : TStrings;
+    FForceLineBreaks: Boolean;
+    procedure DoLinesChanged(Sender: TObject);
+    procedure SetLines(AValue: TStrings);
+    procedure SetForceLineBreaks(AValue: Boolean);
+  Protected
+    Function GetText : String; override;
+    procedure ApplyText(aElement : TJSHTMLElement); override;
+  Public
+    Constructor Create(aOwner : TComponent); override;
+    Destructor Destroy; override;
+  published
+    Property Lines : TStrings Read FLines Write SetLines;
+    // When forcelinebreaks is true a <br> will be appended to every line.
+    // Note that for TextMode=tmText this means the lines will be rendered as-is, but there will still be a <br> between the lines
+    Property ForceLineBreaks : Boolean Read FForceLineBreaks Write SetForceLineBreaks;
+  end;
+
 
 Function ViewPort : TViewPort;
+
+Const
+  TextTagNames : Array[TTextTag] of string
+   = ('p','b','i','u','s','span','quote','blockquote','h1','h2','h3','h4','h5','h6','pre','ruby','article','address','abbr','');
+
 
 implementation
 
@@ -488,6 +558,145 @@ Function ViewPort : TViewPort;
 begin
   Result:=TViewPort.Instance;
 end;
+
+{ TCustomTextWidget }
+
+procedure TCustomTextWidget.SetEnvelopeTag(AValue: TTextTag);
+begin
+  if FEnvelopeTag=AValue then Exit;
+  FEnvelopeTag:=AValue;
+  if (FEnvelopeTag=ttCustom) and (FCustomTag='') then
+    FCustomTag:='div';
+  if IsRendered then
+    Refresh;
+end;
+
+procedure TCustomTextWidget.SetCustomTag(AValue: String);
+begin
+  if FCustomTag=AValue then Exit;
+  FCustomTag:=AValue;
+  if (FCustomTag<>'') then
+    FEnvelopeTag:=ttCustom;
+  if IsRendered then
+    Refresh;
+end;
+
+
+procedure TCustomTextWidget.SetTextMode(AValue: TTextMode);
+begin
+  if FTextMode=AValue then Exit;
+  FTextMode:=AValue;
+  if IsRendered then
+    ApplyText(Element);
+end;
+
+procedure TCustomTextWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
+begin
+  inherited ApplyWidgetSettings(aElement);
+  ApplyText(aElement);
+end;
+
+procedure TCustomTextWidget.ApplyText(aElement: TJSHTMLElement);
+begin
+  if FTextMode=tmText then
+    aElement.innerText:=GetText
+  else
+    aElement.innerHTML:=GetText;
+end;
+
+function TCustomTextWidget.HTMLTag: String;
+
+begin
+  Result:=TextTagNames[FEnvelopeTag];
+  if Result='' then
+    Result:='div';
+end;
+
+{ TTextLinesWidget }
+
+procedure TTextLinesWidget.SetLines(AValue: TStrings);
+begin
+  if FLines=AValue then Exit;
+  FLines.Assign(AValue);
+end;
+
+procedure TTextLinesWidget.SetForceLineBreaks(AValue: Boolean);
+begin
+  if FForceLineBreaks=AValue then Exit;
+  FForceLineBreaks:=AValue;
+  if IsRendered then
+    ApplyText(Element);
+end;
+
+procedure TTextLinesWidget.DoLinesChanged(Sender: TObject);
+begin
+  if IsRendered then
+    ApplyText(Element);
+end;
+
+function TTextLinesWidget.GetText: String;
+
+Var
+  I : integer;
+
+begin
+  if (FTextMode=tmHTML) and ForceLineBreaks then
+    begin
+    Result:='';
+    For I:=0 to FLines.Count-1 do
+      Result:=Result+flines[i]+'<br/>';
+    end
+  else
+    Result:=FLines.Text;
+end;
+
+procedure TTextLinesWidget.ApplyText(aElement: TJSHTMLElement);
+
+Var
+  I : integer;
+
+begin
+  if (TextMode=tmHTML) or (Not ForceLineBreaks)  then
+    inherited ApplyText(aElement)
+  else
+    begin
+    For I:=0 to FLines.Count-1 do
+      begin
+      aElement.AppendChild(Document.createTextNode(FLines[i]));
+      aElement.AppendChild(CreateElement('br',''));
+      end;
+    end;
+end;
+
+constructor TTextLinesWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  FLines:=TstringList.Create;
+  TstringList(FLines).OnChange:=@DoLinesChanged;
+end;
+
+destructor TTextLinesWidget.Destroy;
+begin
+  FLines:=TstringList.Create;
+  inherited Destroy;
+end;
+
+{ TTextWidget }
+
+procedure TTextWidget.SetText(AValue: String);
+begin
+  if FText=AValue then Exit;
+  FText:=AValue;
+  if IsRendered then
+    ApplyText(Element);
+end;
+
+function TTextWidget.GetText: String;
+begin
+  Result:=FText;
+end;
+
+
 
 { TLabelWidget }
 
@@ -1399,7 +1608,15 @@ begin
   if FText=AValue then Exit;
   FText:=AValue;
   if IsRendered then
-     Element.InnerText:=Ftext;
+    ApplyText(Element);
+end;
+
+procedure TButtonWidget.SetTextMode(AValue: TTextMode);
+begin
+  if FTextMode=AValue then Exit;
+  FTextMode:=AValue;
+  if IsRendered then
+     ApplyText(Element)
 end;
 
 
@@ -1423,7 +1640,16 @@ end;
 procedure TButtonWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 begin
   Inherited;
-  aElement.InnerText:=Text;
+  ApplyText(aElement);
+end;
+
+Procedure TButtonWidget.ApplyText(aElement : TJSHTMLElement);
+
+begin
+  if FTextMode=tmText then
+    aElement.InnerText:=FText
+  else
+    aElement.InnerHTML:=FText;
 end;
 
 procedure TButtonWidget.Click;

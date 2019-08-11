@@ -81,7 +81,6 @@ Const
   SEventTransitionRun = 'transitionrun';
   SEventTransitionStart = 'transitionstart';
   SEventWheel = 'wheel';
-  SErrNotRendered = 'Cannot perform this operation: Widget not rendered';
 
 
 Type
@@ -186,8 +185,8 @@ Type
     Function Widget : TCustomWebWidget;
     // Manipulate
     Function Add(Const aName : String; aSelector : String = '') : TReferenceItem; overload;
-    Function EnsureReference(Const aName : String) : TReferenceItem;
-    Function IndexOfReference(Const aName : String) : TReferenceItem;
+    Function EnsureReference(Const aName : String; Const aSelector : String = '') : TReferenceItem;
+    Function IndexOfReference(Const aName : String) : Integer;
     Function FindReference(Const aName : String) : TReferenceItem;
     Function GetReference(Const aName : String) : TReferenceItem;
     Procedure RemoveReference(Const aName : String);
@@ -353,9 +352,9 @@ Type
     Function DisplayElementName : String;
     // Make sure there is an element.
     function EnsureElement: TJSHTMLElement;
-    // Set parent element to nil.
+    // Set parent element to nil. No rendering is done. Can be called when there are no DOM elements
     Procedure InvalidateParentElement;
-    // Set element to nil, clears styles
+    // Set element to nil, clears styles and references. Can be called when there are no DOM elements
     Procedure InvalidateElement;
     // Name of the tag to create. Set to '' if you don't want RenderHTML to create one.
     Function HTMLTag : String; virtual; abstract;
@@ -382,11 +381,14 @@ Type
     // Apply data to Element, Top and Content. Can only be called when the 3 are set, i.e. after RenderHTML or when Element is set from ElementID.
     Procedure ApplyData; virtual;
     Procedure RemoveData; virtual;
+    // Update references
+    Procedure RefreshReferences; virtual;
     // Create html. Creates element below parent, and renders HTML using doRenderHTML
     Function RenderHTML(aParent : TJSHTMLELement) : TJSHTMLElement;
+    // Override this if you need to do additional actions besides removing top element from parent. Parent is always assigned
     Procedure DoUnRender(aParent : TJSHTMLElement) ; virtual;
     // Remove HTML, if any. aParent can be nil.
-    Procedure UnRender(aParent : TJSHTMLElement);
+    Procedure UnRender(aParent : TJSHTMLElement); overload;
     // Dispatch an event
     Function DispatchEvent(aName : String; aEvent : TJSEvent = Nil) : Boolean;
     // the rendered or attached element if ElementID was set. Can be Nil;
@@ -426,6 +428,8 @@ Type
     Procedure RemoveData(const aName : String);
     // Re-render
     Procedure Refresh;
+    // Unrender
+    Procedure Unrender; overload;
     // These work on the classes property, and on the current element if rendered. Returns the new value of classes.
     Function RemoveClasses(const aClasses : String; Normalize : Boolean = false) : String;
     Function AddClasses(const aClasses : String; Normalize : Boolean = false) : String;
@@ -674,18 +678,22 @@ ResourceString
    SErrElementIDNotAllowed = 'Setting element ID is not allowed';
    SErrParentIDNotAllowed = 'Setting parent ID is not allowed';
    SErrParentNotAllowed = 'Setting parent is not allowed';
+   SErrChildrenNotAllowed = 'Parent does not allow children';
    SErrWidgetNotFound = 'Widget with ID "%s" not found.';
+   SErrUnknownReference = 'Unknown reference: %s';
+   SErrNotRendered = 'Cannot perform this operation: Widget not rendered';
+   SErrCannotRefreshNoWidget = 'Cannot refresh references without widget';
 
 { TWebWidgetReferences }
 
 function TWebWidgetReferences.GetReferenceItem(aIndex : Integer): TReferenceItem;
 begin
-
+  Result:=TReferenceItem(Items[aIndex])
 end;
 
 procedure TWebWidgetReferences.SetReferenceItem(aIndex : Integer; AValue: TReferenceItem);
 begin
-
+  Items[aIndex]:=aValue;
 end;
 
 procedure TWebWidgetReferences.MarkDirty(aItem: TReferenceItem);
@@ -695,8 +703,28 @@ begin
 end;
 
 procedure TWebWidgetReferences.RefreshFromDOM(aItem: TReferenceItem; aElement: TJSHTMlElement);
-begin
 
+Var
+  a : TJSHTMlElementArray;
+  Nodes : TJSNodeList;
+  I : integer;
+
+begin
+  if (Widget=Nil) then
+    Raise EWidgets.Create(SErrCannotRefreshNoWidget);
+  if (Widget.Element=Nil) then
+    Raise EWidgets.Create(SErrNotRendered);
+  if FRefs=Nil then
+    FRefs:=New([]);
+  try
+    Nodes:=Widget.Element.querySelectorAll(aItem.Selector);
+    SetLength(a,Nodes.length);
+    For I:=0 to Nodes.length-1 do
+      A[i]:=TJSHTMLElement(Nodes[i]);
+  except
+    SetLength(a,0);
+  end;
+  FRefs[LowerCase(aItem.Name)]:=A;
 end;
 
 function TWebWidgetReferences.Widget: TCustomWebWidget;
@@ -713,44 +741,87 @@ begin
     MarkDirty(Result)
 end;
 
-function TWebWidgetReferences.EnsureReference(const aName: String): TReferenceItem;
+function TWebWidgetReferences.EnsureReference(const aName: String; const aSelector: String): TReferenceItem;
 begin
-
+  Result:=FindReference(aName);
+  if Result=Nil then
+    Result:=Add(aName,aSelector);
 end;
 
-function TWebWidgetReferences.IndexOfReference(const aName: String): TReferenceItem;
+function TWebWidgetReferences.IndexOfReference(const aName: String): Integer;
 begin
-
+  Result:=Count-1;
+  While (Result>=0) and not SameText(GetReferenceItem(Result).Name,aName) do
+    Dec(Result);
 end;
 
 function TWebWidgetReferences.FindReference(const aName: String): TReferenceItem;
-begin
 
+Var
+  Idx:Integer;
+
+begin
+  Idx:=IndexOfReference(aName);
+  if Idx=-1 then
+    Result:=Nil
+  else
+    Result:=GetReferenceItem(Idx)
 end;
 
 function TWebWidgetReferences.GetReference(const aName: String): TReferenceItem;
 begin
-
+  Result:=FindReference(aName);
+  if (Result=Nil) then
+    Raise EWidgets.CreateFmt(SErrUnknownReference,[aName]);
 end;
 
 procedure TWebWidgetReferences.RemoveReference(const aName: String);
-begin
+Var
+  Idx:Integer;
 
+begin
+  Idx:=IndexOfReference(aName);
+  if Idx<>-1 then
+    Delete(Idx);
 end;
 
 function TWebWidgetReferences.GetElementByName(const aName: String): TJSHTMLElement;
-begin
 
+Var
+  J : JSValue;
+  Arr : TJSArray absolute J;
+
+begin
+  Result:=Nil;
+  if FRefs=Nil then
+    exit;
+  J:=FRefs[LowerCase(aName)];
+  if isArray(J) and (Arr.Length>0) then
+    Result:=TJSHTMLElement(Arr[0])
 end;
 
 function TWebWidgetReferences.GetElementsByName(const aName: String): TJSHTMLElementArray;
-begin
+Var
+  J : JSValue;
+  Arr : TJSArray absolute J;
 
+begin
+  Result:=Nil;
+  if FRefs=Nil then
+    exit;
+  J:=FRefs[LowerCase(aName)];
+  if isArray(J) and (Arr.Length>0) then
+    Result:=TJSHTMLElementArray(Arr)
 end;
 
 procedure TWebWidgetReferences.RefreshFromDOM(aElement: TJSHTMlElement);
-begin
 
+Var
+  I : Integer;
+
+begin
+  For I:=0 to Count-1 do
+    RefreshFromDOM(GetReferenceItem(I),aElement);
 end;
 
 { TReferenceItem }
@@ -1160,21 +1231,36 @@ begin
       Result:=RenderHTML(P);
       FOwnsElement:=True;
       FElement:=Result;
-      ApplyData;
       end;
+    ApplyData;
+    RefreshReferences; // After data, so data can be used in selectors
     end;
 end;
 
 procedure TCustomWebWidget.InvalidateParentElement;
+
+Var
+  I : Integer;
+
 begin
   FParentElement:=nil;
+  For I:=0 to ChildCount-1 do
+    Children[i].InvalidateParentElement;
 end;
 
 procedure TCustomWebWidget.InvalidateElement;
+
+Var
+  I : Integer;
+
 begin
   If FStyles.Count>0 then
     FStyles.ClearImported;
+  if Assigned(Freferences) then
+    FReferences.FRefs:=Nil;
   FElement:=nil;
+  For I:=0 to ChildCount-1 do
+    Children[i].InvalidateElement;
 end;
 
 function TCustomWebWidget.WidgetClasses: String;
@@ -1199,6 +1285,7 @@ begin
         ApplyWidgetSettings(el);
       FElement:=El;
       ApplyData;
+      RefreshReferences;// After data, so data can be used in selectors
       end;
     end;
   Result:=FElement;
@@ -1407,6 +1494,9 @@ begin
   if (AValue=FParent) then exit;
   if (FixedParent<>Nil) then
     Raise EWidgets.Create(SErrParentNotAllowed);
+  if Assigned(aValue) then
+    if Not aValue.AllowChildren then
+      Raise EWidgets.Create(SErrChildrenNotAllowed);
   If Assigned(FParent) then
     FParent.RemoveChild(Self);
   // Unrender
@@ -1423,7 +1513,10 @@ begin
     begin
     FElement:=RenderHTML(ParentElement);
     if Assigned(FElement) then
+      begin
       ApplyData;
+      RefreshReferences;
+      end;
     end;
 end;
 
@@ -1639,19 +1732,27 @@ end;
 procedure TCustomWebWidget.Refresh;
 
 Var
+  I : integer;
+
+begin
+  if IsRendered then
+    UnRender(ParentElement);
+  InvalidateParentElement;
+  EnsureElement;
+  For I:=0 to ChildCount-1 do
+    Children[i].Refresh;
+
+end;
+
+procedure TCustomWebWidget.Unrender;
+
+Var
   P : TJSHTMLElement;
 
 begin
-  P:=Nil;
-  if Assigned(FElement) then
-    begin
-    P:=ParentElement;
-    if Assigned(P) and (FElementID='') then // Do not remove when it's not ours to begin with
-      P.removeChild(FElement);
-    end;
-  InvalidateParentElement;
-  InvalidateElement;
-  EnsureElement;
+  P:=ParentElement;
+  If Assigned(P) then
+    UnRender(P);
 end;
 
 procedure TCustomWebWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
@@ -1725,6 +1826,15 @@ begin
   MaybeUnSet(ContentElement,SContentElementData);
 end;
 
+procedure TCustomWebWidget.RefreshReferences;
+begin
+  if Assigned(FReferences) then
+    if Assigned(Element) then
+      References.RefreshFromDom(Element)
+    else
+      References.FRefs:=Nil;
+end;
+
 class function TCustomWebWidget.GenerateID: String;
 
 begin
@@ -1767,8 +1877,8 @@ begin
   if Assigned(aParent) and Assigned(FElement) then
     begin
     if FOwnsElement then
-      aParent.removeChild(FElement);
-    FElement:=Nil
+      aParent.removeChild(TopElement);
+    InvalidateElement;
     end;
 end;
 
@@ -1777,7 +1887,8 @@ begin
   if Assigned(FBeforeUnRenderHTML) then
     FBeforeUnRenderHTML(Self);
   RemoveData;
-  DoUnRender(aParent);
+  if assigned(AParent) then
+    DoUnRender(aParent);
   if Assigned(FAfterUnRenderHTML) then
     FAfterUnRenderHTML(Self);
 end;

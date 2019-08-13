@@ -263,8 +263,8 @@ type
     function startsWith(aSearchString : String; aPosition : NativeInt) : Boolean; overload;
     function substr(aStartIndex : NativeInt) : String; overload;
     function substr(aStartIndex,aLength : NativeInt) : String; overload;
-    function subString(aStartIndex : NativeInt) : String; overload;
-    function subString(aStartIndex,aEndIndex : NativeInt) : String; overload;
+    function substring(aStartIndex : NativeInt) : String; overload;
+    function substring(aStartIndex,aEndIndex : NativeInt) : String; overload;
     function toLocaleLowerCase : String;
     function toLocaleUpperCase : String;
     function toLowerCase : String;

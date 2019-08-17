@@ -900,6 +900,7 @@ class function TObject.FieldAddress(aName: String): Pointer;
 
 begin
   Result:=Nil;
+  if aName='' then exit;
   asm
     var aClass = null;
     var i = 0;

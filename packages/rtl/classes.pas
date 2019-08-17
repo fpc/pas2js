@@ -1341,7 +1341,7 @@ type
     procedure WriteDouble(e: double);
     procedure WriteDWord(lw: longword);
     procedure WriteInteger(value: nativeInt);
-    procedure WriteLString(const s: String);
+    //procedure WriteLString(const s: String);
     procedure WriteQWord(q: nativeint);
     procedure WriteString(s: String);
     procedure WriteWord(w: word);
@@ -1427,17 +1427,16 @@ type
 { TStringStream }
 
 function TStringStream.GetDataString: String;
-
 var
-   a : TJSUint16Array;
-
+  a : TJSUint16Array;
 begin
   Result:=''; // Silence warning
   a:=TJSUint16Array.New(Memory.slice(0,Size));
-  asm
-//    Result=String.fromCharCode.apply(null, new Uint16Array(a));
-    Result=String.fromCharCode.apply(null, a);
-  end;
+  if a<>nil then
+    asm
+      // Result=String.fromCharCode.apply(null, new Uint16Array(a));
+      Result=String.fromCharCode.apply(null, a);
+    end;
 end;
 
 constructor TStringStream.Create(const aString: String);
@@ -6997,11 +6996,12 @@ end;
 procedure TReader.DefineProperty(const Name: String; AReadData: TReaderProc;
   WriteData: TWriterProc; HasData: Boolean);
 begin
-  if Assigned(AReadData) and (UpperCase(Name) = UpperCase(FPropName)) then
+  if Assigned(AReadData) and SameText(Name,FPropName) then
   begin
     AReadData(Self);
     SetLength(FPropName, 0);
-  end;
+  end else if assigned(WriteData) and HasData then
+    ;
 end;
 
 procedure TReader.DefineBinaryProperty(const Name: String;
@@ -7009,7 +7009,7 @@ procedure TReader.DefineBinaryProperty(const Name: String;
 var
   MemBuffer: TMemoryStream;
 begin
-  if Assigned(AReadData) and (UpperCase(Name) = UpperCase(FPropName)) then
+  if Assigned(AReadData) and SameText(Name,FPropName) then
   begin
     { Check if the next property really is a binary property}
     if FDriver.NextValue <> vaBinary then
@@ -7029,7 +7029,7 @@ begin
       MemBuffer.Free;
     end;
     SetLength(FPropName, 0);
-  end;
+  end else if assigned(WriteData) and HasData then ;
 end;
 
 function TReader.EndOfList: Boolean;
@@ -8381,7 +8381,7 @@ begin
     Driver.BeginProperty(FPropPath + Name);
     AWriteData(Self);
     Driver.EndProperty;
-  end;
+  end else if assigned(ReadData) then ;
 end;
 
 procedure TWriter.DefineBinaryProperty(const Name: String;
@@ -8393,7 +8393,7 @@ begin
     Driver.BeginProperty(FPropPath + Name);
     WriteBinary(AWriteData);
     Driver.EndProperty;
-  end;
+  end else if assigned(ReadData) then ;
 end;
 
 procedure TWriter.FlushBuffer;
@@ -8710,8 +8710,6 @@ var
   BoolValue, DefBoolValue: boolean;
   Handled: Boolean;
   O : TJSObject;
-  intfValue : IInterface;
-
 begin
   // do not stream properties without getter
   if PropInfo.Getter='' then
@@ -9011,8 +9009,7 @@ begin
       end;
     tkInterface:
       begin
-        IntfValue := GetInterfaceProp(Instance, PropInfo);
-{
+{        IntfValue := GetInterfaceProp(Instance, PropInfo);
       if Assigned(IntfValue) and Supports(IntfValue, IInterfaceComponentReference, CompRef) then
           begin
           Component := CompRef.GetComponent;
@@ -9354,7 +9351,7 @@ begin
     vaInt8: Result := ShortInt(Input.ReadByte);
     vaInt16: Result := SmallInt(ReadWord);
     vaInt32: Result := LongInt(ReadDWord);
-    vaNativeInt: Result := Int64(ReadNativeInt);
+    vaNativeInt: Result := ReadNativeInt;
   end;
 end;
 
@@ -10137,15 +10134,6 @@ begin
      Output.WriteBufferData(s[i]);
 end;
 
-procedure TObjectTextConverter.WriteLString(Const s: String);
-var
-  i : Integer;
-begin
-  WriteDWord(Length(s));
-  For I:=1 to Length(S) do
-    Output.WriteBufferData(s[i]);
-end;
-
 procedure TObjectTextConverter.WriteWString(Const s: WideString);
 
 var
@@ -10170,7 +10158,7 @@ begin
     WriteDWord(longword(value));
   end else begin
     Output.WriteByte(ord(vaInt64));
-    WriteQWord(qword(value));
+    WriteQWord(NativeUInt(value));
   end;
 end;
 
@@ -10195,7 +10183,6 @@ end;
 procedure TObjectTextConverter.ProcessValue;
 var
   flt: double;
-  s: String;
   stream: TBytesStream;
 begin
   case parser.Token of

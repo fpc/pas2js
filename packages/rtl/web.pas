@@ -42,21 +42,6 @@ Type
   TJSUIEvent = class;
   TJSTouchEvent = Class;
 
-  TJSAttr = class external name 'Attr' (TJSObject)
-  Private
-    fLocalName : String; external name 'localName';
-    fNameSpaceURI : String external name 'namespaceURI';
-    fPrefix : string; external name 'prefix';
-    fName : string; external name 'name';
-    fSpecified : Boolean; external name 'specified';
-  public
-    value : JSValue;
-    property localName : String Read fLocalName;
-    property namespaceURI : string Read fNameSpaceURI;
-    property prefix : string read fPrefix;
-    property name : string Read fName;
-    property specified : boolean Read fSpecified; // Useless, always true
-  end;
 
 
   { TEventListenerEvent }
@@ -143,6 +128,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property previousSibling : TJSNode Read FPreviousSibling;
   end;
 
+
   TJSNodeListCallBack = procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList);
   TJSNodeListEvent = procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList) of object;
   
@@ -156,7 +142,24 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property length : NativeInt Read FLength;
     Property Nodes [aIndex : NativeInt] : TJSNode Read item; default;
   end;
-  
+
+  TJSAttr = class external name 'Attr' (TJSNode)
+  Private
+    fLocalName : String; external name 'localName';
+    fNameSpaceURI : String external name 'namespaceURI';
+    fPrefix : string; external name 'prefix';
+    fName : string; external name 'name';
+    fSpecified : Boolean; external name 'specified';
+  public
+    value : JSValue;
+    property localName : String Read fLocalName;
+    property namespaceURI : string Read fNameSpaceURI;
+    property prefix : string read fPrefix;
+    property name : string Read fName;
+    property specified : boolean Read fSpecified; // Useless, always true
+  end;
+
+
   TJSNamedNodeMap = class external name 'NamedNodeMap'  (TJSObject)
   Public
     function getNamedItem(aName : string) : TJSAttr;

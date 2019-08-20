@@ -48,12 +48,14 @@ Type
     fNameSpaceURI : String external name 'namespaceURI';
     fPrefix : string; external name 'prefix';
     fName : string; external name 'name';
+    fSpecified : Boolean; external name 'specified';
   public
     value : JSValue;
     property localName : String Read fLocalName;
     property namespaceURI : string Read fNameSpaceURI;
     property prefix : string read fPrefix;
     property name : string Read fName;
+    property specified : boolean Read fSpecified; // Useless, always true
   end;
 
 
@@ -2382,6 +2384,39 @@ Type
     property validationMessage : string read FValidationmMessage;
     property willValidate : boolean read FWillValidate;
     property validity : TJSValidityState read FValidity;
+  end;
+
+  TJSDOMSettableTokenList = class external name 'DOMSettableTokenList' (TJSDOMTokenList)
+  private
+    fvalue: TJSDOMString; external name 'value';
+  public
+    property value: TJSDOMString read fvalue; // readonly
+  end;
+
+  TJSHTMLOutputElement = class external name 'HTMLOutputElement' (TJSHTMLElement)
+  private
+    flabels: TJSNodeList; external name 'labels';
+    fform: TJSHTMLFormElement; external name 'form';
+    ftype: TJSDOMString; external name 'type';
+    fdefaultValue: TJSDOMString; external name 'defaultValue';
+    fvalue: TJSDOMString; external name 'value';
+    fwillValidate: Boolean; external name 'willValidate';
+    fvalidity: TJSValidityState; external name 'validity';
+    fvalidationMessage: TJSDOMString; external name 'validationMessage';
+  public
+    htmlFor: TJSDOMSettableTokenList;
+    function checkValidity: Boolean;
+    function reportValidity: Boolean;
+    procedure setCustomValidity(error: TJSDOMString);
+  public
+    property labels: TJSNodeList read flabels;
+    property form: TJSHTMLFormElement read fform;
+    property type_: TJSDOMString read ftype;
+    property defaultValue: TJSDOMString read fdefaultValue;
+    property value: TJSDOMString read fvalue write fvalue;
+    property willValidate: Boolean read fwillValidate;
+    property validity: TJSValidityState read fvalidity;
+    property validationMessage: TJSDOMString read fvalidationMessage;
   end;
 
   { TJSHTMLImageElement }

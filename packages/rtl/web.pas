@@ -2239,6 +2239,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FElements: TJSHTMLFormControlsCollection; external name 'elements';
     FLength: NativeInt; external name 'length';
   Public
+    Procedure reset;
+    function reportValidity : Boolean;
+    procedure submit;
     method : string;
     target : string;
     action : string;

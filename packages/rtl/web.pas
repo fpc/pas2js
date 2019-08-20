@@ -61,12 +61,15 @@ Type
 
   { TEventListenerEvent }
 
-  TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
+(*
+TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   private
     FTarget: TJSEventTarget; external name 'target';
   public
     Property target: TJSEventTarget Read FTarget;
   end;
+*)
+  TEventListenerEvent = TJSEvent;
 
   TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean;
   TJSRawEventHandler = reference to Procedure(Event: TJSEvent);
@@ -426,10 +429,12 @@ Type
     FBubbles : Boolean; external name 'bubbles';
     FCancelable : Boolean; external name 'cancelable';
     FComposed : Boolean; external name 'composed';
-    FCurrentTarget : TJSElement; external name 'currentTarget';
+    FCurrentTarget : TJSEventTarget; external name 'currentTarget';
+    FCurrentTargetElement : TJSElement; external name 'currentTarget';
     FdefaultPrevented : Boolean; external name 'defaultPrevented';
     FEventPhase : NativeInt; external name 'eventPhase';
-    FTarget : TJSElement; external name 'target';
+    FTarget : TJSEventTarget; external name 'target';
+    FTargetElement : TJSElement; external name 'target';
     FTimeStamp : NativeInt; external name 'timestamp';
     FType : String; external name 'type';
     FIsTrusted : Boolean; external name 'isTrusted';
@@ -449,10 +454,12 @@ Type
     Property bubbles : Boolean Read FBubbles;
     Property cancelable : Boolean Read FCancelable;
     Property composed : Boolean Read FComposed;
-    property currentTarget : TJSElement Read FCurrentTarget;
+    property currentTarget : TJSEventTarget Read FCurrentTarget;
+    property currentTargetElement : TJSElement Read FCurrentTargetElement;
     property defaultPrevented : Boolean Read FdefaultPrevented;
     property eventPhase : NativeInt Read FEventPhase;
-    property target : TJSElement Read FTarget;
+    property target : TJSEventTarget Read FTarget;
+    property targetElement : TJSElement Read FTargetElement;
     Property timestamp : NativeInt Read FTimeStamp;
     property _type : string read FType;
     property isTrusted : Boolean Read FIsTrusted;

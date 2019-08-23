@@ -588,6 +588,7 @@ type
     pbifnIntf_Release,
     pbifnIntfAddMap,
     pbifnIntfAsClass,
+    pbifnIntfAsIntfT, // COM intfvar as intftype
     pbifnIntfCreate,
     pbifnIntfCreateTGUID,
     pbifnIntfExprRefsAdd,
@@ -597,6 +598,7 @@ type
     pbifnIntfGetIntfT,
     pbifnIntfGuidRToStr,
     pbifnIntfIsClass,
+    pbifnIntfIsIntf, // COM intfvar is intftype
     pbifnIntfToClass,
     pbifnIntfSetIntfL,
     pbifnIntfSetIntfP,
@@ -749,6 +751,7 @@ const
     '_Release', // rtl._Release
     'addIntf', // rtl.addIntf
     'intfAsClass', // rtl.intfAsClass
+    'intfAsIntfT', // rtl.intfAsIntfT
     'createInterface', // rtl.createInterface
     'createTGUID', // rtl.createTGUID
     'ref', // $ir.ref
@@ -758,6 +761,7 @@ const
     'getIntfT',   // rtl.getIntfT
     'guidrToStr', // rtl.guidrToStr
     'intfIsClass', // rtl.intfIsClass
+    'intfIsIntfT', // rtl.intfIsIntfT
     'intfToClass', // rtl.intfToClass
     'setIntfL', // rtl.setIntfL
     'setIntfP', // rtl.setIntfP
@@ -6872,8 +6876,13 @@ begin
                 // IntfVar as ClassType ->  rtl.intfAsClass(intfvar,classtype)
                 Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfAsClass),El);
               okInterface:
-                // IntfVar as IntfType -> "rtl.as(A,B)"
-                Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
+                // IntfVar as IntfType
+                if TPasClassType(LeftTypeEl).InterfaceType=citCom then
+                  // COM -> "rtl.intfAsIntfT(A,B)"
+                  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnIntfAsIntfT),El)
+                else
+                  // CORBA -> "rtl.as(A,B)"
+                  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnAs),El);
               else
                 NotSupportedRes(20180327214545);
               end;
@@ -7376,7 +7385,14 @@ begin
               Call.AddArg(B); B:=nil;
               exit;
               end;
-            okInterface: ;
+            okInterface:
+              if TPasClassType(LeftTypeEl).InterfaceType=citCom then
+                begin
+                // COM: IntfVar is IntfType  ->  rtl.intfIsIntfT(A,B)
+                Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnIntfIsIntf)]);
+                Call.AddArg(B); B:=nil;
+                exit;
+                end;
             else
               NotSupported(20180327210741);
             end;

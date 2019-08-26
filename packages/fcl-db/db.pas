@@ -46,7 +46,7 @@ type
     deCheckBrowseMode, dePropertyChange, deFieldListChange, deFocusControl,
     deParentScroll,deConnectChange,deReconcileError,deDisabledStateChange);
 
-  TUpdateStatus = (usUnmodified, usModified, usInserted, usDeleted, usResolved, usResolveFailed);
+  TUpdateStatus = (usUnmodified, usModified, usInserted, usDeleted, usResolved, usResolveFailed, usResolving);
   TUpdateStatusSet = Set of TUpdateStatus;
 
   TUpdateMode = (upWhereAll, upWhereChanged, upWhereKeyOnly);
@@ -1118,6 +1118,7 @@ type
     FUpdateBatchID : Integer;
     FChangeList : TFPList;
     FBatchList : TFPList;
+    FInApplyupdates : Boolean;
     Procedure DoInsertAppend(DoAppend : Boolean);
     Procedure DoInternalOpen;
     Function  GetBuffer (Index : longint) : TDataRecord;
@@ -1152,6 +1153,7 @@ type
     Procedure InitChangeList; virtual;
     Procedure DoneChangeList; virtual;
     Procedure ClearChangeList;
+    procedure ResetUpdateDescriptors;
     Function IndexInChangeList(aBookmark: TBookmark): Integer; virtual;
     Function AddToChangeList(aChange : TUpdateStatus) : TRecordUpdateDescriptor ; virtual;
     Procedure RemoveFromChangeList(R : TRecordUpdateDescriptor); virtual;
@@ -2736,7 +2738,7 @@ begin
     FBeforeApplyUpdates(Self);
 end;
 
-procedure TDataSet.DoAfterApplyUpdates(Const ResolveInfo : TResolveResults);
+procedure TDataSet.DoAfterApplyUpdates(const ResolveInfo: TResolveResults);
 
 begin
   If Assigned(FAfterApplyUpdates) then
@@ -2805,7 +2807,17 @@ begin
     end;
 end;
 
-Function TDataSet.IndexInChangeList(aBookmark : TBookmark) : Integer;
+procedure TDataSet.ResetUpdateDescriptors;
+
+Var
+  I : Integer;
+
+begin
+  For I:=0 to FChangeList.Count-1 do
+    TRecordUpdateDescriptor(FChangeList[i]).Reset;
+end;
+
+function TDataSet.IndexInChangeList(aBookmark: TBookmark): Integer;
 
 begin
   Result:=-1;
@@ -2816,7 +2828,7 @@ begin
     Dec(Result);
 end;
 
-Function TDataSet.AddToChangeList(aChange: TUpdateStatus) : TRecordUpdateDescriptor;
+function TDataSet.AddToChangeList(aChange: TUpdateStatus): TRecordUpdateDescriptor;
 
 Var
   B : TBookmark;
@@ -2854,7 +2866,7 @@ begin
     Exit;
 end;
 
-Function TDataSet.GetRecordUpdates(AList: TRecordUpdateDescriptorList) : Integer;
+function TDataSet.GetRecordUpdates(AList: TRecordUpdateDescriptorList): Integer;
 
 Var
   I,MinIndex : integer;
@@ -2862,11 +2874,12 @@ Var
 begin
   MinIndex:=0; // Check batch list for minimal index ?
   For I:=MinIndex to FChangeList.Count-1 do
-    Alist.Add(FChangeList[i]);
+    if Not (TRecordUpdateDescriptor(FChangeList[i]).Status in [usResolving,usResolved])  then
+      Alist.Add(FChangeList[i]);
   Result:=FChangeList.Count;
 end;
 
-Function TDataSet.ResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor) : Boolean;
+function TDataSet.ResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor): Boolean;
 
 // This must return true if the record may be removed from the list of 'modified' records.
 // If it returns false, the record is kept in the list of modified records.
@@ -2886,7 +2899,7 @@ begin
   DoOnRecordResolved(anUpdate);
 end;
 
-Function TDataSet.RecordUpdateDescriptorToResolveInfo(anUpdate: TRecordUpdateDescriptor) : TResolveInfo;
+function TDataSet.RecordUpdateDescriptorToResolveInfo(anUpdate: TRecordUpdateDescriptor): TResolveInfo;
 
 begin
   Result.BookMark:=anUpdate.Bookmark;
@@ -2961,24 +2974,33 @@ Var
 begin
   if Not Assigned(DataProxy) then
     DatabaseError(SErrDoApplyUpdatesNeedsProxy,Self);
-  if Not (Assigned(FChangeList) and (FChangeList.Count>0)) then
-    Exit;
-  L:=TRecordUpdateDescriptorList.Create;
+  if FInApplyupdates then
+    exit;
   try
-    I:=GetRecordUpdates(L);
-  except
-    L.Free;
-    Raise;
+    FInApplyupdates:=True;
+    if Not (Assigned(FChangeList) and (FChangeList.Count>0)) then
+      Exit;
+    L:=TRecordUpdateDescriptorList.Create;
+    try
+      I:=GetRecordUpdates(L);
+    except
+      L.Free;
+      Raise;
+    end;
+    Inc(FUpdateBatchID);
+    For I:=0 to L.Count-1 do
+      TRecordUpdateDescriptor(L[i]).SetStatus(usResolving);
+    B:=DataProxy.GetRecordUpdateBatch(FUpdateBatchID,L,True);
+    B.FDataset:=Self;
+    B.FLastChangeIndex:=I;
+    B.OnResolve:=@ResolveUpdateBatch;
+    If not Assigned(FBatchlist) then
+      FBatchlist:=TFPList.Create;
+    FBatchList.Add(B);
+    DataProxy.ProcessUpdateBatch(B);
+  Finally
+    FInApplyupdates:=False;
   end;
-  Inc(FUpdateBatchID);
-  B:=DataProxy.GetRecordUpdateBatch(FUpdateBatchID,L,True);
-  B.FDataset:=Self;
-  B.FLastChangeIndex:=I;
-  B.OnResolve:=@ResolveUpdateBatch;
-  If not Assigned(FBatchlist) then
-    FBatchlist:=TFPList.Create;
-  FBatchList.Add(B);
-  DataProxy.ProcessUpdateBatch(B);
 end;
 
 procedure TDataSet.DoneChangeList;
@@ -3104,20 +3126,20 @@ begin
   // empty stub
 end;
 
-procedure TDataSet.InternalGotoBookmark(ABookmark: TBookMark);
+procedure TDataSet.InternalGotoBookmark(ABookmark: TBookmark);
 begin
   // empty stub
 end;
 
 
-function TDataset.GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;
+function TDataSet.GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;
 
 begin
   Result:=TJSObject(buffer.data).Properties[Field.FieldName];
 end;
 
 
-procedure TDataSet.SetFieldData(Field: TField; var Buffer: TDataRecord; AValue : JSValue);
+procedure TDataSet.SetFieldData(Field: TField; var Buffer: TDatarecord; AValue: JSValue);
 
 begin
   TJSObject(buffer.data).Properties[Field.FieldName]:=AValue;
@@ -3307,7 +3329,7 @@ begin
   FFieldDefs.Assign(AFieldDefs);
 end;
 
-procedure TDataSet.DoInsertAppendRecord(const Values: array of JSValue; DoAppend : boolean);
+procedure TDataSet.DoInsertAppendRecord(const Values: array of jsValue; DoAppend: boolean);
 var i : integer;
     ValuesSize : integer;
 begin
@@ -3322,7 +3344,7 @@ begin
   Post;
 end;
 
-procedure TDataSet.InitFieldDefsFromFields;
+procedure TDataSet.InitFieldDefsFromfields;
 var i : integer;
 
 begin
@@ -3400,7 +3422,7 @@ begin
   end;
 end;
 
-procedure TDataSet.RefreshInternalCalcFields(Var Buffer: TDataRecord);
+procedure TDataSet.RefreshInternalCalcFields(var Buffer: TDataRecord);
 
 begin
   //!! To be implemented
@@ -3467,12 +3489,12 @@ begin
   // empty stub
 end;
 
-procedure TDataSet.SetBookmarkFlag(Var Buffer: TDataRecord; Value: TBookmarkFlag);
+procedure TDataSet.SetBookmarkFlag(var Buffer: TDataRecord; Value: TBookmarkFlag);
 begin
   // empty stub
 end;
 
-procedure TDataSet.SetBookmarkData(Var Buffer: TDataRecord; Data: TBookmark);
+procedure TDataSet.SetBookmarkData(var Buffer: TDataRecord; Data: TBookmark);
 begin
   // empty stub
 end;
@@ -3851,7 +3873,7 @@ begin
   //!! To be implemented
 end;
 
-procedure TDataSet.AppendRecord(const Values: array of JSValue);
+procedure TDataSet.AppendRecord(const Values: array of jsValue);
 
 begin
   DoInsertAppendRecord(Values,True);
@@ -3890,7 +3912,7 @@ begin
   Result:=DefaultConvertDateTimeToNative(aField, aValue);
 end;
 
-Class function TDataSet.DefaultConvertDateTimeToNative(aField : TField;aValue : TDateTime) : JSValue;
+class function TDataSet.DefaultConvertDateTimeToNative(aField: TField; aValue: TDateTime): JSValue;
 
 begin
   Result:=DateTimeToRFC3339(aValue);
@@ -3926,13 +3948,13 @@ begin
     end;
 end;
 
-Function TDataSet.BytesToBlobData(aValue : TBytes) : JSValue ;
+function TDataSet.BytesToBlobData(aValue: TBytes): JSValue;
 
 begin
   Result:=DefaultBytesToBlobData(aValue);
 end;
 
-Class Function TDataSet.DefaultBytesToBlobData(aValue : TBytes) : JSValue;
+class function TDataSet.DefaultBytesToBlobData(aValue: TBytes): JSValue;
 
 Var
   S : String;

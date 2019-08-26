@@ -35,6 +35,8 @@ type
   // This class is responsible for mapping the field objects of the records.
   TJSONFieldMapper = Class(TObject)
   Public
+    // Remove a field from the
+    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); virtual; abstract;
     // Return row TJSONData instance with data for field 'FieldName' or 'FieldIndex'.
     Function GetJSONDataForField(Const FieldName : String; FieldIndex : Integer; Row : JSValue) : JSValue; virtual; abstract;
     // Same, but now based on TField.
@@ -278,6 +280,7 @@ type
     FRowType: TJSONRowType;
     FFilterExpression : TFPExpressionParser;
     function GetFilterField(const AName: String): TFPExpressionResult;
+    procedure RemoveCalcFields(Buf: JSValue);
     procedure SetActiveIndex(AValue: String);
     procedure SetIndexes(AValue: TJSONIndexDefs);
     procedure SetMetaData(AValue: TJSObject);
@@ -417,6 +420,7 @@ type
   // Fieldmapper to be used when the data is in an object
   TJSONObjectFieldMapper = Class(TJSONFieldMapper)
   Public
+    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
@@ -426,6 +430,7 @@ type
   // Fieldmapper to be used when the data is in an array
   TJSONArrayFieldMapper = Class(TJSONFieldMapper)
   Public
+    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
@@ -993,14 +998,18 @@ end;
 
 { TJSONArrayFieldMapper }
 
+procedure TJSONArrayFieldMapper.RemoveField(const FieldName: String; FieldIndex: Integer; Row: JSValue);
+begin
+  TJSArray(Row).Splice(FieldIndex,1);
+end;
+
 procedure TJSONArrayFieldMapper.SetJSONDataForField(const FieldName: String;
   FieldIndex: Integer; Row, Data: JSValue);
 begin
   TJSValueDynArray(Row)[FieldIndex]:=Data;
 end;
 
-function TJSONArrayFieldMapper.GetJSONDataForField(Const FieldName: String;
-  FieldIndex: Integer; Row: JSValue): JSValue;
+function TJSONArrayFieldMapper.GetJSONDataForField(const FieldName: String; FieldIndex: Integer; Row: JSValue): JSValue;
 begin
   Result:=TJSValueDynArray(Row)[FieldIndex];
 end;
@@ -1012,6 +1021,11 @@ begin
 end;
 
 { TJSONObjectFieldMapper }
+
+procedure TJSONObjectFieldMapper.RemoveField(const FieldName: String; FieldIndex: Integer; Row: JSValue);
+begin
+  jsDelete(Row,FieldName);
+end;
 
 procedure TJSONObjectFieldMapper.SetJSONDataForField(const FieldName: String;
   FieldIndex: Integer; Row, Data: JSValue);
@@ -1411,13 +1425,28 @@ begin
     end;
 end;
 
+procedure TBaseJSONDataSet.RemoveCalcFields(Buf : JSValue);
+
+Var
+  i : integer;
+
+begin
+  For I:=0 to Fields.Count-1 do
+    if Fields[i].FieldKind in [fkCalculated,fkInternalCalc] then
+      FieldMapper.RemoveField(FIelds[i].FieldName,FIelds[i].Index,Buf);
+
+end;
+
 procedure TBaseJSONDataSet.InternalEdit;
 
 begin
 //  Writeln('TBaseJSONDataSet.InternalEdit:  ');
   FEditIdx:=FCurrentIndex.RecordIndex[FCurrent];
   if not isUndefined(Rows[FEditIdx]) then
-    FEditRow:=TJSJSON.parse(TJSJSON.stringify(Rows[FEditIdx]))
+    begin
+    FEditRow:=TJSJSON.parse(TJSJSON.stringify(Rows[FEditIdx]));
+    RemoveCalcFields(FEditRow);
+    end
   else
     FEditRow:=TJSObject.new;
 //  Writeln('TBaseJSONDataSet.InternalEdit: ',FEditRow);

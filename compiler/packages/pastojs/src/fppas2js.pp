@@ -567,6 +567,7 @@ type
     pbifnArray_Static_Clone,
     pbifnAs,
     pbifnAsExt,
+    pbifnBitwiseLongwordFix,
     pbifnBitwiseNativeIntAnd,
     pbifnBitwiseNativeIntOr,
     pbifnBitwiseNativeIntShl,
@@ -730,6 +731,7 @@ const
     '$clone',
     'as', // rtl.as
     'asExt', // rtl.asExt
+    'lw', // pbifnBitwiseLongwordFix
     'and', // pbifnBitwiseNativeIntAnd,
     'or', // pbifnBitwiseNativeIntOr,
     'shl', // pbifnBitwiseNativeIntShl,
@@ -1890,6 +1892,7 @@ type
     Function ConvertCharToInt(Arg: TJSElement; PosEl: TPasElement; ArgContext: TConvertContext): TJSElement; virtual;
     Function ConvertIntToInt(Arg: TJSElement; FromBT, ToBT: TResolverBaseType; PosEl: TPasElement; ArgContext: TConvertContext): TJSElement; virtual;
     Function CreateBitWiseAnd(El: TPasElement; Value: TJSElement; const Mask: TMaxPrecInt; Shift: integer): TJSElement; virtual;
+    Function CreateBitWiseLongword(El: TPasElement; Value: TJSElement): TJSElement; virtual;
     Function ConvertParamsExpr(El: TParamsExpr; AContext: TConvertContext): TJSElement; virtual;
     Function ConvertArrayParams(El: TParamsExpr; AContext: TConvertContext): TJSElement; virtual;
     Function ConvertFuncParams(El: TParamsExpr; AContext: TConvertContext): TJSElement; virtual;
@@ -6468,8 +6471,8 @@ function TPasToJSConverter.ConvertUnaryExpression(El: TUnaryExpr;
 Var
   U : TJSUnaryExpression;
   E : TJSElement;
-  ResolvedOp, ResolvedEl: TPasResolverResult;
-  BitwiseNot: Boolean;
+  ResolvedEl: TPasResolverResult;
+  BitwiseNot, NeedLongWordBitFix: Boolean;
   aResolver: TPas2JSResolver;
   TypeEl, SubTypeEl: TPasType;
 begin
@@ -6496,13 +6499,18 @@ begin
       BitwiseNot:=true;
       if aResolver<>nil then
         begin
-        aResolver.ComputeElement(El.Operand,ResolvedOp,[]);
-        BitwiseNot:=ResolvedOp.BaseType in btAllJSInteger;
-        end;
+        aResolver.ComputeElement(El.Operand,ResolvedEl,[]);
+        BitwiseNot:=ResolvedEl.BaseType in btAllJSInteger;
+        NeedLongWordBitFix:=ResolvedEl.BaseType=btLongWord;
+        end
+      else
+        NeedLongWordBitFix:=false;
       if BitwiseNot then
         begin
         U:=TJSUnaryInvExpression(CreateElement(TJSUnaryInvExpression,El));
         U.A:=E;
+        if NeedLongWordBitFix then
+          exit(CreateBitWiseLongword(El,U));
         end
       else
         U:=CreateUnaryNot(E,El);
@@ -6751,6 +6759,22 @@ Var
         +GetResolverResultDbg(RightResolved));
   end;
 
+  function BitwiseOpNeedLongwordFix: boolean;
+  begin
+    Result:=((LeftResolved.BaseType=btLongWord) and (RightResolved.BaseType<=btLongWord))
+        or ((RightResolved.BaseType=btLongWord) and (LeftResolved.BaseType<=btLongWord));
+  end;
+
+  function CreateBitwiseLongwordOp(A, B: TJSElement; C: TJSBinaryClass): TJSElement;
+  var
+    R: TJSBinary;
+  begin
+    R:=TJSBinary(CreateElement(C,El));
+    R.A:=A;
+    R.B:=B;
+    Result:=CreateBitWiseLongword(El,R);
+  end;
+
 var
   R : TJSBinary;
   C : TJSBinaryClass;
@@ -6906,16 +6930,23 @@ begin
           begin
           UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
                      or (RightResolved.BaseType in btAllJSInteger));
-          if UseBitwiseOp
-              and (LeftResolved.BaseType in [btIntDouble,btUIntDouble])
-              and (RightResolved.BaseType in [btIntDouble,btUIntDouble]) then
+          if UseBitwiseOp then
             begin
-            Call:=CreateCallExpression(El);
-            Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntAnd)]);
-            Call.AddArg(A);
-            Call.AddArg(B);
-            Result:=Call;
-            exit;
+            if (LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                and (RightResolved.BaseType in [btIntDouble,btUIntDouble]) then
+              begin
+              Call:=CreateCallExpression(El);
+              Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntAnd)]);
+              Call.AddArg(A);
+              Call.AddArg(B);
+              Result:=Call;
+              exit;
+              end
+            else if BitwiseOpNeedLongwordFix then
+              begin
+              Result:=CreateBitwiseLongwordOp(A,B,TJSBitwiseAndExpression);
+              exit;
+              end;
             end;
           end
         else
@@ -6932,16 +6963,23 @@ begin
           begin
           UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
                      or (RightResolved.BaseType in btAllJSInteger));
-          if UseBitwiseOp
-              and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
-                or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+          if UseBitwiseOp then
             begin
-            Call:=CreateCallExpression(El);
-            Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntOr)]);
-            Call.AddArg(A);
-            Call.AddArg(B);
-            Result:=Call;
-            exit;
+            if ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+              begin
+              Call:=CreateCallExpression(El);
+              Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntOr)]);
+              Call.AddArg(A);
+              Call.AddArg(B);
+              Result:=Call;
+              exit;
+              end
+            else if BitwiseOpNeedLongwordFix then
+              begin
+              Result:=CreateBitwiseLongwordOp(A,B,TJSBitwiseOrExpression);
+              exit;
+              end;
             end;
           end
         else
@@ -6958,16 +6996,23 @@ begin
           begin
           UseBitwiseOp:=((LeftResolved.BaseType in btAllJSInteger)
                      or (RightResolved.BaseType in btAllJSInteger));
-          if UseBitwiseOp
-              and ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
-                or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+          if UseBitwiseOp then
             begin
-            Call:=CreateCallExpression(El);
-            Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntXor)]);
-            Call.AddArg(A);
-            Call.AddArg(B);
-            Result:=Call;
-            exit;
+            if ((LeftResolved.BaseType in [btIntDouble,btUIntDouble])
+                or (RightResolved.BaseType in [btIntDouble,btUIntDouble])) then
+              begin
+              Call:=CreateCallExpression(El);
+              Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntXor)]);
+              Call.AddArg(A);
+              Call.AddArg(B);
+              Result:=Call;
+              exit;
+              end
+            else if BitwiseOpNeedLongwordFix then
+              begin
+              Result:=CreateBitwiseLongwordOp(A,B,TJSBitwiseXOrExpression);
+              exit;
+              end;
             end;
           end
         else
@@ -6976,7 +7021,7 @@ begin
         if UseBitwiseOp then
           C:=TJSBitwiseXOrExpression
         else
-          C:=TJSBitwiseXOrExpression;
+          C:=TJSBitwiseXOrExpression; // no logical xor in JS. bitwise works for boolean too
         end;
       eopPower:
         begin
@@ -7203,6 +7248,19 @@ begin
         Call.Expr:=CreateMemberExpression([GetBIName(pbivnRTL),GetBIName(pbifnBitwiseNativeIntShr)]);
       Call.AddArg(A); A:=nil;
       Call.AddArg(B); B:=nil;
+      exit;
+      end
+    else if LeftResolved.BaseType=btLongWord then
+      begin
+      // aLongWord shl b  ->  rtl.lw(a << b)
+      if El.OpCode=eopShl then
+        JSBinClass:=TJSLShiftExpression
+      else
+        JSBinClass:=TJSURShiftExpression;
+      Result:=TJSBinaryExpression(CreateElement(JSBinClass,El));
+      TJSBinaryExpression(Result).A:=A; A:=nil;
+      TJSBinaryExpression(Result).B:=B; B:=nil;
+      Result:=CreateBitWiseLongword(El,Result);
       exit;
       end;
     end
@@ -8426,6 +8484,17 @@ begin
     Result:=ShiftEx;
     ShiftEx.B:=CreateLiteralNumber(El,Shift);
     end;
+end;
+
+function TPasToJSConverter.CreateBitWiseLongword(El: TPasElement;
+  Value: TJSElement): TJSElement;
+var
+  Call: TJSCallExpression;
+begin
+  Call:=CreateCallExpression(El);
+  Call.Expr:=CreatePrimitiveDotExpr(GetBIName(pbivnRTL)+'.'+GetBIName(pbifnBitwiseLongwordFix),El);
+  Call.AddArg(Value);
+  Result:=Call;
 end;
 
 function TPasToJSConverter.ConvertInheritedExpr(El: TInheritedExpr;

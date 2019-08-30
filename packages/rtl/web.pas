@@ -2464,6 +2464,30 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property y: NativeInt read FY;
   end;
 
+  TJSHTMLLinkElement = class external name 'HTMLLinkElement'(TJSHTMLElement)
+  Private
+    frelList: TJSDOMTokenList; external name 'relList';
+    fsizes: TJSDOMSettableTokenList {TJSDOMTokenList}; external name 'sizes';
+  Public
+    href: string;
+    crossOrigin: string;
+    rel: string;
+    as_: string; external name 'as';
+    media: string;
+    integrity: string;
+    hreflang: string;
+    type_: string external name 'type';
+    imageSrcset: string;
+    imageSizes: string;
+    referrerPolicy: string;
+    disabled: string;
+    charset: string deprecated; // obsolete
+    rev: string deprecated; // obsolete property
+    target: string deprecated; // obsolete property
+    Property relList: TJSDOMTokenList read frelList;
+    Property sizes: TJSDOMSettableTokenList{TJSDOMTokenList} read fsizes;
+  end;
+
   { TJSHTMLMenuElement }
 
   TJSHTMLMenuElement = class external name 'HTMLMenuElement' (TJSHTMLElement) //  uhm... should it be declared? it is experimental at Mozilla docs...
@@ -2988,14 +3012,18 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSHTMLScriptElement = Class external name 'HTMLScriptElement' (TJSHTMLElement)
   Public
-    type_ : String;
+    type_ : String external name 'type';
     src : String;
     charset : string;
+    integrity : string;
     async : boolean;
     defer : boolean;
     text : string;
+    crossOrigin : string;
+    referrerPolicy : string;
     noModule : boolean;
   end;
+
 
 
 

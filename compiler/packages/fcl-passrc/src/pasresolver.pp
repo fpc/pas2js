@@ -16935,7 +16935,6 @@ var
   AncestorScope, HelperScope: TPasClassScope;
   C: TClass;
 begin
-  writeln('AAA1 TPasResolver.GroupScope_AddTypeAndAncestors ',GetObjName(HiType));
   HiType:=ResolveAliasType(HiType,false);
   LoType:=ResolveAliasType(HiType);
   IsClass:=LoType.ClassType=TPasClassType;

@@ -937,6 +937,7 @@ type
     Procedure TestTypeHelper_DoubleAlias;
     Procedure TestTypeHelper_Constructor_NewInstance;
     Procedure TestTypeHelper_InterfaceFail;
+    Procedure TestTypeHelper_TypeAliasType;
 
     // attributes
     Procedure TestAttributes_Ignore;
@@ -5798,8 +5799,8 @@ begin
   '  if unit1.j1=0 then ;',
   '  if unitdots.unit1.j1=0 then ;',
   '']);
-  CheckResolverException('Duplicate identifier "unitdots.unit1" at unitdots.main1.pas(2,14)',
-    nDuplicateIdentifier);
+  CheckParserException('Duplicate identifier "unit1" at token ";" in file unitdots.main1.pas at line 2 column 27',
+    nParserDuplicateIdentifier);
 end;
 
 procedure TTestResolver.TestUnit_Unit1DotUnit2Fail;
@@ -17659,6 +17660,37 @@ begin
   'begin',
   '']);
   CheckResolverException('Type "IUnknown" cannot be extended by a type helper',nTypeXCannotBeExtendedByATypeHelper);
+end;
+
+procedure TTestResolver.TestTypeHelper_TypeAliasType;
+begin
+  StartProgram(false);
+  Add([
+  '{$modeswitch typehelpers}',
+  'type',
+  '  TEnum = type longint;',
+  '  TIntHelper = type helper for longint',
+  '    procedure Run;',
+  '  end;',
+  '  TEnumHelper = type helper for TEnum',
+  '    procedure Fly;',
+  '  end;',
+  'procedure TIntHelper.Run;',
+  'begin',
+  'end;',
+  'procedure TEnumHelper.Fly;',
+  'begin',
+  'end;',
+  'var',
+  '  e: TEnum;',
+  '  i: longint;',
+  'begin',
+  '  i.Run;',
+  '  e.Fly;',
+  '  with i do Run;',
+  '  with e do Fly;',
+  '']);
+  ParseProgram;
 end;
 
 procedure TTestResolver.TestAttributes_Ignore;

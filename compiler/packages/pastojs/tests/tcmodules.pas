@@ -23111,7 +23111,7 @@ begin
   '{$modeswitch typehelpers}',
   'type',
   '  Float = type double;',
-  '  THelper = type helper for double',
+  '  THelper = type helper for Float',
   '    const NPI = 3.141592;',
   '    function ToStr: String;',
   '  end;',

@@ -650,22 +650,45 @@ Type
   TCustomTemplateWidget = Class(TWebWidget)
   private
     FContainerTag: String;
-    FTemplate: TStrings;
-    procedure DoTemplateChanged(Sender: TObject);
     procedure SetContainerTag(AValue: String);
-    procedure SetTemplate(AValue: TStrings);
   Protected
-    function GetTemplateHTML: String; virtual;
+    function GetTemplateHTML: String; virtual; abstract;
     Procedure ApplyTemplate(aElement : TJSHTMLElement); virtual;
     Function DoRenderHTML(aParent, aElement: TJSHTMLElement) : TJSHTMLElement; override;
-    // The template.
-    Property Template : TStrings Read FTemplate Write SetTemplate;
     // When set, a tag will be created and the template will be rendered below this tag.
     Property ContainerTag : String Read FContainerTag Write SetContainerTag;
   Public
     Function HTMLTag : String; override;
+  end;
+
+  { TSimpleTemplateWidget }
+
+  TSimpleTemplateWidget = Class(TCustomTemplateWidget)
+  Private
+    FTemplate: String;
+    procedure SetTemplate(AValue: String);
+  Protected
+    function GetTemplateHTML: String; override;
+  Published
+    // The template.
+    Property Template : String Read FTemplate Write SetTemplate;
+    Property References;
+  end;
+
+
+  TTemplateWidget = Class(TCustomTemplateWidget)
+  Private
+    FTemplate: TStrings;
+    procedure DoTemplateChanged(Sender: TObject);
+    procedure SetTemplate(AValue: TStrings);
+  Protected
+    function GetTemplateHTML: String; override;
+  Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    // The template.
+    Property Template : TStrings Read FTemplate Write SetTemplate;
+    Property References;
   end;
 
 implementation
@@ -683,6 +706,21 @@ ResourceString
    SErrUnknownReference = 'Unknown reference: %s';
    SErrNotRendered = 'Cannot perform this operation: Widget not rendered';
    SErrCannotRefreshNoWidget = 'Cannot refresh references without widget';
+
+{ TSimpleTemplateWidget }
+
+procedure TSimpleTemplateWidget.SetTemplate(AValue: String);
+begin
+  FTemplate:=AValue;
+  if isRendered then
+    Refresh;
+end;
+
+function TSimpleTemplateWidget.GetTemplateHTML: String;
+begin
+  Result:=FTemplate;
+end;
+
 
 { TWebWidgetReferences }
 
@@ -869,17 +907,6 @@ end;
 
 { TCustomTemplateWidget }
 
-procedure TCustomTemplateWidget.SetTemplate(AValue: TStrings);
-begin
-  if FTemplate=AValue then Exit;
-  FTemplate.Assign(AValue);
-end;
-
-function TCustomTemplateWidget.GetTemplateHTML: String;
-begin
-  Result:=FTemplate.Text;
-end;
-
 procedure TCustomTemplateWidget.ApplyTemplate(aElement: TJSHTMLElement);
 begin
   aElement.InnerHTML:=GetTemplateHTML;
@@ -899,17 +926,6 @@ begin
     end;
 end;
 
-function TCustomTemplateWidget.HTMLTag: String;
-begin
-  Result:=ContainerTag;
-end;
-
-procedure TCustomTemplateWidget.DoTemplateChanged(Sender: TObject);
-begin
-  if isRendered then
-    Refresh;
-end;
-
 procedure TCustomTemplateWidget.SetContainerTag(AValue: String);
 begin
   if FContainerTag=AValue then Exit;
@@ -918,7 +934,32 @@ begin
     Refresh;
 end;
 
-constructor TCustomTemplateWidget.Create(aOwner: TComponent);
+function TCustomTemplateWidget.HTMLTag: String;
+begin
+  Result:=ContainerTag;
+end;
+
+{ TTemplateWidget }
+
+procedure TTemplateWidget.SetTemplate(AValue: TStrings);
+begin
+  if FTemplate=AValue then Exit;
+  FTemplate.Assign(AValue);
+end;
+
+function TTemplateWidget.GetTemplateHTML: String;
+begin
+  Result:=FTemplate.Text;
+end;
+
+
+procedure TTemplateWidget.DoTemplateChanged(Sender: TObject);
+begin
+  if isRendered then
+    Refresh;
+end;
+
+constructor TTemplateWidget.Create(aOwner: TComponent);
 
 begin
   inherited Create(aOwner);
@@ -927,7 +968,7 @@ begin
   FContainerTag:='';
 end;
 
-destructor TCustomTemplateWidget.Destroy;
+destructor TTemplateWidget.Destroy;
 
 begin
   FreeAndNil(FTemplate);
@@ -1873,11 +1914,18 @@ end;
 
 procedure TCustomWebWidget.DoUnRender(aParent: TJSHTMLElement);
 
+Var
+  el : TJSHTMLElement;
+
 begin
   if Assigned(aParent) and Assigned(FElement) then
     begin
     if FOwnsElement then
-      aParent.removeChild(TopElement);
+      begin
+      el:=TopElement;
+      if (El.ParentElement=aParent) then
+        aParent.removeChild(el);
+      end;
     InvalidateElement;
     end;
 end;

@@ -346,6 +346,9 @@ begin
     case LowerCase(s) of
      'widestring' : result:=ftString;
      'currency' : result:=ftFloat;
+     'smallint' : result:=ftInteger;
+    else
+      writeln('Unknown field type:',S)
     end;
 end;
 
@@ -401,7 +404,15 @@ begin
     fn:=F.Name;
     // The JSON streamer does not create all properties :(
     if FO.hasOwnProperty('size') then
-      fs:=F.Size
+      begin
+
+      if isString(FO['size']) then
+        fs:=StrToInt(String(FO['size']))
+      else if isNumber(FO['size']) then
+        fs:=F.Size
+      else
+        fs:=0;
+      end
     else
       fs:=0;
     if FO.hasOwnProperty('type') then
@@ -415,6 +426,7 @@ begin
     Ft:=DataTypeToFieldType(dT);
     if (ft=ftBlob) and (fs=0) then
       fs:=1;
+//    Writeln('FieldDef : ',fn,', ',ft,', ',fs);
     FieldDefs.Add(fn,ft,fs,Req);
     end;
 end;

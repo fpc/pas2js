@@ -612,7 +612,10 @@ function TRouter.DoRouteRequest(ARoute: TRoute; const AURL: String;
   AParams: TStrings): TRoute;
 begin
   Result:=aRoute;
-  Result.HandleRequest(Self,aURL,AParams);
+  if Assigned(Result) then
+    Result.HandleRequest(Self,aURL,AParams)
+  else
+    Raise EHTTPRoute.CreateFmt('No route for URL: %s',[aURL]);
 end;
 
 function TRouter.DoRouteRequest(AURL: String): TRoute;

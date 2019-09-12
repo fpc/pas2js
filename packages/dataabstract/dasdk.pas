@@ -170,11 +170,11 @@ Type
   end;
 
   TDAUserInfo = class external name 'RemObjects.DataAbstract.Server.UserInfo' (TROStructType)
+  Public
     constructor new;
     procedure fromObject(aItem : TDAUserInfo);reintroduce; overload;
     procedure fromObject(aItem : TJSObject);reintroduce; overload;
     function toObject : TDAUserInfoData;reintroduce;
-  Public
     Attributes : TROValue;
     Privileges : TROValue;
     SessionID : TROValue;

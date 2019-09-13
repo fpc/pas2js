@@ -1,7 +1,7 @@
 program designdemo;
 
 {$mode objfpc}
-{ $DEFINE USEIDE}
+{$DEFINE USEIDE}
 
 uses
   browserapp, JS, Classes, SysUtils, Web, designer, webideclient;

@@ -32,7 +32,9 @@
         <CompilerPath Value="pas2js"/>
         <ExecuteBefore>
           <Command Value="$MakeExe(IDE,pas2js) -O- -Jc -vbq pas2js_rtl.pas"/>
-          <ScanForFPCMsgs Value="True"/>
+          <Parsers Count="1">
+            <Item1 Value="Pas2JS"/>
+          </Parsers>
         </ExecuteBefore>
       </Other>
       <SkipCompiler Value="True"/>

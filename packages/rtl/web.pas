@@ -3592,7 +3592,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Procedure set_(const aName,aValue : String); external name 'set';
     Procedure set_(const aName : String; aBlob : TJSBlob); external name 'set';
     Function getAll(const aName : String) : TJSFormDataEntryValueArray;
-    Function values : TJSValueDynArray;
+    Function values : TJSValueDynArray; reintroduce;
     Property Entry[aIndex : String] : TJSFormDataEntryValue read Get;
   end;
 

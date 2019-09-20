@@ -77,6 +77,7 @@ Type
     procedure SetResourceName(AValue: String);
     procedure SetSQL(AValue: TStrings);
   Protected
+    Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; override;
     function DataPacketReceived(ARequest: TDataRequest): Boolean; override;
     function GetStringFieldLength(F: TJSObject; AName: String; AIndex: Integer): integer;virtual;
     function StringToFieldType(S: String): TFieldType; virtual;
@@ -324,6 +325,13 @@ procedure TSQLDBRestDataset.SetSQL(AValue: TStrings);
 begin
   if FSQL=AValue then Exit;
   FSQL.Assign(AValue);
+end;
+
+
+
+class function TSQLDBRestDataset.DefaultBlobDataToBytes(aValue: JSValue): TBytes;
+begin
+  Result:=BytesOf(Window.atob(String(aValue)));
 end;
 
 function TSQLDBRestDataset.DoGetDataProxy: TDataProxy;

@@ -649,6 +649,8 @@ type
     function GetValue(var AValue: TBytes): Boolean;
     procedure SetAsString(const AValue: string); override;
     procedure SetVarValue(const AValue: JSValue); override;
+    Function GetAsBytes: TBytes; override;
+    Procedure SetAsBytes(const aValue: TBytes); override;
   public
     constructor Create(AOwner: TComponent); override;
   published
@@ -6922,7 +6924,7 @@ begin
     DatabaseErrorFmt(SInvalidFieldSize,[AValue]);
 end;
 
-Function TBinaryField.BlobToBytes(aValue : JSValue) : TBytes;
+function TBinaryField.BlobToBytes(aValue: JSValue): TBytes;
 
 begin
   if Assigned(Dataset) then
@@ -6931,7 +6933,7 @@ begin
     Result:=TDataSet.DefaultBlobDataToBytes(aValue)
 end;
 
-Function TBinaryField.BytesToBlob(aValue : TBytes) : JSValue;
+function TBinaryField.BytesToBlob(aValue: TBytes): JSValue;
 
 begin
   if Assigned(Dataset) then
@@ -6953,8 +6955,8 @@ begin
   if V<>Null then
     begin
     S:=BlobToBytes(V);
-    For I:=0 to Length(S) do
-       TJSString(Result).Concat(TJSString.fromCharCode(S[I]));
+    For I:=0 to Length(S)-1 do
+       Result:=TJSString(Result).Concat(TJSString.fromCharCode(S[I]));
     end;
 end;
 
@@ -7013,6 +7015,24 @@ begin
     SetAsString(String(AValue))
   else
     RaiseAccessError('Blob');
+end;
+
+function TBinaryField.GetAsBytes: TBytes;
+
+Var
+  V : JSValue;
+
+begin
+  V:=GetData;
+  if Assigned(V) then
+    Result:=BlobToBytes(V)
+  else
+    SetLength(Result,0);
+end;
+
+procedure TBinaryField.SetAsBytes(const aValue: TBytes);
+begin
+  SetData(BytesToBlob(aValue))
 end;
 
 

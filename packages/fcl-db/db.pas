@@ -6953,11 +6953,14 @@ begin
   Result := '';
   V:=GetData;
   if V<>Null then
-    begin
-    S:=BlobToBytes(V);
-    For I:=0 to Length(S)-1 do
-       Result:=TJSString(Result).Concat(TJSString.fromCharCode(S[I]));
-    end;
+    if (DataType=ftMemo) then
+      Result:=String(V)
+    else
+      begin
+      S:=BlobToBytes(V);
+      For I:=0 to Length(S)-1 do
+         Result:=TJSString(Result).Concat(TJSString.fromCharCode(S[I]));
+      end;
 end;
 
 
@@ -6989,10 +6992,15 @@ var
   i : Integer;
 
 begin
-  SetLength(B, Length(aValue));
-  For I:=1 to Length(aValue) do
-    B[i-1]:=Ord(aValue[i]);
-  SetAsBytes(B);
+  if DataType=ftMemo then
+    SetData(aValue)
+  else
+    begin
+    SetLength(B, Length(aValue));
+    For I:=1 to Length(aValue) do
+      B[i-1]:=Ord(aValue[i]);
+    SetAsBytes(B);
+    end;
 end;
 
 

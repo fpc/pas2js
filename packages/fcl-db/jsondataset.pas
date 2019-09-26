@@ -1333,7 +1333,7 @@ begin
         else
           Result := grBOF; // begin of file
       gmCurrent: // check if empty
-        if fCurrent >= fCurrentIndex.Count then
+        if (FCurrent<0) or (fCurrent >= fCurrentIndex.Count) then
           Result := grEOF;
     end;
     if Result = grOK then // read the data
@@ -1347,6 +1347,12 @@ begin
         begin
         FFilterRow:=Buffer.Data;
         recordAccepted:=DoFilterRecord;
+        if Not RecordAccepted and (GetMode=gmCurrent) then
+          begin
+          // Transform to EOF.
+          RecordAccepted:=True;
+          Result:=grEOF;
+          end;
         end;
       end;
   until recordAccepted;

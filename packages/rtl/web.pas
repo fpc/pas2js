@@ -2119,7 +2119,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
 
   { TJSHTMLElement }
-  TJSHTMLElement = class external name 'HTMLELement' (TJSElement)
+  TJSHTMLElement = class external name 'HTMLElement' (TJSElement)
   private
     FDataset: TJSObject ; external name 'dataset';
     FIsContentEditable: Boolean ; external name 'isContentEditable';

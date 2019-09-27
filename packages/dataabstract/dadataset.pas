@@ -473,7 +473,9 @@ begin
   DADS:=aRequest.Dataset as TDADataset;
   R:=aRequest as TDADatarequest;
   if (Connection=Nil) then
-    Raise EDADataset.Create(Name+': Cannot get data without connection');
+    Raise EDADataset.Create(DADS.Name+': Cannot get data without connection');
+  if (DADS.TableName='') then
+    Raise EDADataset.Create(DADS.Name+': Cannot get data without tablename');
   DS:=Connection.EnsureDataservice;
   TN:=TDAStringArray.New;
   TN.fromObject([DADS.TableName]);

@@ -1015,7 +1015,7 @@ type
   TFilterOption = (foCaseInsensitive, foNoPartialCompare);
   TFilterOptions = set of TFilterOption;
 
-  TLoadOption = (loNoOpen,loNoEvents,loAtEOF);
+  TLoadOption = (loNoOpen,loNoEvents,loAtEOF,loCancelPending);
   TLoadOptions = Set of TLoadOption;
   TDatasetLoadEvent = procedure(DataSet: TDataSet; Data : JSValue) of object;
   TDatasetLoadFailEvent = procedure(DataSet: TDataSet; ID : Integer; Const ErrorMsg : String) of object;
@@ -4524,6 +4524,8 @@ function TDataSet.Load(aOptions: TLoadOptions; aAfterLoad: TDatasetLoadEvent): B
 begin
   if loAtEOF in aOptions then
     DatabaseError(SatEOFInternalOnly,Self);
+  if loCancelPending in aOptions then
+    CancelLoading;
   Result:=DoLoad(aOptions,aAfterLoad);
 end;
 

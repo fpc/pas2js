@@ -3867,7 +3867,7 @@ function StrToInt64Def(const S: String; ADefault: NativeLargeInt
 
 
 begin
-  if TryStrToInt64(S,Result) then
+  if not TryStrToInt64(S,Result) then
     Result:=ADefault;
 end;
 

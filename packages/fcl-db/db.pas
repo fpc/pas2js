@@ -1121,10 +1121,13 @@ type
     FChangeList : TFPList;
     FBatchList : TFPList;
     FInApplyupdates : Boolean;
+    FLoadCount : Integer;
+    FMinLoadID : Integer;
     Procedure DoInsertAppend(DoAppend : Boolean);
     Procedure DoInternalOpen;
     Function  GetBuffer (Index : longint) : TDataRecord;
     function GetDataProxy: TDataProxy;
+    function GetIsLoading: Boolean;
     Procedure RegisterDataSource(ADataSource : TDataSource);
     procedure SetConstraints(Value: TCheckConstraints);
     procedure SetDataProxy(AValue: TDataProxy);
@@ -1138,7 +1141,7 @@ type
     procedure DoInsertAppendRecord(const Values: array of jsValue; DoAppend : boolean);
     // Callback for Tdataproxy.DoGetData;
     function ResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor): Boolean;
-    procedure HandleRequestresponse(ARequest: TDataRequest);
+    procedure HandleRequestResponse(ARequest: TDataRequest);
   protected
     // Proxy methods
     // Override this to integrate package in local data
@@ -1290,6 +1293,7 @@ type
     procedure InternalInitFieldDefs; virtual; abstract;
     function IsCursorOpen: Boolean; virtual; abstract;
     property DataProxy : TDataProxy Read GetDataProxy Write SetDataProxy;
+    Property LoadCount : Integer Read FLoadCount;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -1347,11 +1351,13 @@ type
     procedure Prior;
     procedure Refresh;
     procedure Resync(Mode: TResyncMode); virtual;
+    Procedure CancelLoading;
     procedure SetFields(const Values: array of JSValue);
     procedure UpdateCursorPos;
     procedure UpdateRecord;
     Function GetPendingUpdates : TResolveInfoArray;
     function UpdateStatus: TUpdateStatus; virtual;
+    Property Loading : Boolean Read GetIsLoading;
     property BlockReadSize: Integer read FBlockReadSize write SetBlockReadSize;
     property BOF: Boolean read FBOF;
     property Bookmark: TBookmark read GetBookmark write GotoBookmark;
@@ -3020,13 +3026,19 @@ begin
   Result:=FDataProxy;
 end;
 
+function TDataSet.GetIsLoading: Boolean;
+begin
+//  Writeln(Name,' GetIsLoading Loadcount : ',LoadCount);
+  Result:=(FLoadCount>0);
+end;
+
 function TDataSet.DataPacketReceived(ARequest: TDataRequest): Boolean;
 
 begin
   Result:=False;
 end;
 
-procedure TDataSet.HandleRequestresponse(ARequest: TDataRequest);
+procedure TDataSet.HandleRequestResponse(ARequest: TDataRequest);
 
 Var
   DataAdded : Boolean;
@@ -3034,6 +3046,14 @@ Var
 begin
   if Not Assigned(ARequest) then
     exit;
+//  Writeln(Name,' Check request response: ',ARequest.FRequestID,', min: ',FMinLoadID,' Loadcount:',FLoadCount);
+  if ARequest.FRequestID<=FMinLoadID then
+    begin
+    ARequest.Destroy;
+    Exit;
+    end;
+  Dec(FloadCount);
+//  Writeln(Name,' Handle request response: ',ARequest.FRequestID,', min: ',FMinLoadID,' Loadcount:',FLoadCount);
   Case ARequest.Success of
   rrFail:
     begin
@@ -3551,7 +3571,6 @@ begin
     begin
     DoBeforeClose;
     SetState(dsInactive);
-    FDataRequestID:=0;
     DoneChangeList;
     CloseCursor;
     DoAfterClose;
@@ -3850,7 +3869,10 @@ begin
 {$ifdef dsdebug}
   Writeln ('Active buffer requested. Returning record number: ',ActiveRecord);
 {$endif}
-  Result:=FBuffers[FActiveRecord];
+  if FactiveRecord<>-1 then
+    Result:=FBuffers[FActiveRecord]
+  else
+    Result:=Default(TDataRecord);
 end;
 
 function TDataSet.GetFieldData(Field: TField): JSValue;
@@ -4477,6 +4499,7 @@ Var
   Request : TDataRequest;
 
 begin
+//  Writeln(Name,' Load called. LoadCount ',LoadCount);
   if not (loNoEvents in aOptions) then
     DoBeforeLoad;
   Result:=DataProxy<>Nil;
@@ -4488,7 +4511,11 @@ begin
     Request.FBookmark:=GetBookmark;
   Inc(FDataRequestID);
   Request.FRequestID:=FDataRequestID;
-  DataProxy.DoGetData(Request);
+  if DataProxy.DoGetData(Request) then
+    Inc(FLoadCount)
+  else
+    Request.Free;
+//  Writeln(Name,' End of Load call. Count: ',LoadCount);
 end;
 
 
@@ -4750,6 +4777,12 @@ begin
   if FRecordCount < FBufferCount then FActiveRecord:=FActiveRecord+getpriorrecords;
 // That's all folks!
   DataEvent(deDatasetChange,0);
+end;
+
+procedure TDataSet.CancelLoading;
+begin
+  FMinLoadID:=FDataRequestID;
+  FloadCount:=0;
 end;
 
 procedure TDataSet.SetFields(const Values: array of JSValue);

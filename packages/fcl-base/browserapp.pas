@@ -13,6 +13,8 @@ type
 
   TBrowserApplication = class(TCustomApplication)
   protected
+    function GetHTMLElement(aID : String) : TJSHTMLElement;
+    function CreateHTMLElement(aTag : String; aID : String = '') : TJSHTMLElement;
     procedure DoRun; override;
     function GetConsoleApplication: boolean; override;
     function GetLocation: String; override;
@@ -88,6 +90,18 @@ begin
 end;
 
 { TBrowserApplication }
+
+function TBrowserApplication.GetHTMLElement(aID: String): TJSHTMLElement;
+begin
+  Result:=TJSHTMLElement(Document.getElementById(aID));
+end;
+
+function TBrowserApplication.CreateHTMLElement(aTag: String; aID: String): TJSHTMLElement;
+begin
+  Result:=TJSHTMLElement(Document.createElement(aTag));
+  if aID<>'' then
+    Result.ID:=aID;
+end;
 
 procedure TBrowserApplication.DoRun;
 begin

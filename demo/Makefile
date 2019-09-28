@@ -5,7 +5,7 @@ TARGETS=democomponents demobrowseconsole demoajax demoxhr restbridgeclient \
   chartjs_demoline chartjs_demotime chartjs_demoscriptablebubble chartjs_demoradar \
   chartjs_democustompoints chartjs_demopolararea promiseall promisestory1 \
   promisestory2 promisestory demodb demoload demorest fpcunitbrowsertest \
-  sampleda webgl1 pdfbasic hotreload dynload
+  sampleda webgl1 pdfbasic hotreload dynload bootstraptable
 ifneq ($(SKIPWEBCOMPILER),1)
 TARGETS:=$(TARGETS) demowebcompiler
 BASEDIR=$(CURDIR)/../compiler/packages
@@ -103,3 +103,6 @@ hotreload: ./hotreload/hotreload.lpr
 dynload: ./dynload/testloader.lpr ./dynload/myform.pp
 	$(BROWSERP2JS) -OoRemoveNotUsedDeclarations- ./dynload/testloader.lpr
 	$(P2JS) ./dynload/myform.pp
+bootstraptable: ./bootstrap/demobootstraptable.lpr
+	$(BROWSERP2JS) $<
+	

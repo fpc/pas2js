@@ -2362,7 +2362,7 @@ Var
 begin
   DecodeDate(Trunc(aDateTime),Y,M,D);
   DecodeTime(Frac(aDateTime),H,N,S,Z);
-  Result:=TJSDate.New(Y,M,D,h,n,s,z);
+  Result:=TJSDate.New(Y,M-1,D,h,n,s,z);
 end;
 
 function JSDateToDateTime(aDate: TJSDate): TDateTime;
@@ -2567,7 +2567,7 @@ end ;
 
 function DayOfWeek(DateTime: TDateTime): integer;
 begin
-  Result := 1 + ((Trunc(DateTime) - 1) mod 7);
+  Result:= 1+((Trunc(DateTime) - 1) mod 7);
   If (Result<=0) then
     Inc(Result,7);
 end;
@@ -3313,8 +3313,8 @@ var
               case Count of
                 1: StoreInt(Day, 0);
                 2: StoreInt(Day, 2);
-                3: StoreString(ShortDayNames[DayOfWeek]);
-                4: StoreString(LongDayNames[DayOfWeek]);
+                3: StoreString(ShortDayNames[DayOfWeek-1]);
+                4: StoreString(LongDayNames[DayOfWeek-1]);
                 5: StoreFormat(ShortDateFormat, Nesting+1, False);
               else
                 StoreFormat(LongDateFormat, Nesting+1, False);

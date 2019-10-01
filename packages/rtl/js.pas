@@ -856,6 +856,7 @@ function hasString(const v: JSValue): boolean; external name 'rtl.hasString';// 
 function hasValue(const v: JSValue): boolean; assembler; // returns the JS definition of if(v): v is not false, undefined, null, 0, NaN, or the empty string. Note: JS if(new Boolean(false)) returns true.
 function isArray(const v: JSValue): boolean; external name 'rtl.isArray';
 function isBoolean(const v: JSValue): boolean; assembler;
+function isDate(const v: JSValue): boolean; assembler;
 function isCallback(const v: JSValue): boolean; assembler;
 function isChar(const v: JSValue): boolean; assembler;
 function isClass(const v: JSValue): boolean; assembler; // is a Pascal class, e.g. a TClass
@@ -939,6 +940,11 @@ end;
 function isBoolean(const v: JSValue): boolean; assembler;
 asm
   return typeof(v) == 'boolean';
+end;
+
+function isDate(const v: JSValue): boolean; assembler;
+asm
+  return (v instanceof Date);
 end;
 
 function isCallback(const v: JSValue): boolean; assembler;

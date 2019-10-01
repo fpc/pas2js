@@ -34,6 +34,8 @@ Type
     function DataTypeToFieldType(s: String): TFieldType;
     procedure SetParams(AValue: TParams);
   Protected
+    function ConvertToDateTime(aField : TField; aValue : JSValue; ARaiseException : Boolean) : TDateTime; override;
+    function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     Procedure MetaDataToFieldDefs; override;
   Public
     constructor create(aOwner : TComponent); override;
@@ -153,6 +155,9 @@ Type
 implementation
 
 uses strutils, sysutils;
+
+resourcestring
+  SErrInvalidDate = '%s is not a valid date value for %s';
 
 { TDAConnection }
 
@@ -358,6 +363,23 @@ begin
   FParams.Assign(AValue);
 end;
 
+function TDADataset.ConvertToDateTime(aField: TField; aValue: JSValue; ARaiseException: Boolean): TDateTime;
+begin
+  Result:=0;
+  if isDate(aValue) then
+    Result:=JSDateToDateTime(TJSDate(aValue))
+  else if isString(aValue) then
+    Result:=Inherited  ConvertToDateTime(afield,aValue,ARaiseException)
+  else
+    if aRaiseException then
+      DatabaseErrorFmt(SErrInvalidDate,[String(aValue),aField.FieldName],Self);
+end;
+
+function TDADataset.ConvertDateTimeToNative(aField: TField; aValue: TDateTime): JSValue;
+begin
+  Result:=DateTimeToJSDate(aValue);
+end;
+
 procedure TDADataset.MetaDataToFieldDefs;
 
 begin
@@ -451,6 +473,7 @@ begin
     begin
     Result[i].Name:=DADS.Params[i].Name;
     Result[i].Value:=DADS.Params[i].Value;
+//    Writeln('Set param ',Result[i].Name,' to ',Result[i].Value);
     end;
 end;
 

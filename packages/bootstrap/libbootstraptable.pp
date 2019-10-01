@@ -124,6 +124,7 @@ Type
     queryParams : TQueryParamsFunction;
     queryParamsType : String;
     rememberOrder : boolean;
+    resizable : boolean;
     responseHandler : TResponseFunction;
     rowAttributes : TRowStyleHandler;
     rowStyle : TRowStyleHandler;

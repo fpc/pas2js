@@ -2979,12 +2979,12 @@ var
          allowedchars:=DecimalSeparator+' ';
          if Separator<>#0 then
            allowedchars:=allowedchars+Separator;
-         while (Cur < Len -1) and (Pos(S[Cur + 1],AllowedChars)=0)
+         while (Cur < Len) and (Pos(S[Cur + 1],AllowedChars)=0)
            and (Pos(S[Cur + 1],Digits)=0) do Inc(Cur);
          ElemLen := 1 + Cur - OffSet;
-         // writeln('  S[Offset] = ',S[1+Offset], ' S[Cur] = ',S[Cur],' ElemLen = ',ElemLen,' -> ', S[1+Offset], ElemLen);
-         // writeln('  Cur = ',Cur, 'S =',S);
-         AmPmStr := Copy(S,1+OffSet, ElemLen);
+//         writeln('  S[Offset] = ',S[Offset], ' S[Cur] = ',S[Cur],' ElemLen = ',ElemLen,' -> ', S[1+Offset], ElemLen);
+//         writeln('  Cur = ',Cur, ', S =',S);
+         AmPmStr := Copy(S,OffSet, ElemLen);
 
          // writeln('AmPmStr = ',ampmstr,' (',length(ampmstr),')');
          //We must compare to TimeAMString before hardcoded 'AM' for delphi compatibility

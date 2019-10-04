@@ -324,6 +324,8 @@ type
     function split : TStringDynArray; overload;
     function split(aSeparator : string) : TStringDynArray; overload;
     function split(aSeparator : string; aLimit : NativeInt) : TStringDynArray; overload;
+    function split(aSeparator : array of string) : TStringDynArray; overload;
+    function split(aSeparator : array of string; aLimit : NativeInt) : TStringDynArray; overload;
     function startsWith(aSearchString : String) : Boolean; overload;
     function startsWith(aSearchString : String; aPosition : NativeInt) : Boolean; overload;
     function substr(aStartIndex : NativeInt) : String; overload;

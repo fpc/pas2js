@@ -13,15 +13,18 @@ COMPILERDIR=$(CURDIR)/../compiler/utils/pas2js
 COMPILERUNITPATH=$(BASEDIR)/compat;$(BASEDIR)/fcl-json/src;$(BASEDIR)/fcl-passrc/src;$(BASEDIR)/pastojs/src;$(BASEDIR)/fcl-js/src
 endif
   
-.PHONY: $(TARGETS)
+.PHONY: $(TARGETS) subdirs
 P2JSOPT=-Fu../packages/\*
 P2JS=pas2js 
 BROWSERP2JS=$(P2JS) $(P2JSOPT) -Jirtl.js -Jc -Tbrowser
 CHARTJSDIR=chartjs/js
 CHARTOUTPUT=-FE$(CHARTJSDIR)
-CHARTCMD=$(BROWSERP2JS) $(CHARTOUTPUT)
+CHARTCMD=mkdir -p chartjs/js && $(BROWSERP2JS) $(CHARTOUTPUT)
 
-all: $(TARGETS)
+all: subdirs $(TARGETS)
+
+subdirs:
+	mkdir -p chartjs/js
 
 info:
 	@echo Available targets: $(TARGETS)

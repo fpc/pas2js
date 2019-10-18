@@ -64,6 +64,9 @@ type
     FNodeJSError: TJSError;
     {$endif}
   public
+    class var
+      LogMessageOnCreate : Boolean;
+  Public
     constructor Create(const Msg: String); reintroduce;
     constructor CreateFmt(const Msg: string; const Args: array of jsvalue);
     constructor CreateHelp(const Msg: String; AHelpContext: Integer);
@@ -2107,6 +2110,8 @@ begin
   {$ifdef nodejs}
   FNodeJSError:=TJSError.new;
   {$endif}
+  if LogMessageOnCreate then
+    Writeln('Created exception ',ClassName,' with message: ',Msg);
 end;
 
 constructor Exception.CreateFmt(const Msg: string; const Args: array of jsvalue

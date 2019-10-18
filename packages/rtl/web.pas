@@ -2044,6 +2044,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function open(Const aURL : String) : TJSWindow; overload;
     function open(Const aURL,aTarget : String) : TJSWindow; overload;
     function open(Const aURL,aTarget : String; AOptions : TJSObject) : TJSWindow; overload;
+    procedure postMessage(aMessage : JSValue; aTarget : string);
+    procedure postMessage(aMessage : JSValue; aTarget : string; aTransfer : TJSValueDynArray);
     procedure print;
     function prompt(const aMessage : String) : String; overload;
     function prompt(const aMessage,aDefault : String) : String; overload;
@@ -2244,6 +2246,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   Public
     Procedure reset;
     function reportValidity : Boolean;
+    function checkValidity : Boolean;
     procedure submit;
     method : string;
     target : string;
@@ -2443,7 +2446,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FX: NativeInt; external name 'x';
     FY: NativeInt; external name 'y';
   Public
-    constructor New(x,y : Cardinal);
+    constructor New(x,y : Cardinal); overload;
     alt: String;
     crossOrigin: String;
     decoding: String;
@@ -3574,6 +3577,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSHTMLAudioElement = Class external name 'HTMLAudioElement' (TJSHTMLMediaElement)
+
   end;
 
   TJSFormDataEntryValue = String;

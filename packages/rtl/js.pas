@@ -280,7 +280,10 @@ type
   end;
 
 
-  TReplaceCallBack = Function () : string; varargs;
+  TReplaceCallBack = reference to Function (Const match : string) : string; varargs;
+  TReplaceCallBack0 = reference to Function (Const match : string; offset : Integer; AString : String) : string;
+  TReplaceCallBack1 = reference to Function (Const match,p1 : string; offset : Integer; AString : String) : string;
+  TReplaceCallBack2 = reference to Function (Const match,p1,p2 : string; offset : Integer; AString : String) : string;
 
   TJSString = class external name 'String'
   private
@@ -317,11 +320,18 @@ type
     function replace(aRegexp : TJSRegexp; NewString : String) : String; overload;
     function replace(Regexp : String; aCallback : TReplaceCallBack) : String; overload;
     function replace(Regexp : TJSRegexp; aCallback : TReplaceCallBack) : String; overload;
+    function replace(Regexp : String; aCallback : TReplaceCallBack0) : String; overload;
+    function replace(Regexp : TJSRegexp; aCallback : TReplaceCallBack0) : String; overload;
+    function replace(Regexp : String; aCallback : TReplaceCallBack1) : String; overload;
+    function replace(Regexp : TJSRegexp; aCallback : TReplaceCallBack1) : String; overload;
+    function replace(Regexp : String; aCallback : TReplaceCallBack2) : String; overload;
+    function replace(Regexp : TJSRegexp; aCallback : TReplaceCallBack2) : String; overload;
     function search(Regexp : TJSRegexp) : NativeInt; overload;
     function search(Regexp : JSValue) : NativeInt; overload;
     function slice(aBeginIndex : NativeInt) : String; overload;
     function slice(aBeginIndex, aEndIndex : NativeInt) : String; overload;
     function split : TStringDynArray; overload;
+    function split(aRegexp : TJSRegexp) : TStringDynArray; overload;
     function split(aSeparator : string) : TStringDynArray; overload;
     function split(aSeparator : string; aLimit : NativeInt) : TStringDynArray; overload;
     function split(aSeparator : array of string) : TStringDynArray; overload;

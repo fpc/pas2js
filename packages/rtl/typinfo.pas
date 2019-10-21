@@ -1396,14 +1396,26 @@ end;
 function GetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty
   ): TMethod;
 var
-  v: JSValue;
+  v, fn: JSValue;
 begin
   Result.Code:=nil;
   Result.Data:=nil;
   v:=GetJSValueProp(Instance,PropInfo);
   if not isFunction(v) then exit;
   Result.Data:=Pointer(TJSObject(v)['scope']);
-  Result.Code:=CodePointer(TJSObject(v)['fn']);
+  fn:=TJSObject(v)['fn'];
+  if isString(fn) then
+    begin
+    if Result.Data<>nil then
+      // named callback
+      Result.Code:=CodePointer(TJSObject(Result.Data)[String(fn)])
+    else
+      // this is not an rtl callback, return the value
+      Result.Code:=CodePointer(v);
+    end
+  else
+    // anonymous callback
+    Result.Code:=CodePointer(fn);
 end;
 
 function GetMethodProp(Instance: TObject; const PropName: string): TMethod;
@@ -1411,26 +1423,35 @@ begin
   Result:=GetMethodProp(Instance,FindPropInfo(Instance,PropName));
 end;
 
-function createCallback(scope: Pointer; fn: CodePointer): TJSFunction; external name 'rtl.createCallback';
+function createCallbackPtr(scope: Pointer; fn: CodePointer): TJSFunction; external name 'rtl.createCallback';
+function createCallbackStr(scope: Pointer; fn: string): TJSFunction; external name 'rtl.createCallback';
 
 procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;
   const Value: TMethod);
 var
   cb: TJSFunction;
+  Code: Pointer;
 begin
   // Note: Value.Data=nil is allowed and can be used by designer code
-  if Value.Code=nil then
+  Code:=Value.Code;
+  if Code=nil then
     cb:=nil
-  else if isFunction(Value.Code)
-      and (TJSObject(Value.Code)['scope']=Value.Data)
-      and (isFunction(TJSObject(Value.Code)['fn']) or isString(TJSObject(Value.Code)['fn']))
-      then
+  else if isFunction(Code) then
     begin
-    // Value.Code is already a callback
-    cb:=TJSFunction(Value.Code);
+    if (TJSObject(Code)['scope']=Value.Data)
+        and (isFunction(TJSObject(Code)['fn']) or isString(TJSObject(Code)['fn']))
+      then
+      begin
+      // Value.Code is already the needed callback
+      cb:=TJSFunction(Code);
+      end
+    else if isString(TJSObject(Code)['fn']) then
+      // named callback, different scope
+      cb:=createCallbackStr(Value.Data,string(TJSObject(Code)['fn']));
     end
   else
-    cb:=createCallback(Value.Data,Value.Code);
+    // not a valid value -> for compatibility set it anyway
+    cb:=createCallbackPtr(Value.Data,Code);
   SetJSValueProp(Instance,PropInfo,cb);
 end;
 

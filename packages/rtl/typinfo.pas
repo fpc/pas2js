@@ -1418,7 +1418,19 @@ procedure SetMethodProp(Instance: TObject; PropInfo: TTypeMemberProperty;
 var
   cb: TJSFunction;
 begin
-  cb:=createCallback(Value.Data,Value.Code);
+  // Note: Value.Data=nil is allowed and can be used by designer code
+  if Value.Code=nil then
+    cb:=nil
+  else if isFunction(Value.Code)
+      and (TJSObject(Value.Code)['scope']=Value.Data)
+      and (isFunction(TJSObject(Value.Code)['fn']) or isString(TJSObject(Value.Code)['fn']))
+      then
+    begin
+    // Value.Code is already a callback
+    cb:=TJSFunction(Value.Code);
+    end
+  else
+    cb:=createCallback(Value.Data,Value.Code);
   SetJSValueProp(Instance,PropInfo,cb);
 end;
 

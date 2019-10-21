@@ -852,10 +852,14 @@ begin
   if aCode=Nil then
     exit;
 asm
+  if (typeof(aCode)!=='function') return "";
   var i = 0;
   var TI = this.$rtti;
-  // Callback ?
-  if ((typeof aCode["fn"] === "string") && (typeof aCode["scope"] === "object")) return aCode["fn"];
+  if (rtl.isObject(aCode.scope)){
+    // callback
+    if (typeof aCode.fn === "string") return aCode.fn;
+    aCode = aCode.fn;
+  }
   // Not a callback, check rtti
   while ((Result === "") && (TI != null)) {
     i = 0;

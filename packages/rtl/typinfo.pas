@@ -1447,7 +1447,10 @@ begin
       end
     else if isString(TJSObject(Code)['fn']) then
       // named callback, different scope
-      cb:=createCallbackStr(Value.Data,string(TJSObject(Code)['fn']));
+      cb:=createCallbackStr(Value.Data,string(TJSObject(Code)['fn']))
+    else
+      // normal function
+      cb:=createCallbackPtr(Value.Data,Code);
     end
   else
     // not a valid value -> for compatibility set it anyway

@@ -49,7 +49,7 @@ type
 
   { TNJSBuffer }
 
-  TNJSBuffer = class external name 'buffer'
+  TNJSBuffer = class external name 'Buffer'
   public
     class function alloc(Size: NativeInt): TJSArrayBuffer;
     class function alloc(Size: NativeInt; const Fill: JSValue): TJSArrayBuffer;

@@ -439,7 +439,7 @@ type
     property Elements[Index: NativeInt]: JSValue read GetElements write SetElements; default;
   end;
 
-  TJSArrayBuffer = Class external name 'ArrayBuffer'
+  TJSArrayBuffer = Class external name 'ArrayBuffer' (TJSObject)
   private
     fLength : NativeInt; external name 'byteLength';
   public

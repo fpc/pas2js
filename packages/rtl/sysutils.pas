@@ -626,6 +626,8 @@ function IsEqualGUID(const guid1, guid2: TGuid): Boolean;
 function GuidCase(const guid: TGuid; const List: array of TGuid): Integer;
 Function CreateGUID(out GUID : TGUID) : Integer;
 
+Function EncodeHTMLEntities (S : String) : String;
+
 implementation
 
 procedure ShowException(ExceptObject: TObject; ExceptAddr: Pointer);
@@ -4425,6 +4427,18 @@ begin
       Result := IncludeTrailingPathDelimiter(Result) + ExcludeLeadingPathDelimiter(Paths[I]);
   end else
     Result := '';
+end;
+
+Function EncodeHTMLEntities (S : String) : String;
+
+begin
+  Result:='';
+  if S='' then exit;
+  asm
+   return S.replace(/[\u00A0-\u9999<>\&]/gim, function(i) {
+     return '&#'+i.charCodeAt(0)+';';
+   });
+  end;
 end;
 
 end.

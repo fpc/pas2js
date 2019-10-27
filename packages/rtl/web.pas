@@ -2491,6 +2491,33 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property sizes: TJSDOMSettableTokenList{TJSDOMTokenList} read fsizes;
   end;
 
+  { TJSHTMLAnchorElement }
+
+  TJSHTMLAnchorElement = class external name 'HTMLAnchorElement' (TJSHTMLElement)
+  Private
+    FOrigin: string;external name 'origin';
+    frelList: TJSDOMTokenList; external name 'relList';
+  Public
+    href: string;
+    download: string;
+    hash: string;
+    host: string;
+    hostname: string;
+    hreflang: string;
+    media: string ;
+    password: string;
+    Protocol: string;
+    referrerPolicy : string;
+    rel: string ;
+    rev: string deprecated; // obsolete property
+    target: string ;
+    text : string;
+    type_ : string external name 'type';
+    username : string;
+    Property relList: TJSDOMTokenList read frelList;
+    Property origin: string Read FOrigin;
+  end;
+
   { TJSHTMLMenuElement }
 
   TJSHTMLMenuElement = class external name 'HTMLMenuElement' (TJSHTMLElement) //  uhm... should it be declared? it is experimental at Mozilla docs...
@@ -3599,6 +3626,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Function values : TJSValueDynArray; reintroduce;
     Property Entry[aIndex : String] : TJSFormDataEntryValue read Get;
   end;
+
+  TJSHTMLTemplateElement = class external name 'HTMLTemplateElement' (TJSHTMLElement)
+    content : TJSHTMLElement;
+  end;
+
 
 var
   document : TJSDocument; external name 'document';

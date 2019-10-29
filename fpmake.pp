@@ -157,6 +157,7 @@ begin
     P.Targets.AddProgram('pas2js.pp');
     P.Targets.AddProgram('webidl2pas.pp');
     {$IF FPC_FULLVERSION>=30101}
+    P.Targets.AddProgram('compileserver.pp');
     P.Targets.AddLibrary('pas2jslib.pp');
     {$ENDIF}
     P.Targets.AddImplicitUnit('fpjson',False).ResourceStrings:=True;

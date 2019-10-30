@@ -20,9 +20,15 @@ unit DA;
 
 interface
 
-uses Types, JS, DASDK;
+uses Sysutils, Types, JS, DASDK;
 
 Type
+  TDADataType = ( datUnknown, datString, datDateTime, datFloat, datCurrency,
+          datAutoInc, datInteger, datLargeInt, datBoolean, datMemo,
+          datBlob, datWideString, datWideMemo, datLargeAutoInc, datByte,
+          datShortInt, datWord, datSmallInt, datCardinal, datLargeUInt,
+          datGuid, datXml, datDecimal, datSingleFloat, datFixedChar, datFixedWideChar, datCursor);
+
   // Forward classes
   TDADataTable = class;
   TDABIN2DataStreamer = class;
@@ -210,7 +216,9 @@ Type
     __newValues : array of JSValue;
   end;
 
-  TDAExpression  = class external name 'RemObjects.DataAbstract.Expression' (TJSObject);
+  TDAExpression  = class external name 'RemObjects.DataAbstract.Expression' (TJSObject)
+    function toXML : String;
+  end;
 
   TDADynamicWhere = class external name 'RemObjects.DataAbstract.DynamicWhere' (TJSObject)
   Public
@@ -264,7 +272,13 @@ Type
   public
     constructor new(aList : array of TDAExpression);
   end;
-  
+
+  TDABinaryOperator = (dboAnd, dboOr, dboXor, dboLess, dboLessOrEqual, dboGreater,
+    dboGreaterOrEqual, dboNotEqual, dboEqual, dboLike, dboIn, dboAddition, dboSubtraction,
+    dboMultiply, dboDivide, dboNotIn);
+
+  TDAUnaryOperator = (duoNot, duoMinus);
+
 
   TDAUtil = Class external name 'RemObjects.DataAbstract.Util' (TJSObject)
   Public
@@ -313,6 +327,52 @@ Type
   Public
     constructor new(aTable : TDADataTable; aHTMLTableID : String);
   end;
+
+Const
+  BinaryOperatorNames : Array[TDABinaryOperator] of string =
+    ('And', 'Or', 'Xor', 'Less', 'LessOrEqual', 'Greater',
+    'GreaterOrEqual', 'NotEqual', 'Equal', 'Like', 'In', 'Addition', 'Subtraction',
+    'Multiply', 'Divide', 'NotIn');
+
+  UnaryOperatorNames: Array[TDAUnaryOperator] of string = ('Not', 'Minus');
+
+  DataTypeNames : Array[TDADataType] of string = ('Unknown', 'String', 'eTime', 'Float', 'Currency',
+          'AutoInc', 'Integer', 'LargeInt', 'Boolean', 'Memo',
+          'Blob', 'WideString', 'WideMemo', 'LargeAutoInc', 'Byte',
+          'ShortInt', 'Word', 'SmallInt', 'Cardinal', 'LargeUInt',
+          'Guid', 'Xml', 'Decimal', 'SingleFloat', 'FixedChar', 'FixedWideChar', 'Cursor');
+
+Function JSValueToDataType(aValue : JSValue) : TDADataType;
+Function JSValueToDataTypeName(aValue : JSValue) : String;
+
 Implementation
+
+Function JSValueToDataType(aValue : JSValue) : TDADataType;
+
+begin
+  if isNull(aValue) then
+    Result:=datUnknown
+  else if isString(aValue) then
+    Result:=datWideString
+  else if isBoolean(aValue) then
+    Result:=datBoolean
+  else if isNumber(aValue) then
+    begin
+    if isInteger(aValue) then
+      Result:=datLargeInt
+    else
+      Result:=datFloat
+    end
+  else if isDate(aValue) then
+    Result:=datDateTime
+  else
+    Raise EConvertError.Create('Cannot convert JSValue to DADataType: Unknown/Unsupported type');
+end;
+
+Function JSValueToDataTypeName(aValue : JSValue) : String;
+
+begin
+  Result:=DataTypeNames[JSValueToDataType(aValue)];
+end;
 
 end.

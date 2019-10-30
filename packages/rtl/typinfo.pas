@@ -51,8 +51,9 @@ type
     //tkQWord,
     //tkInterfaceRaw,
     //tkUString,tkUChar,
-    tkHelper    // 19
+    tkHelper,   // 19
     //tkFile,
+    tkExtClass  // 20
     );
   TTypeKinds = set of TTypeKind;
 
@@ -330,6 +331,13 @@ type
   public
     ClassType: TClass external name 'class';
     Ancestor: TTypeInfoClass external name 'ancestor';
+  end;
+
+  { TTypeInfoExtClass - Kind = tkExtClass }
+
+  TTypeInfoExtClass = class external name 'rtl.tTypeInfoExtClass'(TTypeInfoClass)
+  public
+    JSClassName: String external name 'jsclass';
   end;
 
   { TTypeInfoClassRef - class-of, Kind = tkClassRef }

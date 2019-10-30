@@ -2650,6 +2650,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure checkValidity;
     procedure setCustomValidity(aMessage : String);
   Public
+    autofocus : Boolean;
+    disabled : Boolean;
     multiple : boolean;
     required: boolean;
     selectedIndex : NativeInt;

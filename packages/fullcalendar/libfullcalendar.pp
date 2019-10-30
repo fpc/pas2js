@@ -481,6 +481,11 @@ Type
     eventClick : TEventMouseEventHandler;
     eventMouseEnter : TEventMouseEventHandler;
     eventMouseLeave : TEventMouseEventHandler;
+    listDayFormat : TDateFormatter;
+    listDayBool : Boolean; external name 'listDayFormat';
+    listDayAltFormat : TDateFormatter;
+    listDayAltBool : Boolean; external name 'listDayAltFormat';
+    noEventsMessage : String;
   end;
 
   { TFullCalendarView }

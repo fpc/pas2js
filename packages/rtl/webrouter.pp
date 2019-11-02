@@ -646,7 +646,7 @@ end;
 
 function TRouter.GetCurrentLocation: String;
 begin
-
+  Result:=History.GetCurrentLocation;
 end;
 
 function TRouter.Push(location: TRawLocation): TTransitionResult;

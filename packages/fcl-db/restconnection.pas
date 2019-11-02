@@ -235,7 +235,7 @@ begin
   I:=aBatch.List.Count-1;
   While BatchOK and (I>=0) do
     begin
-    BatchOK:=aBatch.List[I].Status in [usResolved,usResolveFailed];
+    BatchOK:=aBatch.List[I].ResolveStatus in [rsResolved,rsResolveFailed];
     Dec(I);
     end;
   If BatchOK and Assigned(aBatch.OnResolve) then

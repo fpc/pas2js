@@ -46,8 +46,11 @@ type
     deCheckBrowseMode, dePropertyChange, deFieldListChange, deFocusControl,
     deParentScroll,deConnectChange,deReconcileError,deDisabledStateChange);
 
-  TUpdateStatus = (usUnmodified, usModified, usInserted, usDeleted, usResolved, usResolveFailed, usResolving);
+  TUpdateStatus = (usModified, usInserted, usDeleted);
   TUpdateStatusSet = Set of TUpdateStatus;
+
+  TResolveStatus = (rsUnresolved, rsResolving, rsResolved, rsResolveFailed);
+  TResolveStatusSet = Set of TResolveStatus;
 
   TUpdateMode = (upWhereAll, upWhereChanged, upWhereKeyOnly);
   TResolverResponse = (rrSkip, rrAbort, rrMerge, rrApply, rrIgnore);
@@ -1356,7 +1359,6 @@ type
     procedure UpdateCursorPos;
     procedure UpdateRecord;
     Function GetPendingUpdates : TResolveInfoArray;
-    function UpdateStatus: TUpdateStatus; virtual;
     Property Loading : Boolean Read GetIsLoading;
     property BlockReadSize: Integer read FBlockReadSize write SetBlockReadSize;
     property BOF: Boolean read FBOF;
@@ -1607,12 +1609,12 @@ type
     FData: JSValue;
     FDataset: TDataset;
     FProxy: TDataProxy;
+    FResolveStatus: TResolveStatus;
     FResolveError: String;
     FServerData: JSValue;
     FStatus: TUpdateStatus;
-    FOriginalStatus : TUpdateStatus;
   Protected
-    Procedure SetStatus(aValue : TUpdateStatus); virtual;
+    Procedure SetResolveStatus(aValue : TResolveStatus); virtual;
     Procedure Reset;
   Public
     Constructor Create(aProxy : TDataProxy; aDataset : TDataset; aBookmark : TBookMark; AData : JSValue; AStatus : TUpdateStatus); reintroduce;
@@ -1620,8 +1622,9 @@ type
     Procedure ResolveFailed(aError : String);
     Property Proxy : TDataProxy read FProxy;
     Property Dataset : TDataset Read FDataset;
-    Property OriginalStatus : TUpdateStatus Read FOriginalStatus;
+    Property OriginalStatus : TUpdateStatus Read FStatus; deprecated;
     Property Status : TUpdateStatus Read FStatus;
+    Property ResolveStatus : TResolveStatus Read FResolveStatus;
     Property ServerData : JSValue Read FServerData;
     Property Data : JSValue Read FData;
     Property Bookmark : TBookmark Read FBookmark;
@@ -1836,14 +1839,14 @@ end;
 
 { TRecordUpdateDescriptor }
 
-procedure TRecordUpdateDescriptor.SetStatus(aValue: TUpdateStatus);
+procedure TRecordUpdateDescriptor.SetResolveStatus(aValue: TResolveStatus);
 begin
-  FStatus:=AValue;
+  FResolveStatus:=AValue;
 end;
 
 procedure TRecordUpdateDescriptor.Reset;
 begin
-  FStatus:=FOriginalStatus;
+  FResolveStatus:=rsUnresolved;
   FResolveError:='';
   FServerData:=Null;
 end;
@@ -1855,20 +1858,19 @@ begin
   FBookmark:=aBookmark;
   FData:=AData;
   FStatus:=AStatus;
-  FOriginalStatus:=AStatus;
   FProxy:=aProxy;
 end;
 
 
 procedure TRecordUpdateDescriptor.Resolve(aData: JSValue);
 begin
-  FStatus:=usResolved;
+  SetResolveStatus(rsResolved);
   FServerData:=AData;
 end;
 
 procedure TRecordUpdateDescriptor.ResolveFailed(aError: String);
 begin
-  SetStatus(usResolveFailed);
+  SetResolveStatus(rsResolveFailed);
   FResolveError:=AError;
 end;
 
@@ -2882,7 +2884,7 @@ Var
 begin
   MinIndex:=0; // Check batch list for minimal index ?
   For I:=MinIndex to FChangeList.Count-1 do
-    if Not (TRecordUpdateDescriptor(FChangeList[i]).Status in [usResolving,usResolved])  then
+    if TRecordUpdateDescriptor(FChangeList[i]).ResolveStatus=rsUnResolved  then
       Alist.Add(FChangeList[i]);
   Result:=FChangeList.Count;
 end;
@@ -2896,7 +2898,7 @@ begin
   try
     Result:=DoResolveRecordUpdate(anUpdate);
     If not Result then
-      anUpdate.FStatus:=usResolveFailed;
+      anUpdate.SetResolveStatus(rsResolveFailed);
   except
     On E : Exception do
       begin
@@ -2953,11 +2955,11 @@ begin
     if (Idx<>-1) then
       begin
       doRemove:=False;
-      if (RUD.Status=usResolved) then
+      if (RUD.ResolveStatus=rsResolved) then
         DoRemove:=ResolveRecordUpdate(RUD)
       else
         // What if not resolvable.. ?
-        DoRemove:=(RUD.Status in [usUnmodified]);
+        DoRemove:=(RUD.ResolveStatus=rsResolved);
       If DoRemove then
         begin
         RUD.Free;
@@ -2997,7 +2999,7 @@ begin
     end;
     Inc(FUpdateBatchID);
     For I:=0 to L.Count-1 do
-      TRecordUpdateDescriptor(L[i]).SetStatus(usResolving);
+      TRecordUpdateDescriptor(L[i]).SetResolveStatus(rsResolving);
     B:=DataProxy.GetRecordUpdateBatch(FUpdateBatchID,L,True);
     B.FDataset:=Self;
     B.FLastChangeIndex:=I;
@@ -4868,11 +4870,13 @@ begin
   end;
 end;
 
+(*
 function TDataSet.UpdateStatus: TUpdateStatus;
 
 begin
-  Result:=usUnmodified;
+  Result:=;
 end;
+*)
 
 procedure TDataSet.SetConstraints(Value: TCheckConstraints);
 begin

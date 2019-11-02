@@ -288,7 +288,6 @@ type
     procedure SetRowType(AValue: TJSONRowType);
   protected
     procedure ActivateIndex(Build : Boolean);
-    function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     // Determine filter value type based on field type
     function FieldTypeToExpressionType(aDataType: TFieldType): TResultType; virtual;
     // Callback for IsNull filter function.
@@ -376,6 +375,7 @@ type
   public
     constructor Create (AOwner: TComponent); override;
     destructor Destroy; override;
+    function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     function Locate(const KeyFields: string; const KeyValues: JSValue; Options: TLocateOptions): boolean; override;
     function Lookup(const KeyFields: string; const KeyValues: JSValue; const ResultFields: string): JSValue; override;
     function GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;  override;

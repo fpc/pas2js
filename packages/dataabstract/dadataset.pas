@@ -64,12 +64,12 @@ Type
     function DataTypeToFieldType(s: String): TFieldType;
     procedure SetParams(AValue: TParams);
   Protected
-    function ConvertToDateTime(aField : TField; aValue : JSValue; ARaiseException : Boolean) : TDateTime; override;
-    function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     Procedure MetaDataToFieldDefs; override;
   Public
     constructor create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    function ConvertToDateTime(aField : TField; aValue : JSValue; ARaiseException : Boolean) : TDateTime; override;
+    function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     function DoGetDataProxy: TDataProxy; override;
     Function ParamByName(Const aName : string) : TParam;
     Function FindParam(Const aName : string) : TParam;

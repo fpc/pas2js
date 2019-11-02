@@ -2888,6 +2888,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property Result : JSValue Read FResult;
   end;
 
+  TCanvasCoordType = double; // Is in fact a number.
+
   // Opaque objects
   TJSCanvasGradient = class external name 'CanvasGradient'  (TJSObject)
   end;
@@ -2896,6 +2898,22 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSPath2D = class external name 'Path2D'  (TJSObject)
+  Public
+    constructor new; overload;
+    constructor new(aPath : TJSPath2D); overload;
+    constructor new(SVGPath : String); overload;
+    Procedure addPath(aPath : TJSPath2D);
+    procedure arc(x,y, radius,startAngle,endAngle : TCanvasCoordType); overload;
+    procedure arc(x,y, radius,startAngle,endAngle : TCanvasCoordType; antiClockWise : boolean); overload;
+    procedure arcTo(x1,y1,x2,y2,radius : TCanvasCoordType); overload;
+    procedure bezierCurveTo(cp1x,cp1y,cp2x,cp2y,x,y : TCanvasCoordType); overload;
+    Procedure closePath;
+    procedure ellipse(x, y, radiusX, radiusY : TCanvasCoordType; rotation, startAngle, endAngle : Double); overload;
+    procedure ellipse(x, y, radiusX, radiusY : TCanvasCoordType; rotation, startAngle, endAngle : Double; anticlockwise : Boolean); overload;
+    Procedure lineTo(X,Y : TCanvasCoordType);
+    Procedure moveTo(X,Y : TCanvasCoordType);
+    procedure quadraticCurveTo(cpx,cpy,x,y : TCanvasCoordType);
+    procedure rect(x,y,awidth,aheight: TCanvasCoordType); overload;
   end;
 
   { TJSImageData }
@@ -2913,7 +2931,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property width : Integer Read FWidth;
   end;
 
-  TCanvasCoordType = double; // Is in fact a number.
 
   TJSTextMetrics = class external name 'TextMetrics' (TJSObject)
     width : TCanvasCoordType;
@@ -2977,6 +2994,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure drawImage(image : TJSObject; dx,dy : TCanvasCoordType); overload;
     procedure drawImage(image : TJSObject; dx,dy,dwidth,dheight : TCanvasCoordType); overload;
     procedure drawImage(image : TJSObject; sx,sy,sWidth,sHeight,dx,dy,dwidth,dheight : TCanvasCoordType); overload;
+    procedure ellipse(x, y, radiusX, radiusY : TCanvasCoordType; rotation, startAngle, endAngle : Double); overload;
+    procedure ellipse(x, y, radiusX, radiusY : TCanvasCoordType; rotation, startAngle, endAngle : Double; anticlockwise : Boolean); overload;
     procedure fill; overload;
     procedure fill(aRule : String); overload;
     procedure fill(aPath : TJSPath2D); overload;

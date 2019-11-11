@@ -300,7 +300,8 @@ type
     function charCodeAt(aIndex : NativeInt) : NativeInt;
     function codePointAt(aIndex : NativeInt) : NativeInt;
     function concat(s : string) : string; varargs;
-    function endsWith(aSearchString : string; Pos : NativeInt = 0) : boolean;
+    function endsWith(aSearchString : string) : boolean; overload;
+    function endsWith(aSearchString : string; Pos : NativeInt) : boolean; overload;
     function includes(aSearchString : string; Pos : NativeInt = 0) : boolean;
     function indexOf(aSearchString : String; Pos : NativeInt = 0) : Integer;
     function lastIndexOf(aSearchString : String) : NativeInt;overload;

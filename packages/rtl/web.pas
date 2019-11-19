@@ -328,7 +328,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSLocation = class external name 'Location'  (TJSObject)
   Private
-    FOrigin : string;
+    FOrigin : string; external name 'origin';
   Public
     hash : string;
     host : string;

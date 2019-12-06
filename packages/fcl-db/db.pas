@@ -1039,6 +1039,7 @@ type
   TResolveInfo = record
     Data : JSValue;
     Status : TUpdateStatus;
+    ResolveStatus : TResolveStatus;
     Error : String; // Only filled on error.
     BookMark : TBookmark;
     _private : JSValue; // for use by descendents of TDataset
@@ -2915,6 +2916,7 @@ begin
   Result.BookMark:=anUpdate.Bookmark;
   Result.Data:=anUpdate.Data;
   Result.Status:=anUpdate.Status;
+  Result.ResolveStatus:=anUpdate.ResolveStatus;
   Result.Error:=anUpdate.ResolveError;
 end;
 

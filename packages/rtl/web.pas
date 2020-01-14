@@ -65,8 +65,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure addEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure addEventListener(aname : string; aListener : JSValue);
     function dispatchEvent(event : JSValue) : Boolean;
-    procedure RemoveEventListener(aname : string; aListener : TJSEventHandler);
-    procedure RemoveEventListener(aname : string; aListener : TJSRawEventHandler);
+    procedure removeEventListener(aname : string; aListener : TJSEventHandler);
+    procedure removeEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure removeEventListener(aname : string; aListener : JSValue);
   end;
 

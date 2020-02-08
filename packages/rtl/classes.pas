@@ -9652,8 +9652,11 @@ var
 begin
   CharsRead:=0;
   for I:=0 to ParseBufSize-1 do
+  begin
     if FStream.ReadData(FBuf[i])<>2 then
-       Inc(CharsRead);
+      Break;
+    Inc(CharsRead);
+  end;
   Inc(FDeltaPos, CharsRead);
   FPos := 0;
   FBufLen := CharsRead;

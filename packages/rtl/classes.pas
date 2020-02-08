@@ -46,6 +46,7 @@ type
 
   TListAssignOp = (laCopy, laAnd, laOr, laXor, laSrcUnique, laDestUnique);
   TListSortCompare = function(Item1, Item2: JSValue): Integer;
+  TListSortCompareFunc = reference to function (Item1, Item2: JSValue): Integer;
   TListCallback = Types.TListCallback;
   TListStaticCallback = Types.TListStaticCallback;
   TAlignment = (taLeftJustify, taRightJustify, taCenter);
@@ -112,6 +113,7 @@ type
     function Remove(Item: JSValue): Integer;
     procedure Pack;
     procedure Sort(const Compare: TListSortCompare);
+    procedure SortList(const Compare: TListSortCompareFunc);
     procedure ForEachCall(const proc2call: TListCallback; const arg: JSValue);
     procedure ForEachCall(const proc2call: TListStaticCallback; const arg: JSValue);
     property Capacity: Integer read FCapacity write SetCapacity;
@@ -180,6 +182,7 @@ type
     function Remove(Item: JSValue): Integer;
     procedure Pack;
     procedure Sort(const Compare: TListSortCompare);
+    procedure SortList(const Compare: TListSortCompareFunc);
     property Capacity: Integer read GetCapacity write SetCapacity;
     property Count: Integer read GetCount write SetCount;
     property Items[Index: Integer]: JSValue read Get write Put; default;
@@ -452,6 +455,7 @@ type
   TCollectionItemClass = class of TCollectionItem;
   TCollectionNotification = (cnAdded, cnExtracting, cnDeleting);
   TCollectionSortCompare = function (Item1, Item2: TCollectionItem): Integer;
+  TCollectionSortCompareFunc = reference to function (Item1, Item2: TCollectionItem): Integer;
 
   TCollection = class(TPersistent)
   private
@@ -495,6 +499,7 @@ type
     function FindItemID(ID: Integer): TCollectionItem;
     procedure Exchange(Const Index1, index2: integer);
     procedure Sort(Const Compare : TCollectionSortCompare);
+    procedure SortList(Const Compare : TCollectionSortCompareFunc);
     property Count: Integer read GetCount;
     property ItemClass: TCollectionItemClass read FItemClass;
     property Items[Index: Integer]: TCollectionItem read GetItem write SetItem;
@@ -2096,7 +2101,7 @@ end;
 // Needed by Sort method.
 
 Procedure QuickSort(aList: TJSValueDynArray; L, R : Longint;
-                    const Compare: TListSortCompare);
+                    const Compare: TListSortCompareFunc);
 var
   I, J : Longint;
   P, Q : JSValue;
@@ -2138,6 +2143,16 @@ begin
 end;
 
 procedure TFPList.Sort(const Compare: TListSortCompare);
+begin
+  if Not Assigned(FList) or (FCount < 2) then exit;
+  QuickSort(Flist, 0, FCount-1,
+    function(Item1, Item2: JSValue): Integer
+    begin
+      Result := Compare(Item1, Item2);
+    end);
+end;
+
+procedure TFPList.SortList(const Compare: TListSortCompareFunc);
 begin
   if Not Assigned(FList) or (FCount < 2) then exit;
   QuickSort(Flist, 0, FCount-1, Compare);
@@ -2485,6 +2500,11 @@ end;
 procedure TList.Sort(const Compare: TListSortCompare);
 begin
   FList.Sort(Compare);
+end;
+
+procedure TList.SortList(const Compare: TListSortCompareFunc);
+begin
+  FList.SortList(Compare);
 end;
 
 { TPersistent }
@@ -4222,6 +4242,17 @@ begin
   BeginUpdate;
   try
     FItems.Sort(TListSortCompare(Compare));
+  Finally
+    EndUpdate;
+  end;
+end;
+
+procedure TCollection.SortList(const Compare: TCollectionSortCompareFunc);
+
+begin
+  BeginUpdate;
+  try
+    FItems.SortList(TListSortCompareFunc(Compare));
   Finally
     EndUpdate;
   end;

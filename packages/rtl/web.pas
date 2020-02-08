@@ -2009,6 +2009,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     onprogress : TJSProgressEventhandler;
     onpopstate : TJSPopStateEventHandler;
     onreset : TJSUIEventHandler;
+    onresize : TJSUIEventHandler;
     onscroll : TJSUIEventHandler;
     onselect : TJSEventHandler;
     onselectionchange : TJSEventHandler;

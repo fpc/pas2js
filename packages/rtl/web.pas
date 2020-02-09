@@ -884,6 +884,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure writeln(aLine : String);
   Public
     body : TJSElement;
+    cookie: TJSString;
     designMode : string;
     dir : string;
     domain : string;

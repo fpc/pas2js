@@ -837,6 +837,7 @@ type
     function _finally(value : TJSPromiseFinallyHandler): TJSPromise;
   end;
 
+
   TJSFunctionArguments = class external name 'arguments'
   private
     FLength: NativeInt; external name 'length';
@@ -846,6 +847,20 @@ type
     property Length: NativeInt read FLength;
     property Elements[Index: NativeInt]: JSValue read GetElements write SetElements; default;
   end;
+
+  TJSIteratorResult = Class external name 'IteratorResult' (TJSObject)
+  Private
+    fDone : Boolean; external name 'done';
+    fValue : JSValue; external name 'value';
+  Public
+    property done : boolean Read FDone;
+    property value : JSValue read FValue;
+  end;
+
+  TJSAsyncIterator = Class external name 'AsyncIterator' (TJSObject)
+    function next: TJSIteratorResult;
+  end;
+
 
 var
   // JSArguments can be used in procedures/functions to provide access to the 'arguments' array.

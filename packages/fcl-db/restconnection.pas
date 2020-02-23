@@ -273,6 +273,7 @@ begin
     end;
     R.FXHR.open(Method,URL);
     R.FXHR.setRequestHeader('content-type','application/json');
+    Connection.SetupRequest(R.FXHR); 
     if R.Status in [usInserted,usModified] then
       R.FXHR.Send(TJSJSON.Stringify(R.Data))
     else

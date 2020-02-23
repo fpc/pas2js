@@ -60,11 +60,15 @@ Type
   TNJSGPIOClass = class of TNJSGPIO;
 
 var
-  GPIO : TNJSGPIOClass;
+  TGPIO : TNJSGPIOClass;
 
 implementation
 
+Type
+  TNJSOnOffModule = class external name 'Object' (TJSObject)
+    Gpio : TNJSGPIOClass;
+  end;  
+  
 initialization
-  gpio:=TNJSGPIOClass(require('onoff'));
+  TGPIO:=TNJSOnOffModule(require('onoff')).Gpio;
 end.
-

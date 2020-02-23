@@ -10,7 +10,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
  **********************************************************************}
-unit NodeJSFS;
+unit node.fs;
 
 {$mode objfpc}
 {$ModeSwitch externalclass}

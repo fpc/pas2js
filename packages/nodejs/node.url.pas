@@ -13,7 +13,7 @@
 
  **********************************************************************}
 
-unit nodejsurl;
+unit node.url;
 
 {$mode objfpc}
 {$ModeSwitch externalclass}

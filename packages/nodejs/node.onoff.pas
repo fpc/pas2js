@@ -13,7 +13,7 @@
 
  **********************************************************************}
 
-unit nodejsonoff;
+unit node.onoff;
 
 {$mode objfpc}
 {$modeswitch externalclass}

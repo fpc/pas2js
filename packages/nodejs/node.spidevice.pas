@@ -12,7 +12,7 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
  **********************************************************************}
-unit nodejsspidevice;
+unit node.spidevice;
 
 {$mode objfpc}
 {$modeswitch externalclass}

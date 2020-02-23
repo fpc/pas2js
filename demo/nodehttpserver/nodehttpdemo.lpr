@@ -3,7 +3,7 @@ program nodehttpdemo;
 {$mode objfpc}
 
 uses
-  nodejsapp, JS, Classes, SysUtils, nodeJS, nodejshttp, nodejsnet;
+  nodejsapp, JS, Classes, SysUtils, nodeJS, node.http, node.net;
 
 type
 

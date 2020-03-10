@@ -49,8 +49,9 @@ Type
   TMySubContentWidget = Class(TMyParentWidget)
   Private
     FSub: TJSHTMLElement;
-  Public
+  Protected
     Function DoRenderHTML(aParent,aElement : TJSHTMLElement) :TJSHTMLElement; override;
+  Public
     Procedure DoUnRender(aParent: TJSHTMLElement); override;
     function GetContentElement: TJSHTMLELement; override;
   end;
@@ -60,8 +61,9 @@ Type
   TMyPrefixSubContentWidget = Class(TMySubContentWidget)
   Private
     FTop : TJSHTMLELement;
-  Public
+  Protected
     Function DoRenderHTML(aParent,aElement : TJSHTMLElement) :TJSHTMLElement; override;
+  Public
     Procedure DoUnRender(aParent: TJSHTMLElement); override;
     function GetTopElement: TJSHTMLELement; override;
   end;
@@ -73,6 +75,7 @@ Type
     FUL : TJSHTMLElement;
     FSubs : TJSHTMLElementArray;
     Function DoRenderHTML(aParent,aElement : TJSHTMLElement) :TJSHTMLElement; override;
+
   Public
     Property References;
     Property Subs : TJSHTMLElementArray read FSubs;
@@ -313,13 +316,251 @@ Type
     Procedure SelectMultiAfterRefresh;
   end;
 
+  TTestLoopWidget = Class(TSimpleLoopTemplateWidget);
+
+  { TTestSimpleLoopWidget }
+
+  TTestSimpleLoopWidget = class(TBaseTestWidget)
+  private
+    FMy: TTestLoopWidget;
+    procedure CheckCount(aCount: Integer; ParentEl: TJSHTmlElement=nil; aRowOffset : Integer = 0);
+    procedure DoGetValue(Sender: TObject; aValue: TLoopTemplateValue);
+    procedure DoGroupValue(Sender: TObject; aValue: TLoopTemplateValue);
+    function GetItems: TWebWidgetReferences;
+  Public
+    Procedure Setup; override;
+    Procedure TearDown; override;
+    Property MyWidget : TTestLoopWidget Read FMy;
+    Property References : TWebWidgetReferences Read GetItems;
+  Published
+//  Public
+    Procedure TestSetup;
+    Procedure TestRender;
+    Procedure TestRenderAfterMaxCount;
+    Procedure TestRenderAfterHeader;
+    Procedure TestRenderAfterFooter;
+    Procedure TestRenderAfterItem;
+    Procedure TestRenderGetValue;
+    Procedure TestRenderOneGroup;
+//  Published
+    Procedure TestRenderTwoGroups;
+  end;
+
 implementation
+
+{ TTestSimpleLoopWidget }
+
+Const
+  SSimpleHeader = '<dl>'+sLinebreak;
+  SSimpleFooter = '</dl>'+sLinebreak;
+  SSimpleItem = '<dt id="{{_row_}}">{{_row_}}</dt><dd>{{_index_}}</dd>'+sLinebreak;
+  SSimpleItem2 = '<dt id="{{_id_}}">{{_row_}}</dt><dd>{{_name_}}</dd>'+sLinebreak;
+
+
+  SSimpleDivGroupHeader = '<div id="div_{{_group_}}">'+sLinebreak;
+  SSimpleDivGroupFooter = '</div>'+sLinebreak;
+  SSimpleGroupHeader = '<dl id="grp_{{_group_}}">'+sLinebreak;
+  SSimpleGroupFooter = '</dl>'+sLinebreak;
+
+function TTestSimpleLoopWidget.GetItems: TWebWidgetReferences;
+begin
+  Result:=MyWidget.References
+end;
+
+procedure TTestSimpleLoopWidget.Setup;
+begin
+  inherited Setup;
+  FMy:=TTestLoopWidget.Create(Nil);
+  FMy.HeaderTemplate:=SSimpleHeader;
+  FMy.FooterTemplate:=SSimpleFooter;
+  FMy.ItemTemplate:=SSimpleItem;
+  FMy.ItemCount:=3;
+  FMy.ParentID:=SBaseWindowID;
+end;
+
+procedure TTestSimpleLoopWidget.TearDown;
+begin
+  FreeAndNil(FMy);
+  inherited TearDown;
+end;
+
+procedure TTestSimpleLoopWidget.TestSetup;
+begin
+  AssertNotnull('have widget',MyWidget);
+  AssertEquals('Have header template',SSimpleHeader,MyWidget.HeaderTemplate);
+  AssertEquals('Have footer template',SSimpleFooter,MyWidget.FooterTemplate);
+  AssertEquals('Have item template',SSimpleItem,MyWidget.ItemTemplate);
+end;
+
+procedure TTestSimpleLoopWidget.CheckCount(aCount: Integer; ParentEl: TJSHTmlElement; aRowOffset: Integer);
+
+Var
+  El,EL2 : TJSHTMLElement;
+  S : String;
+  I : Integer;
+
+begin
+  // Checks for /tag(id)/tag(id)
+  //Function AssertTree(dl>aParent : TJSHTmlElement; aTree : String) :TJSHTMLElement;
+  if Assigned(ParentEl) then
+    El:=AssertTree(ParentEl,'dt('+IntToStr(1+aRowOffset)+')')
+  else
+    El:=AssertTree('dl/dt('+IntToStr(1+aRowOffset)+')');
+  For I:=1 to aCount do
+    begin
+    S:=IntToStr(aRowOffset+I);
+    AssertEquals('dt text '+S,S,El.InnerText);
+    El:=TJSHTMLElement(El.nextElementSibling);
+    AssertNotNull('Have element '+S,El);
+    AssertEquals('Have dd element '+S,'dd',LowerCase(El.TagName));
+    AssertEquals('dd text '+S,IntToStr(aRowOffset+I-1),El.InnerText);
+    El:=TJSHTMLElement(El.nextElementSibling);
+    if I<>aCount then
+      begin
+      AssertNotNull('Have next DT element '+S,El);
+      AssertEquals('Have next DT element id',IntToStr(aRowOffset+I+1),El.ID);
+      end
+    else
+      AssertNull('Last element : done',el);
+    end;
+end;
+
+procedure TTestSimpleLoopWidget.DoGetValue(Sender: TObject; aValue: TLoopTemplateValue);
+begin
+  With aValue do
+    begin
+    if Name='name' then
+      Value:='Name-'+IntToStr(Index);
+    end;
+end;
+
+procedure TTestSimpleLoopWidget.DoGroupValue(Sender: TObject; aValue: TLoopTemplateValue);
+begin
+  if aValue.Name='divsplit' then
+    aValue.Value:=IntToStr(aValue.Index div 10)
+  else
+    aValue.Value:=IntToStr(aValue.Index div 3);
+//  Writeln('Calculating group ',aValue.name,' value ',aValue.Value,' from index ',aValue.Index);
+end;
+
+
+procedure TTestSimpleLoopWidget.TestRender;
+begin
+  MyWidget.Refresh;
+  CheckCount(3);
+end;
+
+procedure TTestSimpleLoopWidget.TestRenderAfterMaxCount;
+begin
+  MyWidget.Refresh;
+  MyWidget.ItemCount:=2;
+  CheckCount(2);
+end;
+
+procedure TTestSimpleLoopWidget.TestRenderAfterHeader;
+begin
+  MyWidget.Refresh;
+  MyWidget.HeaderTemplate:='<dl id="666"/>';
+  AssertTree('dl(666)');
+  CheckCount(3);
+end;
+
+procedure TTestSimpleLoopWidget.TestRenderAfterFooter;
+begin
+  MyWidget.Refresh;
+  MyWidget.FooterTemplate:='</dl><p id="me">me</p>';
+  CheckCount(3);
+  AssertTree('p(me)');
+end;
+
+procedure TTestSimpleLoopWidget.TestRenderAfterItem;
+begin
+  MyWidget.Refresh;
+  MyWidget.ItemTemplate:='<dt id="{{_index_}}">{{row}}</dt>';
+  AssertTree('dl/dt(0)');
+  AssertTree('dl/dt(1)');
+  AssertTree('dl/dt(2)');
+end;
+
+procedure TTestSimpleLoopWidget.TestRenderGetValue;
+begin
+  MyWidget.OnGetValue:=@DoGetValue;
+  MyWidget.Refresh;
+  MyWidget.ItemTemplate:='<dt id="{{name}}">{{row}}</dt>';
+  AssertTree('dl/dt(name-0)');
+  AssertTree('dl/dt(name-1)');
+  AssertTree('dl/dt(name-2)');
+end;
+
+
+procedure TTestSimpleLoopWidget.TestRenderOneGroup;
+
+Var
+  El : TJSHTMLElement;
+
+begin
+  MyWidget.ItemCount:=9;
+  MyWidget.ContainerTag:='div';
+
+  MyWidget.HeaderTemplate:='';
+  MyWidget.FooterTemplate:='';
+  MyWidget.Groups.AddGroup('split',SSimpleGroupHeader,SSimpleGroupFooter);
+  MyWidget.OnGetGroupValue:=@DoGroupValue;
+  MyWidget.Refresh;
+  el:=AssertTree('div/dl(grp_0)');
+  CheckCount(3,El,0);
+  el:=AssertTree('div/dl(grp_1)');
+  CheckCount(3,El,3);
+  el:=AssertTree('div/dl(grp_2)');
+  CheckCount(3,El,6);
+end;
+
+procedure TTestSimpleLoopWidget.TestRenderTwoGroups;
+
+Var
+  El : TJSHTMLElement;
+
+begin
+  MyWidget.ItemCount:=27;
+  MyWidget.ContainerTag:='div';
+  MyWidget.HeaderTemplate:='';
+  MyWidget.FooterTemplate:='';
+  MyWidget.Groups.AddGroup('divsplit',SSimpleDivGroupHeader,SSimpleDivGroupFooter);
+  MyWidget.Groups.AddGroup('split',SSimpleGroupHeader,SSimpleGroupFooter);
+  MyWidget.OnGetGroupValue:=@DoGroupValue;
+  MyWidget.Refresh;
+  // 0 -- 9
+  el:=AssertTree('div/div(div_0)/dl(grp_0)');
+  CheckCount(3,El,0);
+  el:=AssertTree('div/div(div_0)/dl(grp_1)');
+  CheckCount(3,El,3);
+  el:=AssertTree('div/div(div_0)/dl(grp_2)');
+  CheckCount(3,El,6);
+  el:=AssertTree('div/div(div_0)/dl(grp_3)');
+  CheckCount(1,El,9);
+  // 10-19
+  el:=AssertTree('div/div(div_1)/dl(grp_3)');
+  CheckCount(2,El,10);
+  el:=AssertTree('div/div(div_1)/dl(grp_4)');
+  CheckCount(3,El,12);
+  el:=AssertTree('div/div(div_1)/dl(grp_5)');
+  CheckCount(3,El,15);
+  el:=AssertTree('div/div(div_1)/dl(grp_6)');
+  CheckCount(2,El,18);
+  // 20-27
+  el:=AssertTree('div/div(div_2)/dl(grp_6)');
+  CheckCount(1,El,20);
+  el:=AssertTree('div/div(div_2)/dl(grp_7)');
+  CheckCount(3,El,21);
+  el:=AssertTree('div/div(div_2)/dl(grp_8)');
+  CheckCount(3,El,24);
+end;
 
 { TMyChildWidget }
 
 class function TMySimpleChildWidget.AllowChildren: Boolean;
 begin
-  Result:=FAlse;
+  Result:=False;
 end;
 
 { TMyRefWidget }
@@ -397,13 +638,16 @@ end;
 procedure TTestWebWidgetReferences.TestAdd;
 begin
   AddSet;
-  AssertEquals('Count',3,references.Count);
-  AssertEquals('0 : Name','a',references[0].name);
-  AssertEquals('0 : Selector','div',references[0].Selector);
-  AssertEquals('1 : Name','b',references[1].name);
-  AssertEquals('1 : Selector','ul',references[1].selector);
-  AssertEquals('2 : Name','c',references[2].name);
-  AssertEquals('2 : Selector','ul>li',references[2].selector);
+  With References do
+    begin
+    AssertEquals('Count',3,Count);
+    AssertEquals('0 : Name','a',Items[0].name);
+    AssertEquals('0 : Selector','div',Items[0].Selector);
+    AssertEquals('1 : Name','b',Items[1].name);
+    AssertEquals('1 : Selector','ul',Items[1].selector);
+    AssertEquals('2 : Name','c',Items[2].name);
+    AssertEquals('2 : Selector','ul>li',Items[2].selector);
+    end;
 end;
 
 procedure TTestWebWidgetReferences.TestIndexOf;
@@ -427,16 +671,16 @@ end;
 procedure TTestWebWidgetReferences.TestFind;
 begin
   AddSet;
-  AssertSame('A',References[0],References.FindReference('A'));
-  AssertSame('a',References[0],References.FindReference('a'));
+  AssertSame('A',References.Items[0],References.FindReference('A'));
+  AssertSame('a',References.Items[0],References.FindReference('a'));
   AssertNull('e',References.FindReference('E'));
 end;
 
 procedure TTestWebWidgetReferences.TestGet;
 begin
   AddSet;
-  AssertSame('A',References[0],References.GetReference('A'));
-  AssertSame('a',References[0],References.GetReference('a'));
+  AssertSame('A',References.Items[0],References.GetReference('A'));
+  AssertSame('a',References.Items[0],References.GetReference('a'));
   AssertException('Get unknown',EWidgets,@GetDRef);
 end;
 
@@ -445,9 +689,9 @@ begin
   MyWidget.References.Add('me','ul');
   AssertEquals('Ref count',1,MyWidget.References.Count);
   MyWidget.Refresh;
-  AssertEquals('count of References found',1,Length(References[0].Elements));
-  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
-  AssertSame('Reference filled',MyWidget.UL,References[0].Element);
+  AssertEquals('count of References found',1,Length(References.Items[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References.Items[0].Elements[0]);
+  AssertSame('Reference filled',MyWidget.UL,References.Items[0].Element);
 end;
 
 procedure TTestWebWidgetReferences.GetSingleByName;
@@ -455,8 +699,8 @@ begin
   MyWidget.References.Add('me','ul');
   AssertEquals('Ref count',1,MyWidget.References.Count);
   MyWidget.Refresh;
-  AssertEquals('count of References found',1,Length(References[0].Elements));
-  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
+  AssertEquals('count of References found',1,Length(References.Items[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References.Items[0].Elements[0]);
   AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementByName('me'));
   AssertEquals('Reference filled',1,Length(MyWidget.references.GetElementsByName('me')));
   AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementsByName('me')[0]);
@@ -475,8 +719,8 @@ begin
   MyWidget.References.Add('ME','ul');
   AssertEquals('Ref count',1,MyWidget.References.Count);
   MyWidget.Refresh;
-  AssertEquals('count of References found',1,Length(References[0].Elements));
-  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
+  AssertEquals('count of References found',1,Length(References.Items[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References.Items[0].Elements[0]);
   AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementByName('me'));
   AssertEquals('Reference filled',1,Length(MyWidget.references.GetElementsByName('me')));
   AssertSame('Reference filled',MyWidget.UL,MyWidget.references.GetElementsByName('me')[0]);
@@ -491,10 +735,10 @@ begin
   MyWidget.References.Add('me','li');
   AssertEquals('Ref count',1,MyWidget.References.Count);
   MyWidget.Refresh;
-  AssertEquals('Count of References found',10,Length(References[0].Elements));
+  AssertEquals('Count of References found',10,Length(References.Items[0].Elements));
   for I:=0 to Length(MyWidget.FSubs)-1 do
-    AssertSame('1 array Reference filled',MyWidget.Subs[I],References[0].Elements[i]);
-  AssertSame('first Reference filled',MyWidget.Subs[0],References[0].Element);
+    AssertSame('1 array Reference filled',MyWidget.Subs[I],References.Items[0].Elements[i]);
+  AssertSame('first Reference filled',MyWidget.Subs[0],References.Items[0].Element);
 end;
 
 procedure TTestWebWidgetReferences.GetMultiByName;
@@ -530,9 +774,9 @@ begin
   MyWidget.Refresh;
   MyWidget.References.Add('me','ul');
   AssertEquals('Ref count',1,MyWidget.References.Count);
-  AssertEquals('count of References found',1,Length(References[0].Elements));
-  AssertSame('first array Reference filled',MyWidget.UL,References[0].Elements[0]);
-  AssertSame('Reference filled',MyWidget.UL,References[0].Element);
+  AssertEquals('count of References found',1,Length(References.Items[0].Elements));
+  AssertSame('first array Reference filled',MyWidget.UL,References.Items[0].Elements[0]);
+  AssertSame('Reference filled',MyWidget.UL,References.Items[0].Element);
 end;
 
 procedure TTestWebWidgetReferences.SelectMultiAfterRefresh;
@@ -543,10 +787,10 @@ begin
   MyWidget.Refresh;
   MyWidget.References.Add('me','li');
   AssertEquals('Ref count',1,MyWidget.References.Count);
-  AssertEquals('Count of References found',10,Length(References[0].Elements));
+  AssertEquals('Count of References found',10,Length(References.Items[0].Elements));
   for I:=0 to Length(MyWidget.FSubs)-1 do
-    AssertSame('1 array Reference filled',MyWidget.Subs[I],References[0].Elements[i]);
-  AssertSame('first Reference filled',MyWidget.Subs[0],References[0].Element);
+    AssertSame('1 array Reference filled',MyWidget.Subs[I],References.Items[0].Elements[i]);
+  AssertSame('first Reference filled',MyWidget.Subs[0],References.Items[0].Element);
 end;
 
 { TTestWebWidgetStyles }
@@ -1960,6 +2204,6 @@ begin
 end;
 
 initialization
-  RegisterTests([TTestWidgetBasicOperations,TTestWebWidgetStyles,TTestWebWidgetReferences]);
+  RegisterTests([TTestWidgetBasicOperations,TTestWebWidgetStyles,TTestWebWidgetReferences,TTestSimpleLoopWidget]);
 end.
 

@@ -976,6 +976,7 @@ ResourceString
    SErrUnknownTemplateGroup = 'Unknown template group item: "%s"';
    SErrDuplicateTemplateGroup = 'Duplicate template group item: "%s"';
    SErrNoGroupInNonGroupTemplate = 'Group name can only be used group value template';
+
 { TSimpleLoopTemplateGroup }
 
 procedure TSimpleLoopTemplateGroup.SetGroupValueTemplate(AValue: String);
@@ -1084,9 +1085,6 @@ begin
   else
     inherited Assign(Source);
 end;
-
-{ TLoopTemplateValue }
-
 
 { TListLoopTemplateWidget.TPropListLoopEnumerator }
 
@@ -1217,19 +1215,12 @@ begin
   FList:=aValue;
 end;
 
-Type
-  THackList = class(TList)
-  Public
-    Property List;
-  end;
 
 function TListLoopTemplateWidget.GetArray: TJSArray;
 
 Var
   I : integer;
   C : TCollection;
-  FL : TFPList;
-
 begin
   Case FListKind of
     lkCollection :
@@ -1357,7 +1348,7 @@ end;
 procedure TCustomLoopTemplateWidget.SetGroups(AValue: TLoopTemplateGroupList);
 begin
   if FGroups=AValue then Exit;
-  FGroups:=AValue;
+  FGroups.Assign(AValue);
   if IsRendered then
     Refresh;
 end;
@@ -1379,7 +1370,7 @@ end;
 function TCustomLoopTemplateWidget.RenderGroupHeaders(aEnum : TLoopEnumerator) : String;
 
 Var
-  GrpIdx,J : Integer;
+  GrpIdx: Integer;
   grp : TLoopTemplateGroup;
   StartGroups : Boolean;
   S,V : String;
@@ -1457,6 +1448,7 @@ end;
 
 destructor TCustomLoopTemplateWidget.Destroy;
 begin
+  FreeAndNil(FGroups);
   inherited Destroy;
 end;
 
@@ -2174,17 +2166,23 @@ procedure TCustomWebWidget.InvalidateParentElement;
 
 Var
   I : Integer;
+  C : TCustomWebWidget;
 
 begin
   FParentElement:=nil;
   For I:=0 to ChildCount-1 do
-    Children[i].InvalidateParentElement;
+    begin
+    C:=Children[i];
+    if Assigned(C) then // Can be Nil
+      C.InvalidateParentElement;
+    end;
 end;
 
 procedure TCustomWebWidget.InvalidateElement;
 
 Var
   I : Integer;
+  C : TCustomWebWidget;
 
 begin
   If FStyles.Count>0 then
@@ -2193,7 +2191,11 @@ begin
     FReferences.FRefs:=Nil;
   FElement:=nil;
   For I:=0 to ChildCount-1 do
-    Children[i].InvalidateElement;
+    begin
+    C:=Children[i];
+    if Assigned(C) then // Can be Nil
+      C.InvalidateElement;
+    end;
 end;
 
 function TCustomWebWidget.WidgetClasses: String;
@@ -2899,6 +2901,7 @@ begin
     FChildren[i]:=Nil;
     C.Free;
     end;
+  FChildren.Length:=0;
   Parent:=Nil;
   ParentID:='';
   FChildren:=Nil;

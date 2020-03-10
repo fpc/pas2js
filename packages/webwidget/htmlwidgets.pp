@@ -1,3 +1,18 @@
+{
+    This file is part of the Free Pascal run time library.
+    Copyright (c) 2019-Now by Michael Van Canneyt, member of the
+    Free Pascal development team
+
+    WEB Widget Set : Basic bare HTML Widgets
+
+    See the file COPYING.FPC, included in this distribution,
+    for details about the copyright.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+ **********************************************************************}
 unit htmlwidgets;
 
 {$mode objfpc}
@@ -413,48 +428,105 @@ Type
   end;
 
   { TSelectWidget }
+
   TJSHTMLOptionElementArray = Array of TJSHTMLOptionElement;
-  TSelectWidget = class(TWebWidget)
-  private
-    FItems : TStrings;
-    FValues : TStrings;
-    FOptions : TJSHTMLOptionElementArray;
+  TCustomSelectWidget = Class;
+
+
+  { TCustomSelectWidget }
+
+  TCustomSelectWidget = class(TWebWidget)
+  Private
+    FSize,
     FSelectedIndex : Integer;
+    FOptions : TJSHTMLOptionElementArray;
     FMultiple : Boolean;
     function GetMultiple: Boolean;
     function GetSelected(Index : Integer): Boolean;
     function GetSelectedIndex: Integer;
-    function GetItems: TStrings;
     function GetSelect: TJSHTMLSelectElement;
     function GetSelectionCount: Integer;
     function GetSelectionItem(aIndex : Integer): String;
     function GetSelectionValue(aIndex : Integer): String;
-    function GetValues: TStrings;
-    procedure OptionsChanged(Sender: TObject);
+    function GetSize: Integer;
     procedure SetMultiple(AValue: Boolean);
     procedure SetSelected(Index : Integer; AValue: Boolean);
     procedure SetSelectedIndex(AValue: Integer);
-    procedure setItems(AValue: TStrings);
-    procedure setValues(AValue: TStrings);
+    procedure SetSize(AValue: Integer);
   Protected
-    Procedure BuildOptions(aSelect : TJSHTMLSelectElement); virtual;
+    Type
+      { TSelectOptionEnumerator }
+      TSelectOptionEnumerator = Class
+      private
+        FSelect: TCustomSelectWidget;
+      public
+        constructor Create(ASelect : TCustomSelectWidget); reintroduce; virtual;
+        Function OptionText : String; virtual; abstract;
+        Function HasValue : boolean; virtual;
+        Function Value : string; virtual;
+        function MoveNext: Boolean; virtual; abstract;
+        Property Select: TCustomSelectWidget Read FSelect;
+      end;
+  Protected
+    function GetItemCount: Integer; virtual;
+    Function CreateOptionEnumerator : TSelectOptionEnumerator; virtual; abstract;
     Procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
-    Property SelectElement : TJSHTMLSelectElement Read GetSelect;
+    Procedure BuildOptions(aSelect : TJSHTMLSelectElement); virtual;
     Property Options : TJSHTMLOptionElementArray Read Foptions;
-  Public
-    Constructor Create(aOWner : TComponent); override;
-    Destructor Destroy; override;
-    Function HTMLTag : String; override;
+    Property SelectElement : TJSHTMLSelectElement Read GetSelect;
+  Protected
+    // Can be made public/published
     // Items that are selected
+    Property ItemCount : Integer Read GetItemCount;
     Property Selected[Index : Integer] : Boolean Read GetSelected Write SetSelected;
     Property SelectionCount : Integer Read GetSelectionCount;
     Property SelectionValue[aIndex : Integer] : String Read GetSelectionValue;
     Property SelectionItem[aIndex : Integer] : String Read GetSelectionItem;
+    property SelectedIndex : Integer Read GetSelectedIndex Write SetSelectedindex;
+    Property Multiple : Boolean Read GetMultiple Write SetMultiple;
+    Property Size : Integer Read GetSize Write SetSize;
+  Public
+    Constructor Create(aOWner : TComponent); override;
+    Function HTMLTag : String; override;
+  end;
+
+  TSelectWidget = class(TCustomSelectWidget)
+  private
+    FItems : TStrings;
+    FValues : TStrings;
+    function GetItems: TStrings;
+    function GetValues: TStrings;
+    procedure OptionsChanged(Sender: TObject);
+    procedure setItems(AValue: TStrings);
+    procedure setValues(AValue: TStrings);
+  Protected
+    Type
+      { TStringsSelectOptionEnumerator }
+      TStringsSelectOptionEnumerator = Class(TSelectOptionEnumerator)
+        FCurrent : Integer;
+        constructor Create(ASelect : TCustomSelectWidget); override;
+        Function OptionText : String; override;
+        Function HasValue : boolean; override;
+        Function Value : string; override;
+        function MoveNext: Boolean; override;
+      end;
+    Function CreateOptionEnumerator: TSelectOptionEnumerator; override;
+  Public
+    Constructor Create(aOWner : TComponent); override;
+    Destructor Destroy; override;
+    Property SelectionCount;
+    Property SelectionValue;
+    Property SelectionItem;
+    Property Selected;
+    Property Options;
+    Property SelectElement;
+    Property ItemCount;
   Published
     Property Items : TStrings Read GetItems Write setItems;
     Property Values : TStrings Read GetValues Write setValues;
-    property SelectedIndex : Integer Read GetSelectedIndex Write SetSelectedindex;
-    Property Multiple : Boolean Read GetMultiple Write SetMultiple;
+    property SelectedIndex;
+    Property Multiple;
+    property size;
   end;
 
   { TLabelWidget }
@@ -490,7 +562,6 @@ Type
     FCustomTag: String;
     FEnvelopeTag: TTextTag;
     FTextMode: TTextMode;
-    SerCustomTag: String;
     procedure SetCustomTag(AValue: String);
     procedure SetEnvelopeTag(AValue: TTextTag);
     procedure SetTextMode(AValue: TTextMode);
@@ -538,25 +609,742 @@ Type
     Property ForceLineBreaks : Boolean Read FForceLineBreaks Write SetForceLineBreaks;
   end;
 
+  { TCustomTableColumn }
+  TColumnOption = (coHeader,coCaptionHeader);
+  TColumnOptions = set of TColumnOption;
+
+  TCustomTableColumn = Class(TCollectionItem)
+  private
+    FAlignment: TAlignment;
+    FCaption: String;
+    FClassNames: String;
+    procedure SetAlignment(AValue: TAlignment);
+    procedure SetCaption(AValue: String);
+    procedure SetClassNames(AValue: String);
+  Protected
+    Function GetDisplayName: string; override;
+    function GetCaption: String; virtual;
+  Public
+    Procedure Assign(Source : TPersistent); override;
+    Property Alignment : TAlignment Read FAlignment Write SetAlignment;
+    Property Caption : String Read GetCaption Write SetCaption;
+    Property ClassNames : String Read FClassNames Write SetClassNames;
+  end;
+
+  { TCustomTableColumns }
+
+  TCustomTableColumns = Class(TCollection)
+  private
+    function GetCustomColumn(Index : Integer): TCustomTableColumn;
+    procedure SetCustomColumn(Index : Integer; AValue: TCustomTableColumn);
+  Protected
+    Property CustomColumns [Index : Integer] : TCustomTableColumn Read GetCustomColumn Write SetCustomColumn; default;
+  Public
+    Function Add(aCaption : String): TCustomTableColumn; overload;
+  end;
+
+  { TCustomTableWidget }
+  TTableOption = (toHeader,    // use THead tag
+                  toHeaderRow, // Create header row
+                  toBody,      // use TBody tag
+                  toFooter,    // use TFoot tag
+                  toFooterRow,  // create footer row
+                  toRowID,      // add ID to tr: -kind-row
+                  toCellID,     // add ID to cell td: -kind-row-col
+                  toHeaderRowData,     // Add rowno to <tr data-row> for header.
+                  toHeaderCellDataRow, // Add rowno to <th data-row> for header. Automatic if onheadercellclick is set.
+                  toHeaderCellDataCol, // Add colno to <th data-col> for header. Automatic if onheadercellclick is set.
+                  toBodyRowData,       // Add rowno to <tr data-row> for body.
+                  toBodyCellDataRow,   // Add rowno to <th data-row> for body. Automatic if oncellclick is set.
+                  toBodyCellDataCol,   // Add colno to <th data-col> for body. Automatic if oncellclick is set.
+                  tofooterRowData,     // Add rowno to <tr data-row> for footer
+                  tofooterCellDataRow, // Add rowno to <th data-row> for footer. Automatic if onfootercellclick is set.
+                  tofooterCellDataCol  // Add colno to <th data-col> for footer. Automatic if onfootercellclick is set.
+                  );
+  TTableOptions = Set of TTableOption;
+
+  TRowKind = (rkHeader,rkBody,rkFooter);
+
+Type
+  TCustomTableWidget = Class;
+
+  // Constructed only once when rendering !
+  { TTableWidgetCelldata }
+  TTableWidgetCellData = Class
+  private
+    FAsHTML: Boolean;
+    FClassNames: String;
+    FCol: Integer;
+    FColumn: TCustomTableColumn;
+    FContent: TJSHTMLElement;
+    FKind: TRowKind;
+    FRow: Integer;
+    FTable: TCustomTableWidget;
+    FTableID: String;
+    FTag: String;
+    FText: String;
+  Protected
+    Procedure SetRowColKind(aRow,aCol : Integer; aKind : TRowKind); virtual;
+    Procedure Reset; // do not reset row,col, column
+  Public
+    Constructor Create(aTable : TCustomTableWidget;aTableID : String); virtual;
+    Property Table : TCustomTableWidget Read FTable;
+    Property Column : TCustomTableColumn Read FColumn;
+    Property Row : Integer Read FRow;
+    Property Col : Integer Read FCol;
+    Property Kind : TRowKind Read FKind;
+    Property Tag : String Read FTag Write FTag;
+    Property ClassNames : String Read FClassNames Write FClassNames;
+    Property Text : String Read FText Write FText;
+    Property AsHTML : Boolean Read FAsHTML Write FAsHTML;
+    Property Content : TJSHTMLElement Read FContent Write FContent;
+    Property TableID : String Read FTableID;
+  end;
+
+
+  TTableRowEnumerator = Class
+  private
+    FTable: TCustomTableWidget;
+    FCurrent : Integer;
+  public
+    constructor Create(ATable : TCustomTableWidget); reintroduce; virtual;
+    Procedure GetCellData(aCell : TTableWidgetCellData); virtual;
+    function MoveNext: Boolean; virtual;
+    property CurrentRow : Integer Read FCurrent;
+    Property Table : TCustomTableWidget Read FTable;
+  end;
+
+  TTableRowCountEnumerator = Class (TTableRowEnumerator)
+  private
+    FRowCount: Integer;
+  public
+    constructor Create(ATable : TCustomTableWidget;aCount : Integer); reintroduce;
+    function MoveNext: Boolean; override;
+    Property RowCount : Integer read FRowCount;
+  end;
+
+  TOnCellDataEvent = Procedure (Sender : TObject; Enum : TTableRowEnumerator; aCell : TTableWidgetCellData) of object;
+
+  TCustomTableWidget = Class(TCustomWebWidget)
+  private
+    FCaption: String;
+    FColumns: TCustomTableColumns;
+    FOnCellClick: THTMLNotifyEvent;
+    FOnFooterCellClick: THTMLNotifyEvent;
+    FOnFooterRowClick: THTMLNotifyEvent;
+    FOnHeaderCellClick: THTMLNotifyEvent;
+    FOnHeaderRowClick: THTMLNotifyEvent;
+    FOnRowClick: THTMLNotifyEvent;
+    FTableOptions: TTableOptions;
+    FOnGetCellData : TOnCellDataEvent;
+    procedure SetCaption(AValue: String);
+    procedure SetColumns(AValue: TCustomTableColumns);
+    procedure SetTableOptions(AValue: TTableOptions);
+  Public
+  Protected
+    procedure AppendCaption(aCaptionElement: TJSHTMLElement); virtual;
+    procedure RenderData(aElement: TJSHTMLElement); virtual;
+    function DoCellClick(aEvent: TJSMouseEvent): boolean; virtual;
+    function DoHeaderCellClick(aEvent: TJSMouseEvent): boolean;virtual;
+    function DoFooterCellClick(aEvent: TJSMouseEvent): boolean;virtual;
+    function DoRowClick(aEvent: TJSMouseEvent): boolean; virtual;
+    function DoHeaderRowClick(aEvent: TJSMouseEvent): boolean;virtual;
+    function DoFooterRowClick(aEvent: TJSMouseEvent): boolean;virtual;
+    function CreateColumns: TCustomTableColumns; virtual;
+    Function DefaultTableOptions: TTableOptions; virtual;
+    Procedure CreateDefaultColumns; virtual;
+    Function GetRowEnumerator(aKind : TRowKind) : TTableRowEnumerator; virtual;
+    function RenderCell(aCell: TTableWidgetCellData): TJSHTMLElement; virtual;
+    procedure RenderRow(aEnum : TTableRowEnumerator; aParent: TJSHTMLElement; aKind: TRowKind; aCell: TTableWidgetCellData); virtual;
+    procedure RenderRows(aParent: TJSHTMLElement; aKind : TRowKind; aCell: TTableWidgetCellData); virtual;
+    Procedure ApplyWidgetSettings(aElement : TJSHTMLElement); override;
+    Function HTMLTag : String; override;
+    Function CreateCellData(const aTableID : String) : TTableWidgetCellData; virtual;
+    Function GetBodyRowEnumerator : TTableRowEnumerator; virtual; abstract;
+  Protected
+    // These can be made public/published
+    Property CustomColumns : TCustomTableColumns Read FColumns Write SetColumns;
+    Property TableOptions : TTableOptions read FTableOptions write SetTableOptions;
+    Property Caption : String Read FCaption Write SetCaption;
+    Property OnGetCellData : TOnCellDataEvent Read FOnGetCellData Write FOnGetCellData;
+    Property OnCellClick :  THTMLNotifyEvent Read FOnCellClick Write FOnCellClick;
+    Property OnHeaderCellClick :  THTMLNotifyEvent Read FOnHeaderCellClick Write FOnHeaderCellClick;
+    Property OnFooterCellClick :  THTMLNotifyEvent Read FOnFooterCellClick Write FOnFooterCellClick;
+    Property OnRowClick :  THTMLNotifyEvent Read FOnRowClick Write FOnRowClick;
+    Property OnHeaderRowClick :  THTMLNotifyEvent Read FOnHeaderRowClick Write FOnHeaderRowClick;
+    Property OnFooterRowClick :  THTMLNotifyEvent Read FOnFooterRowClick Write FOnFooterRowClick;
+  Public
+    Constructor Create(aOwner : TComponent); override;
+    Destructor Destroy; override;
+    Procedure RefreshBody;
+  end;
+
+  TTableWidget = Class(TCustomTableWidget)
+  Public
+    Property CustomColumns;
+    Property TableOptions;
+    Property Caption;
+    Property OnGetCellData;
+    Property OnCellClick;
+    Property OnHeaderCellClick;
+    Property OnFooterCellClick;
+    Property OnRowClick;
+    Property OnHeaderRowClick;
+    Property OnFooterRowClick;
+  end;
 
 Function ViewPort : TViewPort;
 
 Const
   TextTagNames : Array[TTextTag] of string
    = ('p','b','i','u','s','span','quote','blockquote','h1','h2','h3','h4','h5','h6','pre','ruby','article','address','abbr','');
-
+  RowKindNames  : Array[TRowKind] of string = ('header','body','footer');
 
 implementation
 
 uses DateUtils;
 
 resourcestring
-  SErrInvalidIndex = 'Index %s not in valid range of [0..%d]';
+  SErrInvalidIndex = 'Index %d not in valid range of [0..%d]';
 
 Function ViewPort : TViewPort;
 
 begin
   Result:=TViewPort.Instance;
+end;
+
+{ TTableRowCountEnumerator }
+
+Const
+  CellTags : Array[TRowKind] of string = ('th','td','td');
+
+{ TSelectWidget.TStringsSelectOptionEnumerator }
+
+constructor TSelectWidget.TStringsSelectOptionEnumerator.Create(ASelect: TCustomSelectWidget);
+begin
+  inherited Create(ASelect);
+  FCurrent:=-1;
+end;
+
+function TSelectWidget.TStringsSelectOptionEnumerator.OptionText: String;
+begin
+  Result:=TSelectWidget(Select).Items[FCurrent];
+end;
+
+function TSelectWidget.TStringsSelectOptionEnumerator.HasValue: boolean;
+begin
+  Result:=FCurrent<TSelectWidget(Select).Values.Count;
+end;
+
+function TSelectWidget.TStringsSelectOptionEnumerator.Value: string;
+begin
+  Result:=TSelectWidget(Select).Values[FCurrent];
+end;
+
+function TSelectWidget.TStringsSelectOptionEnumerator.MoveNext: Boolean;
+begin
+  Result:=FCurrent<TSelectWidget(Select).Items.Count-1;
+  if Result then
+    Inc(FCurrent);
+end;
+
+{ TCustomSelectWidget.TSelectOptionEnumerator }
+
+constructor TCustomSelectWidget.TSelectOptionEnumerator.Create(ASelect: TCustomSelectWidget);
+begin
+  FSelect:=ASelect;
+end;
+
+function TCustomSelectWidget.TSelectOptionEnumerator.HasValue: boolean;
+begin
+  Result:=False;
+end;
+
+function TCustomSelectWidget.TSelectOptionEnumerator.Value: string;
+begin
+  Result:='';
+end;
+
+constructor TTableRowCountEnumerator.Create(ATable: TCustomTableWidget; aCount: Integer);
+begin
+  Inherited Create(aTable);
+  FRowCount:=aCount;
+end;
+
+function TTableRowCountEnumerator.MoveNext: Boolean;
+begin
+  Result:=Inherited MoveNext and (CurrentRow<RowCount)
+end;
+
+{ TTableWidgetCellData }
+
+procedure TTableWidgetCellData.SetRowColKind(aRow, aCol: Integer; aKind: TRowKind);
+begin
+  if (aRow<>-1) then
+    FRow:=aRow;
+  if (aCol<>-1) then
+    FCol:=aCol;
+  FKind:=aKind;
+end;
+
+procedure TTableWidgetCellData.Reset;
+begin
+  Ftag:='td';
+  FClassNames:='';
+  FText:='';
+  FContent:=Nil;
+  FAsHTML:=False;
+end;
+
+constructor TTableWidgetCellData.Create(aTable: TCustomTableWidget; aTableID: String);
+begin
+  FTable:=aTable;
+  FTableID:=aTableID;
+  SetRowColKind(0,0,rkBody);
+end;
+
+{ TCustomTableWidget }
+
+procedure TCustomTableWidget.SetColumns(AValue: TCustomTableColumns);
+begin
+  if FColumns=AValue then Exit;
+  FColumns.Assign(AValue);
+end;
+
+procedure TCustomTableWidget.SetCaption(AValue: String);
+begin
+  if FCaption=AValue then Exit;
+  FCaption:=AValue;
+  if isRendered then Refresh;
+end;
+
+function TCustomTableWidget.DoCellClick(aEvent: TJSMouseEvent): boolean;
+begin
+  If Assigned(FOnCellClick) then
+    FOnCellClick(Self,aEvent);
+  If Assigned(FOnRowClick) then
+    FOnRowClick(Self,aEvent);
+  Result:=False;
+//  Writeln('On click for cell',aEvent.targetElement.innerText);
+end;
+
+function TCustomTableWidget.DoHeaderCellClick(aEvent: TJSMouseEvent): boolean;
+begin
+  If Assigned(FOnHeaderCellClick) then
+    FOnHeaderCellClick(Self,aEvent);
+  If Assigned(FOnHeaderRowClick) then
+    FOnHeaderRowClick(Self,aEvent);
+  Result:=False;
+//  Writeln('On click for header cell',aEvent.targetElement.innerText);
+end;
+
+function TCustomTableWidget.DoFooterCellClick(aEvent: TJSMouseEvent): boolean;
+begin
+  If Assigned(FOnFooterCellClick) then
+    FOnFooterCellClick(Self,aEvent);
+  If Assigned(FOnFooterRowClick) then
+    FOnFooterRowClick(Self,aEvent);
+  Result:=False;
+//  Writeln('On click for Footer cell',aEvent.targetElement.innerText);
+end;
+
+function TCustomTableWidget.DoRowClick(aEvent: TJSMouseEvent): boolean;
+begin
+  If Assigned(FOnRowClick) then
+    FOnRowClick(Self,aEvent);
+  Result:=False;
+//  Writeln('On click for Row',aEvent.targetElement.innerText);
+end;
+
+function TCustomTableWidget.DoHeaderRowClick(aEvent: TJSMouseEvent): boolean;
+begin
+  If Assigned(FOnHeaderRowClick) then
+    FOnHeaderRowClick(Self,aEvent);
+  Result:=False;
+//  Writeln('On click for Header Row',aEvent.targetElement.innerText);
+end;
+
+function TCustomTableWidget.DoFooterRowClick(aEvent: TJSMouseEvent): boolean;
+begin
+  If Assigned(FOnFooterRowClick) then
+    FOnFooterRowClick(Self,aEvent);
+  Result:=False;
+//  Writeln('On click for Footer Row',aEvent.targetElement.innerText);
+end;
+
+procedure TCustomTableWidget.SetTableOptions(AValue: TTableOptions);
+begin
+  if FTableOptions=AValue then Exit;
+  FTableOptions:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+procedure TCustomTableWidget.AppendCaption(aCaptionElement: TJSHTMLElement);
+begin
+  aCaptionElement.InnerHTML:=Caption;
+end;
+
+function TCustomTableWidget.GetRowEnumerator(aKind: TRowKind): TTableRowEnumerator;
+begin
+  Case aKind of
+    rkHeader : Result:=TTableRowCountEnumerator.Create(Self,1);
+    rkFooter : Result:=TTableRowCountEnumerator.Create(Self,1);
+    rkBody : Result:=GetBodyRowEnumerator;
+  end;
+end;
+
+procedure TTableRowEnumerator.GetCellData(aCell: TTableWidgetCellData);
+
+Var
+  K : TRowKind;
+
+begin
+  K:=aCell.Kind;
+  Case K of
+    rkHeader:
+      begin
+      aCell.Tag:='th';
+      aCell.Text:=ACell.Column.Caption;
+      end;
+    rkFooter,
+    rkBody :
+      begin
+      aCell.Tag:='td';
+      end;
+    end;
+end;
+
+function TCustomTableWidget.HTMLTag: String;
+begin
+  Result:='table';
+end;
+
+function TCustomTableWidget.RenderCell(aCell: TTableWidgetCellData): TJSHTMLElement;
+
+Const
+  Aligns : Array[TAlignment] of string = ('left','right','center');
+  RowChecks : Array[TRowKind] of TTableOption = (toHeaderCellDataRow,toBodyCellDataRow,toFooterCellDataRow);
+  ColChecks : Array[TRowKind] of TTableOption = (toHeaderCellDataCol,toBodyCellDataCol,toFooterCellDataCol);
+
+Var
+  C : TJSHtmlElement;
+  cl : THTMLNotifyEvent;
+  K : TRowKind;
+  M : THTMLClickEventHandler;
+  elID : string;
+begin
+  K:=aCell.Kind;
+  if toCellID in TableOptions then
+    elID:=aCell.TableID+'-'+RowKindNames[K]+'-'+IntToStr(ACell.Row)+'-'+IntToStr(aCell.Col)
+  else
+    elID:='';
+  C:=CreateElement(aCell.Tag,elID);
+  if aCell.Content<>Nil then
+    C.AppendChild(aCell.Content)
+  else if aCell.AsHTML then
+    C.innerHTML:=aCell.text
+  else
+    C.innerText:=aCell.text;
+  C.className:=AddClasses(aCell.Column.ClassNames,aCell.ClassNames);
+  if ACell.Column.Alignment<>taLeftJustify then
+    C.Style.setProperty('text-align',Aligns[ACell.Column.Alignment]);
+  Case K of
+    rkBody   :
+      begin
+      CL:=FOnCellClick;
+      M:=@DoCellClick;
+      end;
+    rkHeader :
+      begin
+      CL:=FOnHeaderCellClick;
+      M:=@DoHeaderCellClick;
+      end;
+    rkFooter :
+      begin
+      CL:=FOnFooterCellClick;
+      M:=@DoFooterCellClick;
+      end;
+  else
+    CL:=Nil;
+    M:=nil;
+  end;
+  if Assigned(cl) or (RowChecks[K] in TableOptions) then
+     begin
+     C.dataset['row']:=ACell.Row;
+     C.Dataset['kind']:=RowKindNames[K];
+     end;
+  if Assigned(cl) or (ColChecks[K] in TableOptions) then
+     begin
+     C.dataset['col']:=ACell.Col;
+     C.Dataset['kind']:=RowKindNames[K];
+     end;
+  if Assigned(M) then
+    C.OnClick:=M;
+  Result:=C;
+end;
+
+procedure TCustomTableWidget.RenderRow(aEnum: TTableRowEnumerator; aParent: TJSHTMLElement; aKind: TRowKind; aCell: TTableWidgetCellData);
+
+
+Var
+  I: integer;
+
+begin
+  For I:=0 to CustomColumns.Count-1 do
+    begin
+    aCell.Reset;
+    aCell.FColumn:=CustomColumns[i];
+    aCell.SetRowColKind(-1,I,aKind);
+//    Writeln(CellKinds[aKind],' cell before : ',aCell.Tag,' data : ',aCell.Text);
+    aEnum.GetCellData(aCell);
+//    Writeln(CellKinds[aKind],' cell after : ',aCell.Tag,' data : ',aCell.Text);
+    if aCell.Tag='' then
+      ACell.Tag:=CellTags[aKind];
+    if Assigned(FOnGetCellData) then
+      FOnGetCellData(Self,aEnum,aCell);
+    aParent.appendChild(RenderCell(aCell));
+    end;
+end;
+
+procedure TCustomTableWidget.RenderRows(aParent: TJSHTMLElement; aKind: TRowKind; aCell: TTableWidgetCellData);
+
+Const
+  TableRowChecks : Array[TRowKind] of TTableOption = (toHeaderRowData,toBodyRowData,toFooterRowData);
+
+Var
+  RowEl : TJSHTMLElement;
+  Enum : TTableRowEnumerator;
+  M : THTMLClickEventHandler;
+  cl : THTMLNotifyEvent;
+  elid : String;
+
+begin
+   Enum:=GetRowEnumerator(aKind);
+   if Enum=Nil then
+     Exit;
+   try
+     While Enum.MoveNext do
+       begin
+       if toRowID in TableOptions then
+         elID:=aCell.TableID+'-'+RowKindNames[aKind]+'-'+IntToStr(Enum.CurrentRow)
+       else
+         elID:='';
+       RowEl:=CreateElement('tr',elID);
+       aCell.SetRowColKind(Enum.CurrentRow,-1,aKind);
+       Case aKind of
+         rkBody :
+           begin
+           CL:=FOnRowClick;
+           M:=@DoRowClick;
+           end;
+         rkHeader :
+           begin
+           CL:=FOnHeaderRowClick;
+           M:=@DoHeaderRowClick;
+           end;
+         rkFooter :
+           begin
+           CL:=FOnFooterRowClick;
+           M:=@DoFooterRowClick;
+           end;
+       end;
+       if Assigned(CL) or (TableRowChecks[Akind] in TableOptions) then
+         begin
+         RowEl.dataset['row']:=Enum.CurrentRow;
+         RowEl.dataset['kind']:=RowKindNames[aKind];
+         end;
+       if Assigned(M) then
+         RowEl.OnClick:=M;
+       RenderRow(Enum,RowEl,aKind,aCell);
+       aParent.AppendChild(RowEl);
+       end;
+   finally
+     Enum.Free;
+   end;
+end;
+
+procedure TCustomTableWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
+begin
+  inherited ApplyWidgetSettings(aElement);
+  RenderData(aElement);
+end;
+
+procedure TCustomTableWidget.RenderData(aElement: TJSHTMLElement);
+
+Var
+  El : TJSHTMLElement;
+  aCell : TTableWidgetCellData;
+
+begin
+  if (Caption<>'') then
+    begin
+    El:=CreateElement('caption',aElement.ID+'-caption');
+    AppendCaption(EL);
+    aElement.AppendChild(EL);
+    end;
+  aCell:=CreateCellData(aElement.ID);
+  If (CustomColumns.Count=0) then
+    CreateDefaultColumns;
+  if toHeaderRow in TableOptions then
+    begin
+    if toHeader in TableOptions then
+      begin
+      El:=CreateElement('thead',aElement.ID+'-head');
+      aElement.AppendChild(el);
+      end
+    else
+      El:=aElement;
+    aCell.SetRowColKind(-1,-1,rkHeader);
+    RenderRows(El,rkHeader,aCell);
+    end;
+  if toBody in TableOptions then
+    begin
+    El:=CreateElement('tbody',aElement.ID+'-body');
+    aElement.AppendChild(el);
+    end
+  else
+    El:=aElement;
+  aCell.SetRowColKind(-1,-1,rkBody);
+  RenderRows(El,rkBody,aCell);
+  if toFooterRow in TableOptions then
+    begin
+    if toFooter in TableOptions then
+      begin
+      El:=CreateElement('tFoot',aElement.ID+'-foot');
+      aElement.AppendChild(el);
+      end
+    else
+      El:=aElement;
+    aCell.SetRowColKind(-1,-1,rkFooter);
+    RenderRows(El,rkFooter,aCell);
+    end;
+end;
+
+function TCustomTableWidget.CreateCellData(const aTableID : String): TTableWidgetCellData;
+begin
+  Result:=TTableWidgetCellData.Create(Self,aTableID);
+end;
+
+
+function TCustomTableWidget.CreateColumns: TCustomTableColumns;
+begin
+  Result:=TCustomTableColumns.Create(TCustomTableColumn);
+end;
+
+function TCustomTableWidget.DefaultTableOptions: TTableOptions;
+begin
+  Result:=[toHeader,toBody,toFooter,toHeaderRow]
+end;
+
+procedure TCustomTableWidget.CreateDefaultColumns;
+begin
+  // Do nothing
+end;
+
+constructor TCustomTableWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  FTableOptions:=DefaultTableOptions;
+  FColumns:=CreateColumns;
+end;
+
+destructor TCustomTableWidget.Destroy;
+begin
+  FreeAndNil(FColumns);
+  inherited Destroy;
+end;
+
+procedure TCustomTableWidget.RefreshBody;
+begin
+  if Not Assigned(Element) then
+    Refresh
+  else
+    begin
+    Element.Innerhtml:='';
+    RenderData(Element);
+    end;
+end;
+
+{ TCustomTableColumn }
+
+procedure TCustomTableColumn.SetAlignment(AValue: TAlignment);
+begin
+  if FAlignment=AValue then Exit;
+  FAlignment:=AValue;
+end;
+
+function TCustomTableColumn.GetCaption: String;
+begin
+  Result:=FCaption;
+end;
+
+procedure TCustomTableColumn.SetCaption(AValue: String);
+begin
+  if FCaption=AValue then Exit;
+  FCaption:=AValue;
+end;
+
+procedure TCustomTableColumn.SetClassNames(AValue: String);
+begin
+  if FClassNames=AValue then Exit;
+  FClassNames:=AValue;
+end;
+
+function TCustomTableColumn.GetDisplayName: string;
+begin
+  Result:=Caption;
+end;
+
+procedure TCustomTableColumn.Assign(Source: TPersistent);
+
+Var
+  C : TCustomTableColumn;
+
+begin
+  if Source is TCustomTableColumn then
+    begin
+    C:=Source as TCustomTableColumn;
+    FCaption:=C.FCaption;
+    FClassNames:=C.FClassNames;
+    FAlignment:=C.Alignment;
+    end
+  else
+    inherited Assign(Source);
+end;
+
+{ TCustomTableColumns }
+
+function TCustomTableColumns.GetCustomColumn(Index : Integer): TCustomTableColumn;
+begin
+  Result:=TCustomTableColumn(Items[Index]);
+end;
+
+procedure TCustomTableColumns.SetCustomColumn(Index : Integer; AValue: TCustomTableColumn);
+begin
+  Items[Index]:=aValue;
+end;
+
+function TCustomTableColumns.Add(aCaption: String): TCustomTableColumn;
+begin
+  Result:=add as TCustomTableColumn;
+  Result.Caption:=aCaption;
+end;
+
+{ TTableRowEnumerator }
+
+constructor TTableRowEnumerator.Create(ATable: TCustomTableWidget);
+
+begin
+  FTable:=aTable;
+  FCurrent:=-1;
+end;
+
+
+function TTableRowEnumerator.MoveNext: Boolean;
+begin
+  Inc(FCurrent);
+  Result:=True;
 end;
 
 { TCustomTextWidget }
@@ -783,14 +1571,14 @@ end;
 
 { TSelectWidget }
 
-function TSelectWidget.GetSelectedIndex: Integer;
+function TCustomSelectWidget.GetSelectedIndex: Integer;
 begin
   if IsRendered then
     FSelectedIndex:=SelectElement.selectedIndex;
   Result:=FSelectedIndex
 end;
 
-function TSelectWidget.GetMultiple: Boolean;
+function TCustomSelectWidget.GetMultiple: Boolean;
 
 begin
   if IsElementDirty then
@@ -798,41 +1586,153 @@ begin
   Result:=FMultiple;
 end;
 
-function TSelectWidget.GetSelected(Index : Integer): Boolean;
+function TCustomSelectWidget.GetItemCount: Integer;
+begin
+  Result:=Length(Options);
+end;
+
+function TCustomSelectWidget.GetSelected(Index : Integer): Boolean;
 begin
   if (Index<0) or (Index>=Length(Foptions)) then
      Raise EWidgets.CreateFmt(SErrInvalidIndex,[Index,Length(Foptions)-1]);
   Result:=FOptions[Index].Selected
 end;
 
-function TSelectWidget.GetItems: TStrings;
-begin
-  Result:=FItems;
-end;
-
-function TSelectWidget.GetSelect: TJSHTMLSelectElement;
+function TCustomSelectWidget.GetSelect: TJSHTMLSelectElement;
 begin
   Result:=TJSHTMLSelectElement(Element);
 end;
 
-function TSelectWidget.GetSelectionCount: Integer;
+function TCustomSelectWidget.GetSelectionCount: Integer;
 begin
   Result:=SelectElement.selectedOptions.length;
 end;
 
-function TSelectWidget.GetSelectionItem(aIndex : Integer): String;
+function TCustomSelectWidget.GetSelectionItem(aIndex : Integer): String;
 begin
   if (aIndex<0) or (aindex>=GetSelectionCount) then
      Raise EWidgets.CreateFmt(SErrInvalidIndex,[aIndex,GetSelectionCount-1]);
   Result:=TJSHTMLOptionElement(SelectElement.selectedOptions.item(aIndex)).innerText;
 end;
 
-function TSelectWidget.GetSelectionValue(aIndex : Integer): String;
+function TCustomSelectWidget.GetSelectionValue(aIndex : Integer): String;
 begin
   if (aIndex<0) or (aindex>=GetSelectionCount) then
      Raise EWidgets.CreateFmt(SErrInvalidIndex,[aIndex,GetSelectionCount-1]);
   Result:=TJSHTMLOptionElement(SelectElement.selectedOptions.item(aIndex)).value;
 end;
+
+function TCustomSelectWidget.GetSize: Integer;
+begin
+  if IsElementDirty then
+    FSize:=SelectElement.Size;
+  Result:=FSize;
+end;
+
+procedure TCustomSelectWidget.SetMultiple(AValue: Boolean);
+begin
+  If (AValue=Multiple) then exit;
+  FMultiple:=aValue;
+  If IsRendered then
+    SelectElement.multiple:=FMultiple;
+end;
+
+procedure TCustomSelectWidget.SetSelected(Index : Integer; AValue: Boolean);
+begin
+  if (Index<0) or (Index>=Length(Foptions)) then
+     Raise EWidgets.CreateFmt(SErrInvalidIndex,[Index,Length(Foptions)-1]);
+  FOptions[Index].Selected:=aValue;
+end;
+
+procedure TCustomSelectWidget.SetSelectedIndex(AValue: Integer);
+
+begin
+  if (SelectedIndex=aValue) then
+    Exit;
+  FSelectedIndex:=aValue;
+  if IsRendered then
+    SelectElement.SelectedIndex:=FSelectedIndex;
+  if Assigned(OnChange) then
+    OnChange(Self,Nil);
+end;
+
+procedure TCustomSelectWidget.SetSize(AValue: Integer);
+begin
+  If (AValue=Size) then exit;
+  FSize:=aValue;
+  If IsRendered then
+    SelectElement.Size:=FSize;
+end;
+
+procedure TCustomSelectWidget.BuildOptions(aSelect: TJSHTMLSelectElement);
+
+Var
+  O : TJSHTMLOptionElement;
+  Idx : Integer;
+  enum : TSelectOptionEnumerator;
+
+begin
+  // Clear
+  SetLength(FOptions,0);
+  aSelect.InnerHTML:='';
+  // Rebuild
+  Idx:=0;
+  enum:=CreateOptionEnumerator;
+  While enum.MoveNext do
+    begin
+    O:=TJSHTMLOptionElement(CreateElement('option',''));
+    O.innerText:=enum.OptionText;
+    if enum.HasValue then
+      O.value:=enum.Value;
+    if Idx=FSelectedIndex then
+      O.selected:=True;
+    aSelect.AppendChild(O);
+    Inc(Idx);
+    end;
+  SetLength(Foptions,Idx);
+  Dec(idx);
+  While Idx>=0 do
+    begin
+    FOptions[Idx]:=TJSHTMLOptionElement(aSelect.Children[Idx]);
+    dec(Idx);
+    end;
+end;
+
+constructor TCustomSelectWidget.Create(aOWner: TComponent);
+begin
+  inherited Create(aOWner);
+  FSelectedIndex:=-1;
+end;
+
+procedure TCustomSelectWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
+
+Var
+  el : TJSHTmlSelectElement absolute aElement;
+
+begin
+  inherited ApplyWidgetSettings(aElement);
+  el.multiple:=Self.Multiple;
+  el.Size:=Self.Size;
+  BuildOptions(el);
+  // We need to force this.
+  if SelectedIndex=-1 then
+    el.selectedIndex:=-1;
+end;
+
+
+function TCustomSelectWidget.HTMLTag: String;
+begin
+  Result:='select';
+end;
+
+
+{ TSelectWidget }
+
+function TSelectWidget.GetItems: TStrings;
+begin
+  Result:=FItems;
+end;
+
 
 function TSelectWidget.GetValues: TStrings;
 begin
@@ -845,30 +1745,6 @@ begin
     BuildOptions(SelectElement);
 end;
 
-procedure TSelectWidget.SetMultiple(AValue: Boolean);
-begin
-  If (AValue=Multiple) then exit;
-  FMultiple:=aValue;
-  If IsRendered then
-    SelectElement.multiple:=FMultiple;
-end;
-
-procedure TSelectWidget.SetSelected(Index : Integer; AValue: Boolean);
-begin
-  if (Index<0) or (Index>=Length(Foptions)) then
-     Raise EWidgets.CreateFmt(SErrInvalidIndex,[Index,Length(Foptions)-1]);
-  FOptions[Index].Selected:=True;
-end;
-
-procedure TSelectWidget.SetSelectedIndex(AValue: Integer);
-
-begin
-  if (SelectedIndex=aValue) then
-    Exit;
-  FSelectedIndex:=aValue;
-  if IsRendered then
-    SelectElement.SelectedIndex:=FSelectedIndex;
-end;
 
 procedure TSelectWidget.setItems(AValue: TStrings);
 begin
@@ -883,44 +1759,11 @@ begin
   FValues.Assign(aValue);
 end;
 
-procedure TSelectWidget.BuildOptions(aSelect: TJSHTMLSelectElement);
-
-Var
-  O : TJSHTMLOptionElement;
-  Itms,Vals : TStrings;
-  I,Idx : Integer;
-
+function TSelectWidget.CreateOptionEnumerator: TSelectOptionEnumerator;
 begin
-  // Clear
-  SetLength(FOptions,0);
-  aSelect.InnerHTML:='';
-  // Rebuild
-  Itms:=Fitems;
-  Vals:=FValues;
-  Idx:=FSelectedIndex;
-  SetLength(Foptions,Itms.Count);
-  For I:=0 to Itms.Count-1 do
-    begin
-    O:=TJSHTMLOptionElement(CreateElement('option',''));
-    FOptions[I]:=O;
-    O.innerText:=Itms[I];
-    if I<Vals.Count then
-      O.value:=Vals[i];
-    if I=Idx then
-      O.selected:=True;
-    aSelect.AppendChild(O);
-    end;
+  Result:=TStringsSelectOptionEnumerator.Create(Self);
 end;
 
-procedure TSelectWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
-
-Var
-  el : TJSHTmlSelectElement absolute aElement;
-
-begin
-  inherited ApplyWidgetSettings(aElement);
-  BuildOptions(el);
-end;
 
 constructor TSelectWidget.Create(aOWner: TComponent);
 begin
@@ -933,12 +1776,9 @@ end;
 
 destructor TSelectWidget.Destroy;
 begin
+  FreeAndNil(FItems);
+  FreeAndNil(FValues);
   inherited Destroy;
-end;
-
-function TSelectWidget.HTMLTag: String;
-begin
-  Result:='select';
 end;
 
 { TImageWidget }
@@ -1683,6 +2523,7 @@ begin
     Result:=Inp.InnerText
   else
     Result:=FText;
+  Writeln('Getting text: ',Result,' inner : ',FText);
 end;
 
 function TCustomInputWidget.GetReadOnly: Boolean;
@@ -1737,6 +2578,7 @@ Var
   Inp : TJSHTMLElement;
 
 begin
+  Writeln('Setting text: ',AValue,' previous : ',Text);
   if aValue=Text then exit;
   FText:=aValue;
   Inp:=Element;
@@ -1773,6 +2615,9 @@ begin
     Inp.value:=FValue;
     Inp.Required:=FRequired;
     Inp.ReadOnly:=FReadOnly;
+    Writeln('Setting inner text to "',FText,'"');
+    Inp.innerHtml:=FText;
+    Writeln('Setting inner text is now "',Inp.innerText,'"');
     end;
 end;
 
@@ -1808,6 +2653,7 @@ begin
   if (Value=Old) then
     Value:=NewName;
 end;
+
 
 end.
 

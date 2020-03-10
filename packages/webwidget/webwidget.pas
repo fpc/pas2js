@@ -1,3 +1,18 @@
+{
+    This file is part of the Free Pascal run time library.
+    Copyright (c) 2019-Now by Michael Van Canneyt, member of the
+    Free Pascal development team
+
+    WEB Widget Set
+
+    See the file COPYING.FPC, included in this distribution,
+    for details about the copyright.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+ **********************************************************************}
 unit webwidget;
 
 {$mode objfpc}{$H+}
@@ -5,7 +20,7 @@ unit webwidget;
 interface
 
 uses
-  Classes, SysUtils, JS, Web;
+  Types, Classes, SysUtils, JS, Web;
 
 Const
 
@@ -123,7 +138,7 @@ Type
   TWebWidgetStyles = Class(TOwnedCollection)
   private
     Function GetStyleItem(aIndex : Integer): TStyleItem;
-    procedure SetItem(aIndex : Integer; AValue: TStyleItem);
+    procedure SetStyleItem(aIndex : Integer; AValue: TStyleItem);
   Protected
     Procedure MarkDirty(aItem : TStyleItem);
     Procedure ApplyToDOM(aElement : TJSHTMlElement;aItem : TStyleItem); virtual; overload;
@@ -139,7 +154,7 @@ Type
     Procedure RefreshFromDOM(aElement : TJSHTMlElement = Nil;DoClear : Boolean = True);virtual;
     Procedure ClearImported;
     Procedure ApplyToDOM(aElement : TJSHTMlElement = Nil); virtual; overload;
-    Property Styles[aIndex : Integer] : TStyleItem Read GetStyleItem Write SetItem; default;
+    Property Styles[aIndex : Integer] : TStyleItem Read GetStyleItem Write SetStyleItem; default;
   end;
 
 
@@ -155,16 +170,24 @@ Type
   private
     FName: String;
     FSelector: String;
+    procedure SetInputValidity(AValue: String);
     procedure SetName(AValue: String);
     procedure SetSelector(AValue: String);
     function GetElement: TJSHTMLElement;
     function GetElements: TJSHTMLElementArray;
   Protected
+    procedure SetInputValue(AValue: String); virtual;
+    Function GetInputValue : String; virtual;
     Procedure MarkDirty; virtual;
   Public
     Procedure Refresh;
+    Function Exists : Boolean;
+    Function IsArray : Boolean;
+    Function IsInput : Boolean;
     Property Element : TJSHTMLElement Read GetElement;
     Property Elements : TJSHTMLElementArray Read GetElements;
+    Property InputValue : String Read GetInputValue Write SetInputValue;
+    Property InputValidity : String Write SetInputValidity;
   Published
     Property Selector : String Read FSelector Write SetSelector;
     Property Name : String Read FName Write SetName;
@@ -190,10 +213,14 @@ Type
     Function FindReference(Const aName : String) : TReferenceItem;
     Function GetReference(Const aName : String) : TReferenceItem;
     Procedure RemoveReference(Const aName : String);
+    Function ElementExists(Const aName : String) : Boolean;
+    Function ElementIsArray(Const aName : String) : Boolean;
+    Function FindElementByName(Const aName : String) : TJSHTMLElement;
     Function GetElementByName(Const aName : String) : TJSHTMLElement;
     Function GetElementsByName(Const aName : String) : TJSHTMLElementArray;
     Procedure RefreshFromDOM(aElement : TJSHTMlElement = Nil);virtual;
-    Property References[aIndex : Integer] : TReferenceItem Read GetReferenceItem Write SetReferenceItem; default;
+    Property Items[aIndex : Integer] : TReferenceItem Read GetReferenceItem Write SetReferenceItem;
+    Property References[aName : String] : TReferenceItem Read GetReference; default;
   end;
 
 {$DispatchStrField name}
@@ -307,6 +334,9 @@ Type
     function GetParentElement: TJSHTMLELement;
     function GetParentID: String;
     function GetElementID: String;
+    function GetReference(const aName : string): TJSHTMLElement;
+    function GetReferenceItem(aName : String): TReferenceItem;
+    function GetReferenceList(const aName : string): TJSHTMLElementArray;
     function GetReferences: TWebWidgetReferences;
     function GetRendered: Boolean;
     function GetVisible: Boolean;
@@ -344,6 +374,9 @@ Type
     Class Function FindElement(aID : String) : TJSHTMLElement;
     // Create element in DOM tree, set ID if it is nonzero
     Class function CreateElement (aTag : String; aID : String) : TJSHTMLElement;
+    // references are relative to this element. By default, this is the element of the widget.
+    // override if you want for instance to indicate the parent element.
+    function GetReferenceElement: TJSHTMLELement; virtual;
     // override if you want content to go in this sub-element instead of directly below the toplevel element.
     function GetContentElement: TJSHTMLELement; virtual;
     // Override this if Element is not the top element of this widget.
@@ -355,7 +388,7 @@ Type
     // Set parent element to nil. No rendering is done. Can be called when there are no DOM elements
     Procedure InvalidateParentElement;
     // Set element to nil, clears styles and references. Can be called when there are no DOM elements
-    Procedure InvalidateElement;
+    Procedure InvalidateElement; virtual;
     // Name of the tag to create. Set to '' if you don't want RenderHTML to create one.
     Function HTMLTag : String; virtual; abstract;
     // Class names that must always be applied for this widget to work.
@@ -372,9 +405,9 @@ Type
     // This is called during RenderHTML, but also when binding ElementID to an Element.
     Procedure ApplyWidgetSettings(aElement : TJSHTMLElement); virtual;
     {
-      Actually render element.
+      Actually create & render element.
       This gets the element as created by RenderHTML and the parent as received by RenderHTML.
-      If aElement is nil, the DoRenderHTML is responsible for attaching it to the parent element.
+      If aElement is nil, the DoRenderHTML is responsible for creating & attaching it to the parent element.
       Must return the value for Element.
     }
     Function DoRenderHTML(aParent,aElement : TJSHTMLElement) :TJSHTMLElement; virtual;
@@ -465,6 +498,12 @@ Type
     Property StyleRefresh : TStyleRefresh Read FStyleRefresh Write FStyleRefresh;
     // Possible references to sub widgets, based on CSS selectors
     Property References : TWebWidgetReferences Read GetReferences write SetReferences;
+    // Direct named acces
+    Property Reference[aName : String] : TReferenceItem Read GetReferenceItem;
+    // Easy access to an element
+    Property Elements[const aName : string] : TJSHTMLElement Read GetReference;
+    // Easy access to an element list
+    Property ElementList[const aName : string] : TJSHTMLElementArray Read GetReferenceList;
     // Events of TWebWidget
     Property BeforeRenderHTML : TNotifyEvent Read FBeforeRenderHTML Write FBeforeRenderHTML;
     Property AfterRenderHTML : TNotifyEvent Read FAfterRenderHTML Write FAfterRenderHTML;
@@ -652,6 +691,7 @@ Type
     FContainerTag: String;
     procedure SetContainerTag(AValue: String);
   Protected
+    function GetReferenceElement: TJSHTMLELement; override;
     function GetTemplateHTML: String; virtual; abstract;
     Procedure ApplyTemplate(aElement : TJSHTMLElement); virtual;
     Function DoRenderHTML(aParent, aElement: TJSHTMLElement) : TJSHTMLElement; override;
@@ -669,10 +709,15 @@ Type
     procedure SetTemplate(AValue: String);
   Protected
     function GetTemplateHTML: String; override;
+  Public
+    Property Reference;
+    Property References;
+    Property Elements;
+    Property ElementList;
   Published
     // The template.
     Property Template : String Read FTemplate Write SetTemplate;
-    Property References;
+    Property ContainerTag;
   end;
 
 
@@ -686,30 +731,776 @@ Type
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    Property Reference;
+    Property References;
+    Property Elements;
+    Property ElementList;
+  Published
     // The template.
     Property Template : TStrings Read FTemplate Write SetTemplate;
+    Property ContainerTag;
+  end;
+
+  { TCustomLoopTemplateWidget }
+
+  { TLoopTemplateValue }
+
+  TLoopTemplateValue = Class
+  Public
+    Index : Integer;
+    Name : String;
+    Value : String;
+  end;
+  TGetLoopTemplateValueEvent = Procedure (Sender : TObject; aValue : TLoopTemplateValue) of object;
+
+  { TLoopTemplateGroup }
+
+  TLoopTemplateGroup = class(TCollectionItem)
+  private
+    FGroupValue : string;
+    FFooterTemplate: String;
+    FHeaderTemplate: String;
+    FName: string;
+    procedure SetFooterTemplate(AValue: String);
+    procedure SetHeaderTemplate(AValue: String);
+    procedure SetName(AValue: string);
+  Public
+    Procedure Assign(Source: TPersistent); override;
+  Published
+    Property Name : string Read FName Write SetName;
+    Property HeaderTemplate : String Read FHeaderTemplate Write SetHeaderTemplate;
+    Property FooterTemplate : String Read FFooterTemplate Write SetFooterTemplate;
+  end;
+
+  { TLoopTemplateGroupList }
+
+  TLoopTemplateGroupList = class(TOwnedCollection)
+  private
+    function GetG(aIndex : Integer): TLoopTemplateGroup;
+    procedure SetG(aIndex : Integer; AValue: TLoopTemplateGroup);
+  Protected
+    procedure Update(Item: TCollectionItem); override;
+  Public
+    Function IndexOfGroup(const aName : string) : Integer;
+    Function FindGroup(const aName : string) : TLoopTemplateGroup;
+    Function GetGroup(const aName : string) : TLoopTemplateGroup;
+    Function AddGroup(Const aName,aHeader,aFooter : String) : TLoopTemplateGroup;
+    Property Groups [aIndex : Integer] : TLoopTemplateGroup Read GetG Write SetG; default;
+  end;
+
+  TCustomLoopTemplateWidget = Class(TCustomTemplateWidget)
+  Private
+    FFooter: String;
+    FGroups: TLoopTemplateGroupList;
+    FHeader: String;
+    FOnGetValue: TGetLoopTemplateValueEvent;
+    FTemplate: String;
+    procedure SetFooter(AValue: String);
+    procedure SetGroups(AValue: TLoopTemplateGroupList);
+    procedure SetHeader(AValue: String);
+    procedure SetTemplate(AValue: String);
+  Protected
+    Type
+      { TLoopEnumerator }
+      TLoopEnumerator = Class
+      private
+        FGroup : TLoopTemplateGroup;
+        FWidget: TCustomLoopTemplateWidget;
+        FIndex : Integer;
+        FCurrValues : TLoopTemplateValue;
+      public
+        constructor Create(AWidget : TCustomLoopTemplateWidget; aValues: TLoopTemplateValue); reintroduce; virtual;
+        destructor destroy; override;
+        Function GetValue(Const aName : String): String; virtual;
+        function MoveNext: Boolean; virtual;
+        Property Widget: TCustomLoopTemplateWidget Read FWidget;
+        Property Index : Integer Read FIndex;
+        Property CurrValues : TLoopTemplateValue Read FCurrValues;
+      end;
+  Protected
+    // Template support
+    function GetTemplateHTML: String; override;
+    Function RenderTemplate(aEnum : TLoopEnumerator; aTemplate : String) : String; virtual;
+    // Grouping support
+    function RenderGroupFooters(aStartIndex: Integer; aEnum: TLoopEnumerator): String; virtual;
+    function RenderGroupHeaders(aEnum: TLoopEnumerator): String; virtual;
+    function GetGroupValue(enum: TLoopEnumerator; aGroupIndex: Integer; aGroup: TLoopTemplateGroup): String; virtual;
+    // Create all kinds of helper classes
+    Class Function CreateGroups(aOwner : TComponent) : TLoopTemplateGroupList; virtual;
+    Class Function CreateCurrValues : TLoopTemplateValue; virtual;
+    Function CreateLoopEnumerator (aCurrValues : TLoopTemplateValue) : TLoopEnumerator; virtual; abstract;
+  Public
+    Constructor Create(aOwner : TComponent); override;
+    Destructor Destroy; override;
+    Property Elements;
+    Property ElementList;
+  Protected
+    // The templates.
+    Property Groups : TLoopTemplateGroupList Read FGroups Write SetGroups;
+    Property HeaderTemplate : String Read FHeader Write SetHeader;
+    Property ItemTemplate : String Read FTemplate Write SetTemplate;
+    Property FooterTemplate : String Read FFooter Write SetFooter;
+    Property OnGetValue : TGetLoopTemplateValueEvent Read FOnGetValue Write FOnGetValue;
+  end;
+
+  { TSimpleLoopTemplateWidget }
+
+  { TSimpleLoopTemplateGroup }
+
+  TSimpleLoopTemplateGroup = Class(TLoopTemplateGroup)
+  private
+    FGroupValueTemplate: String;
+    procedure SetGroupValueTemplate(AValue: String);
+  Published
+    Property GroupValueTemplate : String Read FGroupValueTemplate Write SetGroupValueTemplate;
+  end;
+
+  TSimpleLoopTemplateWidget = Class(TCustomLoopTemplateWidget)
+  private
+    FItemCount: Integer;
+    FOnGetGroupValue: TGetLoopTemplateValueEvent;
+    procedure SetItemCount(AValue: Integer);
+  Protected
+    Type
+      { TSimpleLoopEnumerator }
+      TSimpleLoopEnumerator = Class(TLoopEnumerator)
+      private
+        FMaxCount: Integer;
+      public
+        function MoveNext: Boolean; override;
+        Property MaxCount : Integer Read FMaxCount;
+      end;
+  Protected
+    Function CreateLoopEnumerator(aCurrValues : TLoopTemplateValue)  : TLoopEnumerator; override;
+    function GetGroupValue(aEnum: TLoopEnumerator; aGroupIndex: Integer; aGroup: TLoopTemplateGroup): String; override;
+    Class Function CreateGroups(aOwner : TComponent) : TLoopTemplateGroupList; override;
+  Published
+    Property ItemCount : Integer Read FItemCount Write SetItemCount;
+    Property Groups;
+    Property HeaderTemplate;
+    Property ItemTemplate;
+    Property FooterTemplate;
+    Property OnGetValue;
+    Property OnGetGroupValue : TGetLoopTemplateValueEvent Read FOnGetGroupValue Write FOnGetGroupValue;
     Property References;
+    Property ContainerTag;
+  end;
+
+
+  { TListLoopTemplateWidget }
+
+  TListLoopTemplateWidget = Class(TCustomLoopTemplateWidget)
+  Public
+    Type
+      TListKind = (lkCollection,lkFPList,lkList,lkObjectArray,lkJSArray);
+      TValueMode = (vmRTTI,vmProperty);
+    Const
+      ListKindNames : Array[TlistKind] of string = ('Collection','FPList','List','ObjectArray','JSArray');
+  private
+    FListKind: TListKind;
+    FList : JSValue;
+    procedure CheckList(aKind: TListKind);
+    function GetCollection: TCollection;
+    function GetFPList: TFPList;
+    function GetJSArray: TJSArray;
+    function GetList: TList;
+    function GetObjectArray: TObjectDynArray;
+    function GetValueMode: TValueMode;
+    procedure SetCollection(AValue: TCollection);
+    procedure SetFPList(AValue: TFPList);
+    procedure SetJSArray(AValue: TJSArray);
+    procedure SetList(AValue: TList);
+    procedure SetObjectArray(AValue: TObjectDynArray);
+  Protected
+    Type
+      { TListLoopEnumerator }
+      TListLoopEnumerator = Class(TLoopEnumerator)
+      private
+        FArray : TJSArray;
+        FCurrent : JSValue;
+      public
+        function MoveNext: Boolean; override;
+        Property Current : JSValue Read FCurrent;
+      end;
+      { TRTTIListLoopEnumerator }
+      TRTTIListLoopEnumerator = Class(TListLoopEnumerator)
+      public
+        function GetValue(const aName: String): String; override;
+      end;
+      { TPropListLoopEnumerator }
+      TPropListLoopEnumerator = Class(TListLoopEnumerator)
+      public
+        function GetValue(const aName: String): String; override;
+      end;
+  Protected
+    // Return JS array from list
+    Function GetArray : TJSArray;virtual;
+    Function CreateLoopEnumerator(aCurrValues : TLoopTemplateValue) : TLoopEnumerator; override;
+  Public
+    Property Collection : TCollection Read GetCollection Write SetCollection;
+    Property FPList : TFPList Read GetFPList Write SetFPList;
+    Property List : TList Read GetList Write SetList;
+    Property ObjectArray : TObjectDynArray Read GetObjectArray Write SetObjectArray;
+    Property JSArray : TJSArray Read GetJSArray Write SetJSArray;
+    // What kind of list do we have
+    Property ListKind : TListKind Read FListKind;
+    // How do we get values from the objects.
+    Property ValueMode : TValueMode Read GetValueMode;
+  Published
+    Property HeaderTemplate;
+    Property ItemTemplate;
+    Property FooterTemplate;
+    Property OnGetValue;
   end;
 
 implementation
 
+uses TypInfo;
+
 ResourceString
    SErrCannotSetParentAndElementID = 'ElementID and ParentID cannot be set at the same time.';
-   SErrCannotRenderWithoutParent = 'Cannot render without parent';
+   SErrCannotRenderWithoutParent = '%s: Cannot render without parent';
    SErrInvalidChildIndex = 'Invalid child index: value %d is not in valid range [0..%d]';
    SErrUnknownStyle = 'Unknown style: %s';
-   SErrElementIDNotAllowed = 'Setting element ID is not allowed';
-   SErrParentIDNotAllowed = 'Setting parent ID is not allowed';
-   SErrParentNotAllowed = 'Setting parent is not allowed';
-   SErrChildrenNotAllowed = 'Parent does not allow children';
+   SErrElementIDNotAllowed = '%s: Setting element ID is not allowed';
+   SErrParentIDNotAllowed = '%s: Setting parent ID is not allowed';
+   SErrParentNotAllowed = '%s: Setting parent is not allowed';
+   SErrChildrenNotAllowed = '%s: Parent does not allow children';
    SErrWidgetNotFound = 'Widget with ID "%s" not found.';
    SErrUnknownReference = 'Unknown reference: %s';
+   SErrNoElement = '%s: Element reference is empty: "%s"';
    SErrNotRendered = 'Cannot perform this operation: Widget not rendered';
    SErrCannotRefreshNoWidget = 'Cannot refresh references without widget';
+   SErrNotInput = 'Reference %s is not an input element';
+   SErrListNotA = '%s: List is not a %';
+   SErrUnknownTemplateGroup = 'Unknown template group item: "%s"';
+   SErrDuplicateTemplateGroup = 'Duplicate template group item: "%s"';
+   SErrNoGroupInNonGroupTemplate = 'Group name can only be used group value template';
+{ TSimpleLoopTemplateGroup }
+
+procedure TSimpleLoopTemplateGroup.SetGroupValueTemplate(AValue: String);
+begin
+  if FGroupValueTemplate=AValue then Exit;
+  FGroupValueTemplate:=AValue;
+  Changed(False);
+end;
+
+{ TLoopTemplateGroupList }
+
+function TLoopTemplateGroupList.GetG(aIndex : Integer): TLoopTemplateGroup;
+begin
+  Result:=TLoopTemplateGroup(Items[aIndex])
+end;
+
+procedure TLoopTemplateGroupList.SetG(aIndex : Integer; AValue: TLoopTemplateGroup);
+begin
+  Items[aIndex]:=aValue;
+end;
+
+procedure TLoopTemplateGroupList.Update(Item: TCollectionItem);
+begin
+  inherited Update(Item);
+  if Owner is TCustomLoopTemplateWidget then
+    With TCustomLoopTemplateWidget(Owner) do
+      if IsRendered then
+        Refresh;
+end;
+
+function TLoopTemplateGroupList.IndexOfGroup(const aName: string): Integer;
+begin
+  Result:=Count-1;
+  While (Result>=0) and Not SameText(GetG(Result).Name,aName) do
+    Dec(Result);
+end;
+
+function TLoopTemplateGroupList.FindGroup(const aName: string): TLoopTemplateGroup;
+
+Var
+  Idx: Integer;
+
+begin
+  Idx:=IndexOfGroup(aName);
+  if (Idx=-1) then
+    Result:=Nil
+  else
+    Result:=GetG(Idx);
+end;
+
+function TLoopTemplateGroupList.GetGroup(const aName: string): TLoopTemplateGroup;
+begin
+  Result:=FindGroup(aName);
+  if (Result=Nil) then
+    raise EWidgets.CreateFmt(SErrUnknownTemplateGroup, [aName]);
+end;
+
+function TLoopTemplateGroupList.AddGroup(const aName, aHeader, aFooter: String): TLoopTemplateGroup;
+begin
+  if IndexOfGroup(aName)<>-1 then
+    raise EWidgets.CreateFmt(SErrDuplicateTemplateGroup, [aName]);
+  Result:=add as TLoopTemplateGroup;
+  Result.Name:=aName;
+  Result.FFooterTemplate:=aFooter;
+  Result.HeaderTemplate:=aHeader;
+end;
+
+{ TLoopTemplateGroup }
+
+procedure TLoopTemplateGroup.SetFooterTemplate(AValue: String);
+begin
+  if FFooterTemplate=AValue then Exit;
+  FFooterTemplate:=AValue;
+  Changed(False);
+end;
+
+procedure TLoopTemplateGroup.SetHeaderTemplate(AValue: String);
+begin
+  if FHeaderTemplate=AValue then Exit;
+  FHeaderTemplate:=AValue;
+  Changed(False);
+end;
+
+procedure TLoopTemplateGroup.SetName(AValue: string);
+begin
+  if FName=AValue then Exit;
+  if Assigned(Collection) then
+    if TLoopTemplateGroupList(Collection).IndexOfGroup(aValue)<>-1 then
+      raise EWidgets.CreateFmt(SErrDuplicateTemplateGroup, [aValue]);
+  FName:=AValue;
+end;
+
+procedure TLoopTemplateGroup.Assign(Source: TPersistent);
+
+Var
+  G : TLoopTemplateGroup;
+
+begin
+  if Source is TLoopTemplateGroup then
+    begin
+    G:=Source as TLoopTemplateGroup;
+    FName:=G.Name;
+    FHeaderTemplate:=G.HeaderTemplate;
+    FFooterTemplate:=G.FooterTemplate;
+    end
+  else
+    inherited Assign(Source);
+end;
+
+{ TLoopTemplateValue }
+
+
+{ TListLoopTemplateWidget.TPropListLoopEnumerator }
+
+function TListLoopTemplateWidget.TPropListLoopEnumerator.GetValue(const aName: String): String;
+
+Var
+  V : JSValue;
+
+begin
+  V:=TJSObject(Current)[aName];
+  if IsDefined(V) then
+    Result:=String(V);
+end;
+
+{ TListLoopTemplateWidget.TRTTIListLoopEnumerator }
+
+function TListLoopTemplateWidget.TRTTIListLoopEnumerator.GetValue(const aName: String): String;
+
+Const
+  AllowedTypes = [tkInteger,tkChar, tkString, tkEnumeration, tkSet,tkDouble, tkBool, tkJSValue];
+
+Var
+  O : TObject;
+  MP : TTypeMemberProperty;
+
+begin
+  O:=TObject(Current);
+  MP:=GetPropInfo(O,aName,AllowedTypes);
+  if Assigned(Mp) then
+    case MP.TypeInfo.Kind of
+     tkInteger : Result:=IntToStr(GetOrdProp(O,MP));
+     tkChar,
+     tkString : Result:=GetStrProp(O,MP);
+     tkEnumeration : Result:=GetEnumName(TTypeInfoEnum(MP.TypeInfo),GetOrdProp(O,MP));
+     tkSet : Result:=GetSetProp(O,MP);
+     tkDouble : Result:=FloatToStr(GetFloatProp(O,MP));
+     tkBool : Result:=BoolToStr(GetBoolProp(O,MP));
+     tkJSValue : Result:=String(GetJSValueProp(O,MP));
+    end;
+end;
+
+{ TListLoopTemplateWidget.TListLoopEnumerator }
+
+function TListLoopTemplateWidget.TListLoopEnumerator.MoveNext: Boolean;
+begin
+  Result:=Index<FArray.Length-1;
+  Result:=inherited MoveNext;
+  if Result then
+    FCurrent:=FArray[Index];
+end;
+
+{ TListLoopTemplateWidget }
+
+
+procedure TListLoopTemplateWidget.CheckList(aKind: TListKind);
+
+begin
+  If FListKind<>aKind then
+    Raise EWidgets.CreateFmt(SErrListNotA,[DisplayElementName,ListKindNames[aKind]]);
+end;
+
+function TListLoopTemplateWidget.GetCollection: TCollection;
+begin
+  CheckList(lkCollection);
+  Result:=TCollection(FList)
+end;
+
+function TListLoopTemplateWidget.GetFPList: TFPList;
+begin
+  CheckList(lkFPList);
+  Result:=TFPList(FList)
+end;
+
+function TListLoopTemplateWidget.GetJSArray: TJSArray;
+begin
+  CheckList(lkJSArray);
+  Result:=TJSArray(FList)
+end;
+
+function TListLoopTemplateWidget.GetList: TList;
+begin
+  CheckList(lkList);
+  Result:=TList(FList)
+end;
+
+function TListLoopTemplateWidget.GetObjectArray: TObjectDynArray;
+begin
+  CheckList(lkObjectArray);
+  Result:=TObjectDynArray(FList);
+end;
+
+
+function TListLoopTemplateWidget.GetValueMode: TValueMode;
+begin
+  if ListKind in [lkCollection,lkFPList,lkList,lkObjectArray] then
+    Result:=vmRTTI
+  else
+    Result:=vmProperty;
+end;
+
+procedure TListLoopTemplateWidget.SetCollection(AValue: TCollection);
+begin
+  Flist:=aValue;
+  FListKind:=lkCollection;
+end;
+
+procedure TListLoopTemplateWidget.SetFPList(AValue: TFPList);
+begin
+  Flist:=aValue;
+  FListKind:=lkFPList;
+end;
+
+procedure TListLoopTemplateWidget.SetJSArray(AValue: TJSArray);
+begin
+  FList:=AValue;
+  FListKind:=lkJSArray;
+end;
+
+procedure TListLoopTemplateWidget.SetList(AValue: TList);
+begin
+  Flist:=aValue;
+  FListKind:=lkList;
+end;
+
+procedure TListLoopTemplateWidget.SetObjectArray(AValue: TObjectDynArray);
+begin
+  FListKind:=lkObjectArray;
+  FList:=aValue;
+end;
+
+Type
+  THackList = class(TList)
+  Public
+    Property List;
+  end;
+
+function TListLoopTemplateWidget.GetArray: TJSArray;
+
+Var
+  I : integer;
+  C : TCollection;
+  FL : TFPList;
+
+begin
+  Case FListKind of
+    lkCollection :
+      begin
+      C:=TCollection(Flist);
+      Result:=TJSArray.New(C.Count);
+      for I:=0 To C.Count-1 do
+        Result[i]:=C.Items[i];
+      end;
+    lkFPList:
+      Result:=TJSArray(TFPList(FList).List);
+    lkList:
+      Result:=TJSArray(TList(FList).List);
+    lkJSArray,
+    lkObjectArray :
+      Result:=TJSArray(FList);
+    end;
+end;
+
+function TListLoopTemplateWidget.CreateLoopEnumerator(aCurrValues : TLoopTemplateValue) : TLoopEnumerator;
+
+begin
+  Case ValueMode of
+    vmRTTI     : Result:=TRTTIListLoopEnumerator.Create(Self,aCurrValues);
+    vmProperty : Result:=TPropListLoopEnumerator.Create(Self,aCurrValues);
+  end;
+  TListLoopEnumerator(Result).FArray:=GetArray;
+end;
+
+{ TSimpleLoopTemplateWidget.TSimpleLoopEnumerator }
+
+function TSimpleLoopTemplateWidget.TSimpleLoopEnumerator.MoveNext: Boolean;
+begin
+  Result:=(Index<MaxCount-1);
+  if Result then
+    Inherited MoveNext;
+end;
+
+{ TSimpleLoopTemplateWidget }
+
+procedure TSimpleLoopTemplateWidget.SetItemCount(AValue: Integer);
+begin
+  if FItemCount=AValue then Exit;
+  FItemCount:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+function TSimpleLoopTemplateWidget.CreateLoopEnumerator(aCurrValues : TLoopTemplateValue) : TLoopEnumerator;
+
+Var
+  L : TSimpleLoopEnumerator;
+
+begin
+  L:=TSimpleLoopEnumerator.Create(Self,aCurrValues);
+  L.FMaxCount:=Self.ItemCount;
+  Result:=L;
+end;
+
+function TSimpleLoopTemplateWidget.GetGroupValue(aEnum: TLoopEnumerator; aGroupIndex: Integer; aGroup: TLoopTemplateGroup): String;
+begin
+  aEnum.CurrValues.Name:=aGroup.Name;
+  if TSimpleLoopTemplateGroup(aGroup).GroupValueTemplate<>'' then
+    aEnum.FCurrValues.Value:=RenderTemplate(aEnum,TSimpleLoopTemplateGroup(aGroup).GroupValueTemplate);
+  if Assigned(OnGetGroupValue) then
+    OnGetGroupValue(Self,aEnum.CurrValues);
+  Result:=aEnum.CurrValues.Value;
+  // Writeln('Group Value: ',aEnum.CurrValues.Value,' for ',aGroup.Name);
+end;
+
+class function TSimpleLoopTemplateWidget.CreateGroups(aOwner: TComponent): TLoopTemplateGroupList;
+begin
+  Result:=TLoopTemplateGroupList.Create(aOwner,TSimpleLoopTemplateGroup)
+end;
+
+{ TCustomLoopTemplateWidget }
+
+procedure TCustomLoopTemplateWidget.SetTemplate(AValue: String);
+begin
+  if FTemplate=aValue then exit;
+  FTemplate:=aValue;
+  if IsRendered then
+    Refresh;
+end;
+
+Class function TCustomLoopTemplateWidget.CreateGroups(aOwner : TComponent): TLoopTemplateGroupList;
+begin
+  Result:=TLoopTemplateGroupList.Create(AOwner,TLoopTemplateGroup);
+end;
+
+Class function TCustomLoopTemplateWidget.CreateCurrValues: TLoopTemplateValue;
+begin
+  Result:=TLoopTemplateValue.Create;
+end;
+
+function TCustomLoopTemplateWidget.RenderTemplate(aEnum: TLoopEnumerator; aTemplate: String): String;
+
+Var
+  E : TJSRegexp;
+
+begin
+  E:=TJSRegexp.New('{{([_\w]*)}}','g');
+  Result:=TJSString(aTemplate).Replace(E,Function (Const match,p1 : string; offset : Integer; AString : String) : string
+  begin
+    aEnum.CurrValues.Value:=aEnum.GetValue(p1);
+    // Writeln(p1,' -> ',aEnum.CurrValues.Value);
+    if Assigned(OnGetValue) then
+      begin
+      aEnum.CurrValues.Index:=aEnum.Index;
+      aEnum.CurrValues.Name:=P1;
+      OnGetValue(Self,aEnum.CurrValues);
+      end;
+    Result:=AEnum.CurrValues.Value;
+  end);
+end;
+
+procedure TCustomLoopTemplateWidget.SetFooter(AValue: String);
+begin
+  if FFooter=AValue then Exit;
+  FFooter:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+procedure TCustomLoopTemplateWidget.SetGroups(AValue: TLoopTemplateGroupList);
+begin
+  if FGroups=AValue then Exit;
+  FGroups:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+procedure TCustomLoopTemplateWidget.SetHeader(AValue: String);
+begin
+  if FHeader=AValue then Exit;
+  FHeader:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+function TCustomLoopTemplateWidget.GetGroupValue(enum : TLoopEnumerator; aGroupIndex : Integer; aGroup : TLoopTemplateGroup) : String;
+
+begin
+  Result:=aGroup.Name;
+end;
+
+function TCustomLoopTemplateWidget.RenderGroupHeaders(aEnum : TLoopEnumerator) : String;
+
+Var
+  GrpIdx,J : Integer;
+  grp : TLoopTemplateGroup;
+  StartGroups : Boolean;
+  S,V : String;
+
+begin
+//  Writeln('Rendering group headers for row ',aEnum.Index);
+  Result:='';
+  StartGroups:=False;
+  For GrpIdx:=0 to Groups.Count-1 do
+    begin
+    Grp:=Groups[GrpIdx];
+    aEnum.FGroup:=Grp;
+    V:=GetGroupValue(aEnum,GrpIdx,Grp);
+    if Not StartGroups then
+      begin
+      StartGroups:=(aEnum.Index=0) or (V<>Grp.FGroupValue);
+      if StartGroups and (aEnum.Index>0) then
+        Result:=Result+RenderGroupFooters(grpIdx,aEnum);
+      end;
+    Grp.FGroupValue:=V;
+    if StartGroups then
+      begin
+      S:=RenderTemplate(aEnum,Grp.HeaderTemplate);
+      // Writeln('Rendering group ',Grp.Name,' (',V,') header template: ',Grp.HeaderTemplate,' : ',S);
+      Result:=Result+S;
+      end;
+    aEnum.FGroup:=Nil;
+    end;
+end;
+
+function TCustomLoopTemplateWidget.RenderGroupFooters(aStartIndex : Integer; aEnum : TLoopEnumerator) : String;
+
+
+Var
+  GrpIdx : Integer;
+  grp : TLoopTemplateGroup;
+
+begin
+  Result:='';
+  For GrpIdx:=Groups.Count-1 downto aStartIndex do
+    begin
+    Grp:=Groups[GrpIdx];
+    Result:=Result+RenderTemplate(aEnum,Grp.FooterTemplate);
+    end;
+end;
+
+function TCustomLoopTemplateWidget.GetTemplateHTML: String;
+
+Var
+  Enum : TLoopEnumerator;
+
+begin
+  Enum:=CreateLoopEnumerator(CreateCurrValues);
+  try
+    Result:=RenderTemplate(Enum,HeaderTemplate);
+    While enum.MoveNext do
+      begin
+      if Groups.Count>0 then
+        Result:=Result+RenderGroupHeaders(Enum);
+      Result:=Result+RenderTemplate(Enum,ItemTemplate);
+      end;
+    if Groups.Count>0 then
+      Result:=Result+RenderGroupFooters(0,Enum);
+    Result:=Result+RenderTemplate(Enum,FooterTemplate);
+  finally
+    Enum.Free;
+  end;
+end;
+
+constructor TCustomLoopTemplateWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  FGroups:=CreateGroups(Self);
+end;
+
+destructor TCustomLoopTemplateWidget.Destroy;
+begin
+  inherited Destroy;
+end;
+
+
+{ TCustomLoopTemplateWidget.TLoopEnumerator }
+
+constructor TCustomLoopTemplateWidget.TLoopEnumerator.Create(AWidget: TCustomLoopTemplateWidget; aValues: TLoopTemplateValue);
+begin
+  FWidget:=AWidget;
+  FCurrValues:=aValues;
+  FIndex:=-1;
+end;
+
+destructor TCustomLoopTemplateWidget.TLoopEnumerator.destroy;
+begin
+  FreeAndNil(FCurrValues);
+  inherited destroy;
+end;
+
+function TCustomLoopTemplateWidget.TLoopEnumerator.GetValue(const aName: String): String;
+begin
+  Case AName of
+   '_index_' : Result:=IntToStr(Index);
+   '_row_' : Result:=IntToStr(Index+1);
+   '_group_' : if Assigned(FGroup) then
+                 Result:=FGroup.FGroupValue
+               else
+                 Raise EWidgets.Create(SErrNoGroupInNonGroupTemplate);
+  else
+    Result:='';
+  end;
+end;
+
+function TCustomLoopTemplateWidget.TLoopEnumerator.MoveNext: Boolean;
+begin
+  Result:=True;
+  Inc(FIndex);
+  FCurrValues.Index:=FIndex;
+end;
 
 { TSimpleTemplateWidget }
 
 procedure TSimpleTemplateWidget.SetTemplate(AValue: String);
+
 begin
   FTemplate:=AValue;
   if isRendered then
@@ -726,7 +1517,7 @@ end;
 
 function TWebWidgetReferences.GetReferenceItem(aIndex : Integer): TReferenceItem;
 begin
-  Result:=TReferenceItem(Items[aIndex])
+  Result:=TReferenceItem(Inherited Items[aIndex])
 end;
 
 procedure TWebWidgetReferences.SetReferenceItem(aIndex : Integer; AValue: TReferenceItem);
@@ -737,7 +1528,7 @@ end;
 procedure TWebWidgetReferences.MarkDirty(aItem: TReferenceItem);
 begin
   if Assigned(Widget) and Assigned(Widget.Element) then
-    RefreshFromDOM(aItem,Widget.Element)
+    RefreshFromDOM(aItem,Widget.GetReferenceElement)
 end;
 
 procedure TWebWidgetReferences.RefreshFromDOM(aItem: TReferenceItem; aElement: TJSHTMlElement);
@@ -748,14 +1539,18 @@ Var
   I : integer;
 
 begin
-  if (Widget=Nil) then
-    Raise EWidgets.Create(SErrCannotRefreshNoWidget);
-  if (Widget.Element=Nil) then
-    Raise EWidgets.Create(SErrNotRendered);
+  if aElement=Nil then
+    begin
+    if (Widget=Nil) then
+      Raise EWidgets.Create(SErrCannotRefreshNoWidget);
+    if (Widget.Element=Nil) then
+      Raise EWidgets.Create(SErrNotRendered);
+    aElement:=Widget.GetReferenceElement;
+    end;
   if FRefs=Nil then
     FRefs:=New([]);
   try
-    Nodes:=Widget.Element.querySelectorAll(aItem.Selector);
+    Nodes:=aElement.querySelectorAll(aItem.Selector);
     SetLength(a,Nodes.length);
     For I:=0 to Nodes.length-1 do
       A[i]:=TJSHTMLElement(Nodes[i]);
@@ -823,8 +1618,32 @@ begin
     Delete(Idx);
 end;
 
-function TWebWidgetReferences.GetElementByName(const aName: String): TJSHTMLElement;
+function TWebWidgetReferences.ElementExists(const aName: String): Boolean;
 
+Var
+  V : JSValue;
+begin
+  Result:=Assigned(FRefs);
+  if Result then
+    begin
+    V:=FRefs[LowerCase(aName)];
+    Result:=Assigned(V);
+    end;
+end;
+
+function TWebWidgetReferences.ElementIsArray(const aName: String): Boolean;
+Var
+  V : JSValue;
+begin
+  Result:=Assigned(FRefs);
+  if Result then
+    begin
+    V:=FRefs[LowerCase(aName)];
+    Result:=isArray(V) and (TJSArray(V).Length>1);
+    end;
+end;
+
+function TWebWidgetReferences.FindElementByName(const aName: String): TJSHTMLElement;
 Var
   J : JSValue;
   Arr : TJSArray absolute J;
@@ -836,6 +1655,14 @@ begin
   J:=FRefs[LowerCase(aName)];
   if isArray(J) and (Arr.Length>0) then
     Result:=TJSHTMLElement(Arr[0])
+end;
+
+function TWebWidgetReferences.GetElementByName(const aName: String): TJSHTMLElement;
+
+begin
+  Result:=FindElementByName(aName);
+  if Result=Nil then
+    Raise EWidgets.CreateFmt(SErrNoElement,[Widget.DisplayElementName,aName]);
 end;
 
 function TWebWidgetReferences.GetElementsByName(const aName: String): TJSHTMLElementArray;
@@ -871,6 +1698,15 @@ begin
   MarkDirty;
 end;
 
+procedure TReferenceItem.SetInputValidity(AValue: String);
+begin
+  if IsInput then
+    // this is not quite correct, but will work
+    TJSHTMLInputElement(Element).setCustomValidity(aValue)
+  else
+    Raise EWidgets.CreateFmt(SErrNotInput,[Name]);
+end;
+
 function TReferenceItem.GetElement: TJSHTMLElement;
 begin
   if Assigned(Collection) then
@@ -887,6 +1723,14 @@ begin
     Result:=Nil;
 end;
 
+procedure TReferenceItem.SetInputValue(AValue: String);
+begin
+  if IsInput then
+    TJSObject(Element)['value']:=aValue
+  else
+    Raise EWidgets.CreateFmt(SErrNotInput,[Name])
+end;
+
 procedure TReferenceItem.MarkDirty;
 begin
   if Assigned(Collection)  then
@@ -896,6 +1740,46 @@ end;
 procedure TReferenceItem.Refresh;
 begin
   MarkDirty;
+end;
+
+function TReferenceItem.Exists: Boolean;
+begin
+  if Assigned(Collection) then
+    Result:=(Collection as TWebWidgetReferences).ElementExists(Name)
+  else
+    Result:=False;
+end;
+
+function TReferenceItem.IsArray: Boolean;
+begin
+  if Assigned(Collection) then
+    Result:=(Collection as TWebWidgetReferences).ElementIsArray(Name)
+  else
+    Result:=False;
+end;
+
+function TReferenceItem.IsInput: Boolean;
+
+Var
+  el : TJSHTMLELement;
+
+begin
+  Result:=Exists and not IsArray;
+  if Result then
+    begin
+    el:=Element;
+    Result:= ((el is TJSHTMLInputElement)
+               or (el is TJSHTMLTextAreaElement)
+               or (el is TJSHTMLSelectElement));
+    end;
+end;
+
+function TReferenceItem.GetInputValue: String;
+begin
+  if IsInput then
+    Result:=String(TJSObject(Element)['value'])
+  else
+    Raise EWidgets.CreateFmt(SErrNotInput,[Name])
 end;
 
 procedure TReferenceItem.SetSelector(AValue: String);
@@ -932,6 +1816,14 @@ begin
   FContainerTag:=AValue;
   if IsRendered then
     Refresh;
+end;
+
+function TCustomTemplateWidget.GetReferenceElement: TJSHTMLELement;
+begin
+  If (ContainerTag='') then
+    Result:=ParentElement
+  else
+    Result:=Element;
 end;
 
 function TCustomTemplateWidget.HTMLTag: String;
@@ -1016,7 +1908,7 @@ begin
   Result:=TStyleItem(Items[Aindex]);
 end;
 
-procedure TWebWidgetStyles.SetItem(aIndex : Integer; AValue: TStyleItem);
+procedure TWebWidgetStyles.SetStyleItem(aIndex: Integer; AValue: TStyleItem);
 begin
   Items[aIndex]:=aValue;
 end;
@@ -1323,9 +2215,13 @@ begin
       begin
       El:=FindElement(FElementID);
       if Assigned(El) then
+        begin
         ApplyWidgetSettings(el);
+        HookupEvents(el);
+        end;
       FElement:=El;
-      ApplyData;
+      if Assigned(El) then
+        ApplyData;
       RefreshReferences;// After data, so data can be used in selectors
       end;
     end;
@@ -1451,6 +2347,30 @@ begin
     Result:=FElementID;
 end;
 
+function TCustomWebWidget.GetReference(const aName : string): TJSHTMLElement;
+begin
+  if Assigned(FReferences) then
+    Result:=FReferences.GetElementByName(aName)
+  else
+    Result:=Nil;
+end;
+
+function TCustomWebWidget.GetReferenceItem(aName : String): TReferenceItem;
+begin
+  if Assigned(FReferences) then
+    Result:=FReferences.GetReference(aName)
+  else
+    Result:=Nil;
+end;
+
+function TCustomWebWidget.GetReferenceList(const aName : string): TJSHTMLElementArray;
+begin
+  if Assigned(FReferences) then
+    Result:=FReferences.GetElementsByName(aName)
+  else
+    Result:=Nil;
+end;
+
 function TCustomWebWidget.GetReferences: TWebWidgetReferences;
 begin
   if (FReferences=Nil) then
@@ -1499,9 +2419,9 @@ begin
   if (aValue<>'') then
     begin
     if (FParentID<>'') then
-      Raise EWidgets.Create(SErrCannotSetParentAndElementID);
+      Raise EWidgets.CreateFmt(SErrCannotSetParentAndElementID,[DisplayElementName]);
     if FixedElement<>Nil then
-      Raise EWidgets.Create(SErrElementIDNotAllowed);
+      Raise EWidgets.CreateFmt(SErrElementIDNotAllowed,[DisplayElementName]);
     FElementID:=AValue;
     end
   else
@@ -1534,10 +2454,10 @@ Var
 begin
   if (AValue=FParent) then exit;
   if (FixedParent<>Nil) then
-    Raise EWidgets.Create(SErrParentNotAllowed);
+    Raise EWidgets.CreateFmt(SErrParentNotAllowed,[DisplayElementName]);
   if Assigned(aValue) then
     if Not aValue.AllowChildren then
-      Raise EWidgets.Create(SErrChildrenNotAllowed);
+      Raise EWidgets.CreateFmt(SErrChildrenNotAllowed,[DisplayElementName]);
   If Assigned(FParent) then
     FParent.RemoveChild(Self);
   // Unrender
@@ -1571,9 +2491,9 @@ begin
   if (aValue<>'') then
     begin
     if (FElementID<>'') then
-      Raise EWidgets.Create(SErrCannotSetParentAndElementID);
+      Raise EWidgets.CreateFmt(SErrCannotSetParentAndElementID,[DisplayElementName]);
     if (FixedParent<>Nil) then
-      Raise EWidgets.Create(SErrParentIDNotAllowed);
+      Raise EWidgets.CreateFmt(SErrParentIDNotAllowed,[DisplayElementName]);
     end;
   ReRender:=IsRendered;
   if ReRender then
@@ -1614,7 +2534,7 @@ begin
   if (aValue=FReferences) then exit;
   References.Assign(aValue);
   if IsRendered then
-    References.RefreshFromDOM(FElement);
+    References.RefreshFromDOM(GetReferenceElement);
 end;
 
 procedure TCustomWebWidget.SetStyles(AValue: TWebWidgetStyles);
@@ -1717,7 +2637,7 @@ begin
   if FMyEvents=nil then
     FMyEvents:=TJSObject.New;
   FMyEvents[aName]:=aHandler;
-  El:=Element;
+  El:=FElement;
   if Assigned(El) then
     HookupEvent(el,aName);
 end;
@@ -1768,6 +2688,11 @@ begin
   Result:=TJSHTMLElement(Document.createElement(aTag));
   if aID<>'' then
     Result.id:=aID;
+end;
+
+function TCustomWebWidget.GetReferenceElement: TJSHTMLELement;
+begin
+  Result:=Element;
 end;
 
 procedure TCustomWebWidget.Refresh;
@@ -1871,7 +2796,7 @@ procedure TCustomWebWidget.RefreshReferences;
 begin
   if Assigned(FReferences) then
     if Assigned(Element) then
-      References.RefreshFromDom(Element)
+      References.RefreshFromDom(GetReferenceElement)
     else
       References.FRefs:=Nil;
 end;
@@ -2129,8 +3054,6 @@ begin
   if IsRendered then
     jsDelete(Element.Dataset,aName)
 end;
-
-
 
 end.
 

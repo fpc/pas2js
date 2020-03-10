@@ -12,19 +12,10 @@ Type
     top,left : integer;
   end;
 
-  { // Sections/categories in the API documentation site to be checked/added.
-    Todo : Deferred
-    Todo : Effects
-    Todo : events
-    Todo : Forms
-    Todo : Internals
-    Todo : Manipulation
-    Todo : Properties
-  }
   TJQuery = class;
 
   TCallback = Procedure (args : JSValue);
-  TCallbackEvent = Procedure (args : JSValue);
+  TCallbackEvent = Procedure (args : JSValue) of object;
 
   TCallbacks = class external name 'Callbacks'
   Public

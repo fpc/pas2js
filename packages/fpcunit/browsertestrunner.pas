@@ -1,4 +1,4 @@
-{   This unit contains the TTestRunner class, a base class for the console test
+{   This unit contains the TTestRunner class, a base class for the browser test
     runner for fpcunit.
 
     This file is part of the Free Component Library (FCL)

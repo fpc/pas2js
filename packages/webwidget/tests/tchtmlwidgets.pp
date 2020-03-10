@@ -5,7 +5,7 @@ unit tcHTMLWidgets;
 interface
 
 uses
-  Classes, SysUtils, fpcunit, testregistry, web, webwidget, htmlwidgets, tcwidget;
+  Classes, SysUtils, fpcunit, testregistry, web, webwidget, htmlwidgets, tcwidget, js;
 
 Type
   { TTestButtonWidget }
@@ -287,6 +287,7 @@ Type
     Procedure TestPropsOnRender;
     Procedure TestPropsAfterRender;
     Procedure TestMultiSelect;
+    Procedure TestNoSelectedIndex;
   end;
 
   TMyTextWidget = Class(TTextWidget)
@@ -341,7 +342,600 @@ Type
     procedure TestEnvelopeChangeRenders;
   end;
 
+  { TMyTableWidget }
+
+  TMyTableWidget = Class(TCustomTableWidget)
+  private
+    FRowCount: Integer;
+  Protected
+    Type
+      TMyTableRowCountEnumerator = Class(TTableRowCountEnumerator)
+        procedure GetCellData(aData: TTableWidgetCellData); override;
+      end;
+  Public
+    Constructor create(aOwner : TComponent); override;
+    Function GetBodyRowEnumerator : TTableRowEnumerator; override;
+    Function GetRowEnumerator(aKind: TRowKind): TTableRowEnumerator; override;
+    Property RowCount : Integer Read FRowCount Write FRowCount;
+    Property CustomColumns;
+    Property Caption;
+    Property TableOptions;
+    Property OnGetCellData;
+    Property OnCellClick;
+    Property OnHeaderCellClick;
+    Property OnFooterCellClick;
+    Property OnRowClick;
+    Property OnHeaderRowClick;
+    Property OnFooterRowClick;
+  end;
+
+  { TTestTableWidget }
+
+  TTestTableWidget = Class(TBaseTestWidget)
+  private
+    FMy: TMyTableWidget;
+    FClickCount : Integer;
+    FClickEvent: TJSEvent;
+    procedure AssertTableCaption(El: TJSHTMLElement);
+    procedure CheckBodyCells(aParent: TJSHTMLELement);
+    procedure CheckBodyRow(aParent: TJSHTMLELement; aIndex: Integer);
+    procedure CheckCellData(el: TJSHTMLElement; aRow, aCol: Integer; rk: TRowKind; RowOption: TTableOption; ColOption: TTableOption);
+    procedure CheckHeaderCells(aParent: TJSHTMLELement);
+    procedure CheckFooterCells(aParent: TJSHTMLELement);
+    procedure CheckRowData(aRow: TJSHTMLELement; aRowKind: TRowKind; aRowKindOption: TTableOption; aIndex: integer);
+    procedure DoClickCount(Sender: TObject; Event: TJSEvent);
+  Protected
+    Procedure Setup; override;
+    Procedure TearDown; override;
+    Property My : TMyTableWidget Read FMy;
+  Published
+    Procedure TestEmpty;
+    Procedure TestRender;
+    Procedure TestRenderNoCaption;
+    Procedure TestRenderNoCaptionNoHeaders;
+    Procedure TestRenderFooters;
+    Procedure TestRenderNoheaderFooterBody;
+    Procedure TestRenderRowId;
+    Procedure TestRenderCellID;
+    Procedure TestRenderHeaderRowData;
+    Procedure TestRenderHeaderCellDataRow;
+    Procedure TestRenderHeaderCellDataCol;
+    Procedure TestRenderRowData;
+    Procedure TestRenderBodyCellDataRow;
+    Procedure TestRenderBodyCellDataCol;
+    Procedure TestRenderFooterRowData;
+    Procedure TestRenderFooterCellDataRow;
+    Procedure TestRenderFooterCellDataCol;
+    Procedure TestClickHeaderCell;
+    Procedure TestClickFooterCell;
+    Procedure TestClickCell;
+    Procedure TestClickRow;
+    Procedure TestClickRowFromCell;
+    Procedure TestClickHeaderRowFromHeaderCell;
+    Procedure TestClickFooterRowFromFooterCell;
+  end;
+
 implementation
+
+{ TTestTableWidget }
+
+procedure TTestTableWidget.Setup;
+begin
+  inherited Setup;
+  FMy:=TMyTableWidget.Create(Nil);
+  FMy.ParentID:=SBaseWindowID;
+end;
+
+procedure TTestTableWidget.TearDown;
+begin
+  FreeAndNil(FMy);
+  inherited TearDown;
+end;
+
+procedure TTestTableWidget.TestEmpty;
+begin
+  AssertNotNull('Have table',My);
+  AssertEquals('Have parentid',SBaseWindowID,My.ParentID);
+  AssertNotNull('Have table cols',My.CustomColumns);
+  AssertEquals('Have table col count',2,My.CustomColumns.Count);
+end;
+
+procedure TTestTableWidget.CheckHeaderCells(aParent : TJSHTMLELement);
+
+Var
+  El : TJSHTMLElement;
+  I : integer;
+  Col : TCustomTableColumn;
+
+begin
+
+  AssertEquals('Header row count',1, aParent.childElementCount);
+  aParent:=TJSHTMLElement(aParent.firstElementChild);
+  AssertnotNull('Have row',aParent);
+  AssertEquals('Have row tag','tr',LowerCase(aParent.tagname));
+  CheckRowData(aParent,rkHeader,toHeaderRowData,0);
+  AssertEquals('Header cell count',My.CustomColumns.Count, aParent.childElementCount);
+  I:=0;
+  el:=TJSHTMLElement(aParent.firstElementChild);
+  While el<>Nil do
+    begin
+    AssertTrue('have col avail',I<My.CustomColumns.Count);
+    Col:=My.CustomColumns[i];
+    AssertNotNull('have col instance',Col);
+    AssertEquals('Have head element','th',LowerCase(el.tagName));
+    AssertEquals('Have head content col caption',Col.Caption,el.innerText);
+    CheckCellData(el,0,i,rkHeader,toHeaderCellDataRow,toHeaderCellDataCol);
+    El:=TJSHTMLElement(El.nextElementSibling);
+    Inc(i);
+    end;
+end;
+
+procedure TTestTableWidget.CheckRowData(aRow: TJSHTMLELement; aRowKind : TRowKind; aRowKindOption : TTableOption; aIndex : integer);
+
+Var
+  S : String;
+begin
+  S:=RowKindNames[aRowKind];
+  if (toRowID in My.TableOptions)  then
+    AssertEquals(S+' row ID',My.ElementID+'-'+S+'-'+IntToStr(aIndex),String(aRow.ID))
+  else
+    AssertEquals(S+' Row ID empty','',aRow.ID);
+  if (aRowKindOption in My.TableOptions) then
+    begin
+    AssertEquals(S+' row data',IntToStr(aIndex),String(aRow.Dataset['row']));
+    AssertEquals(S+' row kind data',S,String(aRow.Dataset['kind']));
+    end
+  else
+    begin
+    AssertTrue(S+' empty row data',isUndefined(aRow.Dataset['kind']));
+    AssertTrue(S+' empty row data',isUndefined(aRow.Dataset['row']));
+    end;
+end;
+
+procedure TTestTableWidget.CheckFooterCells(aParent: TJSHTMLELement);
+Var
+  El : TJSHTMLElement;
+  I : integer;
+  Col : TCustomTableColumn;
+
+begin
+  AssertEquals('Footer row count',1, aParent.childElementCount);
+  aParent:=TJSHTMLElement(aParent.firstElementChild);
+  AssertnotNull('Have row',aParent);
+  AssertEquals('Have row tag','tr',LowerCase(aParent.tagname));
+  CheckRowData(aParent,rkFooter,tofooterRowData,0);
+  AssertEquals('Footer cell count',My.CustomColumns.Count, aParent.childElementCount);
+  I:=0;
+  el:=TJSHTMLElement(aParent.firstElementChild);
+  While el<>Nil do
+    begin
+    AssertTrue('have col avail',I<My.CustomColumns.Count);
+    Col:=My.CustomColumns[i];
+    AssertNotNull('have col instance',Col);
+    AssertEquals('Have footer element','td',LowerCase(el.tagName));
+    AssertEquals('Have footer content',Format('Footer[%d]',[I]),el.innerText);
+    CheckCellData(el,0,i,rkFooter,toFooterCellDataRow,toFooterCellDataCol);
+    El:=TJSHTMLElement(El.nextElementSibling);
+    Inc(i);
+    end;
+end;
+
+procedure TTestTableWidget.DoClickCount(Sender: TObject; Event: TJSEvent);
+begin
+  Inc(FClickCount);
+  AssertSame('Table',My,Sender);
+  FClickEvent:=Event;
+end;
+
+procedure TTestTableWidget.CheckCellData(el : TJSHTMLElement; aRow,aCol : Integer; rk : TRowKind; RowOption : TTableOption; ColOption : TTableOption) ;
+
+Var
+  S : String;
+
+begin
+  S:=RowKindNames[RK];
+  if toCellID in My.TableOptions then
+    AssertEquals('Cell ID',My.ElementID+'-'+S+'-'+IntToStr(aRow)+'-'+IntToStr(aCol),el.ID)
+  else
+    AssertEquals('Cell ID','',el.ID);
+  if ([rowoption,coloption] * My.TableOptions) <> [] then
+    AssertEquals(S+'row kind data',S,String(el.Dataset['kind']))
+  else
+    AssertTrue(S+'cell empty row data',isUndefined(el.Dataset['kind']));
+  if (rowOption in My.TableOptions) then
+    AssertEquals(S+'cell row data',IntToStr(aRow),String(el.Dataset['row']))
+  else
+    AssertTrue(S+' cell empty row data',isUndefined(el.Dataset['row']));
+  if (ColOption in My.TableOptions) then
+    AssertEquals(S+' cell col data',IntToStr(aCol),String(el.Dataset['col']))
+  else
+    AssertTrue(S+' cell empty col data',isUndefined(el.Dataset['col']));
+end;
+
+procedure TTestTableWidget.CheckBodyRow(aParent : TJSHTMLELement; aIndex : Integer);
+
+Var
+  El : TJSHTMLElement;
+  I : integer;
+  Col : TCustomTableColumn;
+begin
+  CheckRowData(aParent,rkBody,toBodyRowData,aIndex);
+  AssertEquals('row cell count',My.CustomColumns.Count, aParent.childElementCount);
+  I:=0;
+  el:=TJSHTMLElement(aParent.firstElementChild);
+  While el<>Nil do
+    begin
+    AssertTrue('have col avail',I<My.CustomColumns.Count);
+    Col:=My.CustomColumns[i];
+    AssertNotNull('have col instance',Col);
+    AssertEquals('Have cell element','td',LowerCase(el.tagName));
+    AssertEquals('Have cell content ',Format('cell[%d,%d]',[I,aIndex]),el.innerText);
+    CheckCellData(el,aIndex,i,rkBody,toBodyCellDataRow,toBodyCellDataCol);
+    El:=TJSHTMLElement(El.nextElementSibling);
+    Inc(i);
+    end;
+end;
+procedure TTestTableWidget.CheckBodyCells(aParent : TJSHTMLELement);
+
+Var
+  aRow : integer;
+
+begin
+  AssertEquals('Body row count',My.RowCount, aParent.childElementCount);
+  aParent:=TJSHTMLElement(aParent.firstElementChild);
+  aRow:=0;
+  While aParent<>nil do
+    begin
+    AssertNotNull('Have row',aParent);
+    AssertEquals('Have row tag','tr',LowerCase(aParent.tagname));
+    CheckBodyRow(aParent,aRow);
+    aParent:=TJSHTMLElement(aParent.nextElementSibling);
+    inc(aRow);
+    end;
+end;
+
+procedure TTestTableWidget.AssertTableCaption(El : TJSHTMLElement);
+
+begin
+  AssertTrue('Caption element',SameText('caption',el.tagName));
+  AssertEquals('Caption',My.Caption,El.InnerHTML)
+end;
+
+procedure TTestTableWidget.TestRender;
+
+Var
+  El : TJSHTMLElement;
+
+begin
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','table',Lowercase(My.Element.tagName));
+  AssertEquals('Sub elements',3,My.Element.childElementCount);
+  El:=TJSHTMLElement(My.Element.firstElementChild);
+  AssertTableCaption(El);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have head element','thead',LowerCase(el.tagName));
+  CheckHeaderCells(el);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have body element','tbody',LowerCase(el.tagName));
+  CheckBodyCells(el);
+end;
+
+procedure TTestTableWidget.TestRenderNoCaption;
+
+Var
+  El : TJSHTMLElement;
+
+begin
+  My.Caption:='';
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','table',Lowercase(My.Element.tagName));
+  AssertEquals('Sub elements',2,My.Element.childElementCount);
+  El:=TJSHTMLElement(My.Element.firstElementChild);
+  AssertEquals('Have head element','thead',LowerCase(el.tagName));
+  CheckHeaderCells(el);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have body element','tbody',LowerCase(el.tagName));
+  CheckBodyCells(el);
+end;
+
+procedure TTestTableWidget.TestRenderNoCaptionNoHeaders;
+
+Var
+  El : TJSHTMLElement;
+
+begin
+  My.Caption:='';
+  My.TableOptions:=My.TableOptions-[toHeaderRow];
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','table',Lowercase(My.Element.tagName));
+  AssertEquals('Sub elements',1,My.Element.childElementCount);
+  El:=TJSHTMLElement(My.Element.firstElementChild);
+  AssertEquals('Have body element','tbody',LowerCase(el.tagName));
+  CheckBodyCells(el);
+end;
+
+procedure TTestTableWidget.TestRenderFooters;
+Var
+  El : TJSHTMLElement;
+
+begin
+  My.TableOptions:=My.TableOptions+[toFooterRow];
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','table',Lowercase(My.Element.tagName));
+  AssertEquals('Sub elements',4,My.Element.childElementCount);
+  El:=TJSHTMLElement(My.Element.firstElementChild);
+  AssertTableCaption(El);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have head element','thead',LowerCase(el.tagName));
+  CheckHeaderCells(el);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have body element','tbody',LowerCase(el.tagName));
+  CheckBodyCells(el);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have footer element','tfoot',LowerCase(el.tagName));
+  CheckFooterCells(el);
+end;
+
+procedure TTestTableWidget.TestRenderNoheaderFooterBody;
+
+Var
+  El : TJSHTMLElement;
+
+begin
+  My.TableOptions:=My.TableOptions-[toFooter,toBody,toHeader]+[toFooterRow];
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  AssertEquals('Have element','table',Lowercase(My.Element.tagName));
+  AssertEquals('Sub elements',5,My.Element.childElementCount);
+  El:=TJSHTMLElement(My.Element.firstElementChild);
+  AssertTableCaption(El);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have head element','tr',LowerCase(el.tagName));
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have body element 1','tr',LowerCase(el.tagName));
+  CheckBodyRow(El,0);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have body element 2','tr',LowerCase(el.tagName));
+  CheckBodyRow(El,1);
+  El:=TJSHTMLElement(El.nextElementSibling);
+  AssertEquals('Have footer element','tr',LowerCase(el.tagName));
+end;
+
+procedure TTestTableWidget.TestRenderRowId;
+begin
+  My.TableOptions:=My.TableOptions+[toRowID];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderCellID;
+begin
+  My.TableOptions:=My.TableOptions+[toCellID];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderHeaderRowData;
+begin
+  My.TableOptions:=My.TableOptions+[toHeaderRowData];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderHeaderCellDataRow;
+begin
+  My.TableOptions:=My.TableOptions+[toHeaderCellDataRow];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderHeaderCellDataCol;
+begin
+  My.TableOptions:=My.TableOptions+[toHeaderCellDataCol];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderRowData;
+begin
+  My.TableOptions:=My.TableOptions+[toBodyRowData];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderBodyCellDataRow;
+begin
+  My.TableOptions:=My.TableOptions+[toBodyCellDataRow];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderBodyCellDataCol;
+begin
+  My.TableOptions:=My.TableOptions+[toBodyCellDataCol];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderFooterRowData;
+begin
+  My.TableOptions:=My.TableOptions+[tofooterRowData];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderFooterCellDataRow;
+begin
+  My.TableOptions:=My.TableOptions+[tofooterCellDataRow];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestRenderFooterCellDataCol;
+begin
+  My.TableOptions:=My.TableOptions+[tofooterCellDataCol];
+  TestRender;// Check functions will do additional check.
+end;
+
+procedure TTestTableWidget.TestClickHeaderCell;
+
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+  My.OnHeaderCellClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.firstElementChild.firstElementChild);
+  AssertEquals('TH el','th',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+procedure TTestTableWidget.TestClickFooterCell;
+
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+  My.TableOptions:=My.TableOptions-[toHeaderRow]+[toFooterRow];
+  My.OnFooterCellClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.nextElementSibling.firstElementChild.firstElementChild);
+  AssertEquals('TD el','td',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+procedure TTestTableWidget.TestClickCell;
+
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+  My.TableOptions:=My.TableOptions-[toHeaderRow];
+  My.OnCellClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.firstElementChild.firstElementChild);
+  AssertEquals('TD el','td',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+procedure TTestTableWidget.TestClickRow;
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+  My.TableOptions:=My.TableOptions-[toHeaderRow];
+  My.OnRowClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.firstElementChild);
+  AssertEquals('TD el','tr',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+procedure TTestTableWidget.TestClickRowFromCell;
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+  My.TableOptions:=My.TableOptions-[toHeaderRow];
+  My.OnRowClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.firstElementChild.FirstElementChild);
+  AssertEquals('TD el','td',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+procedure TTestTableWidget.TestClickHeaderRowFromHeaderCell;
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+//  My.TableOptions:=My.TableOptions;
+  My.OnHeaderRowClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.firstElementChild.FirstElementChild);
+  AssertEquals('TD el','th',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+procedure TTestTableWidget.TestClickFooterRowFromFooterCell;
+Var
+  ev : TJSEvent;
+  el : TJSHTMLElement;
+begin
+  My.Caption:='';
+  My.TableOptions:=My.TableOptions-[toHeaderRow]+[toFooterRow];
+  My.OnFooterRowClick:=@DoClickCount;
+  My.Refresh;
+  AssertNotNull('Have element',My.Element);
+  ev:=TJSEvent.New('click');
+  el:=TJSHTMLElement(My.Element.firstElementChild.nextElementSibling.firstElementChild.firstElementChild);
+  AssertEquals('TD el','td',LowerCase(el.TagName));
+  el.dispatchEvent(ev);
+  AssertEquals('One click',1,FClickCount);
+  AssertSame('Event',ev,FClickEvent);
+end;
+
+{ TMyTableWidget }
+
+constructor TMyTableWidget.create(aOwner: TComponent);
+
+begin
+  inherited create(aOwner);
+  CustomColumns.Add ('Col1');
+  CustomColumns.Add ('Col2');
+  Caption:='Our caption';
+  RowCount:=2;
+end;
+
+function TMyTableWidget.GetBodyRowEnumerator: TTableRowEnumerator;
+begin
+  Result:=TMyTableRowCountEnumerator.Create(Self,RowCount);
+end;
+
+function TMyTableWidget.GetRowEnumerator(aKind: TRowKind): TTableRowEnumerator;
+begin
+  if AKind=rkFooter then
+    Result:=TMyTableRowCountEnumerator.Create(Self,1)
+  else
+    Result:=Inherited GetRowEnumerator(aKind);
+end;
+
+procedure TMyTableWidget.TMyTableRowCountEnumerator.GetCellData(aData: TTableWidgetCellData);
+begin
+  inherited GetCellData(aData);
+  Case aData.Kind of
+    rkBody :
+      aData.Text:=Format('cell[%d,%d]',[aData.Col,aData.Row]);
+    rkFooter :
+      begin
+      aData.Text:=Format('Footer[%d]',[aData.Col]);
+      end;
+  end;
+end;
 
 { TTestTextLinesWidget }
 
@@ -686,6 +1280,21 @@ begin
   AssertEquals('SelectionValue[1]','3',My.selectionValue[1]);
   AssertEquals('SelectionItem[1]','Three',My.selectionItem[1]);
 end;
+
+procedure TTestSelectElement.TestNoSelectedIndex;
+begin
+  My.SelectedIndex:=-1;
+  My.Refresh;
+  AssertTree('select/option');
+  AssertEquals('Multi',False,Select.multiple);
+  AssertEquals('SelectedIndex',-1,Select.selectedIndex);
+  AssertEquals('Amount of options',3,Length(Options));
+  AssertEquals('Amount of option values',3,Select.childElementCount);
+  AssertOption(0,'One','1');
+  AssertOption(1,'Two','2');
+  AssertOption(2,'Three','3');
+end;
+
 
 { TTestImageElement }
 
@@ -1376,7 +1985,9 @@ initialization
                  TTestRadioInputElement,TTestCheckBoxInputElement,
                  TTestDateInputElement,TTestFileInputElement,
                  TTestHiddenInputElement, TTestImageElement,
-                 TTestImageElement,TTestSelectElement,
-                 TTestLabelWidget,TTestTextWidget,TTestTextLinesWidget]);
+                 TTestImageElement,
+                 TTestLabelWidget,TTestTextWidget,TTestTextLinesWidget,
+                 TTestSelectElement,
+                 TTestTableWidget]);
 end.
 

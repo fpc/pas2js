@@ -3,7 +3,7 @@ program testwidgets;
 {$mode objfpc}
 
 uses
-  browserconsole, {browsertestrunner} consoletestrunner, JS, Classes, SysUtils, Web, btnrun, tcWidget, tchtmlwidgets;
+  browserconsole, consoletestrunner, JS, Classes, SysUtils, Web, btnrun, tcWidget, tchtmlwidgets, tcdbhtmlwidgets, tcdbwidgets;
 
 var
   Application : TTestRunner;

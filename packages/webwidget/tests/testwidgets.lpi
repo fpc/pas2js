@@ -60,6 +60,14 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="tcHTMLWidgets"/>
       </Unit>
+      <Unit>
+        <Filename Value="tcdbhtmlwidgets.pp"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
+      <Unit>
+        <Filename Value="tcdbwidgets.pp"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

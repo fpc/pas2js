@@ -1633,6 +1633,8 @@ Begin
   if (Result<>'') and (Result[1]=' ') then
     Delete(Result,1,1);
   P:=Pos('.',Result);
+  if (P<=0) then
+    P:=Length(Result)+1;
   Result:=ReplaceDecimalSep(Result,DS);
   Dec(P,3);
   if (TS<>'') and (TS<>#0) then

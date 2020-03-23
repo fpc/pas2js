@@ -258,6 +258,8 @@ Type
     Function RouteRequest(Const ARouteURL : String; DoPush : Boolean = False) : TRoute;
     // Extract request path from URL. By default, returns the URL
     function GetRequestPath(const URL: String): String; virtual;
+    // Examine the URL hash and route the request. Returns the route. Use when arriving on a page do handle the initial route
+    Function RouteFromURL : String;
     // Navigation. These are easy-access methods for history.
     function GetCurrentLocation: String;
     // These use the history mechanism
@@ -642,6 +644,16 @@ end;
 function TRouter.GetRequestPath(const URL: String): String;
 begin
   Result:=SanitizeRoute(URL);
+end;
+
+function TRouter.RouteFromURL: String;
+
+begin
+  // Result:=Copy(window.location.hash,2,Length(window.location.hash)-1);
+  // Writeln('Curr ', GetCurrentLocation,' route : ',Result);
+  Result:=GetCurrentLocation;
+  if (Result<>'') then
+    Router.RouteRequest(Result,true);
 end;
 
 function TRouter.GetCurrentLocation: String;

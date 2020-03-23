@@ -43,7 +43,6 @@ Type
   TJSTouchEvent = Class;
 
 
-
   { TEventListenerEvent }
 
 (*
@@ -1849,6 +1848,23 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   TJSCSSStyleDeclaration = class; // forward
 
   TJSTimerCallBack = reference to procedure;
+  Theader = Array [0..1] of String;
+  THeaderArray = Array of Theader;
+
+  TJSHTMLHeaders = Class external name 'Headers' (TJSObject)
+  Public
+    constructor new(values : THeaderArray); overload;
+    procedure append(aName, aValue : String);
+    procedure delete(aName : String);
+    function entries : TJSIterator;
+    Function get(aName: String): string;
+    Function has(aName: String): Boolean;
+    function keys : TJSIterator;
+    function values : TJSIterator;
+    procedure set_(aName, aValue : String);
+    Property Headers[aName : string] : string Read Get Write Set_;
+  end;
+
 
   { TJSMediaQueryList }
 

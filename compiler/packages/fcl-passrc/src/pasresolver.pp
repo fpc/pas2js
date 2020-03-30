@@ -4367,8 +4367,6 @@ begin
       begin
       // this proc was already found. This happens when this is the forward
       // declaration or a previously found implementation.
-      Data^.ElScope:=ElScope;
-      Data^.StartScope:=StartScope;
       exit;
       end;
 
@@ -9290,6 +9288,7 @@ begin
   // FoundEl compatible element -> create reference
   FoundEl:=FindCallData.Found;
   Ref:=CreateReference(FoundEl,NameExpr,rraRead);
+
   if FindCallData.StartScope.ClassType=ScopeClass_WithExpr then
     Ref.WithExprScope:=TPasWithExprScope(FindCallData.StartScope);
   FindData:=Default(TPRFindData);
@@ -16870,6 +16869,7 @@ begin
   {$IFDEF VerbosePasResolver}
   writeln('TPasResolver.CreateReference RefEl=',GetObjName(RefEl),' DeclEl=',GetObjName(DeclEl));
   {$ENDIF}
+
   Result:=TResolvedReference.Create;
   if FindData<>nil then
     begin

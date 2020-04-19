@@ -5,7 +5,9 @@ TARGETS=democomponents demobrowseconsole demoajax demoxhr restbridgeclient \
   chartjs_demoline chartjs_demotime chartjs_demoscriptablebubble chartjs_demoradar \
   chartjs_democustompoints chartjs_demopolararea promiseall promisestory1 \
   promisestory2 promisestory demodb demoload demorest fpcunitbrowsertest \
-  sampleda webgl1 pdfbasic hotreload dynload bootstraptable fullcalendar
+  sampleda webgl1 pdfbasic hotreload dynload bootstraptable fullcalendar \
+  jitsimeet opentok
+
 ifneq ($(SKIPWEBCOMPILER),1)
 TARGETS:=$(TARGETS) demowebcompiler
 BASEDIR=$(CURDIR)/../compiler/packages
@@ -109,4 +111,8 @@ dynload: ./dynload/testloader.lpr ./dynload/myform.pp
 bootstraptable: ./bootstrap/demobootstraptable.lpr
 	$(BROWSERP2JS) $<
 fullcalendar: ./fullcalendar/demofullcalendar.lpr
+	$(BROWSERP2JS) $<
+jitsimeet: ./jitsimeet/demojitsimeet.lpr
+	$(BROWSERP2JS) $<
+opentok: ./opentok/demoopentok.lpr
 	$(BROWSERP2JS) $<

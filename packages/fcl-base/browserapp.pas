@@ -17,6 +17,7 @@ type
     function CreateHTMLElement(aTag : String; aID : String = '') : TJSHTMLElement;
     procedure DoRun; override;
     function GetConsoleApplication: boolean; override;
+    Function LogGetElementErrors : Boolean;
     function GetLocation: String; override;
   public
     procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;
@@ -36,7 +37,7 @@ procedure ReloadEnvironmentStrings;
 
 var
   I : Integer;
-  S : String;
+  S,N : String;
   A,P : TStringDynArray;
 begin
   if Assigned(EnvNames) then
@@ -48,10 +49,11 @@ begin
   for I:=0 to Length(A)-1 do
     begin
     P:=TJSString(A[i]).split('=');
+    N:=LowerCase(decodeURIComponent(P[0]));
     if Length(P)=2 then
-      EnvNames[decodeURIComponent(P[0])]:=decodeURIComponent(P[1])
+      EnvNames[N]:=decodeURIComponent(P[1])
     else if Length(P)=1 then
-      EnvNames[decodeURIComponent(P[0])]:=''
+      EnvNames[N]:=''
     end;
 end;
 
@@ -75,8 +77,15 @@ end;
 
 function MyGetEnvironmentVariable(Const EnvVar: String): String;
 
+Var
+  aName : String;
+
 begin
-  Result:=String(EnvNames[envvar]);
+  aName:=Lowercase(EnvVar);
+  if EnvNames.hasOwnProperty(aName) then
+    Result:=String(EnvNames[aName])
+  else
+    Result:='';
 end;
 
 function MyGetEnvironmentVariableCount: Integer;
@@ -94,6 +103,8 @@ end;
 function TBrowserApplication.GetHTMLElement(aID: String): TJSHTMLElement;
 begin
   Result:=TJSHTMLElement(Document.getElementById(aID));
+  if (Result=Nil) and LogGetElementErrors then
+    Writeln('Could not find element with ID ',aID);
 end;
 
 function TBrowserApplication.CreateHTMLElement(aTag: String; aID: String): TJSHTMLElement;
@@ -111,6 +122,11 @@ end;
 function TBrowserApplication.GetConsoleApplication: boolean;
 begin
   Result:=true;
+end;
+
+function TBrowserApplication.LogGetElementErrors: Boolean;
+begin
+  Result:=True;
 end;
 
 function TBrowserApplication.GetLocation: String;

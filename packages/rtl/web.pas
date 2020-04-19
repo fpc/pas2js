@@ -1664,6 +1664,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure clearWatch(AID : NativeInt);
   end;
 
+  TJSMediaStreamTrack = class external name 'MediaStreamTrack' (TJSEventTarget)
+  end;
+
   TJSMediaDevices = class external name 'MediaDevices' (TJSEventTarget)
   end;
 

@@ -4637,6 +4637,7 @@ var
   Proc: TPasProcedure;
   Store, SameScope: Boolean;
   ProcScope: TPasProcedureScope;
+  CurResolver: TPasResolver;
 
   procedure CountProcInSameModule;
   begin
@@ -4667,28 +4668,35 @@ begin
         exit; // no hint
       end;
     case Data^.Kind of
-      fpkProc:
-        // proc hides a non proc
-        if (Data^.Proc.GetModule=El.GetModule) then
-          // forbidden within same module
-          RaiseMsg(20170216151649,nDuplicateIdentifier,sDuplicateIdentifier,
-            [El.Name,GetElementSourcePosStr(El)],Data^.Proc.ProcType)
-        else
+    fpkProc:
+      // proc hides a non proc
+      if (Data^.Proc.GetModule=El.GetModule) then
+        // forbidden within same module
+        RaiseMsg(20170216151649,nDuplicateIdentifier,sDuplicateIdentifier,
+          [El.Name,GetElementSourcePosStr(El)],Data^.Proc.ProcType)
+      else
+        begin
+        // give a hint
+        if Data^.Proc.Parent is TPasMembersType then
           begin
-          // give a hint
-          if Data^.Proc.Parent is TPasMembersType then
-            begin
-            if El.Visibility=visStrictPrivate then
-            else if (El.Visibility=visPrivate) and (El.GetModule<>Data^.Proc.GetModule) then
-            else
-              LogMsg(20171118205344,mtHint,nFunctionHidesIdentifier_NonProc,sFunctionHidesIdentifier,
-                [GetElementSourcePosStr(El)],Data^.Proc.ProcType);
-            end;
+          if El.Visibility=visStrictPrivate then
+          else if (El.Visibility=visPrivate) and (El.GetModule<>Data^.Proc.GetModule) then
+          else
+            LogMsg(20171118205344,mtHint,nFunctionHidesIdentifier_NonProc,sFunctionHidesIdentifier,
+              [GetElementSourcePosStr(El)],Data^.Proc.ProcType);
           end;
-      fpkMethod:
-        // method hides a non proc
+        end;
+    fpkMethod:
+      // method hides a non proc
+      begin
+      ProcScope:=TPasProcedureScope(Data^.Proc.CustomData);
+      CurResolver:=ProcScope.Owner as TPasResolver;
+      if msDelphi in CurResolver.CurrentParser.CurrentModeswitches then
+        // ok in delphi
+      else
         RaiseMsg(20171118232543,nDuplicateIdentifier,sDuplicateIdentifier,
           [El.Name,GetElementSourcePosStr(El)],Data^.Proc.ProcType);
+      end;
     end;
     exit;
     end;
@@ -4911,8 +4919,12 @@ var
   C: TClass;
   i: Integer;
   OtherScope: TPasIdentifierScope;
+  IsDelphi: Boolean;
 begin
   if aName='' then exit(nil);
+
+  IsDelphi:=msDelphi in CurrentParser.CurrentModeswitches;
+
   if Scope is TPasGroupScope then
     begin
     Group:=TPasGroupScope(Scope);
@@ -4932,7 +4944,8 @@ begin
       RaiseMsg(20170403223024,nSymbolCannotBePublished,sSymbolCannotBePublished,[],El);
     end;
 
-  if (Kind=pikSimple) and (Group<>nil) and (El.ClassType<>TPasProperty) then
+  if (Kind=pikSimple) and (Group<>nil) and (El.ClassType<>TPasProperty)
+      and not IsDelphi then
     begin
     // check duplicate in ancestors and helpers
     for i:=1 to Group.Count-1 do

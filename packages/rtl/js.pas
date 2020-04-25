@@ -904,6 +904,7 @@ function isExt(const InstanceOrClass, aClass: JSValue): boolean; external name '
 function jsInstanceOf(const aFunction, aFunctionWithPrototype: JSValue): String; assembler;
 function jsTypeOf(const v: JSValue): String; external name 'typeof';
 function jsIsNaN(const v: JSValue): boolean; external name 'isNaN';// true if value cannot be converted to a number. e.g. True on NaN, undefined, {}, '123'. False on true, null, '', ' ', '1A'
+function jsIsFinite(const v: JSValue): boolean; external name 'isFinite';// true if value is a Finite number
 function toNumber(const v: JSValue): double; assembler; // if not possible, returns NaN
 function toInteger(const v: JSValue): NativeInt; // if v is not an integer, returns 0
 function toObject(Value: JSValue): TJSObject; // If Value is not a Javascript object, returns Nil

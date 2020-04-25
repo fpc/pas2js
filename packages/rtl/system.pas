@@ -92,6 +92,11 @@ type
   TDynArrayIndex = NativeInt;
   TTextLineBreakStyle = (tlbsLF,tlbsCRLF,tlbsCR);
 
+  TCompareOption = ({coLingIgnoreCase, coLingIgnoreDiacritic, }coIgnoreCase{,
+                    coIgnoreKanaType, coIgnoreNonSpace, coIgnoreSymbols, coIgnoreWidth,
+                    coLingCasing, coDigitAsNumbers, coStringSort});
+  TCompareOptions = set of TCompareOption;
+
 {*****************************************************************************
             TObject, TClass, IUnknown, IInterface, TInterfacedObject
 *****************************************************************************}
@@ -360,6 +365,7 @@ function Pos(const Search, InString: String; StartAt : Integer): Integer; assemb
 procedure Insert(const Insertion: String; var Target: String; Index: Integer); overload;
 function upcase(c : char) : char; assembler;
 function HexStr(Val: NativeInt; cnt: byte): string; external name 'rtl.hexStr'; overload;
+function binstr(val : int64; cnt : byte) : string;
 
 procedure val(const S: String; out NI : NativeInt; out Code: Integer); overload;
 procedure val(const S: String; out NI : NativeUInt; out Code: Integer); overload;
@@ -708,6 +714,18 @@ begin
     end
   else
     Code:=1;
+end;
+
+function binstr(val : int64;cnt : byte) : string;
+var
+  i : Integer;
+begin
+  SetLength(Result,cnt);
+  for i:=cnt downto 1 do
+   begin
+     Result[i]:=char(48+val and 1);
+     val:=val shr 1;
+   end;
 end;
 
 function upcase(c : char) : char; assembler;

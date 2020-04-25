@@ -6026,7 +6026,7 @@ begin
         RaiseInvalidProcModifier(20170216151637,Proc,pmOverride,Proc);
       if Proc.IsMessage then
         RaiseInvalidProcModifier(20170216151638,Proc,pmMessage,Proc);
-      if Proc.IsStatic then
+      if Proc.IsStatic and not HasDots then
         RaiseInvalidProcTypeModifier(20170216151640,El,ptmStatic,El);
       if (not HasDots)
           and (Proc.GetProcTypeEnum in [
@@ -7943,11 +7943,11 @@ var
   DeclArgs, ImplArgs: TFPList;
   DeclName, ImplName: String;
   ImplResult, DeclResult: TPasType;
+  NewImplPTMods: TProcTypeModifiers;
+  ptm: TProcTypeModifier;
 begin
   if ImplProc.ClassType<>DeclProc.ClassType then
     RaiseXExpectedButYFound(20170216151729,DeclProc.TypeName,ImplProc.TypeName,ImplProc);
-  if ImplProc.CallingConvention<>DeclProc.CallingConvention then
-    RaiseMsg(20170216151731,nCallingConventionMismatch,sCallingConventionMismatch,[],ImplProc);
   if ImplProc.ProcType is TPasFunctionType then
     begin
     // check result type
@@ -7973,6 +7973,15 @@ begin
           sFunctionHeaderMismatchForwardVarName,[DeclProc.Name,DeclName,ImplName],ImplProc);
       end;
     end;
+
+  // modifiers
+  if ImplProc.CallingConvention<>DeclProc.CallingConvention then
+    RaiseMsg(20170216151731,nCallingConventionMismatch,sCallingConventionMismatch,[],ImplProc);
+  NewImplPTMods:=ImplProc.ProcType.Modifiers-DeclProc.ProcType.Modifiers;
+  if NewImplPTMods<>[] then
+    for ptm in NewImplPTMods do
+      RaiseMsg(20200425154821,nDirectiveXNotAllowedHere,sDirectiveXNotAllowedHere,
+        [ProcTypeModifiers[ptm]],ImplProc.ProcType);
 end;
 
 procedure TPasResolver.ResolveImplBlock(Block: TPasImplBlock);

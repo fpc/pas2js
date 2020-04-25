@@ -186,6 +186,7 @@ const
   nWrongTypeXInArrayConstructor = 3120;
   nMethodHidesNonVirtualMethodExactly = 3125;
   nDuplicatePublishedMethodXAtY = 3126;
+  nDirectiveXNotAllowedHere = 3143;
 
   // using same IDs as FPC
   nVirtualMethodXHasLowerVisibility = 3250; // was 3050
@@ -319,6 +320,7 @@ resourcestring
   sWrongTypeXInArrayConstructor = 'Wrong type "%s" in array constructor';
   sMethodHidesNonVirtualMethodExactly = 'method hides identifier at "%s". Use reintroduce';
   sDuplicatePublishedMethodXAtY = 'Duplicate published method "%s" at %s';
+  sDirectiveXNotAllowedHere = 'Directive "%s" not allowed here';
 
 type
   { TResolveData - base class for data stored in TPasElement.CustomData }

@@ -77,6 +77,7 @@ Resourcestring
   SParserLocInfo                  = ' (at %d,%d, stream offset %.8x)';
   SParserUnterminatedBinValue     = 'Unterminated byte value';
   SParserInvalidProperty          = 'Invalid property';
+  SRangeError                     = 'Range error';
 
 implementation
 

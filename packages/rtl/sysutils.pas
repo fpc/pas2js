@@ -13,6 +13,8 @@
 unit SysUtils;
 
 {$mode objfpc}
+{$modeswitch typehelpers}
+{$modeswitch advancedrecords}
 
 interface
 
@@ -225,6 +227,7 @@ function StringReplace(aOriginal, aSearch, aReplace: string; Flags: TStringRepla
 function QuoteString(aOriginal: String; AQuote: Char): String;
 function QuotedStr(const s: string; QuoteChar: Char = ''''): string;
 function DeQuoteString(aQuoted: String; AQuote: Char): String;
+Function LastDelimiter(const Delimiters, S: string): SizeInt;
 function IsDelimiter(const Delimiters, S: string; Index: Integer): Boolean;
 function AdjustLineBreaks(const S: string): string;
 function AdjustLineBreaks(const S: string; Style: TTextLineBreakStyle): string;
@@ -256,7 +259,7 @@ Function StrToDWord(const S : String) : DWord;
 Function StrToDWordDef(const S : String; ADefault : DWord) : DWord;
 Function TryStrToDWord(const S : String; Out res : DWord) : Boolean;
 
-function IntToHex(Value: NativeInt; Digits: integer): string;
+function IntToHex(Value: NativeInt; Digits: Integer): string; overload;
 
 { *****************************************************************************
   Float conversions
@@ -281,6 +284,8 @@ Function TryStrToFloat(const S : String; Out res : Double) : Boolean; overload;
 Function StrToFloatDef(const S : String; Const aDef : Double) : Double;
 Function StrToFloat(const S : String) : Double;
 Function FormatFloat (Fmt : String; aValue : Double) : String;
+Function SwapEndian(W : Word) : Word;
+Function SwapEndian(C : Cardinal) : Cardinal;
 
 { *****************************************************************************
   Boolean conversions
@@ -627,6 +632,488 @@ function GuidCase(const guid: TGuid; const List: array of TGuid): Integer;
 Function CreateGUID(out GUID : TGUID) : Integer;
 
 Function EncodeHTMLEntities (S : String) : String;
+
+{ ---------------------------------------------------------------------
+  Type Helpers
+  ---------------------------------------------------------------------}
+
+Type
+
+  generic TArray<T> = array of T;
+  TCharArray = Array of char;
+
+  TByteBitIndex = 0..7;
+  TShortIntBitIndex = 0..7;
+  TWordBitIndex = 0..15;
+  TSmallIntBitIndex = 0..15;
+  TCardinalBitIndex = 0..31;
+  TIntegerBitIndex = 0..31;
+  TLongIntBitIndex = TIntegerBitIndex;
+  TQwordBitIndex = 0..52;
+  TInt64BitIndex = 0..52;
+  TNativeIntBitIndex = 0..52;
+  TNativeUIntBitIndex = 0..52;
+
+Const
+  CPUEndian = {$IFNDEF FPC_LITTLE_ENDIAN}TEndian.Big{$ELSE}TEndian.Little{$ENDIF};
+
+Type
+
+  { TGuidHelper }
+
+  TGuidHelper = record helper for TGUID
+    class function Create(Src : TGUID; BigEndian: Boolean): TGUID; overload; static;
+    class function Create(const Buf : TJSArrayBuffer; AStartIndex: Cardinal; BigEndian: Boolean): TGUID; overload; static;
+    class function Create(const Data: array of Byte; AStartIndex: Cardinal; BigEndian: Boolean): TGUID; overload; static;
+    Class Function Create(const B: TBytes; DataEndian: TEndian = CPUEndian): TGUID; overload; static; inline;
+    Class Function Create(const B: TBytes; AStartIndex: Cardinal; DataEndian: TEndian = CPUEndian): TGUID; overload; static;
+    Class Function Create(const S: string): TGUID; overload; static;
+    Class Function Create(A: Integer; B: SmallInt; C: SmallInt; const D: TBytes): TGUID; overload; static;
+//    Class Function Create(A: Integer; B: SmallInt; C: SmallInt; D, E, F, G, H, I, J, K: Byte): TGUID; overload; static;
+    Class Function Create(A: Cardinal; B: Word; C: Word; D, E, F, G, H, I, J, K: Byte): TGUID; overload; static;
+    Class Function NewGuid: TGUID; static;
+    Function ToByteArray(DataEndian: TEndian = CPUEndian): TBytes;
+    Function ToString(SkipBrackets: Boolean = False): string;
+  end;
+
+
+  TCompareOption = system.TCompareOption;
+  TCompareOptions = system.TCompareOptions;
+
+{$SCOPEDENUMS ON}
+  TStringSplitOptions = (None, ExcludeEmpty);
+{$SCOPEDENUMS OFF}
+
+  { TStringHelper }
+
+  TStringHelper = Type Helper for String
+  Private
+    Function GetChar(AIndex : SizeInt) : Char;
+    Function GetLength : SizeInt;
+  public
+    const Empty = '';
+    // Methods
+    Class Function Compare(const A: string; const B: string): Integer; overload; static; //inline;
+    Class Function Compare(const A: string; const B: string; IgnoreCase: Boolean): Integer; overload; static; //inline; //deprecated 'Use same with TCompareOptions';
+    Class Function Compare(const A: string; const B: string; Options: TCompareOptions): Integer; overload; static; // inline;
+    Class Function Compare(const A: string; IndexA: SizeInt; const B: string; IndexB: SizeInt; ALen: SizeInt): Integer; overload; static; // inline;
+    Class Function Compare(const A: string; IndexA: SizeInt; const B: string; IndexB: SizeInt; ALen: SizeInt; IgnoreCase: Boolean): Integer; overload; static; // inline; //deprecated 'Use same with TCompareOptions';
+    Class Function Compare(const A: string; IndexA: SizeInt; const B: string; IndexB: SizeInt; ALen: SizeInt; Options: TCompareOptions): Integer; overload; static;//  inline;
+    Class Function CompareOrdinal(const A: string; const B: string): Integer; overload; static;
+    Class Function CompareOrdinal(const A: string; IndexA: SizeInt; const B: string; IndexB: SizeInt; ALen: SizeInt): Integer; overload; static;
+    Class Function CompareText(const A: string; const B: string): Integer; static; inline;
+    Class Function Copy(const Str: string): string; inline; static;
+    Class Function Create(AChar: Char; ACount: SizeInt): string; overload; inline; static;
+    Class Function Create(const AValue: array of Char): string; overload; static;
+    Class Function Create(const AValue: array of Char; StartIndex: SizeInt; ALen: SizeInt): string; overload; static;
+    Class Function EndsText(const ASubText, AText: string): Boolean; static;
+    Class Function Equals(const a: string; const b: string): Boolean; overload; static;
+    Class Function Format(const AFormat: string; const args: array of const): string; overload; static;
+    Class Function IsNullOrEmpty(const AValue: string): Boolean; static;
+    Class Function IsNullOrWhiteSpace(const AValue: string): Boolean; static;
+    Class Function Join(const Separator: string; const Values: array of JSValue): string; overload; static;
+    Class Function Join(const Separator: string; const Values: array of string): string; overload; static;
+    Class Function Join(const Separator: string; const Values: array of string; StartIndex: SizeInt; ACount: SizeInt): string; overload; static;
+    Class Function LowerCase(const S: string): string; overload; static; inline;
+    Class Function Parse(const AValue: Boolean): string; overload; static; inline;
+    Class Function Parse(const AValue: Extended): string; overload; static;inline;
+    Class Function Parse(const AValue: NativeInt): string; overload; static; inline;
+    Class Function Parse(const AValue: Integer): string; overload; static; inline;
+    Class Function ToBoolean(const S: string): Boolean; overload; static; inline;
+    Class Function ToDouble(const S: string): Double; overload; static; inline;
+    Class Function ToExtended(const S: string): Extended; overload; static; inline;
+    Class Function ToNativeInt(const S: string): NativeInt; overload; static; inline;
+    Class Function ToInteger(const S: string): Integer; overload; static; inline;
+    Class Function UpperCase(const S: string): string; overload; static; inline;
+    Function CompareTo(const B: string): Integer;
+    Function Contains(const AValue: string): Boolean;
+    Function CountChar(const C: Char): SizeInt;
+    Function DeQuotedString: string; overload;
+    Function DeQuotedString(const AQuoteChar: Char): string; overload;
+    Function EndsWith(const AValue: string): Boolean; overload; inline;
+    Function EndsWith(const AValue: string; IgnoreCase: Boolean): Boolean; overload;
+    Function Equals(const AValue: string): Boolean; overload;
+    Function Format(const args: array of const): string; overload;
+    Function GetHashCode: Integer;
+    Function IndexOf(AValue: Char): SizeInt; overload; inline;
+    Function IndexOf(const AValue: string): SizeInt; overload; inline;
+    Function IndexOf(AValue: Char; StartIndex: SizeInt): SizeInt; overload;
+    Function IndexOf(const AValue: string; StartIndex: SizeInt): SizeInt; overload;
+    Function IndexOf(AValue: Char; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function IndexOf(const AValue: string; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function IndexOfUnQuoted(const AValue: string; StartQuote, EndQuote: Char; StartIndex: SizeInt = 0): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of Char): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of Char; StartIndex: SizeInt): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of Char; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of String): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of String; StartIndex: SizeInt): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of String; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: array of String; StartIndex: SizeInt; ACount: SizeInt; Out AMatch : SizeInt): SizeInt; overload;
+    Function IndexOfAnyUnquoted(const AnyOf: array of Char; StartQuote, EndQuote: Char): SizeInt; overload;
+    Function IndexOfAnyUnquoted(const AnyOf: array of Char; StartQuote, EndQuote: Char; StartIndex: SizeInt): SizeInt; overload;
+    Function IndexOfAnyUnquoted(const AnyOf: array of Char; StartQuote, EndQuote: Char; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    function IndexOfAnyUnquoted(const AnyOf: array of string; StartQuote, EndQuote: Char; StartIndex: SizeInt; Out Matched: SizeInt): SizeInt; overload;
+    Function Insert(StartIndex: SizeInt; const AValue: string): string;
+    Function IsDelimiter(const Delimiters: string; Index: SizeInt): Boolean;
+    Function IsEmpty: Boolean;
+    Function LastDelimiter(const Delims: string): SizeInt;
+    Function LastIndexOf(AValue: Char): SizeInt; overload;
+    Function LastIndexOf(const AValue: string): SizeInt; overload;
+    Function LastIndexOf(AValue: Char; AStartIndex: SizeInt): SizeInt; overload;
+    Function LastIndexOf(const AValue: string; AStartIndex: SizeInt): SizeInt; overload;
+    Function LastIndexOf(AValue: Char; AStartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function LastIndexOf(const AValue: string; AStartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function LastIndexOfAny(const AnyOf: array of Char): SizeInt; overload;
+    Function LastIndexOfAny(const AnyOf: array of Char; AStartIndex: SizeInt): SizeInt; overload;
+    Function LastIndexOfAny(const AnyOf: array of Char; AStartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
+    Function PadLeft(ATotalWidth: SizeInt): string; overload; inline;
+    Function PadLeft(ATotalWidth: SizeInt; PaddingChar: Char): string; overload; inline;
+    Function PadRight(ATotalWidth: SizeInt): string; overload; inline;
+    Function PadRight(ATotalWidth: SizeInt; PaddingChar: Char): string; overload; inline;
+    Function QuotedString: string; overload;
+    Function QuotedString(const AQuoteChar: Char): string; overload;
+    Function Remove(StartIndex: SizeInt): string; overload; inline;
+    Function Remove(StartIndex: SizeInt; ACount: SizeInt): string; overload; inline;
+    Function Replace(OldChar: Char; NewChar: Char): string; overload;
+    Function Replace(OldChar: Char; NewChar: Char; ReplaceFlags: TReplaceFlags): string; overload;
+    Function Replace(const OldValue: string; const NewValue: string): string; overload;
+    Function Replace(const OldValue: string; const NewValue: string; ReplaceFlags: TReplaceFlags): string; overload;
+    Function Split(const Separators: array of Char): TStringArray; overload;
+    Function Split(const Separators: array of Char; ACount: SizeInt): TStringArray; overload;
+    Function Split(const Separators: array of Char; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of string): TStringArray; overload;
+    Function Split(const Separators: array of string; ACount: SizeInt): TStringArray; overload;
+    Function Split(const Separators: array of string; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of string; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of Char; AQuote: Char): TStringArray; overload;
+    Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char): TStringArray; overload;
+    Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt): TStringArray; overload;
+    Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of string; AQuote: Char): TStringArray; overload;
+    Function Split(const Separators: array of string; AQuoteStart, AQuoteEnd: Char): TStringArray; overload;
+    Function Split(const Separators: array of string; AQuoteStart, AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: array of string; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt): TStringArray; overload;
+    Function Split(const Separators: array of string; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
+    Function StartsWith(const AValue: string): Boolean; overload; inline;
+    Function StartsWith(const AValue: string; IgnoreCase: Boolean): Boolean; overload;
+    Function Substring(AStartIndex: SizeInt): string; overload;
+    Function Substring(AStartIndex: SizeInt; ALen: SizeInt): string; overload;
+    Function ToBoolean: Boolean; overload; inline;
+    Function ToInteger: Integer; overload; inline;
+    Function ToNativeInt: NativeInt; overload; inline;
+    Function ToDouble: Double; overload; inline;
+    Function ToExtended: Extended; overload; inline;
+    Function ToCharArray: TCharArray; overload;
+    Function ToCharArray(AStartIndex: SizeInt; ALen: SizeInt): TCharArray; overload;
+    Function ToLower: string; overload; inline;
+    Function ToLowerInvariant: string;
+    Function ToUpper: string; overload; inline;
+    Function ToUpperInvariant: string; inline;
+    Function Trim: string; overload;
+    Function TrimLeft: string; overload;
+    Function TrimRight: string; overload;
+    Function Trim(const ATrimChars: array of Char): string; overload;
+    Function TrimLeft(const ATrimChars: array of Char): string; overload;
+    Function TrimRight(const ATrimChars: array of Char): string; overload;
+    Function TrimEnd(const ATrimChars: array of Char): string; deprecated 'Use TrimRight';
+    Function TrimStart(const ATrimChars: array of Char): string; deprecated 'Use TrimLeft';
+    property Chars[AIndex: SizeInt]: Char read GetChar;
+    property Length: SizeInt read GetLength;
+  end;
+
+  TDoubleHelper = Type Helper for Double
+  private
+    Function GetB(AIndex: Cardinal): Byte;
+    Function GetW(AIndex: Cardinal): Word;
+    Function GetE: NativeUInt; inline;
+    Function GetF: NativeUInt; inline;
+    Function GetS: Boolean; inline;
+    Procedure SetS(aValue : Boolean); inline;
+    procedure SetB(AIndex: Cardinal; const AValue: Byte);
+    procedure SetW(AIndex: Cardinal; const AValue: Word);
+  public
+    const
+    {$push}
+    {$R-}
+    {$Q-}
+      Epsilon          : Double = 4.9406564584124654418e-324;
+      MaxValue         : Double = 1.7976931348623157081e+308;
+      MinValue         : Double = -1.7976931348623157081e+308;
+      // PositiveInfinity : Double = 1.0/0.0;
+      // NegativeInfinity : Double = -1.0/0.0;
+      // NaN              : Double = 0.0/0.0;
+    {$POP}
+    Class Function IsInfinity(const AValue: Double): Boolean; overload; inline; static;
+    Class Function IsNan(const AValue: Double): Boolean; overload; inline; static;
+    Class Function IsNegativeInfinity(const AValue: Double): Boolean; overload; inline; static;
+    Class Function IsPositiveInfinity(const AValue: Double): Boolean; overload; inline; static;
+    Class Function Parse(const AString: string): Double; overload; inline; static;
+    Class Function ToString(const AValue: Double): string; overload; inline; static;
+    Class Function ToString(const AValue: Double; const AFormat: TFloatFormat; const APrecision, ADigits: Integer): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: Double): Boolean; overload; inline; static;
+
+    Procedure BuildUp(const ASignFlag: Boolean; const AMantissa: NativeUInt; const AExponent: Integer);
+    Function Exponent: Integer;
+    Function Fraction: Extended;
+    Function IsInfinity: Boolean; overload; inline;
+    Function IsNan: Boolean; overload; inline;
+    Function IsNegativeInfinity: Boolean; overload; inline;
+    Function IsPositiveInfinity: Boolean; overload; inline;
+    Function Mantissa: NativeUInt;
+
+    Function ToString(const AFormat: TFloatFormat; const APrecision, ADigits: Integer): string; overload; inline;
+    Function ToString: string; overload; inline;
+
+    property Bytes[AIndex: Cardinal]: Byte read GetB write SetB;  // 0..7
+    property Words[AIndex: Cardinal]: Word read GetW write SetW; // 0..3
+    property Sign: Boolean read GetS Write SetS;
+    property Exp: NativeUInt read GetE;
+    property Frac: NativeUInt read GetF;
+  end;
+
+  TByteHelper = Type Helper for Byte
+  public
+    const
+      MaxValue = 255;
+      MinValue = 0;
+  public
+    Class Function Parse(const AString: string): Byte; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Byte): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: Byte): Boolean; inline; static;
+  Public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TByteBitIndex) : Byte; inline;
+    Function ClearBit(const Index: TByteBitIndex) : Byte; inline;
+    Function ToggleBit(const Index: TByteBitIndex) : Byte; inline;
+    Function TestBit(const Index:TByteBitIndex):Boolean; inline;
+  end;
+
+  TShortIntHelper = Type Helper for ShortInt
+  public
+    const
+      MaxValue = 127;
+      MinValue = -128;
+  public
+    Class Function Parse(const AString: string): ShortInt; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: ShortInt): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: ShortInt): Boolean; inline; static;
+  public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TShortIntBitIndex): Shortint; inline;
+    Function ClearBit(const Index: TShortIntBitIndex): Shortint; inline;
+    Function ToggleBit(const Index: TShortIntBitIndex): Shortint; inline;
+    Function TestBit(const Index:TShortIntBitIndex):Boolean;
+  end;
+
+  TSmallIntHelper = Type Helper for SmallInt
+  public
+    const
+      MaxValue = 32767;
+      MinValue = -32768;
+  public
+    Class Function Parse(const AString: string): SmallInt; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: SmallInt): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: SmallInt): Boolean; inline; static;
+  public
+    Function ToString: string; overload; inline;
+    Function ToBoolean: Boolean; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function SetBit(const Index: TSmallIntBitIndex) : Smallint; inline;
+    Function ClearBit(const Index: TSmallIntBitIndex) : Smallint; inline;
+    Function ToggleBit(const Index: TSmallIntBitIndex) : Smallint; inline;
+    Function TestBit(const Index:TSmallIntBitIndex):Boolean;
+  end;
+
+  TWordHelper = Type Helper for Word
+  public
+    const
+      MaxValue = 65535;
+      MinValue = 0;
+  Public
+    Class Function Parse(const AString: string): Word; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Word): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: Word): Boolean; inline; static;
+  Public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TWordBitIndex) : Word; inline;
+    Function ClearBit(const Index: TWordBitIndex) : Word; inline;
+    Function ToggleBit(const Index: TWordBitIndex) : Word; inline;
+    Function TestBit(const Index:TWordBitIndex):Boolean; inline;
+  end;
+
+  TCardinalHelper = Type Helper for Cardinal { for LongWord Type too }
+  public
+    const
+      MaxValue = 4294967295;
+      MinValue = 0;
+  Public
+    Class Function Parse(const AString: string): Cardinal; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Cardinal): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: Cardinal): Boolean; inline; static;
+  Public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TCardinalBitIndex) : Cardinal; inline;
+    Function ClearBit(const Index: TCardinalBitIndex) : Cardinal; inline;
+    Function ToggleBit(const Index: TCardinalBitIndex) : Cardinal; inline;
+    Function TestBit(const Index:TCardinalBitIndex):Boolean; inline;
+  end;
+
+  TIntegerHelper = Type Helper for Integer { for LongInt Type too }
+  public
+    const
+      MaxValue = 2147483647;
+      MinValue = -2147483648;
+  Public
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Integer): string; overload; inline; static;
+    Class Function Parse(const AString: string): Integer; inline; static;
+    Class Function TryParse(const AString: string; out AValue: Integer): Boolean; inline; static;
+  Public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TIntegerBitIndex) : Integer; inline;
+    Function ClearBit(const Index: TIntegerBitIndex) : Integer; inline;
+    Function ToggleBit(const Index: TIntegerBitIndex) : Integer; inline;
+    Function TestBit(const Index:TIntegerBitIndex):Boolean; inline;
+  end;
+
+  TNativeIntHelper = Type Helper for NativeInt
+  public
+    const
+      MaxValue = High(NativeInt);
+      MinValue = Low(NativeInt);
+  Public
+    Class Function Parse(const AString: string): NativeInt; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: NativeInt): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: NativeInt): Boolean; inline; static;
+  Public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TNativeIntBitIndex) : NativeInt; inline;
+    Function ClearBit(const Index: TNativeIntBitIndex) : NativeInt; inline;
+    Function ToggleBit(const Index: TNativeIntBitIndex) : NativeInt; inline;
+    Function TestBit(const Index:TNativeIntBitIndex):Boolean; inline;
+  end;
+
+  TNativeUIntHelper = Type Helper for NativeUInt
+  public
+    const
+      MaxValue = High(NativeUInt);
+      MinValue = 0;
+  Public
+    Class Function Parse(const AString: string): NativeUInt; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: NativeUInt): string; overload; inline; static;
+    Class Function TryParse(const AString: string; out AValue: NativeUInt): Boolean; inline; static;
+  Public
+    Function ToBoolean: Boolean; inline;
+    Function ToDouble: Double; inline;
+    Function ToExtended: Extended; inline;
+    Function ToBinString:string; inline;
+    Function ToHexString(const AMinDigits: Integer): string; overload; inline;
+    Function ToHexString: string; overload; inline;
+    Function ToSingle: Single; inline;
+    Function ToString: string; overload; inline;
+    Function SetBit(const Index: TNativeUIntBitIndex) : NativeUint; inline;
+    Function ClearBit(const Index: TNativeUIntBitIndex): NativeUint; inline;
+    Function ToggleBit(const Index: TNativeUIntBitIndex) : NativeUint; inline;
+    Function TestBit(const Index:TNativeUIntBitIndex) :Boolean; inline;
+  end;
+
+  {$SCOPEDENUMS ON}
+    TUseBoolStrs = (False, True);
+  {$SCOPEDENUMS OFF}
+
+  TBooleanHelper = Type Helper for Boolean
+  public
+    Class Function Parse(const S: string): Boolean; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
+  Public
+    Function ToInteger: Integer; inline;
+    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+  end;
+
+  TByteBoolHelper = Type Helper for ByteBool
+  public
+    Class Function Parse(const S: string): Boolean; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
+  Public
+    Function ToInteger: Integer; inline;
+    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+  end;
+
+  TWordBoolHelper = Type Helper for WordBool
+  public
+    Class Function Parse(const S: string): Boolean; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
+  Public
+    Function ToInteger: Integer; inline;
+    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+  end;
+
+  TLongBoolHelper = Type Helper for LongBool
+  public
+    Class Function Parse(const S: string): Boolean; inline; static;
+    Class Function Size: Integer; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
+  public
+    Function ToInteger: Integer; inline;
+    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+  end;
+
 
 implementation
 
@@ -1453,6 +1940,20 @@ end;
 
 Const
   maxdigits = 15;
+Function SwapEndian(W : Word) : Word;
+
+begin
+  Result:=((W and $FF) shl 8) or ((W shr 8) and $FF)
+end;
+
+Function SwapEndian(C : Cardinal) : Cardinal;
+
+begin
+  Result:=((C and $FF) shl 24)
+           or ((C and $FF00) shl 8)
+           or ((C shr 8) and $FF00)
+           or ((C shr 24) and $FF);
+end;
 
 Function ReplaceDecimalSep(S: String; Const DS : string) : string;
 
@@ -1762,7 +2263,7 @@ function Format(const Fmt: String; const Args: array of JSValue): String;
 
 Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
     Hs,ToAdd : String;
-    Index : SizeInt;
+    Index : Byte;
     Width,Prec : Longint;
     Left : Boolean;
     Fchar : char;
@@ -1997,7 +2498,7 @@ begin
               vq:=nativeInt(Args[Doarg]);
               index:=31; // May need to adjust to NativeInt
               If Prec>index then
-                ToAdd:=IntToHex(vq,index)
+                ToAdd:=IntToHex(NativeInt(vq),index)
               else
                 begin
                 // determine minimum needed number of hex digits.
@@ -2207,6 +2708,15 @@ begin
   if (Index>0) and (Index<=Length(S)) then
     Result:=Pos(S[Index],Delimiters)<>0; // Note we don't do MBCS yet
 end;
+
+Function LastDelimiter(const Delimiters, S: string): SizeInt;
+
+begin
+  Result:=Length(S);
+  While (Result>0) and (Pos(S[Result],Delimiters)=0) do
+    Dec(Result);
+end;
+
 
 function AdjustLineBreaks(const S: string): string;
 
@@ -3770,6 +4280,7 @@ begin
   For I:=0 to 7 do
    GUID.D4[I]:=R(1);
 end;
+
 { ---------------------------------------------------------------------
   Integer/Ordinal related
   ---------------------------------------------------------------------}
@@ -3970,20 +4481,19 @@ end;
 
 
 function IntToHex(Value: NativeInt; Digits: integer): string;
-const
-  HexDigits = '0123456789ABCDEF';
+
 begin
-  If Digits=0 then
-    Digits:=1;
+//  Result:=HexStr(Value,Digits);     // TestNegLongintHelper  Failed: "ToHexString" expected: <FFFE0000> but was: <00-20000> !
   Result:='';
-  While Value>0 do
-    begin
-    result:=HexDigits[(value and 15)+1]+Result;
-    value := value shr 4;
-    end ;
+  asm
+  if (Value<0) Value = 0xFFFFFFFF + Value + 1;
+  Result=Value.toString(16);
+  end;
+  Result:=UpperCase(Result);
   while (Length(Result)<Digits) do
     Result:='0'+Result;
 end;
+
 
 
 { TFormatSettings }
@@ -4172,6 +4682,8 @@ class constructor TFormatSettings.Init;
 begin
   FormatSettings := TFormatSettings.Create;
 end;
+
+
 
 { ---------------------------------------------------------------------
   FileNames
@@ -4442,6 +4954,2744 @@ begin
    });
   end;
 end;
+
+{ ---------------------------------------------------------------------
+  Type helpers implementation
+  ---------------------------------------------------------------------}
+
+{ ---------------------------------------------------------------------
+  TGUIDHelper
+  ---------------------------------------------------------------------}
+
+Procedure NotImplemented(S : String);
+
+begin
+  Raise Exception.Create('Not yet implemented : '+S);
+end;
+
+class function TGuidHelper.Create(Src: TGUID; BigEndian: Boolean): TGUID;
+begin
+  Result:=Src;
+  if Not Bigendian then
+    begin
+    Result.D1:=SwapEndian(Result.D1);
+    Result.D2:=SwapEndian(Result.D2);
+    Result.D3:=SwapEndian(Result.D3);
+    end;
+end;
+
+class function TGuidHelper.Create(const Buf: TJSArrayBuffer; AStartIndex: Cardinal; BigEndian: Boolean): TGUID;
+
+Var
+  A : Cardinal;
+  B,C : Word;
+  V : TJSDataView;
+
+begin
+  V:=TJSDataView.New(Buf);
+  // The get functions return by default correct endianness.
+  if BigEndian then
+    begin
+    A:=V.getUint32(aStartIndex);
+    B:=V.getUint16(AStartIndex+4);
+    C:=V.getUint16(AStartIndex+6);
+    end
+  else
+    begin
+    A:=SwapEndian(V.getUint32(aStartIndex));
+    B:=SwapEndian(V.getUint16(AStartIndex+4));
+    C:=SwapEndian(V.getUint16(AStartIndex+6));
+    end;
+  Result:=Create(A,B,C,V.GetUint8(AStartIndex+8),V.GetUint8(AStartIndex+9),V.GetUint8(AStartIndex+10),V.GetUint8(AStartIndex+11),V.GetUint8(AStartIndex+12),V.GetUint8(AStartIndex+13),V.GetUint8(AStartIndex+14),V.GetUint8(AStartIndex+15));
+end;
+
+
+class function TGuidHelper.Create(const Data: array of Byte; AStartIndex: Cardinal; BigEndian: Boolean): TGUID;
+
+Var
+  D : TJSUint8Array;
+
+begin
+  if ((System.Length(Data)-AStartIndex)<16) then
+    raise EArgumentException.CreateFmt('The length of a GUID array must be at least %d',[]);
+  D:=TJSUint8Array.From(Data);
+  Result:=Create(D.buffer,aStartIndex,BigEndian);
+end;
+
+
+class function TGuidHelper.Create(const B: TBytes; DataEndian: TEndian): TGUID;
+
+begin
+  Result:=Create(B,0,DataEndian);
+end;
+
+class function TGuidHelper.Create(const B: TBytes; AStartIndex: Cardinal; DataEndian: TEndian): TGUID;
+
+begin
+  if ((System.Length(B)-AStartIndex)<16) then
+    raise EArgumentException.CreateFmt('The length of a GUID array must be at least %d',[]);
+  Result:=Create(B,AStartIndex,DataEndian=TEndian.Big);
+end;
+
+class function TGuidHelper.Create(const S: string): TGUID;
+
+begin
+  Result:=StringToGUID(S);
+end;
+
+class function TGuidHelper.Create(A: Integer; B: SmallInt; C: SmallInt; const D: TBytes): TGUID;
+
+begin
+  if (System.Length(D)<>8) then
+    raise EArgumentException.CreateFmt('The length of a GUID array must be %d',[]);
+  Result:=Create(Cardinal(A),Word(B),Word(C),D[0],D[1],D[2],D[3],D[4],D[5],D[6],D[7]);
+end;
+
+(*
+class function TGuidHelper.Create(A: Integer; B: SmallInt; C: SmallInt; D, E, F, G, H, I, J, K: Byte): TGUID;
+
+begin
+  Result:=Create(Cardinal(A),Word(B),Word(C),D,E,F,G,H,I,J,K);
+end;
+*)
+class function TGuidHelper.Create(A: Cardinal; B: Word; C: Word; D, E, F, G, H, I, J, K: Byte): TGUID;
+
+begin
+  Result.D1 := Cardinal(A);
+  Result.D2 := Word(B);
+  Result.D3 := Word(C);
+  Result.D4[0] := D;
+  Result.D4[1] := E;
+  Result.D4[2] := F;
+  Result.D4[3] := G;
+  Result.D4[4] := H;
+  Result.D4[5] := I;
+  Result.D4[6] := J;
+  Result.D4[7] := K;
+end;
+
+class function TGuidHelper.NewGuid: TGUID;
+
+begin
+  CreateGUID(Result)
+end;
+
+function TGuidHelper.ToByteArray(DataEndian: TEndian): TBytes;
+
+Var
+  D : TJSUint8Array;
+  V : TJSDataView;
+  I : Integer;
+
+begin
+  D:=TJSUint8array.New(16);
+  V:=TJSDataView.New(D.buffer);
+  V.setUint32(0,D1,DataEndian=TEndian.Little);
+  V.setUint16(4,D2,DataEndian=TEndian.Little);
+  V.setUint16(6,D3,DataEndian=TEndian.Little);
+  for I:=0 to 7 do
+    V.setUint8(8+I,D4[i]);
+  SetLength(Result, 16);
+  for I:=0 to 15 do
+    Result[i]:=V.getUint8(I);
+end;
+
+function TGuidHelper.ToString(SkipBrackets: Boolean): string;
+
+begin
+  Result:=GuidToString(Self);
+  If SkipBrackets then
+    Result:=Copy(Result,2,Length(Result)-2);
+end;
+
+{ ---------------------------------------------------------------------
+  TStringHelper
+  ---------------------------------------------------------------------}
+
+Function HaveChar(AChar : Char; const AList: array of Char) : Boolean;
+
+Var
+  I : SizeInt;
+
+begin
+  I:=0;
+  Result:=False;
+  While (Not Result) and (I<Length(AList)) do
+    begin
+    Result:=(AList[i]=AChar);
+    Inc(I);
+    end;
+end;
+
+function TStringHelper.GetChar(AIndex: SizeInt): Char;
+begin
+  Result:=Self[AIndex+1];
+end;
+
+
+function TStringHelper.GetLength: SizeInt;
+
+begin
+  Result:=System.Length(Self);
+end;
+
+
+class function TStringHelper.Compare(const A: string; const B: string): Integer;
+begin
+  Result:=Compare(A,0,B,0,System.Length(B),[]);
+end;
+
+
+class function TStringHelper.Compare(const A: string; const B: string;
+  IgnoreCase: Boolean): Integer; //deprecated 'Use same with TCompareOptions';
+begin
+  if IgnoreCase then
+    Result:=Compare(A,B,[coIgnoreCase])
+  else
+    Result:=Compare(A,B,[]);
+end;
+
+
+class function TStringHelper.Compare(const A: string; const B: string;
+  Options: TCompareOptions): Integer;
+begin
+  Result:=Compare(A,0,B,0,System.Length(B),Options);
+end;
+
+
+class function TStringHelper.Compare(const A: string; IndexA: SizeInt;
+  const B: string; IndexB: SizeInt; ALen: SizeInt): Integer;
+begin
+  Result:=Compare(A,IndexA,B,IndexB,ALen,[]);
+end;
+
+
+class function TStringHelper.Compare(const A: string; IndexA: SizeInt;
+  const B: string; IndexB: SizeInt; ALen: SizeInt; IgnoreCase: Boolean
+  ): Integer; //deprecated 'Use same with TCompareOptions';
+begin
+  if IgnoreCase then
+    Result:=Compare(A,IndexA,B,IndexB,ALen,[coIgnoreCase])
+  else
+    Result:=Compare(A,IndexA,B,IndexB,ALen,[])
+end;
+
+
+class function TStringHelper.Compare(const A: string; IndexA: SizeInt;
+  const B: string; IndexB: SizeInt; ALen: SizeInt; Options: TCompareOptions
+  ): Integer;
+
+Var
+  AL,BL : String;
+
+begin
+  AL:=System.Copy(A,IndexA+1,aLen);
+  BL:=System.Copy(B,IndexB+1,aLen);
+  if (coIgnoreCase in Options) then
+    Result:=TJSString(UpperCase(AL)).localeCompare(UpperCase(BL))
+  else
+    Result:=TJSString(AL).localeCompare(BL)
+end;
+
+
+class function TStringHelper.CompareOrdinal(const A: string; const B: string
+  ): Integer;
+
+Var
+  L : SizeInt;
+
+begin
+  L:=System.Length(B);
+  if L>System.Length(A) then
+    L:=System.Length(A);
+  Result:=CompareOrdinal(A,0,B,0,L);
+end;
+
+
+class function TStringHelper.CompareOrdinal(const A: string; IndexA: SizeInt;
+  const B: string; IndexB: SizeInt; ALen: SizeInt): Integer;
+
+Var
+  I,M : integer;
+
+begin
+  M:=System.Length(A)-IndexA;
+  If M>(System.Length(B)-IndexB) then
+    M:=(System.Length(B)-IndexB);
+  if M>aLen then
+    M:=aLen;
+  I:=0;
+  Result:=0;
+  While (Result=0) and (I<M) do
+    begin
+    Result:=TJSString(A).charCodeAt(IndexA+I)-TJSString(B).charCodeAt(IndexB+I);
+    Inc(I);
+    end;
+end;
+
+
+class function TStringHelper.CompareText(const A: string; const B: string
+  ): Integer;
+begin
+  Result:=Sysutils.CompareText(A,B);
+end;
+
+
+class function TStringHelper.Copy(const Str: string): string;
+begin
+  Result:=Str;
+end;
+
+
+class function TStringHelper.Create(AChar: Char; ACount: SizeInt): string;
+begin
+   Result:=StringOfChar(AChar,ACount);
+end;
+
+
+class function TStringHelper.Create(const AValue: array of Char): string;
+
+begin
+  Result:=Create(AValue,0,System.Length(AValue));
+end;
+
+
+class function TStringHelper.Create(const AValue: array of Char;
+  StartIndex: SizeInt; ALen: SizeInt): string;
+Var
+  I : Integer;
+begin
+  SetLength(Result,ALen);
+  For I:=1 to ALen do
+    Result[aLen]:=AValue[StartIndex+I-1];
+end;
+
+
+class function TStringHelper.EndsText(const ASubText, AText: string): Boolean;
+begin
+  Result:=(ASubText<>'') and (sysutils.CompareText(System.Copy(AText,System.Length(AText)-System.Length(ASubText)+1,System.Length(ASubText)),ASubText)=0);
+end;
+
+
+class function TStringHelper.Equals(const a: string; const b: string): Boolean;
+begin
+  Result:=A=B;
+end;
+
+
+class function TStringHelper.Format(const AFormat: string;
+  const args: array of const): string;
+begin
+  Result:=Sysutils.Format(AFormat,Args);
+end;
+
+
+class function TStringHelper.IsNullOrEmpty(const AValue: string): Boolean;
+begin
+  Result:=system.Length(AValue)=0;
+end;
+
+
+class function TStringHelper.IsNullOrWhiteSpace(const AValue: string): Boolean;
+begin
+  Result:=system.Length(SysUtils.Trim(AValue))=0;
+end;
+
+
+Class Function TStringHelper.Join(const Separator: string; const Values: array of JSValue): string; overload;
+
+begin
+  Result:=TJSArray(Values).Join(Separator);
+end;
+
+class function TStringHelper.Join(const Separator: string;
+  const Values: array of string): string;
+begin
+  Result:=TJSArray(Values).Join(Separator);
+end;
+
+
+class function TStringHelper.Join(const Separator: string;
+  const Values: array of string; StartIndex: SizeInt; ACount: SizeInt): string;
+
+Var
+  VLen : SizeInt;
+
+begin
+  VLen:=High(Values);
+  If (ACount<0) or ((StartIndex>0) and (StartIndex>VLen)) then
+    raise ERangeError.Create(SRangeError);
+  If (ACount=0) or (VLen<0) then
+    Result:=''
+  else
+    Result:=TJSArray(Values).Slice(StartIndex,StartIndex+aCount-1).Join(Separator);
+end;
+
+
+class function TStringHelper.LowerCase(const S: string): string;
+begin
+  Result:=sysutils.Lowercase(S);
+end;
+
+
+class function TStringHelper.Parse(const AValue: Boolean): string;
+begin
+  Result:=BoolToStr(AValue);
+end;
+
+
+class function TStringHelper.Parse(const AValue: Extended): string;
+begin
+  Result:=FloatToStr(AValue);
+end;
+
+
+class function TStringHelper.Parse(const AValue: NativeInt): string;
+begin
+  Result:=IntToStr(AValue);
+end;
+
+
+class function TStringHelper.Parse(const AValue: Integer): string;
+begin
+  Result:=IntToStr(AValue);
+end;
+
+
+class function TStringHelper.ToBoolean(const S: string): Boolean;
+begin
+  Result:=StrToBool(S);
+end;
+
+
+class function TStringHelper.ToDouble(const S: string): Double;
+begin
+  Result:=StrToFloat(S);
+end;
+
+
+class function TStringHelper.ToExtended(const S: string): Extended;
+begin
+  Result:=StrToFloat(S);
+end;
+
+
+class function TStringHelper.ToNativeInt(const S: string): NativeInt;
+begin
+  Result:=StrToInt64(S);
+end;
+
+
+class function TStringHelper.ToInteger(const S: string): Integer;
+begin
+  Result:=StrToInt(S);
+end;
+
+
+class function TStringHelper.UpperCase(const S: string): string;
+begin
+  Result:=sysutils.Uppercase(S);
+end;
+
+
+function TStringHelper.CompareTo(const B: string): Integer;
+begin
+  // Order is important
+  Result:=Compare(Self,B);
+end;
+
+
+function TStringHelper.Contains(const AValue: string): Boolean;
+begin
+  Result:=Pos(AValue,Self)>0;
+end;
+
+
+function TStringHelper.CountChar(const C: Char): SizeInt;
+
+Var
+  S : Char;
+begin
+  Result:=0;
+  For S in Self do
+    if (S=C) then
+      Inc(Result);
+end;
+
+
+function TStringHelper.DeQuotedString: string;
+begin
+  Result:=DeQuotedString('''');
+end;
+
+
+function TStringHelper.DeQuotedString(const AQuoteChar: Char): string;
+
+var
+  L,I : SizeInt;
+  Res : Array of Char;
+  PS,PD : SizeInt;
+  IsQuote : Boolean;
+
+begin
+  L:=System.Length(Self);
+  if (L<2) or Not ((Self[1]=AQuoteChar) and (Self[L]=AQuoteChar)) then
+    Exit(Self);
+  SetLength(Res,L);
+  IsQuote:=False;
+  PS:=2;
+  PD:=1;
+  For I:=2 to L-1 do
+    begin
+    if (Self[PS]=AQuoteChar) then
+      begin
+      IsQuote:=Not IsQuote;
+      if Not IsQuote then
+        begin
+        Result[PD]:=Self[PS];
+        Inc(PD);
+        end;
+      end
+    else
+      begin
+      if IsQuote then
+        IsQuote:=false;
+      Result[PD]:=Self[PS];
+      Inc(PD);
+      end;
+    Inc(PS);
+    end;
+  SetLength(Result,PD-1);
+end;
+
+
+function TStringHelper.EndsWith(const AValue: string): Boolean;
+begin
+  Result:=EndsWith(AValue,False);
+end;
+
+
+function TStringHelper.EndsWith(const AValue: string; IgnoreCase: Boolean): Boolean;
+
+Var
+  L : SizeInt;
+  S : String;
+
+begin
+  L:=system.Length(AVAlue);
+  Result:=L=0;
+  if Not Result then
+    begin
+    S:=system.Copy(Self,Length-L+1,L);
+    Result:=system.Length(S)=L;
+    if Result then
+      if IgnoreCase then
+        Result:=CompareText(S,AValue)=0
+      else
+        Result:=S=AValue;
+    end;
+end;
+
+
+function TStringHelper.Equals(const AValue: string): Boolean;
+
+begin
+  Result:=(Self=AValue);
+end;
+
+
+function TStringHelper.Format(const args: array of const): string;
+
+begin
+  Result:=Format(Self,Args);
+end;
+
+
+function TStringHelper.GetHashCode: Integer;
+
+// Taken from contnrs, fphash
+var
+  P,pmax : Integer;
+  L : TJSString;
+
+begin
+{$push}
+{$Q-}
+  L:=TJSString(Self);
+  Result:=0;
+
+  P:=1;
+  pmax:=length+1;
+  while (p<pmax) do
+    begin
+    Result:=LongWord(LongInt(Result shl 5) - LongInt(Result)) xor L.CharCodeAt(P);
+    Inc(p);
+    end;
+{$pop}
+end;
+
+
+function TStringHelper.IndexOf(AValue: Char): SizeInt;
+begin
+  Result:=IndexOf(AValue,0,Length);
+end;
+
+
+function TStringHelper.IndexOf(const AValue: string): SizeInt;
+begin
+  Result:=IndexOf(AValue,0,Length);
+end;
+
+
+function TStringHelper.IndexOf(AValue: Char; StartIndex: SizeInt): SizeInt;
+begin
+  Result:=IndexOf(AValue,StartIndex,Length);
+end;
+
+
+function TStringHelper.IndexOf(const AValue: string; StartIndex: SizeInt
+  ): SizeInt;
+begin
+  Result:=IndexOf(AValue,StartIndex,Length);
+end;
+
+
+function TStringHelper.IndexOf(AValue: Char; StartIndex: SizeInt;
+  ACount: SizeInt): SizeInt;
+
+Var
+  S : String;
+
+begin
+  S:=System.Copy(Self,StartIndex+1,ACount);
+  Result:=Pos(AValue,S)-1;
+  if Result<>-1 then
+    Result:=Result+StartIndex;
+end;
+
+
+function TStringHelper.IndexOf(const AValue: string; StartIndex: SizeInt;
+  ACount: SizeInt): SizeInt;
+
+Var
+  S : String;
+
+begin
+  S:=System.Copy(Self,StartIndex+1,ACount);
+  Result:=Pos(AValue,S)-1;
+  if Result<>-1 then
+    Result:=Result+StartIndex;
+end;
+
+function TStringHelper.IndexOfUnQuoted(const AValue: string; StartQuote,
+  EndQuote: Char; StartIndex: SizeInt = 0): SizeInt;
+
+Var
+  LV : SizeInt;
+
+  Function MatchAt(I : SizeInt) : Boolean ; Inline;
+
+  Var
+    J : SizeInt;
+
+  begin
+    J:=1;
+    Repeat
+      Result:=(Self[I+J-1]=AValue[j]);
+      Inc(J);
+    Until (Not Result) or (J>LV);
+  end;
+
+Var
+  I,L,Q: SizeInt;
+
+begin
+  Result:=-1;
+  LV:=system.Length(AValue);
+  L:=Length-LV+1;
+  if L<0 then
+    L:=0;
+  I:=StartIndex+1;
+  Q:=0;
+  if StartQuote=EndQuote then
+    begin
+    While (Result=-1) and (I<=L) do
+      begin
+      if (Self[I]=StartQuote) then
+        Q:=1-Q;
+      if (Q=0) and MatchAt(i) then
+        Result:=I-1;
+      Inc(I);
+      end;
+    end
+  else
+    begin
+    While (Result=-1) and (I<=L) do
+      begin
+      if Self[I]=StartQuote then
+        Inc(Q)
+      else if (Self[I]=EndQuote) and (Q>0) then
+        Dec(Q);
+      if (Q=0) and MatchAt(i) then
+        Result:=I-1;
+      Inc(I);
+      end;
+    end;
+end;
+
+
+function TStringHelper.IndexOfAny(const AnyOf: array of Char): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf,0,Length);
+end;
+
+
+function TStringHelper.IndexOfAny(const AnyOf: array of Char;
+  StartIndex: SizeInt): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf,StartIndex,Length);
+end;
+
+
+function TStringHelper.IndexOfAny(const AnyOf: array of Char;
+  StartIndex: SizeInt; ACount: SizeInt): SizeInt;
+
+Var
+  i,L : SizeInt;
+
+begin
+  I:=StartIndex+1;
+  L:=I+ACount-1;
+  If L>Length then
+    L:=Length;
+  Result:=-1;
+  While (Result=-1) and (I<=L) do
+    begin
+    if HaveChar(Self[i],AnyOf) then
+      Result:=I-1;
+    Inc(I);
+    end;
+end;
+
+function TStringHelper.IndexOfAny(const AnyOf: array of String): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf,0,Length);
+end;
+
+function TStringHelper.IndexOfAny(const AnyOf: array of String;
+  StartIndex: SizeInt): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf,StartIndex,Length-StartIndex);
+end;
+
+function TStringHelper.IndexOfAny(const AnyOf: array of String;
+  StartIndex: SizeInt; ACount: SizeInt): SizeInt;
+
+Var
+  M : SizeInt;
+
+begin
+  Result:=IndexOfAny(AnyOf,StartIndex,ACount,M);
+end;
+
+function TStringHelper.IndexOfAny(const AnyOf: array of String;
+  StartIndex: SizeInt; ACount: SizeInt; out AMatch: SizeInt): SizeInt;
+
+Var
+  L,I : SizeInt;
+
+begin
+  Result:=-1;
+  For I:=0 to System.Length(AnyOf)-1 do
+    begin
+    L:=IndexOf(AnyOf[i],StartIndex,ACount);
+    If (L>=0) and ((Result=-1) or (L<Result)) then
+      begin
+      Result:=L;
+      AMatch:=I;
+      end;
+    end;
+end;
+
+
+function TStringHelper.IndexOfAnyUnquoted(const AnyOf: array of Char;
+  StartQuote, EndQuote: Char): SizeInt;
+begin
+  Result:=IndexOfAnyUnquoted(AnyOf,StartQuote,EndQuote,0,Length);
+end;
+
+
+function TStringHelper.IndexOfAnyUnquoted(const AnyOf: array of Char;
+  StartQuote, EndQuote: Char; StartIndex: SizeInt): SizeInt;
+begin
+  Result:=IndexOfAnyUnquoted(AnyOf,StartQuote,EndQuote,StartIndex,Length);
+end;
+
+
+function TStringHelper.IndexOfAnyUnquoted(const AnyOf: array of Char;
+  StartQuote, EndQuote: Char; StartIndex: SizeInt; ACount: SizeInt): SizeInt;
+
+Var
+  I,L : SizeInt;
+  Q : SizeInt;
+
+begin
+  Result:=-1;
+  L:=StartIndex+ACount-1;
+  if L>Length then
+    L:=Length;
+  I:=StartIndex+1;
+  Q:=0;
+  if StartQuote=EndQuote then
+    begin
+    While (Result=-1) and (I<=L) do
+      begin
+      if (Self[I]=StartQuote) then
+        Q:=1-Q;
+      if (Q=0) and HaveChar(Self[i],AnyOf) then
+        Result:=I-1;
+      Inc(I);
+      end;
+    end
+  else
+  begin
+    While (Result=-1) and (I<=L) do
+      begin
+      if Self[I]=StartQuote then
+        Inc(Q)
+      else if (Self[I]=EndQuote) and (Q>0) then
+        Dec(Q);
+      if (Q=0) and HaveChar(Self[i],AnyOf) then
+        Result:=I-1;
+      Inc(I);
+      end;
+    end;
+
+end;
+
+function TStringHelper.IndexOfAnyUnquoted(const AnyOf: array of string;
+  StartQuote, EndQuote: Char; StartIndex: SizeInt; out Matched: SizeInt
+  ): SizeInt;
+
+Var
+  L,I : SizeInt;
+
+begin
+  Result:=-1;
+  For I:=0 to System.Length(AnyOf)-1 do
+    begin
+    L:=IndexOfUnquoted(AnyOf[i],StartQuote,EndQuote,StartIndex);
+    If (L>=0) and ((Result=-1) or (L<Result)) then
+      begin
+      Result:=L;
+      Matched:=I;
+      end;
+    end;
+end;
+
+
+function TStringHelper.Insert(StartIndex: SizeInt; const AValue: string
+  ): string;
+begin
+  system.Insert(AValue,Self,StartIndex+1);
+  Result:=Self;
+end;
+
+
+function TStringHelper.IsDelimiter(const Delimiters: string; Index: SizeInt
+  ): Boolean;
+begin
+  Result:=sysutils.IsDelimiter(Delimiters,Self,Index+1);
+end;
+
+
+function TStringHelper.IsEmpty: Boolean;
+begin
+  Result:=(Length=0)
+end;
+
+
+function TStringHelper.LastDelimiter(const Delims: string): SizeInt;
+begin
+  Result:=sysutils.LastDelimiter(Delims,Self)-1;
+end;
+
+
+function TStringHelper.LastIndexOf(AValue: Char): SizeInt;
+begin
+  Result:=LastIndexOf(AValue,Length-1,Length);
+end;
+
+
+function TStringHelper.LastIndexOf(const AValue: string): SizeInt;
+begin
+  Result:=LastIndexOf(AValue,Length-1,Length);
+end;
+
+
+function TStringHelper.LastIndexOf(AValue: Char; AStartIndex: SizeInt): SizeInt;
+begin
+  Result:=LastIndexOf(AValue,AStartIndex,Length);
+end;
+
+
+function TStringHelper.LastIndexOf(const AValue: string; AStartIndex: SizeInt
+  ): SizeInt;
+begin
+  Result:=LastIndexOf(AValue,AStartIndex,Length);
+end;
+
+
+function TStringHelper.LastIndexOf(AValue: Char; AStartIndex: SizeInt;
+  ACount: SizeInt): SizeInt;
+
+Var
+  Min : SizeInt;
+
+begin
+  Result:=AStartIndex+1;
+  Min:=Result-ACount+1;
+  If Min<1 then
+    Min:=1;
+  While (Result>=Min) and (Self[Result]<>AValue) do
+    Dec(Result);
+  if Result<Min then
+    Result:=-1
+  else
+    Result:=Result-1;
+end;
+
+
+function TStringHelper.LastIndexOf(const AValue: string; AStartIndex: SizeInt; ACount: SizeInt): SizeInt;
+
+begin
+  Result:=TJSString(Self).lastIndexOf(aValue,aStartIndex);
+  if (aStartIndex-Result)>aCount then
+    Result:=-1;
+end;
+
+
+function TStringHelper.LastIndexOfAny(const AnyOf: array of Char): SizeInt;
+begin
+  Result:=LastIndexOfAny(AnyOf,Length-1,Length);
+end;
+
+
+function TStringHelper.LastIndexOfAny(const AnyOf: array of Char;
+  AStartIndex: SizeInt): SizeInt;
+begin
+  Result:=LastIndexOfAny(AnyOf,AStartIndex,Length);
+end;
+
+
+function TStringHelper.LastIndexOfAny(const AnyOf: array of Char;
+  AStartIndex: SizeInt; ACount: SizeInt): SizeInt;
+
+Var
+  Min : SizeInt;
+
+begin
+  Result:=AStartIndex+1;
+  Min:=Result-ACount+1;
+  If Min<1 then
+    Min:=1;
+  While (Result>=Min) and Not HaveChar(Self[Result],AnyOf) do
+    Dec(Result);
+  if Result<Min then
+    Result:=-1
+  else
+    Result:=Result-1;
+end;
+
+
+function TStringHelper.PadLeft(ATotalWidth: SizeInt): string;
+begin
+  Result:=PadLeft(ATotalWidth,' ');
+end;
+
+
+function TStringHelper.PadLeft(ATotalWidth: SizeInt; PaddingChar: Char): string;
+Var
+  L : SizeInt;
+
+begin
+  Result:=Self;
+  L:=ATotalWidth-Length;
+  If L>0 then
+    Result:=StringOfChar(PaddingChar,L)+Result;
+end;
+
+
+function TStringHelper.PadRight(ATotalWidth: SizeInt): string;
+begin
+  Result:=PadRight(ATotalWidth,' ');
+end;
+
+
+function TStringHelper.PadRight(ATotalWidth: SizeInt; PaddingChar: Char
+  ): string;
+
+Var
+  L : SizeInt;
+
+begin
+  Result:=Self;
+  L:=ATotalWidth-Length;
+  If L>0 then
+    Result:=Result+StringOfChar(PaddingChar,L);
+end;
+
+
+function TStringHelper.QuotedString: string;
+begin
+  Result:=QuotedStr(Self);
+end;
+
+
+function TStringHelper.QuotedString(const AQuoteChar: Char): string;
+begin
+  Result:=QuotedStr(Self,AQuoteChar);
+end;
+
+
+function TStringHelper.Remove(StartIndex: SizeInt): string;
+begin
+  Result:=Remove(StartIndex,Self.Length-StartIndex);
+end;
+
+
+function TStringHelper.Remove(StartIndex: SizeInt; ACount: SizeInt): string;
+begin
+  Result:=Self;
+  System.Delete(Result,StartIndex+1,ACount);
+end;
+
+
+function TStringHelper.Replace(OldChar: Char; NewChar: Char): string;
+begin
+  Result:=Replace(OldChar,NewChar,[rfReplaceAll]);
+end;
+
+
+function TStringHelper.Replace(OldChar: Char; NewChar: Char;
+  ReplaceFlags: TReplaceFlags): string;
+begin
+  Result:=StringReplace(Self,OldChar,NewChar,ReplaceFlags);
+end;
+
+
+function TStringHelper.Replace(const OldValue: string; const NewValue: string
+  ): string;
+begin
+  Result:=Replace(OldValue,NewValue,[rfReplaceAll]);
+end;
+
+
+function TStringHelper.Replace(const OldValue: string; const NewValue: string;
+  ReplaceFlags: TReplaceFlags): string;
+begin
+  Result:=StringReplace(Self,OldValue,NewValue,ReplaceFlags);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char): TStringArray;
+begin
+  Result:=Split(Separators,#0,#0,Length+1,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; ACount: SizeInt
+  ): TStringArray;
+begin
+  Result:=Split(Separators,#0,#0,ACount,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char;
+  Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators,Length+1,Options);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; ACount: SizeInt;
+  Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators,#0,#0,ACount,Options);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string): TStringArray;
+begin
+  Result:=Split(Separators,Length+1);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string; ACount: SizeInt
+  ): TStringArray;
+begin
+  Result:=Split(Separators,ACount,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string;
+  Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators,Length+1,Options);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string;
+  ACount: SizeInt; Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators,#0,#0,ACount,Options);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; AQuote: Char
+  ): TStringArray;
+begin
+  Result:=Split(Separators,AQuote,AQuote);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
+  AQuoteEnd: Char): TStringArray;
+begin
+  Result:=Split(Separators,AQuoteStart,AQuoteEnd,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
+  AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators,AQuoteStart,AQuoteEnd,Length+1,Options);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
+  AQuoteEnd: Char; ACount: SizeInt): TStringArray;
+begin
+  Result:=Split(Separators,AQuoteStart,AQuoteEnd,ACount,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
+  AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray;
+
+Const
+  BlockSize = 10;
+
+  Function NextSep(StartIndex : SizeInt) : SizeInt;
+
+  begin
+    if (AQuoteStart<>#0) then
+      Result:=Self.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex)
+    else
+      Result:=Self.IndexOfAny(Separators,StartIndex);
+  end;
+
+  Procedure MaybeGrow(Curlen : SizeInt);
+
+  begin
+    if System.Length(Result)<=CurLen then
+      SetLength(Result,System.Length(Result)+BlockSize);
+  end;
+
+Var
+  Sep,LastSep,Len : SizeInt;
+  T : String;
+
+begin
+  SetLength(Result,BlockSize);
+  Len:=0;
+  LastSep:=0;
+  Sep:=NextSep(0);
+  While (Sep<>-1) and ((ACount=0) or (Len<ACount)) do
+    begin
+    T:=SubString(LastSep,Sep-LastSep);
+//    Writeln('Examining >',T,'< at pos ',LastSep,', till pos ',Sep);
+    If (T<>'') or (not (TStringSplitOptions.ExcludeEmpty=Options)) then
+      begin
+      MaybeGrow(Len);
+      Result[Len]:=T;
+      Inc(Len);
+      end;
+    LastSep:=Sep+1;
+    Sep:=NextSep(LastSep);
+    end;
+  if (LastSep<=Length) and ((ACount=0) or (Len<ACount)) then
+    begin
+    T:=SubString(LastSep);
+//    Writeln('Examining >',T,'< at pos,',LastSep,' till pos ',Sep);
+    If (T<>'') or (not (TStringSplitOptions.ExcludeEmpty=Options)) then
+      begin
+      MaybeGrow(Len);
+      Result[Len]:=T;
+      Inc(Len);
+      end;
+    end;
+  SetLength(Result,Len);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string; AQuote: Char
+  ): TStringArray;
+begin
+  Result:=SPlit(Separators,AQuote,AQuote);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string; AQuoteStart,
+  AQuoteEnd: Char): TStringArray;
+begin
+  Result:=SPlit(Separators,AQuoteStart,AQuoteEnd,Length+1,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string; AQuoteStart,
+  AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=SPlit(Separators,AQuoteStart,AQuoteEnd,Length+1,Options);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string; AQuoteStart,
+  AQuoteEnd: Char; ACount: SizeInt): TStringArray;
+begin
+  Result:=SPlit(Separators,AQuoteStart,AQuoteEnd,ACount,TStringSplitOptions.None);
+end;
+
+
+function TStringHelper.Split(const Separators: array of string; AQuoteStart,
+  AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray;
+Const
+  BlockSize = 10;
+
+  Function NextSep(StartIndex : SizeInt; out Match : SizeInt) : SizeInt;
+
+  begin
+    if (AQuoteStart<>#0) then
+      Result:=Self.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex,Match)
+    else
+      Result:=Self.IndexOfAny(Separators,StartIndex,Length,Match);
+    if Result<>-1 then
+  end;
+
+  Procedure MaybeGrow(Curlen : SizeInt);
+
+  begin
+    if System.Length(Result)<=CurLen then
+      SetLength(Result,System.Length(Result)+BlockSize);
+  end;
+
+Var
+  Sep,LastSep,Len,Match : SizeInt;
+  T : String;
+
+begin
+  SetLength(Result,BlockSize);
+  Len:=0;
+  LastSep:=0;
+  Sep:=NextSep(0,Match);
+  While (Sep<>-1) and ((ACount=0) or (Len<ACount)) do
+    begin
+    T:=SubString(LastSep,Sep-LastSep);
+    If (T<>'') or (not (TStringSplitOptions.ExcludeEmpty=Options)) then
+      begin
+      MaybeGrow(Len);
+      Result[Len]:=T;
+      Inc(Len);
+      end;
+    LastSep:=Sep+System.Length(Separators[Match]);
+    Sep:=NextSep(LastSep,Match);
+    end;
+  if (LastSep<=Length) and ((ACount=0) or (Len<ACount)) then
+    begin
+    T:=SubString(LastSep);
+//    Writeln('Examining >',T,'< at pos,',LastSep,' till pos ',Sep);
+    If (T<>'') or (not (TStringSplitOptions.ExcludeEmpty=Options)) then
+      begin
+      MaybeGrow(Len);
+      Result[Len]:=T;
+      Inc(Len);
+      end;
+    end;
+  SetLength(Result,Len);
+end;
+
+
+function TStringHelper.StartsWith(const AValue: string): Boolean;
+begin
+  Result:=StartsWith(AValue,False);
+end;
+
+
+function TStringHelper.StartsWith(const AValue: string; IgnoreCase: Boolean
+  ): Boolean;
+Var
+  L : SizeInt;
+  S : String;
+
+begin
+  L:=System.Length(AValue);
+  Result:=L<=0;
+  if not Result then
+    begin
+    S:=System.Copy(Self,1,L);
+    Result:=(System.Length(S)=L);
+    if Result then
+      if IgnoreCase then
+        Result:=SameText(S,aValue)
+      else
+        Result:=SameStr(S,AValue);
+    end;
+end;
+
+
+function TStringHelper.Substring(AStartIndex: SizeInt): string;
+begin
+  Result:=Self.SubString(AStartIndex,Self.Length-AStartIndex);
+end;
+
+
+function TStringHelper.Substring(AStartIndex: SizeInt; ALen: SizeInt): string;
+begin
+  Result:=system.Copy(Self,AStartIndex+1,ALen);
+end;
+
+
+function TStringHelper.ToBoolean: Boolean;
+begin
+  Result:=StrToBool(Self);
+end;
+
+
+function TStringHelper.ToInteger: Integer;
+begin
+  Result:=StrToInt(Self);
+end;
+
+
+function TStringHelper.ToNativeint: Nativeint;
+begin
+  Result:=StrToNativeInt(Self);
+end;
+
+function TStringHelper.ToDouble: Double;
+begin
+  Result:=StrToFLoat(Self);
+end;
+
+
+function TStringHelper.ToExtended: Extended;
+begin
+  Result:=StrToFLoat(Self);
+end;
+
+
+function TStringHelper.ToCharArray: TCharArray;
+
+begin
+  Result:=ToCharArray(0,Self.Length);
+end;
+
+
+function TStringHelper.ToCharArray(AStartIndex: SizeInt; ALen: SizeInt
+  ): TCharArray;
+
+Var
+  I : SizeInt;
+
+begin
+  SetLength(Result,ALen);
+  For I:=0 to ALen-1 do
+    Result[I]:=Self[AStartIndex+I+1];
+end;
+
+
+function TStringHelper.ToLower: string;
+begin
+  Result:=LowerCase(Self);
+end;
+
+
+function TStringHelper.ToLowerInvariant: string;
+begin
+  Result:=LowerCase(Self);
+end;
+
+
+function TStringHelper.ToUpper: string;
+begin
+  Result:=UpperCase(Self);
+end;
+
+
+function TStringHelper.ToUpperInvariant: string;
+begin
+  Result:=UpperCase(Self);
+end;
+
+
+function TStringHelper.Trim: string;
+begin
+  Result:=SysUtils.Trim(Self);
+end;
+
+
+function TStringHelper.TrimLeft: string;
+begin
+  Result:=SysUtils.TrimLeft(Self);
+end;
+
+
+function TStringHelper.TrimRight: string;
+begin
+  Result:=SysUtils.TrimRight(Self);
+end;
+
+
+function TStringHelper.Trim(const ATrimChars: array of Char): string;
+begin
+  Result:=Self.TrimLeft(ATrimChars).TrimRight(ATrimChars);
+end;
+
+
+function TStringHelper.TrimLeft(const ATrimChars: array of Char): string;
+
+Var
+  I,Len : SizeInt;
+
+begin
+  I:=1;
+  Len:=Self.Length;
+  While (I<=Len) and HaveChar(Self[i],ATrimChars) do Inc(I);
+  if I=1 then
+    Result:=Self
+  else if I>Len then
+    Result:=''
+  else
+    Result:=system.Copy(Self,I,Len-I+1);
+end;
+
+
+function TStringHelper.TrimRight(const ATrimChars: array of Char): string;
+
+Var
+  I,Len : SizeInt;
+
+begin
+  Len:=Self.Length;
+  I:=Len;
+  While (I>=1) and HaveChar(Self[i],ATrimChars) do Dec(I);
+  if I<1 then
+    Result:=''
+  else if I=Len then
+    Result:=Self
+  else
+    Result:=system.Copy(Self,1,I);
+end;
+
+
+function TStringHelper.TrimEnd(const ATrimChars: array of Char): string;
+begin
+  Result:=TrimRight(ATrimChars);
+end;
+
+
+function TStringHelper.TrimStart(const ATrimChars: array of Char): string;
+begin
+  Result:=TrimLeft(ATrimChars);
+end;
+
+{ ---------------------------------------------------------------------
+  TDoubleHelper
+  ---------------------------------------------------------------------}
+
+Class Function TDoubleHelper.IsNan(const AValue: Double): Boolean; overload; inline;
+
+begin
+  Result:=JS.jsIsNaN(AValue);
+end;
+
+Class Function TDoubleHelper.IsInfinity(const AValue: Double): Boolean; overload; inline;
+
+begin
+  Result:=Not jsIsFinite(aValue);
+end;
+
+Class Function TDoubleHelper.IsNegativeInfinity(const AValue: Double): Boolean; overload; inline;
+
+begin
+  asm
+    return (AValue=Number.NEGATIVE_INFINITY);
+  end;
+  Result:=aValue=0; // Fool compiler
+end;
+
+Class Function TDoubleHelper.IsPositiveInfinity(const AValue: Double): Boolean; overload; inline;
+
+begin
+  asm
+    return (AValue=Number.POSITIVE_INFINITY);
+  end;
+  Result:=aValue=0;  // Fool compiler.
+end;
+
+Class Function TDoubleHelper.Parse(const AString: string): Double; overload; inline;
+
+begin
+  Result:=StrToFloat(AString);
+end;
+
+
+Class Function TDoubleHelper.ToString(const AValue: Double): string; overload; inline;
+
+begin
+  Result:=FloatToStr(AValue);
+end;
+
+
+Class Function TDoubleHelper.ToString(const AValue: Double; const AFormat: TFloatFormat; const APrecision, ADigits: Integer): string; overload; inline;
+
+begin
+  Result:=FloatToStrF(AValue,AFormat,APrecision,ADigits);
+end;
+
+
+Class Function TDoubleHelper.TryParse(const AString: string; out AValue: Double): Boolean; overload; inline;
+
+begin
+  Result:=TryStrToFloat(AString,AValue);
+end;
+
+
+
+Function TDoubleHelper.GetB(AIndex: Cardinal): Byte;
+
+var
+  F : TJSFloat64Array;
+  B : TJSUInt8array;
+
+begin
+  F:=TJSFloat64Array.New(1);
+  B:=TJSUInt8array.New(F.Buffer);
+  F[0]:=Self;
+  Result:=B[AIndex];
+end;
+
+Function TDoubleHelper.GetW(AIndex: Cardinal): Word;
+
+var
+  F : TJSFloat64Array;
+  W : TJSUInt16array;
+
+begin
+  F:=TJSFloat64Array.New(1);
+  W:=TJSUInt16array.New(F.Buffer);
+  F[0]:=Self;
+  Result:=W[AIndex];
+end;
+
+Type
+  TFloatParts = Record
+    sign : boolean;
+    exp : integer;
+    mantissa : double;
+  end;
+
+// See https://stackoverflow.com/questions/9383593/extracting-the-exponent-and-mantissa-of-a-javascript-number
+
+Function FloatToParts(aValue : Double) : TFloatParts;
+
+var
+  F : TJSFloat64Array;
+  B : TJSUInt8array;
+
+begin
+  F:=TJSFloat64Array.New(1);
+  B:=TJSUInt8array.New(F.Buffer);
+  F[0]:=aValue;
+  Result.Sign:=(B[7] shr 7)=0;
+  Result.exp:=(((B[7] and $7f) shl 4) or (B[6] shr 4))- $3ff;
+  B[3]:=$3F;
+  B[6]:=B[6] or $F0;
+  Result.Mantissa:=F[0];
+end;
+
+Function TDoubleHelper.GetE: NativeUInt; inline;
+
+begin
+  Result:=FloatToParts(Self).Exp;
+end;
+
+Function TDoubleHelper.GetF: NativeUInt; inline;
+
+begin
+  Result:=0;
+  NotImplemented('GetF');
+end;
+
+Function TDoubleHelper.GetS: Boolean; inline;
+
+begin
+  Result:=FloatToParts(Self).Sign;
+end;
+
+procedure TDoubleHelper.SetB(AIndex: Cardinal; const AValue: Byte);
+
+var
+  F : TJSFloat64Array;
+  B : TJSUInt8array;
+
+begin
+  if (AIndex>=8) then
+    raise ERangeError.Create(SRangeError);
+  F:=TJSFloat64Array.New(1);
+  B:=TJSUInt8array.New(F.Buffer);
+  F[0]:=Self;
+  B[AIndex]:=aValue;
+  Self:=F[0];
+end;
+
+procedure TDoubleHelper.SetW(AIndex: Cardinal; const AValue: Word);
+
+Var
+  F : TJSFloat64Array;
+  W : TJSUInt16array;
+
+begin
+  if (AIndex>=4) then
+    raise ERangeError.Create(SRangeError);
+  F:=TJSFloat64Array.New(1);
+  W:=TJSUInt16array.New(F.Buffer);
+  F[0]:=Self;
+  W[AIndex]:=aValue;
+  Self:=F[0];
+end;
+
+
+
+procedure TDoubleHelper.SetS(AValue: Boolean);
+
+
+Var
+  F : TJSFloat64Array;
+  B : TJSUInt8array;
+
+begin
+  F:=TJSFloat64Array.New(1);
+  B:=TJSUInt8array.New(F.Buffer);
+  F[0]:=Self;
+  if aValue then
+    B[7]:=B[7] or (1 shr 7)
+  else
+    B[7]:=B[7] and not (1 shr 7);
+  Self:=F[0];
+end;
+
+
+Procedure TDoubleHelper.BuildUp(const ASignFlag: Boolean; const AMantissa: NativeUInt; const AExponent: Integer);
+
+begin
+  NotImplemented('BuildUp');
+  // Following statement is just to fool the compiler
+  if ASignFlag and (AMantissa>0) and (AExponent<0) then exit;
+//  TFloatRec(Self).BuildUp(ASignFlag, AMantissa, AExponent);
+end;
+
+Function TDoubleHelper.Exponent: Integer;
+
+begin
+  Result:=FloatToParts(Self).Exp;
+end;
+
+Function TDoubleHelper.Fraction: Extended;
+
+begin
+  Result:=system.Frac(Self);
+end;
+
+Function TDoubleHelper.IsInfinity: Boolean; overload; inline;
+
+begin
+  Result:=Double.IsInfinity(Self);
+end;
+
+Function TDoubleHelper.IsNan: Boolean; overload; inline;
+
+begin
+  Result:=Double.IsNan(Self);
+end;
+
+Function TDoubleHelper.IsNegativeInfinity: Boolean; overload; inline;
+
+begin
+  Result:=Double.IsNegativeInfinity(Self);
+end;
+
+Function TDoubleHelper.IsPositiveInfinity: Boolean; overload; inline;
+
+begin
+  Result:=Double.IsPositiveInfinity(Self);
+end;
+
+Function TDoubleHelper.Mantissa: NativeUInt;
+
+begin
+  Result:=Trunc(FloatToParts(Self).mantissa);
+end;
+
+Function TDoubleHelper.ToString(const AFormat: TFloatFormat; const APrecision, ADigits: Integer): string; overload; inline;
+
+begin
+  Result:=FloatToStrF(Self,AFormat,APrecision,ADigits);
+end;
+
+Function TDoubleHelper.ToString: string; overload; inline;
+
+begin
+  Result:=FloatToStr(Self);
+end;
+
+{ ---------------------------------------------------------------------
+  TByteHelper
+  ---------------------------------------------------------------------}
+
+Class Function TByteHelper.Parse(const AString: string): Byte; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TByteHelper.Size: Integer; inline;
+
+begin
+  Result:=1;
+end;
+
+Class Function TByteHelper.ToString(const AValue: Byte): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TByteHelper.TryParse(const AString: string; out AValue: Byte): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TByteHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TByteHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TByteHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TByteHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TByteHelper.ToHexString(const AMinDigits: Integer): string;
+overload; inline;
+
+begin
+  Result:=IntToHex(Self,AMinDigits);
+end;
+
+Function TByteHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=IntToHex(Self,Size*2);
+end;
+
+Function TByteHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TByteHelper.SetBit(const index: TByteBitIndex) : Byte; inline;
+
+begin
+  Self := Self or (Byte(1) shl index);
+  Result:=Self;
+end;
+
+Function TByteHelper.ClearBit(const index: TByteBitIndex) : Byte; inline;
+
+begin
+  Self:=Self and not Byte((Byte(1) shl index));
+  Result:=Self;
+end;
+
+Function TByteHelper.ToggleBit(const index: TByteBitIndex) : Byte; inline;
+
+begin
+  Self := Self xor Byte((Byte(1) shl index));
+  Result:=Self;
+end;
+
+Function TByteHelper.TestBit(const Index: TByteBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and Byte((Byte(1) shl index)))<>0;
+end;
+
+{ ---------------------------------------------------------------------
+  TShortintHelper
+  ---------------------------------------------------------------------}
+
+Class Function TShortIntHelper.Parse(const AString: string): ShortInt; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TShortIntHelper.Size: Integer; inline;
+
+begin
+  Result:=1;
+end;
+
+Class Function TShortIntHelper.ToString(const AValue: ShortInt): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TShortIntHelper.TryParse(const AString: string; out AValue: ShortInt): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TShortIntHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TShortIntHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TShortIntHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TShortIntHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TShortIntHelper.ToHexString(const AMinDigits: Integer): string; overload; inline;
+
+Var
+  B : Word;
+  U : TJSUInt8Array;
+  S : TJSInt8array;
+
+begin
+  if Self>=0 then
+    B:=Self
+  else
+    begin
+    S:=TJSInt8Array.New(1);
+    S[0]:=Self;
+    U:=TJSUInt8Array.New(S);
+    B:=U[0];
+    if AMinDigits>2 then
+      B:=$FF00+B;
+    end;
+  Result:=IntToHex(B,AMinDigits);
+end;
+
+Function TShortIntHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=ToHexString(Size*2);
+end;
+
+Function TShortIntHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TShortIntHelper.SetBit(const index: TShortIntBitIndex) : ShortInt; inline;
+
+begin
+  Self := Self or (ShortInt(1) shl index);
+  Result:=Self;
+end;
+
+Function TShortIntHelper.ClearBit(const index: TShortIntBitIndex) : ShortInt; inline;
+
+begin
+  Self:=Self and not ShortInt((ShortInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TShortIntHelper.ToggleBit(const index: TShortIntBitIndex) : ShortInt; inline;
+
+begin
+  Self := Self xor ShortInt((ShortInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TShortIntHelper.TestBit(const Index: TShortIntBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and ShortInt((ShortInt(1) shl index)))<>0;
+end;
+
+{ ---------------------------------------------------------------------
+  TSmallintHelper
+  ---------------------------------------------------------------------}
+
+Class Function TSmallIntHelper.Parse(const AString: string): SmallInt; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TSmallIntHelper.Size: Integer; inline;
+
+begin
+  Result:=2;
+end;
+
+Class Function TSmallIntHelper.ToString(const AValue: SmallInt): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TSmallIntHelper.TryParse(const AString: string; out AValue: SmallInt): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TSmallIntHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TSmallIntHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TSmallIntHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TSmallIntHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TSmallIntHelper.ToHexString(const AMinDigits: Integer): string; overload; inline;
+
+Var
+  B : Cardinal;
+  U : TJSUInt16Array;
+  S : TJSInt16array;
+
+
+begin
+  if Self>=0 then
+    B:=Self
+  else
+    begin
+    S:=TJSInt16Array.New(1);
+    S[0]:=Self;
+    U:=TJSUInt16Array.New(S);
+    B:=U[0];
+    if AMinDigits>6 then
+      B:=$FFFF0000+B
+    else if AMinDigits>4 then
+      B:=$FF0000+B;
+    end;
+  Result:=IntToHex(B,AMinDigits);
+end;
+
+Function TSmallIntHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=ToHexString(Size*2);
+end;
+
+
+Function TSmallIntHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TSmallIntHelper.SetBit(const index: TSmallIntBitIndex) : SmallInt; inline;
+
+begin
+  Self := Self or (SmallInt(1) shl index);
+  Result:=Self;
+end;
+
+Function TSmallIntHelper.ClearBit(const index: TSmallIntBitIndex) : SmallInt; inline;
+
+begin
+  Self:=Self and not SmallInt((SmallInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TSmallIntHelper.ToggleBit(const index: TSmallIntBitIndex) : SmallInt; inline;
+
+begin
+  Self := Self xor SmallInt((SmallInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TSmallIntHelper.TestBit(const Index: TSmallIntBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and SmallInt((SmallInt(1) shl index)))<>0;
+end;
+
+{ ---------------------------------------------------------------------
+  TWordHelper
+  ---------------------------------------------------------------------}
+
+Class Function TWordHelper.Parse(const AString: string): Word; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TWordHelper.Size: Integer; inline;
+
+begin
+  Result:=2;
+end;
+
+Class Function TWordHelper.ToString(const AValue: Word): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TWordHelper.TryParse(const AString: string; out AValue: Word): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TWordHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TWordHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TWordHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TWordHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TWordHelper.ToHexString(const AMinDigits: Integer): string;
+overload; inline;
+
+begin
+  Result:=IntToHex(Self,AMinDigits);
+end;
+
+Function TWordHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=IntToHex(Self,Size*2);
+end;
+
+
+Function TWordHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TWordHelper.SetBit(const index: TWordBitIndex) : Word; inline;
+
+begin
+  Self := Self or (Word(1) shl index);
+  Result:=Self;
+end;
+
+Function TWordHelper.ClearBit(const index: TWordBitIndex) : Word; inline;
+
+begin
+  Self:=Self and not Word((Word(1) shl index));
+  Result:=Self;
+end;
+
+Function TWordHelper.ToggleBit(const index: TWordBitIndex) : Word; inline;
+
+begin
+  Self := Self xor Word((Word(1) shl index));
+  Result:=Self;
+end;
+
+Function TWordHelper.TestBit(const Index: TWordBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and Word((Word(1) shl index)))<>0;
+end;
+
+{ ---------------------------------------------------------------------
+  TCardinalHelper
+  ---------------------------------------------------------------------}
+
+Class Function TCardinalHelper.Parse(const AString: string): Cardinal; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TCardinalHelper.Size: Integer; inline;
+
+begin
+  Result:=4;
+end;
+
+Class Function TCardinalHelper.ToString(const AValue: Cardinal): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TCardinalHelper.TryParse(const AString: string; out AValue: Cardinal): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TCardinalHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TCardinalHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TCardinalHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TCardinalHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TCardinalHelper.ToHexString(const AMinDigits: Integer): string;
+overload; inline;
+
+begin
+  Result:=IntToHex(Self,AMinDigits);
+end;
+
+Function TCardinalHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=ToHexString(Size*2);
+end;
+
+Function TCardinalHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TCardinalHelper.SetBit(const index: TCardinalBitIndex) : Cardinal; inline;
+
+begin
+  Self := Self or (Cardinal(1) shl index);
+  Result:=Self;
+end;
+
+Function TCardinalHelper.ClearBit(const index: TCardinalBitIndex) : Cardinal; inline;
+
+begin
+  Self:=Self and not Cardinal((Cardinal(1) shl index));
+  Result:=Self;
+end;
+
+Function TCardinalHelper.ToggleBit(const index: TCardinalBitIndex) : Cardinal; inline;
+
+begin
+  Self := Self xor Cardinal((Cardinal(1) shl index));
+  Result:=Self;
+end;
+
+Function TCardinalHelper.TestBit(const Index: TCardinalBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and Cardinal((Cardinal(1) shl index)))<>0;
+end;
+
+
+{ ---------------------------------------------------------------------
+  TIntegerHelper
+  ---------------------------------------------------------------------}
+
+Class Function TIntegerHelper.Parse(const AString: string): Integer; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TIntegerHelper.Size: Integer; inline;
+
+begin
+  Result:=4;
+end;
+
+Class Function TIntegerHelper.ToString(const AValue: Integer): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TIntegerHelper.TryParse(const AString: string; out AValue: Integer): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TIntegerHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TIntegerHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TIntegerHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TIntegerHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TIntegerHelper.ToHexString(const AMinDigits: Integer): string;
+overload; inline;
+
+
+Var
+  B : Word;
+  U : TJSUInt32Array;
+  S : TJSInt32array;
+
+begin
+  if Self>=0 then
+    B:=Self
+  else
+    begin
+    S:=TJSInt32Array.New(1);
+    S[0]:=Self;
+    U:=TJSUInt32Array.New(S);
+    B:=U[0];
+    end;
+  Result:=IntToHex(B,AMinDigits);
+end;
+
+Function TIntegerHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=ToHexString(Size*2);
+end;
+
+
+Function TIntegerHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TIntegerHelper.SetBit(const index: TIntegerBitIndex) : Integer; inline;
+
+begin
+  Self := Self or (Integer(1) shl index);
+  Result:=Self;
+end;
+
+Function TIntegerHelper.ClearBit(const index: TIntegerBitIndex) : Integer; inline;
+
+begin
+  Self:=Self and not Integer((Integer(1) shl index));
+  Result:=Self;
+end;
+
+Function TIntegerHelper.ToggleBit(const index: TIntegerBitIndex) : Integer; inline;
+
+begin
+  Self := Self xor Integer((Integer(1) shl index));
+  Result:=Self;
+end;
+
+Function TIntegerHelper.TestBit(const Index: TIntegerBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and Integer((Integer(1) shl index)))<>0;
+end;
+
+
+{ ---------------------------------------------------------------------
+  TNativeIntHelper
+  ---------------------------------------------------------------------}
+
+Class Function TNativeIntHelper.Parse(const AString: string): NativeInt; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TNativeIntHelper.Size: Integer; inline;
+
+begin
+  Result:=7;
+end;
+
+Class Function TNativeIntHelper.ToString(const AValue: NativeInt): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TNativeIntHelper.TryParse(const AString: string; out AValue: NativeInt): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TNativeIntHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TNativeIntHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TNativeIntHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TNativeIntHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TNativeIntHelper.ToHexString(const AMinDigits: Integer): string;
+overload; inline;
+
+begin
+  Result:=IntToHex(Self,AMinDigits);
+end;
+
+Function TNativeIntHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=IntToHex(Self,Size*2);
+end;
+
+Function TNativeIntHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TNativeIntHelper.SetBit(const index: TNativeIntBitIndex) : NativeInt; inline;
+
+begin
+  Self := Self or (NativeInt(1) shl index);
+  Result:=Self;
+end;
+
+Function TNativeIntHelper.ClearBit(const index: TNativeIntBitIndex) : NativeInt; inline;
+
+begin
+  Self:=Self and not NativeInt((NativeInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TNativeIntHelper.ToggleBit(const index: TNativeIntBitIndex) : NativeInt; inline;
+
+begin
+  Self := Self xor NativeInt((NativeInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TNativeIntHelper.TestBit(const Index: TNativeIntBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and NativeInt((NativeInt(1) shl index)))<>0;
+end;
+
+
+{ ---------------------------------------------------------------------
+  TNativeUIntHelper
+  ---------------------------------------------------------------------}
+
+Class Function TNativeUIntHelper.Parse(const AString: string): NativeUInt; inline;
+
+begin
+  Result:=StrToInt(AString);
+end;
+
+Class Function TNativeUIntHelper.Size: Integer; inline;
+
+begin
+  Result:=7;
+end;
+
+Class Function TNativeUIntHelper.ToString(const AValue: NativeUInt): string; overload; inline;
+
+begin
+  Result:=IntToStr(AValue);
+end;
+
+Class Function TNativeUIntHelper.TryParse(const AString: string; out AValue: NativeUInt): Boolean; inline;
+
+Var
+  C : Integer;
+
+begin
+  Val(AString,AValue,C);
+  Result:=(C=0);
+end;
+
+Function TNativeUIntHelper.ToBoolean: Boolean; inline;
+
+begin
+  Result:=(Self<>0);
+end;
+
+Function TNativeUIntHelper.ToDouble: Double; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TNativeUIntHelper.ToExtended: Extended; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TNativeUIntHelper.ToBinString: string; inline;
+
+begin
+  Result:=BinStr(Self,Size*8);
+end;
+
+Function TNativeUIntHelper.ToHexString(const AMinDigits: Integer): string;
+overload; inline;
+
+begin
+  Result:=IntToHex(Self,AMinDigits);
+end;
+
+Function TNativeUIntHelper.ToHexString: string; overload; inline;
+
+begin
+  Result:=IntToHex(Self,Size*2);
+end;
+
+Function TNativeUIntHelper.ToSingle: Single; inline;
+
+begin
+  Result:=Self;
+end;
+
+Function TNativeUIntHelper.ToString: string; overload; inline;
+
+begin
+  Result:=IntToStr(Self);
+end;
+
+Function TNativeUIntHelper.SetBit(const index: TNativeUIntBitIndex) : NativeUInt; inline;
+
+begin
+  Self := Self or (NativeUInt(1) shl index);
+  Result:=Self;
+end;
+
+Function TNativeUIntHelper.ClearBit(const index: TNativeUIntBitIndex) : NativeUInt; inline;
+
+begin
+  Self:=Self and not NativeUInt((NativeUInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TNativeUIntHelper.ToggleBit(const index: TNativeUIntBitIndex) : NativeUInt; inline;
+
+begin
+  Self := Self xor NativeUInt((NativeUInt(1) shl index));
+  Result:=Self;
+end;
+
+Function TNativeUIntHelper.TestBit(const Index: TNativeUIntBitIndex):Boolean; inline;
+
+begin
+  Result := (Self and NativeUInt((NativeUInt(1) shl index)))<>0;
+end;
+
+{ ---------------------------------------------------------------------
+  TBooleanHelper
+  ---------------------------------------------------------------------}
+
+Class Function TBooleanHelper.Parse(const S: string): Boolean; inline;
+
+begin
+  Result:=StrToBool(S);
+end;
+
+Class Function TBooleanHelper.Size: Integer; inline;
+
+begin
+  Result:=1;
+end;
+
+Class Function TBooleanHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+Class Function TBooleanHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
+
+begin
+  Result:=TryStrToBool(S,AValue);
+end;
+
+Function TBooleanHelper.ToInteger: Integer; inline;
+
+begin
+  Result:=Integer(Self);
+end;
+
+Function TBooleanHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+{ ---------------------------------------------------------------------
+  TByteBoolHelper
+  ---------------------------------------------------------------------}
+
+Class Function TByteBoolHelper.Parse(const S: string): Boolean; inline;
+
+begin
+  Result:=StrToBool(S);
+end;
+
+Class Function TByteBoolHelper.Size: Integer; inline;
+
+begin
+  Result:=1;
+end;
+
+Class Function TByteBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+Class Function TByteBoolHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
+
+begin
+  Result:=TryStrToBool(S,AValue);
+end;
+
+Function TByteBoolHelper.ToInteger: Integer; inline;
+
+begin
+  Result:=Integer(Self);
+end;
+
+Function TByteBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+{ ---------------------------------------------------------------------
+  TWordBoolHelper
+  ---------------------------------------------------------------------}
+
+Class Function TWordBoolHelper.Parse(const S: string): Boolean; inline;
+
+begin
+  Result:=StrToBool(S);
+end;
+
+Class Function TWordBoolHelper.Size: Integer; inline;
+
+begin
+  Result:=2;
+end;
+
+Class Function TWordBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+Class Function TWordBoolHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
+
+begin
+  Result:=TryStrToBool(S,AValue);
+end;
+
+Function TWordBoolHelper.ToInteger: Integer; inline;
+
+begin
+  Result:=Integer(Self);
+end;
+
+Function TWordBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+{ ---------------------------------------------------------------------
+  TLongBoolHelper
+  ---------------------------------------------------------------------}
+
+
+Class Function TLongBoolHelper.Parse(const S: string): Boolean; inline;
+
+begin
+  Result:=StrToBool(S);
+end;
+
+Class Function TLongBoolHelper.Size: Integer; inline;
+
+begin
+  Result:=4;
+end;
+
+Class Function TLongBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+end;
+
+Class Function TLongBoolHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
+
+begin
+  Result:=TryStrToBool(S,AValue);
+end;
+
+Function TLongBoolHelper.ToInteger: Integer; inline;
+
+begin
+  Result:=Integer(Self);
+end;
+
+Function TLongBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+
+begin
+  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+end;
+
 
 end.
 

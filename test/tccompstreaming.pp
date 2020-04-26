@@ -1,3 +1,25 @@
+{ Component streaming tests.
+
+  Copyright (C) 2020 Michael Van Canneyt michael@freepascal.org
+
+  This library is free software; you can redistribute it and/or modify it under the terms of the GNU Library General Public
+  License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version
+  with the following modification:
+
+  As a special exception, the copyright holders of this library give you permission to link this library with independent modules
+  to produce an executable, regardless of the license terms of these independent modules,and to copy and distribute the resulting
+  executable under terms of your choice, provided that you also meet, for each linked independent module, the terms and conditions
+  of the license of that module. An independent module is a module which is not derived from or based on this library. If you
+  modify this library, you may extend this exception to your version of the library, but you are not obligated to do so. If you do
+  not wish to do so, delete this exception statement from your version.
+
+  This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Library General Public License for more details.
+
+  You should have received a copy of the GNU Library General Public License along with this library; if not, write to the Free
+  Software Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA 02110-1335, USA.
+}
+
 Unit tccompstreaming;
 
 interface
@@ -1430,14 +1452,14 @@ end;
 procedure TTestComponentStream.TestTIntegerComponent2Text;
 
 Const
- SData =
+ SData3 =
    'object TestTIntegerComponent2: TIntegerComponent2'+sLineBreak+
    '  IntProp = 1024'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTIntegerComponent2;
-  CheckAsString(SData);
+  CheckAsString(SData3);
 end;
 
 
@@ -1466,14 +1488,14 @@ end;
 procedure TTestComponentStream.TestTIntegerComponent3Text;
 
 Const
- SData =
+ SData4 =
    'object TestTIntegerComponent3: TIntegerComponent3'+sLineBreak+
    '  IntProp = 262144'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTIntegerComponent3;
-  CheckAsString(SData);
+  CheckAsString(SData4);
 end;
 
 
@@ -1546,14 +1568,14 @@ end;
 procedure TTestComponentStream.TestTInt64ComponentText;
 
 Const
- SData =
+ SData5 =
    'object TestTInt64Component: TInt64Component'+sLineBreak+
    '  Int64Prop = 4'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTInt64Component;
-  CheckAsString(SData);
+  CheckAsString(SData5);
 end;
 
 
@@ -1582,14 +1604,14 @@ end;
 procedure TTestComponentStream.TestTInt64Component2Text;
 
 Const
- SData =
+ SData6 =
    'object TestTInt64Component2: TInt64Component2'+sLineBreak+
    '  Int64Prop = 1024'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTInt64Component2;
-  CheckAsString(SData);
+  CheckAsString(SData6);
 end;
 
 
@@ -1618,14 +1640,14 @@ end;
 procedure TTestComponentStream.TestTInt64Component3Text;
 
 Const
- SData =
+ SData7 =
    'object TestTInt64Component3: TInt64Component3'+sLineBreak+
    '  Int64Prop = 262144'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTInt64Component3;
-  CheckAsString(SData);
+  CheckAsString(SData7);
 end;
 
 
@@ -1654,14 +1676,14 @@ end;
 procedure TTestComponentStream.TestTInt64Component4Text;
 
 Const
- SData =
+ SData8 =
    'object TestTInt64Component4: TInt64Component4'+sLineBreak+
    '  Int64Prop = 2147516415'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTInt64Component4;
-  CheckAsString(SData);
+  CheckAsString(SData8);
 end;
 
 
@@ -1736,14 +1758,14 @@ end;
 procedure TTestComponentStream.TestTStringComponentText;
 
 Const
-  SData =
+  SData9 =
      'object TestTStringComponent: TStringComponent'+sLineBreak+
      '  StringProp = ''A string'''+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTStringComponent;
-  CheckAsString(SData);
+  CheckAsString(SData9);
 end;
 
 
@@ -1790,14 +1812,14 @@ end;
 
 procedure TTestComponentStream.TestTStringComponent3Text;
 Const
-  SData =
+  SData10 =
      'object TestTStringComponent3: TStringComponent3'+sLineBreak+
      '  StringProp = ''A ''''quoted'''' string'''+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTStringComponent3;
-  CheckAsString(SData);
+  CheckAsString(SData10);
 end;
 
 
@@ -1825,14 +1847,14 @@ end;
 
 procedure TTestComponentStream.TestTWideStringComponentText;
 Const
-  SData =
+  SData11 =
      'object TestTWideStringComponent: TWideStringComponent'+sLineBreak+
      '  WideStringProp = ''Some WideString'''+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTWideStringComponent;
-  CheckAsString(SData);
+  CheckAsString(SData11);
 end;
 
 
@@ -1905,14 +1927,14 @@ end;
 procedure TTestComponentStream.TestTDoubleComponentText;
 
 Const
- SData =
+ SData12 =
    'object TestTDoubleComponent: TDoubleComponent'+sLineBreak+
    '  DoubleProp =  2.3E+000'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTDoubleComponent;
-  CheckAsString(SData);
+  CheckAsString(SData12);
 end;
 
 
@@ -1989,14 +2011,14 @@ end;
 
 procedure TTestComponentStream.TestTCurrencyComponentTExt;
 Const
- SData =
+ SData13 =
    'object TestTCurrencyComponent: TCurrencyComponent'+sLineBreak+
    '  CurrencyProp = 56700'+sLineBreak+
    'end'+sLineBreak;
 
 begin
   TestTCurrencyComponent;
-  CheckAsString(SData);
+  CheckAsString(SData13);
 end;
 
 
@@ -2094,14 +2116,14 @@ end;
 procedure TTestComponentStream.TestTEnumComponentText;
 
 Const
-  SData =
+  SData14 =
      'object TestTEnumComponent: TEnumComponent'+sLineBreak+
      '  Dice = four'+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTEnumComponent;
-  CheckAsString(SData);
+  CheckAsString(SData14);
 end;
 
 
@@ -2223,14 +2245,14 @@ end;
 
 procedure TTestComponentStream.TestTSetComponentText;
 Const
-  SData =
+  SData15 =
      'object TestTSetComponent: TSetComponent'+sLineBreak+
      '  Throw = [two, five]'+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTSetComponent;
-  CheckAsString(SData);
+  CheckAsString(SData15);
 end;
 
 
@@ -2346,7 +2368,7 @@ end;
 
 procedure TTestComponentStream.TestTMultipleComponentText;
 Const
-  SData =
+  SData16 =
      'object TestTMultipleComponent: TMultipleComponent'+sLineBreak+
      '  IntProp = 1'+sLineBreak+
      '  StringProp = ''A String'''+sLineBreak+
@@ -2357,7 +2379,7 @@ Const
 
 begin
   TestTMultipleComponent;
-  CheckAsString(SData);
+  CheckAsString(SData16);
 end;
 
 
@@ -2388,7 +2410,7 @@ end;
 procedure TTestComponentStream.TestTPersistentComponentText;
 
 Const
-  SData =
+  SData17 =
      'object TestTPersistentComponent: TPersistentComponent'+sLineBreak+
      '  Persist.AInteger = 3'+sLineBreak+
      '  Persist.AString = ''A persistent string'''+sLineBreak+
@@ -2396,7 +2418,7 @@ Const
 
 begin
   TestTPersistentComponent;
-  CheckAsString(SData);
+  CheckAsString(SData17);
 end;
 
 
@@ -2425,14 +2447,14 @@ end;
 
 procedure TTestComponentStream.TestTCollectionComponentText;
 Const
-  SData =
+  SData18 =
      'object TestTCollectionComponent: TCollectionComponent'+sLineBreak+
      '  Coll = <>'+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTCollectionComponent;
-  CheckAsString(SData);
+  CheckAsString(SData18);
 end;
 
 
@@ -2473,7 +2495,7 @@ end;
 
 procedure TTestComponentStream.TestTCollectionComponent2Text;
 Const
-  SData =
+  SData19 =
      'object TestTCollectionComponent2: TCollectionComponent2'+sLineBreak+
      '  Coll = <  '+sLineBreak+
      '    item'+sLineBreak+
@@ -2489,7 +2511,7 @@ Const
 
 begin
   TestTCollectionComponent2;
-  CheckAsString(SData);
+  CheckAsString(SData19);
 end;
 
 
@@ -2614,14 +2636,14 @@ end;
 procedure TTestComponentStream.TestTOwnedComponentText;
 
 Const
-  SData =
+  SData20 =
      'object TestTOwnedComponent: TOwnedComponent'+sLineBreak+
      '  CompProp = SubComponent'+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTOwnedComponent;
-  CheckAsString(SData);
+  CheckAsString(SData20);
 end;
 
 
@@ -2655,7 +2677,7 @@ end;
 
 procedure TTestComponentStream.TestTStreamedOwnedComponentText;
 Const
-  SData =
+  SData21 =
      'object TestTStreamedOwnedComponent: TStreamedOwnedComponent'+sLineBreak+
      '  object Sub: TIntegerComponent'+sLineBreak+
      '    IntProp = 3'+sLineBreak+
@@ -2664,7 +2686,7 @@ Const
 
 begin
   TestTStreamedOwnedComponent;
-  CheckAsString(SData);
+  CheckAsString(SData21);
 end;
 
 Procedure TTestComponentStream.TestTStreamedOwnedComponents;
@@ -2704,7 +2726,7 @@ end;
 
 procedure TTestComponentStream.TestTStreamedOwnedComponentsText;
 Const
-  SData =
+  SData22 =
      'object TestTStreamedOwnedComponents: TStreamedOwnedComponents'+sLineBreak+
      '  object SubA: TIntegerComponent'+sLineBreak+
      '    IntProp = 3'+sLineBreak+
@@ -2716,7 +2738,7 @@ Const
 
 begin
   TestTStreamedOwnedComponents;
-  CheckAsString(SData);
+  CheckAsString(SData22);
 end;
 
 
@@ -2745,14 +2767,14 @@ end;
 procedure TTestComponentStream.TestTMethodComponentText;
 
 Const
-  SData =
+  SData23 =
      'object TestTMethodComponent: TMethodComponent'+sLineBreak+
      '  MethodProp = MyMethod'+sLineBreak+
      'end'+sLineBreak;
 
 begin
   TestTMethodComponent;
-  CheckAsString(SData);
+  CheckAsString(SData23);
 end;
 
 
@@ -2785,7 +2807,7 @@ end;
 
 procedure TTestComponentStream.TestTMethodComponent2Text;
 Const
-  SData =
+  SData24 =
      'object TestTMethodComponent2: TMethodComponent2'+sLineBreak+
      '  object AComponent: TMethodComponent'+sLineBreak+
      '    MethodProp = MyMethod2'+sLineBreak+
@@ -2794,7 +2816,7 @@ Const
 
 begin
   TestTMethodComponent2;
-  CheckAsString(SData);
+  CheckAsString(SData24);
 end;
 
 

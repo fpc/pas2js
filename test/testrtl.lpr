@@ -26,7 +26,7 @@ program testrtl;
 
 uses
   browserconsole, consoletestrunner, frmrtlrun,
-  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers;
+  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers, tcstringhelp;
 
 var
   Application : TTestRunner;

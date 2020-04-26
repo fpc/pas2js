@@ -23493,7 +23493,7 @@ begin
   'begin',
   '  DoIt(i.toStr);',
   '  DoIt(i.toStr());',
-  '  (i*i).toStr;',
+  //'  (i*i).toStr;',
   '  DoIt((i*i).toStr);',
   '']);
   ConvertProgram;

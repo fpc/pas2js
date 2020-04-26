@@ -696,6 +696,7 @@ type
     Procedure TestTypeHelper_Array;
     Procedure TestTypeHelper_EnumType;
     Procedure TestTypeHelper_SetType;
+    Procedure TestTypeHelper_NestedSelf;
 
     // proc types
     Procedure TestProcType;
@@ -23932,6 +23933,44 @@ begin
     '      this.p.s = v;',
     '    }',
     '}, $mod.TEnum.blue));',
+    '']));
+end;
+
+procedure TTestModule.TestTypeHelper_NestedSelf;
+begin
+  StartProgram(false);
+  Add([
+  '{$modeswitch typehelpers}',
+  'type',
+  '  THelper = type helper for string',
+  '    procedure Run(Value: string);',
+  '  end;',
+  'procedure THelper.Run(Value: string);',
+  '  function Sub(i: nativeint): boolean;',
+  '  begin',
+  '    Result:=Self[i+1]=Value[i];',
+  '  end;',
+  'begin',
+  '  if Self[3]=Value[4] then ;',
+  'end;',
+  'begin',
+  '']);
+  ConvertProgram;
+  CheckSource('TestTypeHelper_NestedSelf',
+    LinesToStr([ // statements
+    'rtl.createHelper($mod, "THelper", null, function () {',
+    '  this.Run = function (Value) {',
+    '    var $Self = this;',
+    '    function Sub(i) {',
+    '      var Result = false;',
+    '      Result = $Self.get().charAt((i + 1) - 1) === Value.charAt(i - 1);',
+    '      return Result;',
+    '    };',
+    '    if ($Self.get().charAt(2) === Value.charAt(3)) ;',
+    '  };',
+    '});',
+    '']),
+    LinesToStr([ // $mod.$main
     '']));
 end;
 

@@ -14352,7 +14352,8 @@ begin
               or aResolver.HasAnonymousFunctions(ImplProc.Body.Body) then
             begin
             // has nested procs -> add "var self = this;"
-            FuncContext.AddLocalVar(GetBIName(pbivnSelf),FuncContext.ThisPas);
+            if ThisPas<>nil then
+              FuncContext.AddLocalVar(GetBIName(pbivnSelf),ThisPas);
             SelfSt:=CreateVarStatement(GetBIName(pbivnSelf),
                                 CreatePrimitiveDotExpr('this',ImplProc),ImplProc);
             AddBodyStatement(SelfSt,PosEl);

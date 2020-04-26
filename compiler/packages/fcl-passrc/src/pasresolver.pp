@@ -427,7 +427,8 @@ const
     {$ifdef HasInt64},btQWordBool{$endif}];
   btArrayRangeTypes = btAllChars+btAllBooleans+btAllInteger;
   btAllRanges = btArrayRangeTypes+[btRange];
-  btAllStandardTypes = [
+  btAllIntrinsicTypes = btAllInteger+btAllStringAndChars+btAllFloats+btAllBooleans;
+  btAllFPCTypes = [
     btChar,
     {$ifdef FPC_HAS_CPSTRING}
     btAnsiChar,
@@ -1805,7 +1806,7 @@ type
     // built in types and functions
     procedure ClearBuiltInIdentifiers; virtual;
     procedure AddObjFPCBuiltInIdentifiers(
-      const TheBaseTypes: TResolveBaseTypes = btAllStandardTypes;
+      const TheBaseTypes: TResolveBaseTypes = btAllFPCTypes;
       const TheBaseProcs: TResolverBuiltInProcs = bfAllStandardProcs); virtual;
     function AddBaseType(const aName: string; Typ: TResolverBaseType): TResElDataBaseType;
     function AddCustomBaseType(const aName: string; aClass: TResElDataBaseTypeClass): TPasUnresolvedSymbolRef;
@@ -9082,7 +9083,7 @@ begin
         end;
       end;
     // default: search for type helpers
-    if (LeftResolved.BaseType in btAllStandardTypes)
+    if (LeftResolved.BaseType in btAllIntrinsicTypes)
         or (LeftResolved.BaseType=btContext)
         or (LeftResolved.BaseType=btCustom) then
       begin
@@ -17243,7 +17244,7 @@ begin
   if LoType=nil then
     RaiseMsg(20170216152004,nExprTypeMustBeClassOrRecordTypeGot,sExprTypeMustBeClassOrRecordTypeGot,
       [BaseTypeNames[ExprResolved.BaseType]],ErrorEl);
-  if (ExprResolved.BaseType in btAllStandardTypes) then
+  if (ExprResolved.BaseType in btAllIntrinsicTypes) then
     // ok
   else if (ExprResolved.BaseType=btContext) then
     // ok

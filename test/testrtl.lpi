@@ -76,7 +76,7 @@
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
-    <Target>
+    <Target FileExt=".js">
       <Filename Value="testrtl"/>
     </Target>
     <SearchPaths>

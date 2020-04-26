@@ -25,7 +25,7 @@ program testrtl;
 {$mode objfpc}
 
 uses
-  browserconsole, consoletestrunner, frmrtlrun,
+  browserconsole, consoletestrunner, frmrtlrun,   strutils,
   tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers, tcstringhelp;
 
 var

@@ -1243,6 +1243,6 @@ end;
 
 
 initialization
-  RegisterTest(TTestHelpers);
+//  RegisterTest(TTestHelpers);
 end.
 

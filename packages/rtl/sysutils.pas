@@ -52,6 +52,7 @@ type
   TMonthNames = TMonthNameArray;
   TDayNames = array[0..6] of string;
 
+
 {*****************************************************************************
                             Exception handling
 *****************************************************************************}
@@ -725,6 +726,7 @@ Type
     Class Function ToNativeInt(const S: string): NativeInt; overload; static; inline;
     Class Function ToInteger(const S: string): Integer; overload; static; inline;
     Class Function UpperCase(const S: string): string; overload; static; inline;
+    Class Function ToCharArray(const S : String) : TCharArray; static;
     Function CompareTo(const B: string): Integer;
     Function Contains(const AValue: string): Boolean;
     Function CountChar(const C: Char): SizeInt;
@@ -742,8 +744,11 @@ Type
     Function IndexOf(AValue: Char; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
     Function IndexOf(const AValue: string; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
     Function IndexOfUnQuoted(const AValue: string; StartQuote, EndQuote: Char; StartIndex: SizeInt = 0): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: string): SizeInt; overload;
     Function IndexOfAny(const AnyOf: array of Char): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: String; StartIndex: SizeInt): SizeInt; overload;
     Function IndexOfAny(const AnyOf: array of Char; StartIndex: SizeInt): SizeInt; overload;
+    Function IndexOfAny(const AnyOf: String; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
     Function IndexOfAny(const AnyOf: array of Char; StartIndex: SizeInt; ACount: SizeInt): SizeInt; overload;
     Function IndexOfAny(const AnyOf: array of String): SizeInt; overload;
     Function IndexOfAny(const AnyOf: array of String; StartIndex: SizeInt): SizeInt; overload;
@@ -778,18 +783,27 @@ Type
     Function Replace(OldChar: Char; NewChar: Char; ReplaceFlags: TReplaceFlags): string; overload;
     Function Replace(const OldValue: string; const NewValue: string): string; overload;
     Function Replace(const OldValue: string; const NewValue: string; ReplaceFlags: TReplaceFlags): string; overload;
+    Function Split(const Separators: String): TStringArray; overload;
     Function Split(const Separators: array of Char): TStringArray; overload;
+    Function Split(const Separators: string; ACount: SizeInt): TStringArray; overload;
     Function Split(const Separators: array of Char; ACount: SizeInt): TStringArray; overload;
+    Function Split(const Separators: string; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of Char; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: string; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of string): TStringArray; overload;
     Function Split(const Separators: array of string; ACount: SizeInt): TStringArray; overload;
     Function Split(const Separators: array of string; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of string; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: String; AQuote: Char): TStringArray; overload;
     Function Split(const Separators: array of Char; AQuote: Char): TStringArray; overload;
+    Function Split(const Separators: String; AQuoteStart, AQuoteEnd: Char): TStringArray; overload;
     Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char): TStringArray; overload;
+    Function Split(const Separators: string; AQuoteStart, AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray; overload;
+    Function Split(const Separators: string; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt): TStringArray; overload;
     Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt): TStringArray; overload;
+    Function Split(const Separators: string; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of Char; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray; overload;
     Function Split(const Separators: array of string; AQuote: Char): TStringArray; overload;
     Function Split(const Separators: array of string; AQuoteStart, AQuoteEnd: Char): TStringArray; overload;
@@ -5279,8 +5293,7 @@ begin
 end;
 
 
-class function TStringHelper.Format(const AFormat: string;
-  const args: array of jsValue): string;
+class function TStringHelper.Format(const AFormat: string; const args: array of JSValue): string;
 begin
   Result:=Sysutils.Format(AFormat,Args);
 end;
@@ -5298,7 +5311,7 @@ begin
 end;
 
 
-Class Function TStringHelper.Join(const Separator: string; const Values: array of JSValue): string; overload;
+class function TStringHelper.Join(const Separator: string; const Values: array of JSValue): string;
 
 begin
   Result:=TJSArray(Values).Join(Separator);
@@ -5393,6 +5406,17 @@ begin
   Result:=sysutils.Uppercase(S);
 end;
 
+class function TStringHelper.ToCharArray(const S: String): TCharArray;
+
+Var
+  I,Len: integer;
+
+begin
+  Len:=System.Length(S);
+  SetLength(Result,Len);
+  For I:=1 to Len do
+    Result[I-1]:=S[I];
+end;
 
 function TStringHelper.CompareTo(const B: string): Integer;
 begin
@@ -5500,7 +5524,7 @@ begin
 end;
 
 
-function TStringHelper.Format(const args: array of JSValue): string;
+function TStringHelper.Format(const args: array of jsValue): string;
 
 begin
   Result:=Sysutils.Format(Self,Args);
@@ -5641,10 +5665,20 @@ begin
     end;
 end;
 
+function TStringHelper.IndexOfAny(const AnyOf: string): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf.ToCharArray);
+end;
+
 
 function TStringHelper.IndexOfAny(const AnyOf: array of Char): SizeInt;
 begin
   Result:=IndexOfAny(AnyOf,0,Length);
+end;
+
+function TStringHelper.IndexOfAny(const AnyOf: String; StartIndex: SizeInt): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf.ToCharArray,StartIndex);
 end;
 
 
@@ -5654,6 +5688,10 @@ begin
   Result:=IndexOfAny(AnyOf,StartIndex,Length);
 end;
 
+function TStringHelper.IndexOfAny(const AnyOf: String; StartIndex: SizeInt; ACount: SizeInt): SizeInt;
+begin
+  Result:=IndexOfAny(AnyOf.ToCharArray,StartIndex,aCount);
+end;
 
 function TStringHelper.IndexOfAny(const AnyOf: array of Char;
   StartIndex: SizeInt; ACount: SizeInt): SizeInt;
@@ -5996,9 +6034,21 @@ begin
 end;
 
 
+
+function TStringHelper.Split(const Separators: String): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray);
+end;
+
+
 function TStringHelper.Split(const Separators: array of Char): TStringArray;
 begin
   Result:=Split(Separators,#0,#0,Length+1,TStringSplitOptions.None);
+end;
+
+function TStringHelper.Split(const Separators: string; ACount: SizeInt): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aCount);
 end;
 
 
@@ -6008,11 +6058,21 @@ begin
   Result:=Split(Separators,#0,#0,ACount,TStringSplitOptions.None);
 end;
 
+function TStringHelper.Split(const Separators: string; Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,Options);
+end;
+
 
 function TStringHelper.Split(const Separators: array of Char;
   Options: TStringSplitOptions): TStringArray;
 begin
   Result:=Split(Separators,Length+1,Options);
+end;
+
+function TStringHelper.Split(const Separators: string; ACount: SizeInt; Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aCount,Options);
 end;
 
 
@@ -6049,11 +6109,21 @@ begin
   Result:=Split(Separators,#0,#0,ACount,Options);
 end;
 
+function TStringHelper.Split(const Separators: String; AQuote: Char): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aQuote);
+end;
+
 
 function TStringHelper.Split(const Separators: array of Char; AQuote: Char
   ): TStringArray;
 begin
   Result:=Split(Separators,AQuote,AQuote);
+end;
+
+function TStringHelper.Split(const Separators: String; AQuoteStart, AQuoteEnd: Char): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aQuoteStart,aQuoteEnd);
 end;
 
 
@@ -6063,6 +6133,11 @@ begin
   Result:=Split(Separators,AQuoteStart,AQuoteEnd,TStringSplitOptions.None);
 end;
 
+function TStringHelper.Split(const Separators: string; AQuoteStart, AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aQuoteStart,aQuoteEnd,Options);
+end;
+
 
 function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
   AQuoteEnd: Char; Options: TStringSplitOptions): TStringArray;
@@ -6070,11 +6145,22 @@ begin
   Result:=Split(Separators,AQuoteStart,AQuoteEnd,Length+1,Options);
 end;
 
+function TStringHelper.Split(const Separators: string; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aQuoteStart,aQuoteEnd,aCount);
+end;
+
 
 function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
   AQuoteEnd: Char; ACount: SizeInt): TStringArray;
 begin
   Result:=Split(Separators,AQuoteStart,AQuoteEnd,ACount,TStringSplitOptions.None);
+end;
+
+function TStringHelper.Split(const Separators: string; AQuoteStart, AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions
+  ): TStringArray;
+begin
+  Result:=Split(Separators.ToCharArray,aQuoteStart,aQuoteEnd,aCount,Options);
 end;
 
 
@@ -6110,7 +6196,7 @@ Var
 
 begin
 
- // S:=Self;
+  S:=Self;
   SetLength(Result,BlockSize);
   Len:=0;
   LastSep:=0;
@@ -6189,8 +6275,8 @@ Var
     else
       // MVC todo:
       Result:=-1; // S.IndexOfAny(Separators,StartIndex,Length,Match);
-
   end;
+
   Procedure MaybeGrow(Curlen : SizeInt);
 
   begin
@@ -6203,7 +6289,6 @@ Var
   T : String;
 
 begin
-
   S:=Self;
   SetLength(Result,BlockSize);
   Len:=0;
@@ -6289,7 +6374,7 @@ begin
 end;
 
 
-function TStringHelper.ToNativeint: Nativeint;
+function TStringHelper.ToNativeInt: NativeInt;
 begin
   Result:=StrToNativeInt(Self);
 end;

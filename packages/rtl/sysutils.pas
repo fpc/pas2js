@@ -708,7 +708,7 @@ Type
     Class Function Create(const AValue: array of Char; StartIndex: SizeInt; ALen: SizeInt): string; overload; static;
     Class Function EndsText(const ASubText, AText: string): Boolean; static;
     Class Function Equals(const a: string; const b: string): Boolean; overload; static;
-    Class Function Format(const AFormat: string; const args: array of const): string; overload; static;
+    Class Function Format(const AFormat: string; const args: array of JSValue): string; overload; static;
     Class Function IsNullOrEmpty(const AValue: string): Boolean; static;
     Class Function IsNullOrWhiteSpace(const AValue: string): Boolean; static;
     Class Function Join(const Separator: string; const Values: array of JSValue): string; overload; static;
@@ -733,7 +733,7 @@ Type
     Function EndsWith(const AValue: string): Boolean; overload; inline;
     Function EndsWith(const AValue: string; IgnoreCase: Boolean): Boolean; overload;
     Function Equals(const AValue: string): Boolean; overload;
-    Function Format(const args: array of const): string; overload;
+    Function Format(const args: array of jsValue): string; overload;
     Function GetHashCode: Integer;
     Function IndexOf(AValue: Char): SizeInt; overload; inline;
     Function IndexOf(const AValue: string): SizeInt; overload; inline;
@@ -1181,7 +1181,7 @@ end;
 
 function Trim(const S: String): String; assembler;
 asm
-  return S.trim();
+  return S.replace(/^[\s\uFEFF\xA0\x00-\x1f]+/,'').replace(/[\s\uFEFF\xA0\x00-\x1f]+$/,'');
 end;
 
 function TrimLeft(const S: String): String; assembler;
@@ -5263,7 +5263,7 @@ Var
 begin
   SetLength(Result,ALen);
   For I:=1 to ALen do
-    Result[aLen]:=AValue[StartIndex+I-1];
+    Result[I]:=AValue[StartIndex+I-1];
 end;
 
 
@@ -5280,7 +5280,7 @@ end;
 
 
 class function TStringHelper.Format(const AFormat: string;
-  const args: array of const): string;
+  const args: array of jsValue): string;
 begin
   Result:=Sysutils.Format(AFormat,Args);
 end;
@@ -5294,7 +5294,7 @@ end;
 
 class function TStringHelper.IsNullOrWhiteSpace(const AValue: string): Boolean;
 begin
-  Result:=system.Length(SysUtils.Trim(AValue))=0;
+  Result:=system.Length(Trim(AValue))=0;
 end;
 
 
@@ -5324,7 +5324,7 @@ begin
   If (ACount=0) or (VLen<0) then
     Result:=''
   else
-    Result:=TJSArray(Values).Slice(StartIndex,StartIndex+aCount-1).Join(Separator);
+    Result:=TJSArray(Values).Slice(StartIndex,StartIndex+aCount).Join(Separator);
 end;
 
 
@@ -5403,7 +5403,7 @@ end;
 
 function TStringHelper.Contains(const AValue: string): Boolean;
 begin
-  Result:=Pos(AValue,Self)>0;
+  Result:=(AValue<>'') and (Pos(AValue,Self)>0);
 end;
 
 
@@ -5500,10 +5500,10 @@ begin
 end;
 
 
-function TStringHelper.Format(const args: array of const): string;
+function TStringHelper.Format(const args: array of JSValue): string;
 
 begin
-  Result:=Format(Self,Args);
+  Result:=Sysutils.Format(Self,Args);
 end;
 
 
@@ -5588,6 +5588,7 @@ function TStringHelper.IndexOfUnQuoted(const AValue: string; StartQuote,
 
 Var
   LV : SizeInt;
+  S : String;
 
   Function MatchAt(I : SizeInt) : Boolean ; Inline;
 
@@ -5597,7 +5598,7 @@ Var
   begin
     J:=1;
     Repeat
-      Result:=(Self[I+J-1]=AValue[j]);
+      Result:=(S[I+J-1]=AValue[j]);
       Inc(J);
     Until (Not Result) or (J>LV);
   end;
@@ -5606,6 +5607,7 @@ Var
   I,L,Q: SizeInt;
 
 begin
+  S:=Self;
   Result:=-1;
   LV:=system.Length(AValue);
   L:=Length-LV+1;
@@ -5617,7 +5619,7 @@ begin
     begin
     While (Result=-1) and (I<=L) do
       begin
-      if (Self[I]=StartQuote) then
+      if (S[I]=StartQuote) then
         Q:=1-Q;
       if (Q=0) and MatchAt(i) then
         Result:=I-1;
@@ -5628,9 +5630,9 @@ begin
     begin
     While (Result=-1) and (I<=L) do
       begin
-      if Self[I]=StartQuote then
+      if S[I]=StartQuote then
         Inc(Q)
-      else if (Self[I]=EndQuote) and (Q>0) then
+      else if (S[I]=EndQuote) and (Q>0) then
         Dec(Q);
       if (Q=0) and MatchAt(i) then
         Result:=I-1;
@@ -6079,16 +6081,20 @@ end;
 function TStringHelper.Split(const Separators: array of Char; AQuoteStart,
   AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray;
 
+
 Const
   BlockSize = 10;
+
+Var
+  S : String;
 
   Function NextSep(StartIndex : SizeInt) : SizeInt;
 
   begin
     if (AQuoteStart<>#0) then
-      Result:=Self.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex)
+      Result:=S.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex)
     else
-      Result:=Self.IndexOfAny(Separators,StartIndex);
+      Result:=S.IndexOfAny(Separators,StartIndex);
   end;
 
   Procedure MaybeGrow(Curlen : SizeInt);
@@ -6103,6 +6109,8 @@ Var
   T : String;
 
 begin
+
+ // S:=Self;
   SetLength(Result,BlockSize);
   Len:=0;
   LastSep:=0;
@@ -6132,6 +6140,7 @@ begin
       end;
     end;
   SetLength(Result,Len);
+
 end;
 
 
@@ -6165,19 +6174,23 @@ end;
 
 function TStringHelper.Split(const Separators: array of string; AQuoteStart,
   AQuoteEnd: Char; ACount: SizeInt; Options: TStringSplitOptions): TStringArray;
+
 Const
   BlockSize = 10;
+
+Var
+  S : String;
 
   Function NextSep(StartIndex : SizeInt; out Match : SizeInt) : SizeInt;
 
   begin
     if (AQuoteStart<>#0) then
-      Result:=Self.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex,Match)
+      Result:=S.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex,Match)
     else
-      Result:=Self.IndexOfAny(Separators,StartIndex,Length,Match);
-    if Result<>-1 then
-  end;
+      // MVC todo:
+      Result:=-1; // S.IndexOfAny(Separators,StartIndex,Length,Match);
 
+  end;
   Procedure MaybeGrow(Curlen : SizeInt);
 
   begin
@@ -6190,6 +6203,8 @@ Var
   T : String;
 
 begin
+
+  S:=Self;
   SetLength(Result,BlockSize);
   Len:=0;
   LastSep:=0;
@@ -6218,6 +6233,7 @@ begin
       end;
     end;
   SetLength(Result,Len);
+
 end;
 
 
@@ -6336,7 +6352,7 @@ end;
 
 function TStringHelper.Trim: string;
 begin
-  Result:=SysUtils.Trim(Self);
+  Result:=SysUtils.Trim(self);
 end;
 
 

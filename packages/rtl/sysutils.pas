@@ -2309,7 +2309,7 @@ Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
       If Fmt[ChPos]='*' then
         begin
 
-        if Index=-1 then
+        if Index=High(byte) then
           ArgN:=Argpos
         else
         begin
@@ -2395,7 +2395,7 @@ Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
 
 
   begin
-    Index:=-1;
+    Index:=High(byte);
     Width:=-1;
     Prec:=-1;
     Value:=-1;
@@ -4499,8 +4499,11 @@ function IntToHex(Value: NativeInt; Digits: integer): string;
 begin
 //  Result:=HexStr(Value,Digits);     // TestNegLongintHelper  Failed: "ToHexString" expected: <FFFE0000> but was: <00-20000> !
   Result:='';
+  if Value<0 then
+    asm
+    if (Value<0) Value = 0xFFFFFFFF + Value + 1;
+    end;
   asm
-  if (Value<0) Value = 0xFFFFFFFF + Value + 1;
   Result=Value.toString(16);
   end;
   Result:=UpperCase(Result);
@@ -6274,7 +6277,8 @@ Var
       Result:=S.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex,Match)
     else
       // MVC todo:
-      Result:=-1; // S.IndexOfAny(Separators,StartIndex,Length,Match);
+      //Result:=-1;
+      Result:=S.IndexOfAny(Separators,StartIndex,Length,Match);
   end;
 
   Procedure MaybeGrow(Curlen : SizeInt);

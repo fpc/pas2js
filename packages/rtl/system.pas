@@ -365,7 +365,7 @@ function Pos(const Search, InString: String; StartAt : Integer): Integer; assemb
 procedure Insert(const Insertion: String; var Target: String; Index: Integer); overload;
 function upcase(c : char) : char; assembler;
 function HexStr(Val: NativeInt; cnt: byte): string; external name 'rtl.hexStr'; overload;
-function binstr(val : int64; cnt : byte) : string;
+function binstr(val : NativeUInt; cnt : byte) : string;
 
 procedure val(const S: String; out NI : NativeInt; out Code: Integer); overload;
 procedure val(const S: String; out NI : NativeUInt; out Code: Integer); overload;
@@ -716,7 +716,7 @@ begin
     Code:=1;
 end;
 
-function binstr(val : int64;cnt : byte) : string;
+function binstr(val : NativeUInt;cnt : byte) : string;
 var
   i : Integer;
 begin

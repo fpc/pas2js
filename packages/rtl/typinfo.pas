@@ -159,8 +159,9 @@ type
     pfVar,     // 2^0 = 1
     pfConst,   // 2^1 = 2
     pfOut,     // 2^2 = 4
-    pfArray    // 2^3 = 8
-    //pfAddress,pfReference,
+    pfArray,   // 2^3 = 8
+    pfAddress, // 2^4 = 16
+    pfReference // 2^5 = 32
     );
   TParamFlags = set of TParamFlag;
 

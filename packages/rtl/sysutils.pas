@@ -6276,8 +6276,6 @@ Var
     if (AQuoteStart<>#0) then
       Result:=S.IndexOfAnyUnQuoted(Separators,AQuoteStart,AQuoteEnd,StartIndex,Match)
     else
-      // MVC todo:
-      //Result:=-1;
       Result:=S.IndexOfAny(Separators,StartIndex,Length,Match);
   end;
 

@@ -5310,7 +5310,7 @@ end;
 
 class function TStringHelper.IsNullOrWhiteSpace(const AValue: string): Boolean;
 begin
-  Result:=system.Length(Trim(AValue))=0;
+  Result:=system.Length(sysutils.Trim(AValue))=0;
 end;
 
 

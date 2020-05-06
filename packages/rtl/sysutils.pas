@@ -2421,7 +2421,7 @@ Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
   }
   begin
     result:=false;
-    if Index=-1 then
+    if Index=High(Byte) then
       DoArg:=Argpos
     else
       DoArg:=Index;

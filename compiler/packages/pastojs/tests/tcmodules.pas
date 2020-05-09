@@ -421,6 +421,7 @@ type
     Procedure TestArray_StaticChar;
     Procedure TestArray_StaticMultiDim;
     Procedure TestArray_StaticInFunction;
+    Procedure TestArray_StaticMultiDimEqualNotImplemented;
     Procedure TestArrayOfRecord;
     Procedure TestArray_StaticRecord;
     Procedure TestArrayOfSet;
@@ -432,6 +433,7 @@ type
     Procedure TestArray_SetLengthOutArg;
     Procedure TestArray_SetLengthProperty;
     Procedure TestArray_SetLengthMultiDim;
+    Procedure TestArray_SetLengthDynOfStatic;
     Procedure TestArray_OpenArrayOfString;
     Procedure TestArray_ConstRef;
     Procedure TestArray_Concat;
@@ -8468,7 +8470,7 @@ begin
     '$mod.i = 0;',
     '$mod.i = rtl.length($mod.Arr2) - 1;',
     '$mod.i = rtl.length($mod.Arr2[2]) - 1;',
-    '$mod.Arr2[3] = $mod.Arr;',
+    '$mod.Arr2[3] = rtl.arrayRef($mod.Arr);',
     '$mod.Arr2[4][5] = $mod.i;',
     '$mod.i = $mod.Arr2[6][7];',
     '$mod.Arr2[8][9] = $mod.i;',
@@ -8513,7 +8515,7 @@ begin
     '$mod.i = 2;',
     '$mod.i = 4;',
     '$mod.b = $mod.Arr[0] === $mod.Arr[1];',
-    '$mod.Arr = rtl.arraySetLength(null,0,3).slice(0);',
+    '$mod.Arr = rtl.arraySetLength(null,0,3);',
     '']));
 end;
 
@@ -8722,6 +8724,22 @@ begin
     '']));
 end;
 
+procedure TTestModule.TestArray_StaticMultiDimEqualNotImplemented;
+begin
+  StartProgram(false);
+  Add([
+  'type',
+  '  TArrayInt = array[1..3,1..2] of longint;',
+  'var',
+  '  a,b: TArrayInt;',
+  'begin',
+  '  if a=b then ;',
+  '']);
+  SetExpectedPasResolverError('compare static array is not supported',
+    nXIsNotSupported);
+  ConvertProgram;
+end;
+
 procedure TTestModule.TestArrayOfRecord;
 begin
   StartProgram(false);
@@ -8907,10 +8925,10 @@ begin
     LinesToStr([ // statements
     'this.DoIt = function (vG,vH,vI) {',
     '  var vJ = [];',
-    '  vG = vG;',
-    '  vJ = vH;',
-    '  vI.set(vI.get());',
-    '  $mod.DoIt(vG, vG, {',
+    '  vG = rtl.arrayRef(vG);',
+    '  vJ = rtl.arrayRef(vH);',
+    '  vI.set(rtl.arrayRef(vI.get()));',
+    '  $mod.DoIt(rtl.arrayRef(vG), vG, {',
     '    get: function () {',
     '      return vG;',
     '    },',
@@ -8918,7 +8936,7 @@ begin
     '      vG = v;',
     '    }',
     '  });',
-    '  $mod.DoIt(vH, vH, {',
+    '  $mod.DoIt(rtl.arrayRef(vH), vH, {',
     '    get: function () {',
     '      return vJ;',
     '    },',
@@ -8926,8 +8944,8 @@ begin
     '      vJ = v;',
     '    }',
     '  });',
-    '  $mod.DoIt(vI.get(), vI.get(), vI);',
-    '  $mod.DoIt(vJ, vJ, {',
+    '  $mod.DoIt(rtl.arrayRef(vI.get()), vI.get(), vI);',
+    '  $mod.DoIt(rtl.arrayRef(vJ), vJ, {',
     '    get: function () {',
     '      return vJ;',
     '    },',
@@ -8939,7 +8957,7 @@ begin
     'this.i = [];'
     ]),
     LinesToStr([
-    '$mod.DoIt($mod.i,$mod.i,{',
+    '$mod.DoIt(rtl.arrayRef($mod.i),$mod.i,{',
     '  p: $mod,',
     '  get: function () {',
     '      return this.p.i;',
@@ -9244,7 +9262,54 @@ begin
     LinesToStr([
     '$mod.a = rtl.arraySetLength($mod.a, [], 2);',
     '$mod.a = rtl.arraySetLength($mod.a, 0, 3, 4);',
-    '$mod.b = rtl.arraySetLength($mod.b, 0, 5, 2);',
+    '$mod.b = rtl.arraySetLength($mod.b, 0, 5, "s", 2);',
+    '']));
+end;
+
+procedure TTestModule.TestArray_SetLengthDynOfStatic;
+begin
+  StartProgram(false);
+  Add([
+  'type',
+  '  TStaArr1 = array[1..3] of boolean;',
+  //'  TStaArr2 = array[5..6] of TStaArr1;',
+  '  TDynArr1StaArr1 = array of TStaArr1;',
+  //'  TDynArr1StaArr2 = array of TStaArr2;',
+  '  TDynArr2StaArr1 = array of TDynArr1StaArr1;',
+  //'  TDynArr2StaArr2 = array of TDynArr1StaArr2;',
+  'var',
+  '  DynArr1StaArr1: TDynArr1StaArr1;',
+  //'  DynArr1StaArr2: TDynArr1StaArr1;',
+  '  DynArr2StaArr1: TDynArr2StaArr1;',
+  //'  DynArr2StaArr2: TDynArr2StaArr2;',
+  'begin',
+  '  SetLength(DynArr1StaArr1,11);',
+  '  SetLength(DynArr2StaArr1,12);',
+  '  SetLength(DynArr2StaArr1[13],14);',
+  '  SetLength(DynArr2StaArr1,15,16);',
+  //'  SetLength(DynArr1StaArr2,21);',
+  //'  SetLength(DynArr2StaArr2,22);',
+  //'  SetLength(DynArr2StaArr2[23],24);',
+  //'  SetLength(DynArr2StaArr2,25,26);',
+  '']);
+  ConvertProgram;
+  CheckSource('TestArray_DynOfStatic',
+    LinesToStr([ // statements
+    'this.DynArr1StaArr1 = [];',
+    'this.DynArr2StaArr1 = [];',
+    '']),
+    LinesToStr([ // $mod.$main
+    '$mod.DynArr1StaArr1 = rtl.arraySetLength($mod.DynArr1StaArr1, false, 11, "s", 3);',
+    '$mod.DynArr2StaArr1 = rtl.arraySetLength($mod.DynArr2StaArr1, [], 12);',
+    '$mod.DynArr2StaArr1[13] = rtl.arraySetLength($mod.DynArr2StaArr1[13], false, 14, "s", 3);',
+    '$mod.DynArr2StaArr1 = rtl.arraySetLength(',
+    '  $mod.DynArr2StaArr1,',
+    '  false,',
+    '  15,',
+    '  16,',
+    '  "s",',
+    '  3',
+    ');',
     '']));
 end;
 
@@ -9716,7 +9781,7 @@ begin
     'this.DoOpenInt = function (a) {',
     '  $mod.DoOpenInt(rtl.arrayConcatN(a, [1]));',
     '  $mod.DoOpenInt(rtl.arrayConcatN([1], a));',
-    '  $mod.DoInt(a);',
+    '  $mod.DoInt(rtl.arrayRef(a));',
     '  $mod.DoInt(rtl.arrayConcatN(a, [1]));',
     '  $mod.DoInt(rtl.arrayConcatN([1], a));',
     '};',
@@ -9752,7 +9817,7 @@ begin
   '  integer = longint;',
   '  TArrInt = array of integer;',
   '  TArrArrInt = array of TArrInt;',
-  'procedure DoInt(a: TArrArrInt);',
+  'procedure DoInt(const a: TArrArrInt);',
   'begin',
   '  DoInt(a+[[1]]);',
   '  DoInt([[1]]+a);',
@@ -9809,7 +9874,7 @@ begin
   '  integer = longint;',
   '  TArrInt = array[1..2] of integer;',
   '  TArrArrInt = array of TArrInt;',
-  'procedure DoInt(a: TArrArrInt);',
+  'procedure DoInt(const a: TArrArrInt);',
   'begin',
   '  DoInt(a+[[1,2]]);',
   '  DoInt([[1,2]]+a);',
@@ -12742,6 +12807,8 @@ begin
   Add('    function GetItems: tarray;');
   Add('    procedure SetItems(Value: tarray);');
   Add('    property Items: tarray read getitems write setitems;');
+  Add('    procedure SetNumbers(const Value: tarray);');
+  Add('    property Numbers: tarray write setnumbers;');
   Add('  end;');
   Add('function tobject.getitems: tarray;');
   Add('begin');
@@ -12760,6 +12827,12 @@ begin
   Add('  Self.Items[9]:=Self.Items[10];');
   Add('  Items[Items[11]]:=Items[Items[12]];');
   Add('end;');
+  Add('procedure tobject.SetNumbers(const Value: tarray);');
+  Add('begin;');
+  Add('  Numbers:=nil;');
+  Add('  Numbers:=Value;');
+  Add('  Self.Numbers:=Value;');
+  Add('end;');
   Add('var Obj: tobject;');
   Add('begin');
   Add('  obj.items:=nil;');
@@ -12777,20 +12850,25 @@ begin
     '  };',
     '  this.GetItems = function () {',
     '    var Result = [];',
-    '    Result = this.FItems;',
+    '    Result = rtl.arrayRef(this.FItems);',
     '    return Result;',
     '  };',
     '  this.SetItems = function (Value) {',
-    '    this.FItems = Value;',
+    '    this.FItems = rtl.arrayRef(Value);',
     '    this.FItems = [];',
     '    this.SetItems([]);',
-    '    this.SetItems(this.GetItems());',
+    '    this.SetItems(rtl.arrayRef(this.GetItems()));',
     '    this.GetItems()[1] = 2;',
     '    this.FItems[3] = this.GetItems()[4];',
     '    this.GetItems()[5] = this.GetItems()[6];',
     '    this.GetItems()[7] = 8;',
     '    this.GetItems()[9] = this.GetItems()[10];',
     '    this.GetItems()[this.GetItems()[11]] = this.GetItems()[this.GetItems()[12]];',
+    '  };',
+    '  this.SetNumbers = function (Value) {',
+    '    this.SetNumbers([]);',
+    '    this.SetNumbers(Value);',
+    '    this.SetNumbers(Value);',
     '  };',
     '});',
     'this.Obj = null;'
@@ -26176,8 +26254,8 @@ begin
     'this.ArrInt = [];',
     '']),
     LinesToStr([ // $mod.$main
-    '$mod.Arr = $mod.TheArray;',
-    '$mod.TheArray = $mod.Arr;',
+    '$mod.Arr = rtl.arrayRef($mod.TheArray);',
+    '$mod.TheArray = rtl.arrayRef($mod.Arr);',
     '$mod.Arr = rtl.arraySetLength($mod.Arr,undefined,2);',
     '$mod.TheArray = rtl.arraySetLength($mod.TheArray,undefined,3);',
     '$mod.Arr[4] = $mod.v;',
@@ -26185,7 +26263,7 @@ begin
     '$mod.Arr[6] = null;',
     '$mod.Arr[7] = $mod.TheArray[8];',
     '$mod.Arr[0] = rtl.length($mod.TheArray) - 1;',
-    '$mod.Arr = $mod.ArrInt;',
+    '$mod.Arr = rtl.arrayRef($mod.ArrInt);',
     '$mod.ArrInt = $mod.Arr;',
     'if (rtl.length($mod.TheArray) === 0) ;',
     'if (rtl.length($mod.TheArray) === 0) ;',

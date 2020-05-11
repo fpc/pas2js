@@ -385,6 +385,15 @@ var rtl = {
     return null;
   },
 
+  hideProp: function(o,p,v){
+    Object.defineProperty(o,p, {
+      enumerable: false,
+      configurable: true,
+      writable: true
+    });
+    if(arguments.length>2){ o[p]=v; }
+  },
+
   recNewT: function(parent,name,initfn,full){
     // create new record type
     var t = {};
@@ -802,9 +811,7 @@ var rtl = {
   },
 
   arrayRef: function(a){
-    if (a!=null){
-      rtl.hideProp(a,$pas2jsrefcnt,1);
-    }
+    if (a!=null) rtl.hideProp(a,'$pas2jsrefcnt',1);
     return a;
   },
 

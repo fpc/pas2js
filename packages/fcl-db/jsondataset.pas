@@ -1839,8 +1839,7 @@ begin
     GetFieldList(L,ResultFields);
     Result:=inherited Lookup(KeyFields, KeyValues, ResultFields);
     RI:=LocateRecordIndex(KeyFields,KeyValues,[]);
-    Result:=RI<>-1;
-    if Result then
+    if RI<>-1 then
       begin
       SetLength(Vals,L.Count);
       For I:=0 to L.Count-1 do

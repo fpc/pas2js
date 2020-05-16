@@ -796,7 +796,7 @@ type
 
   { TJSError }
 
-  TJSError = Class external name 'Error'
+  TJSError = Class external name 'Error'   (TJSObject)
   private
     FMessage: String; external name 'message';
     {$ifdef NodeJS}

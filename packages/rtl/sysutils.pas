@@ -314,16 +314,30 @@ type
   TOnGetEnvironmentVariable = function(Const EnvVar: String): String;
   TOnGetEnvironmentString = function(Index: Integer): String;
   TOnGetEnvironmentVariableCount = function: Integer;
+  TShowExceptionHandler = Procedure (Const Msg : String);
+  TUncaughtPascalExceptionHandler = Procedure(aObject : TObject);
+  TUncaughtJSExceptionHandler = Procedure(aObject : TJSObject);
+
 var
   OnGetEnvironmentVariable: TOnGetEnvironmentVariable;
   OnGetEnvironmentString: TOnGetEnvironmentString;
   OnGetEnvironmentVariableCount: TOnGetEnvironmentVariableCount;
+  // Handler to show an exception (used when showexception is called)
+  OnShowException : TShowExceptionHandler = nil;
+
+// Set handlers for uncaught exceptions. These will call HookUncaughtExceptions
+Function SetOnUnCaughtExceptionHandler(aValue : TUncaughtPascalExceptionHandler) : TUncaughtPascalExceptionHandler;
+Function SetOnUnCaughtExceptionHandler(aValue : TUncaughtJSExceptionHandler) : TUncaughtJSExceptionHandler;
+// Hook the rtl handler for uncaught exceptions. If any exception handlers were set, they will be called.
+// If none was set, the exceptions will be displayed using ShowException.
+Procedure HookUncaughtExceptions;
 
 function GetEnvironmentVariable(Const EnvVar: String): String;
 function GetEnvironmentVariableCount: Integer;
 function GetEnvironmentString(Index: Integer): String;
 
-procedure ShowException(ExceptObject: TObject; ExceptAddr: Pointer);
+
+procedure ShowException(ExceptObject: TObject; ExceptAddr: Pointer = Nil);
 Procedure Abort;
 
 {*****************************************************************************
@@ -1131,28 +1145,111 @@ Type
 
 implementation
 
-procedure ShowException(ExceptObject: TObject; ExceptAddr: Pointer);
+{ ---------------------------------------------------------------------
+  Exception handling
+  ---------------------------------------------------------------------}
+Resourcestring
+  SAbortError = 'Operation aborted';
+  SApplicationException = 'Application raised an exception: ';
+  SErrUnknownExceptionType = 'Caught unknown exception type : ';
+
+procedure DoShowException(S : String);
+
+begin
+  if Assigned(OnShowException) then
+    OnShowException(S)
+  else
+    begin
+    {$IFDEF BROWSER}
+      asm
+        window.alert(S);
+      end;
+    {$ENDIF}
+    {$IFDEF NODEJS}
+      Writeln(S);
+    {$ENDIF}
+    end;
+end;
+
+procedure ShowException(ExceptObject: TObject; ExceptAddr: Pointer = Nil);
 
 Var
   S : String;
 
 begin
-  S:='Application raised an exception '+ExceptObject.ClassName;
+  S:=SApplicationException+ExceptObject.ClassName;
   if ExceptObject is Exception then
     S:=S+' : '+Exception(ExceptObject).Message;
-{$IFDEF BROWSER}
-  asm
-    window.alert(S);
-  end;
-{$ENDIF}
-{$IFDEF NODEJS}
-  Writeln(S);
-{$ENDIF}
+  DoShowException(S);
   if ExceptAddr=nil then;
 end;
 
-Const
-  SAbortError = 'Operation aborted';
+Type
+  TRTLExceptionHandler = procedure (aError : JSValue);
+
+Var
+  rtlExceptionHandler : TRTLExceptionHandler; External name 'rtl.onUncaughtException';
+  rtlShowUncaughtExceptions : Boolean; External name 'rtl.showUncaughtExceptions';
+  OnPascalException : TUncaughtPascalExceptionHandler;
+  OnJSException : TUncaughtJSExceptionHandler;
+
+Procedure RTLExceptionHook(aError : JSValue);
+
+Var
+  S : String;
+
+begin
+  if isClassInstance(aError) then
+    begin
+    if Assigned(OnPascalException) then
+      OnPascalException(TObject(aError))
+    else
+      ShowException(TObject(aError),Nil);
+    end
+  else if isObject(aError) then
+    begin
+    if Assigned(OnJSException) then
+      OnJSException(TJSObject(aError))
+    else
+      begin
+      if TJSObject(aError).hasOwnProperty('message') then
+        S:=SErrUnknownExceptionType+String(TJSObject(aError).Properties['message'])
+      else
+        S:=SErrUnknownExceptionType+TJSObject(aError).toString;
+      DoShowException(S);
+      end
+    end
+  else
+    begin
+    S:=SErrUnknownExceptionType+String(aError);
+    DoShowException(S);
+    end;
+end;
+
+
+
+Function SetOnUnCaughtExceptionHandler(aValue : TUncaughtPascalExceptionHandler) : TUncaughtPascalExceptionHandler;
+
+begin
+  Result:=OnPascalException;
+  OnPascalException:=aValue;
+  HookUncaughtExceptions;
+end;
+
+Function SetOnUnCaughtExceptionHandler(aValue : TUncaughtJSExceptionHandler) : TUncaughtJSExceptionHandler;
+
+begin
+  Result:=OnJSException;
+  OnJSException:=aValue;
+  HookUncaughtExceptions;
+end;
+
+Procedure HookUncaughtExceptions;
+
+begin
+  rtlExceptionHandler:=@RTLExceptionHook;
+  rtlShowUncaughtExceptions:=True;
+end;
 
 procedure Abort;
 begin
@@ -1161,6 +1258,7 @@ end;
 
 Type
   TCharSet = Set of Char;
+
 Function CharInSet(Ch: Char;Const CSet : TCharSet) : Boolean;
 
 begin

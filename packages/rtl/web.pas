@@ -55,8 +55,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 *)
   TEventListenerEvent = TJSEvent;
 
-  TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean;
-  TJSRawEventHandler = reference to Procedure(Event: TJSEvent);
+  TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean; safecall;
+  TJSRawEventHandler = reference to Procedure(Event: TJSEvent); safecall;
 
   TJSEventTarget = class external name 'EventTarget' (TJSObject)
   public
@@ -636,7 +636,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   { TJSDataTransferItem }
 
-  TJSDataTransferItemCallBack = reference to Procedure(aData : String);
+  TJSDataTransferItemCallBack = reference to Procedure(aData : String); safecall;
 
   TJSDataTransferItem = class external name 'DataTransferItem'  (TJSObject)
   private
@@ -712,8 +712,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property metaKey  : Boolean Read FmetaKey;
     property dataTransfer : TJSDataTransfer Read FDataTransfer;
   end;
-  TJSDragDropEventHandler = reference to function(aEvent: TJSDragEvent) : Boolean;
-  THTMLClickEventHandler = reference to function(aEvent : TJSMouseEvent) : boolean;
+  TJSDragDropEventHandler = reference to function(aEvent: TJSDragEvent) : Boolean; safecall;
+  THTMLClickEventHandler = reference to function(aEvent : TJSMouseEvent) : boolean; safecall;
   { Various events }
 
 {$IFNDEF FIREFOX}
@@ -791,21 +791,21 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property Total : NativeUINT Read FTotal;
   end;
 
-  TJSPageTransitionEventHandler = reference to function(aEvent : TJsPageTransitionEvent) : boolean;
-  TJSHashChangeEventhandler = reference to function(aEvent : TJSHashChangeEvent) : boolean;
-  TJSMouseWheelEventHandler = reference to function(aEvent : TJSWheelEvent) : boolean;
-  TJSMouseEventHandler = reference to function(aEvent : TJSMouseEvent) : boolean;
-  THTMLAnimationEventHandler = reference to function(aEvent : TJSAnimationEvent) : boolean;
-  TJSErrorEventHandler = reference to function(aEvent : TJSErrorEvent) : boolean;
-  TJSFocusEventHandler = reference to function(aEvent : TJSFocusEvent) : boolean;
-  TJSKeyEventhandler = reference to function (aEvent : TJSKeyBoardEvent) : boolean;
-  TJSLoadEventhandler = reference to function (aEvent : TJSLoadEvent) : boolean;
-  TJSPointerEventHandler = reference to function(aEvent : TJSPointerEvent) : boolean;
-  TJSUIEventHandler = reference to function(aEvent : TJSUIEvent) : Boolean;
-  TJSPopStateEventHandler = reference to function(aEvent : TJSPopStateEvent) : Boolean;
-  TJSStorageEventHandler = reference to function(aEvent : TJSStorageEvent) : Boolean;
-  TJSProgressEventhandler =  reference to function(aEvent : TJSProgressEvent) : Boolean;
-  TJSTouchEventHandler = reference to function(aEvent : TJSTouchEvent) : boolean;
+  TJSPageTransitionEventHandler = reference to function(aEvent : TJsPageTransitionEvent) : boolean; safecall;
+  TJSHashChangeEventhandler = reference to function(aEvent : TJSHashChangeEvent) : boolean; safecall;
+  TJSMouseWheelEventHandler = reference to function(aEvent : TJSWheelEvent) : boolean; safecall;
+  TJSMouseEventHandler = reference to function(aEvent : TJSMouseEvent) : boolean; safecall;
+  THTMLAnimationEventHandler = reference to function(aEvent : TJSAnimationEvent) : boolean; safecall;
+  TJSErrorEventHandler = reference to function(aEvent : TJSErrorEvent) : boolean; safecall;
+  TJSFocusEventHandler = reference to function(aEvent : TJSFocusEvent) : boolean; safecall;
+  TJSKeyEventhandler = reference to function (aEvent : TJSKeyBoardEvent) : boolean; safecall;
+  TJSLoadEventhandler = reference to function (aEvent : TJSLoadEvent) : boolean; safecall;
+  TJSPointerEventHandler = reference to function(aEvent : TJSPointerEvent) : boolean; safecall;
+  TJSUIEventHandler = reference to function(aEvent : TJSUIEvent) : Boolean; safecall;
+  TJSPopStateEventHandler = reference to function(aEvent : TJSPopStateEvent) : Boolean; safecall;
+  TJSStorageEventHandler = reference to function(aEvent : TJSStorageEvent) : Boolean; safecall;
+  TJSProgressEventhandler =  reference to function(aEvent : TJSProgressEvent) : Boolean; safecall;
+  TJSTouchEventHandler = reference to function(aEvent : TJSTouchEvent) : boolean; safecall;
 
   TJSDocument = class external name 'Document' (TJSNode)
   Private
@@ -1850,7 +1850,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   
   TJSCSSStyleDeclaration = class; // forward
 
-  TJSTimerCallBack = reference to procedure;
+  TJSTimerCallBack = reference to procedure; safecall;
   Theader = Array [0..1] of String;
   THeaderArray = Array of Theader;
 
@@ -2836,7 +2836,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSCanvasRenderingContext2D = Class;
 
-  THTMLCanvasToBlobCallback = Reference to function (aBlob : TJSBlob) : boolean;
+  THTMLCanvasToBlobCallback = Reference to function (aBlob : TJSBlob) : boolean; safecall;
 
   TJSHTMLCanvasElement = Class external name 'HTMLCanvasElement' (TJSHTMLElement)
   Public
@@ -3106,7 +3106,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   { TJSXMLHttpRequest }
-  TJSOnReadyStateChangeHandler = reference to procedure;
+  TJSOnReadyStateChangeHandler = reference to procedure; safecall;
 
   TJSXMLHttpRequest = class external name 'XMLHttpRequest' (TJSXMLHttpRequestEventTarget)
   private
@@ -3455,7 +3455,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSMutationRecordArray = array of TJSMutationRecord;
-  TJSMutationCallback = reference to procedure(mutations: TJSMutationRecordArray; observer: TJSMutationObserver);
+  TJSMutationCallback = reference to procedure(mutations: TJSMutationRecordArray; observer: TJSMutationObserver); safecall;
 
   TJSMutationObserverInit = record
     attributes: boolean;

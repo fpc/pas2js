@@ -5,21 +5,36 @@ program errordemo;
 uses
   BrowserConsole, JS, Classes, SysUtils, Web;
 
-function DoRaise(aEvent : TJSMouseEvent) : boolean;
+Type
+
+  { TErrorApp }
+
+  TErrorApp = class
+    function DoRaise(aEvent : TJSMouseEvent) : boolean;
+    function DoHook(aEvent : TJSMouseEvent) : boolean;
+    Procedure DoRaiseJS;
+    Procedure DoRaiseJSError;
+    Procedure DoPascalException(O : TObject);
+    Procedure DoJSException(O : TJSObject);
+  private
+    procedure Run;
+  end;
+
+function TErrorApp.DoRaise(aEvent : TJSMouseEvent) : boolean;
 
 begin
   Result:=False;
   raise exception.Create('A exception');
 end;
 
-function DoHook(aEvent : TJSMouseEvent) : boolean;
+function TErrorApp.DoHook(aEvent : TJSMouseEvent) : boolean;
 
 begin
   Result:=False;
   HookUncaughtExceptions;
 end;
 
-Procedure DoPascalException(O : TObject);
+Procedure TErrorApp.DoPascalException(O : TObject);
 
 begin
   Writeln('O :',O.ClassName);
@@ -27,28 +42,30 @@ begin
     Writeln('Exception class message : ',Exception(O).Message);
 end;
 
-Procedure DoJSException(O : TJSObject);
+Procedure TErrorApp.DoJSException(O : TJSObject);
 begin
   writeln('Javascript exception: ',O.toString);
   if O is TJSError then
     Writeln('Error message : ',TJSError(O).Message);
 end;
 
-Procedure DoRaiseJS; assembler;
+Procedure TErrorApp.DoRaiseJS; assembler;
 asm
   throw new Object();
 end;
 
-Procedure DoRaiseJSError; assembler;
+Procedure TErrorApp.DoRaiseJSError; assembler;
 asm
   var e = new Error();
   e.message="My error message";
   throw e;
 end;
 
+Procedure TErrorApp.Run;
+
 begin
   // This will only work for the main program if you have set showUncaughtExceptions before rtl.run();
-  TJSHtmlButtonElement(Document.getElementById('btnhook')).OnClick:=@DoHook;
+  // TJSHtmlButtonElement(Document.getElementById('btnhook')).OnClick:=@DoHook;
   // These will not be caught (yet)
   TJSHtmlButtonElement(Document.getElementById('btn')).OnClick:=@DoRaise;
   // Uncomment this to set default exception handlers
@@ -63,4 +80,9 @@ begin
   // DoRaiseJSError;
 
   DoRaise(Nil);
+end;
+
+begin
+   With TErrorApp.Create do
+     Run;
 end.

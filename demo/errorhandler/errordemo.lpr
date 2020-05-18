@@ -65,7 +65,7 @@ Procedure TErrorApp.Run;
 
 begin
   // This will only work for the main program if you have set showUncaughtExceptions before rtl.run();
-  // TJSHtmlButtonElement(Document.getElementById('btnhook')).OnClick:=@DoHook;
+  TJSHtmlButtonElement(Document.getElementById('btnhook')).OnClick:=@DoHook;
   // These will not be caught (yet)
   TJSHtmlButtonElement(Document.getElementById('btn')).OnClick:=@DoRaise;
   // Uncomment this to set default exception handlers
@@ -73,7 +73,7 @@ begin
 
   //  Uncomment these to set special exception handlers
   //  SetOnUnCaughtExceptionHandler(@DoPascalException);
-  //  SetOnUnCaughtExceptionHandler(@DoJSException);
+    SetOnUnCaughtExceptionHandler(@DoJSException);
 
   // Various ways to raise an exception.
   // DoRaiseJS;

@@ -315,8 +315,8 @@ type
   TOnGetEnvironmentString = function(Index: Integer): String;
   TOnGetEnvironmentVariableCount = function: Integer;
   TShowExceptionHandler = Procedure (Const Msg : String);
-  TUncaughtPascalExceptionHandler = Procedure(aObject : TObject);
-  TUncaughtJSExceptionHandler = Procedure(aObject : TJSObject);
+  TUncaughtPascalExceptionHandler = reference to Procedure(aObject : TObject);
+  TUncaughtJSExceptionHandler = reference to Procedure(aObject : TJSObject);
 
 var
   OnGetEnvironmentVariable: TOnGetEnvironmentVariable;
@@ -326,10 +326,11 @@ var
   OnShowException : TShowExceptionHandler = nil;
 
 // Set handlers for uncaught exceptions. These will call HookUncaughtExceptions
+// They return the old exception handler, if there was any.
 Function SetOnUnCaughtExceptionHandler(aValue : TUncaughtPascalExceptionHandler) : TUncaughtPascalExceptionHandler;
 Function SetOnUnCaughtExceptionHandler(aValue : TUncaughtJSExceptionHandler) : TUncaughtJSExceptionHandler;
 // Hook the rtl handler for uncaught exceptions. If any exception handlers were set, they will be called.
-// If none was set, the exceptions will be displayed using ShowException.
+// If none were set, the exceptions will be displayed using ShowException.
 Procedure HookUncaughtExceptions;
 
 function GetEnvironmentVariable(Const EnvVar: String): String;

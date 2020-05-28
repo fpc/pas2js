@@ -916,7 +916,7 @@ Type
     Function ToBoolean: Boolean; inline;
     Function ToDouble: Double; inline;
     Function ToExtended: Extended; inline;
-    Function ToBinString:string;
+    Function ToBinString:string; inline;
     Function ToHexString(const AMinDigits: Integer): string; overload; inline;
     Function ToHexString: string; overload; inline;
     Function ToString: string; overload; inline;
@@ -947,7 +947,7 @@ Type
     Function SetBit(const Index: TShortIntBitIndex): Shortint; inline;
     Function ClearBit(const Index: TShortIntBitIndex): Shortint; inline;
     Function ToggleBit(const Index: TShortIntBitIndex): Shortint; inline;
-    Function TestBit(const Index:TShortIntBitIndex):Boolean;
+    Function TestBit(const Index:TShortIntBitIndex):Boolean; inline;
   end;
 
   TSmallIntHelper = Type Helper for SmallInt
@@ -971,7 +971,7 @@ Type
     Function SetBit(const Index: TSmallIntBitIndex) : Smallint; inline;
     Function ClearBit(const Index: TSmallIntBitIndex) : Smallint; inline;
     Function ToggleBit(const Index: TSmallIntBitIndex) : Smallint; inline;
-    Function TestBit(const Index:TSmallIntBitIndex):Boolean;
+    Function TestBit(const Index:TSmallIntBitIndex):Boolean; inline;
   end;
 
   TWordHelper = Type Helper for Word

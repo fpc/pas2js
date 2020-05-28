@@ -6,7 +6,7 @@ TARGETS=democomponents demobrowseconsole demoajax demoxhr restbridgeclient \
   chartjs_democustompoints chartjs_demopolararea promiseall promisestory1 \
   promisestory2 promisestory demodb demoload demorest fpcunitbrowsertest \
   sampleda webgl1 pdfbasic hotreload dynload bootstraptable fullcalendar \
-  jitsimeet opentok
+  jitsimeet opentok asyncmany asyncfetch asyncmanualpromise
 
 ifneq ($(SKIPWEBCOMPILER),1)
 TARGETS:=$(TARGETS) demowebcompiler
@@ -115,4 +115,10 @@ fullcalendar: ./fullcalendar/demofullcalendar.lpr
 jitsimeet: ./jitsimeet/demojitsimeet.lpr
 	$(BROWSERP2JS) $<
 opentok: ./opentok/demoopentok.lpr
+	$(BROWSERP2JS) $<
+asyncmany: ./asyncawait/trymany.lpr
+	$(BROWSERP2JS) $<
+asyncfetch: ./asyncawait/tryfetch.lpr
+	$(BROWSERP2JS) $<
+asyncmanualpromise: ./asyncawait/manualpromise.lpr
 	$(BROWSERP2JS) $<

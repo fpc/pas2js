@@ -1,6 +1,6 @@
 {
     This file is part of the Pas2JS run time library.
-    Copyright (c) 2017-2019 by the Pas2JS development team.
+    Copyright (c) 2017-2020 by the Pas2JS development team.
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.
@@ -1845,9 +1845,13 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property width: Integer read Fwidth;
   end;
 
+  TJSBlob = class;
 
-  TJSURL = class external name 'URL' (TJSObject);
-  
+  TJSURL = class external name 'URL' (TJSObject)
+  public
+    class function createObjectURL(const v: JSValue): string; overload;
+  end;
+
   TJSCSSStyleDeclaration = class; // forward
 
   TJSTimerCallBack = reference to procedure; safecall;
@@ -1862,8 +1866,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function entries : TJSIterator;
     Function get(aName: String): string;
     Function has(aName: String): Boolean;
-    function keys : TJSIterator;
-    function values : TJSIterator;
+    function keys : TJSIterator; reintroduce;
+    function values : TJSIterator; reintroduce;
     procedure set_(aName, aValue : String);
     Property Headers[aName : string] : string Read Get Write Set_;
   end;
@@ -1905,9 +1909,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property body: TJSReadableStream read fbody;
     property bodyUsed: Boolean read fbodyUsed;
     function arrayBuffer(): TJSPromise; // resolves to TJSArrayBuffer
-    function blob(): TJSPromise; // resolves to TJSBlob
+    //function blob(): TJSPromise; // resolves to TJSBlob
+    function blob: TJSBlob; async;
     function json(): TJSPromise; // resolves to JSON / TJSValue
-    function text(): TJSPromise; // resolves to USVString, always decoded using UTF-8
+    //function text(): TJSPromise; // resolves to USVString, always decoded using UTF-8
+    function text(): string; async;
   end;
 
   TJSResponse = class external name 'Response' (TJSBody)
@@ -2052,7 +2058,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Procedure close;
     Function confirm(Const aMsg : String) :  boolean;
     function fetch(resource: String; init: TJSObject): TJSPromise; overload; external name 'fetch';
-    function fetch(resource: String): TJSPromise; overload; external name 'fetch';
+    //function fetch(resource: String): TJSPromise; overload; external name 'fetch';
+    function fetch(resource: String): TJSResponse; async; overload; external name 'fetch';
     function fetch(resource: TJSObject; init: TJSObject): TJSPromise; overload; external name 'fetch';
     function fetch(resource: TJSObject): TJSPromise; overload; external name 'fetch';
     procedure focus;
@@ -3678,7 +3685,7 @@ var
   document : TJSDocument; external name 'document';
   window : TJSWindow; external name 'window';
   console : TJSConsole; external name 'window.console';
-  
+
 implementation
     
 end.

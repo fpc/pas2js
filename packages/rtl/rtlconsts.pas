@@ -20,6 +20,7 @@ Resourcestring
   SInvalidArgIndex              = 'Invalid argument index in format: "%s"';
   SListCapacityError            = 'List capacity (%s) exceeded.';
   SListCountError               = 'List count (%s) out of bounds.';
+  SMapKeyError                  = 'Key not found : %s';
   SListIndexError               = 'List index (%s) out of bounds';
   SSortedListError              = 'Operation not allowed on sorted list';
   SDuplicateString              = 'String list does not allow duplicates';  

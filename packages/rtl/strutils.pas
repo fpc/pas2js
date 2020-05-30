@@ -2119,7 +2119,7 @@ begin
   Result:=S.Split(Delimiters);
 end;
 
-function StartsText(const ASubText, AText: string): Boolean; inline;
+function StartsText(const ASubText, AText: string): Boolean;
 begin
   Result := AnsiStartsText(ASubText, AText);
 end;

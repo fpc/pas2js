@@ -11,12 +11,11 @@ type
 
   { IComparer }
 
-  IComparer<T> = interface
+  IComparer<T> = interface ['{505778ED-F783-4456-9691-32F419CC5E18}']
     function Compare(const Left, Right: T): Integer; overload;
   end;
 
-  TOnComparison<T> = function(const Left, Right: T): Integer of object;
-  TComparisonFunc<T> = function(const Left, Right: T): Integer;
+  TOnComparison<T> = reference to function(const Left, Right: T): Integer;
 
   { TComparer }
 
@@ -29,7 +28,6 @@ type
     function Compare(const ALeft, ARight: T): Integer; virtual; abstract; overload;
 
     class function Construct(const AComparison: TOnComparison<T>): IComparer<T>; overload;
-    class function Construct(const AComparison: TComparisonFunc<T>): IComparer<T>; overload;
   end;
 
   { TDefaultComparer }
@@ -47,16 +45,6 @@ type
   public
     function Compare(const ALeft, ARight: T): Integer; override;
     constructor Create(AComparison: TOnComparison<T>);
-  end;
-
-  { TDelegatedComparerFunc }
-
-  TDelegatedComparerFunc<T> = class(TComparer<T>)
-  private
-    FComparison: TComparisonFunc<T>;
-  public
-    function Compare(const ALeft, ARight: T): Integer; override;
-    constructor Create(AComparison: TComparisonFunc<T>);
   end;
 
   IEnumerator<T> = interface
@@ -84,13 +72,7 @@ end;
 class function TComparer<T>.Construct(const AComparison: TOnComparison<T>
   ): IComparer<T>;
 begin
-  Result := TDelegatedComparerEvents<T>.Create(AComparison);
-end;
-
-class function TComparer<T>.Construct(const AComparison: TComparisonFunc<T>
-  ): IComparer<T>;
-begin
-  Result := TDelegatedComparerFunc<T>.Create(AComparison);
+   Result := TDelegatedComparerEvents<T>.Create(AComparison);
 end;
 
 { TDefaultComparer }
@@ -115,20 +97,10 @@ end;
 
 constructor TDelegatedComparerEvents<T>.Create(AComparison: TOnComparison<T>);
 begin
+  Inherited create;
   FComparison := AComparison;
 end;
 
-{ TDelegatedComparerFunc }
-
-function TDelegatedComparerFunc<T>.Compare(const ALeft, ARight: T): Integer;
-begin
-  Result := FComparison(ALeft, ARight);
-end;
-
-constructor TDelegatedComparerFunc<T>.Create(AComparison: TComparisonFunc<T>);
-begin
-  FComparison := AComparison;
-end;
 
 end.
 

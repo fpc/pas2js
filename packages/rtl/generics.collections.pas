@@ -43,11 +43,12 @@ type
       AIndex, ACount: SizeInt): Boolean; virtual; abstract; overload;
     class function BinarySearch(const AValues: array of T; const AItem: T;
       out AFoundIndex: SizeInt; const AComparer: IComparer<T>): Boolean; overload;
-    //class function BinarySearch(const AValues: array of T; const AItem: T;
-    //  out AFoundIndex: SizeInt): Boolean; overload;
     class function BinarySearch(const AValues: array of T; const AItem: T;
       out ASearchResult: TBinarySearchResult; const AComparer: IComparer<T>): Boolean; overload;
-    //class function BinarySearch(const AValues: array of T; const AItem: T;
+    // No support for automatically creating a comparer.
+    //  class function BinarySearch(const AValues: array of T; const AItem: T;
+    //  out AFoundIndex: SizeInt): Boolean; overload;
+    //  class function BinarySearch(const AValues: array of T; const AItem: T;
     //  out ASearchResult: TBinarySearchResult): Boolean; overload;
   end;
 
@@ -204,7 +205,7 @@ implementation
 class procedure TCustomArrayHelper<T>.Sort(var AValues: array of T;
   const AComparer: IComparer<T>);
 begin
-  QuickSort(AValues, Low(AValues), High(AValues), AComparer);
+  QuickSort(AValues, 0, Length(AValues), AComparer);
 end;
 
 class procedure TCustomArrayHelper<T>.Sort(var AValues: array of T;
@@ -219,16 +220,18 @@ class function TCustomArrayHelper<T>.BinarySearch(const AValues: array of T;
   const AItem: T; out AFoundIndex: SizeInt; const AComparer: IComparer<T>
   ): Boolean;
 begin
+  Writeln('Here too',Length(aValues));
   Result := BinarySearch(AValues, AItem, AFoundIndex, AComparer,
-                         Low(AValues), High(AValues));
+                         0, Length(AValues));
 end;
 
 class function TCustomArrayHelper<T>.BinarySearch(const AValues: array of T;
   const AItem: T; out ASearchResult: TBinarySearchResult;
   const AComparer: IComparer<T>): Boolean;
 begin
+  Writeln('Here',Length(aValues));
   Result := BinarySearch(AValues, AItem, ASearchResult, AComparer,
-                         Low(AValues), High(AValues));
+                         0, Length(AValues));
 end;
 
 { TArrayHelper }
@@ -284,15 +287,20 @@ class function TArrayHelper<T>.BinarySearch(const AValues: array of T;
   const AItem: T; out ASearchResult: TBinarySearchResult;
   const AComparer: IComparer<T>; AIndex, ACount: SizeInt): Boolean;
 var
-  imin, imax, imid: Int32;
+  imin, imax, imid, ilo: Int32;
+
 begin
+  Writeln('Enter ',Length(aValues),' Idx ',aIndex,' acount: ',aCount);
   // continually narrow search until just one element remains
   imin := AIndex;
   imax := Pred(AIndex + ACount);
-
+  Writeln('Start Imax, imin : ',Imax, ' - ', imin);
+  ilo:=imid * imid;
+  imid:=ilo*imid;
   while (imin < imax) do
   begin
     imid := (imax+imin) div 2;
+    writeln('imid',imid);
 
     ASearchResult.CompareResult := AComparer.Compare(AValues[imid], AItem);
     // reduce the search
@@ -314,7 +322,7 @@ begin
   //   otherwise imax == imin
 
   // deferred test for equality
-
+  Writeln('End Imax, imin : ',Imax, ' - ', imin);
   if (imax = imin) then
   begin
     ASearchResult.CompareResult := AComparer.Compare(AValues[imin], AItem);

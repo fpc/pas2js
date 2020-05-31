@@ -27,14 +27,16 @@ program testrtl;
 uses
   browserconsole, consoletestrunner, frmrtlrun,
 //  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers
-  tcgenarrayhelper,
+//  tcgenarrayhelper,
 //  tcstringhelp
-  strutils;
+  tcgenericdictionary,
+  strutils, sysutils;
 
 var
   Application : TTestRunner;
 
 begin
+  SysUtils.HookUncaughtExceptions;
   Application:=TTestRunner.Create(nil);
   Application.RunFormClass:=TConsoleRunner;
   Application.Initialize;

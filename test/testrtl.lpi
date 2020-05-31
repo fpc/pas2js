@@ -76,6 +76,10 @@
         <Filename Value="tcgenarrayhelper.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="tcgenericdictionary.pp"/>
+        <IsPartOfProject Value="True"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
@@ -95,6 +99,9 @@
     </Parsing>
     <CodeGeneration>
       <TargetOS Value="browser"/>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
     </CodeGeneration>
     <Linking>
       <Debugging>
@@ -103,7 +110,7 @@
       </Debugging>
     </Linking>
     <Other>
-      <CustomOptions Value="-Jeutf-8 -Jirtl.js -Jc"/>
+      <CustomOptions Value="-Jeutf-8 -Jirtl.js -Jc -O-"/>
       <CompilerPath Value="$(pas2js)"/>
     </Other>
   </CompilerOptions>

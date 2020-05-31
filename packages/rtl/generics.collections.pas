@@ -6,7 +6,7 @@ unit Generics.Collections;
 interface
 
 uses
-  Classes, SysUtils,
+  Classes, SysUtils, rtlconsts, Types,
   {$IFDEF Pas2js}JS,{$ENDIF}
   Generics.Strings, Generics.Defaults;
 
@@ -197,6 +197,151 @@ type
     property Count: SizeInt read FLength write SetCount;
     property Items[Index: SizeInt]: T read GetItem write SetItem; default;
   end;
+
+  { TPair }
+
+  TPair<TKey,TValue> = record
+    Key: TKey;
+    Value: TValue;
+    constructor Create(const AKey: TKey; const AValue: TValue);
+  end;
+
+  // Hash table using linear probing
+
+  { TDictionary }
+  EDictionary = Class(Exception);
+
+  TDictionary<TKey,TValue> = class(TEnumerable<TPair<TKey,TValue>>)
+  private
+    FMap: TJSMap;
+    function GetItem(const Key: TKey): TValue;
+    procedure SetItem(const Key: TKey; const Value: TValue);
+    procedure DoAdd(const Key: TKey; const Value: TValue);
+    function DoRemove(const Key: TKey; Notification: TCollectionNotification): TValue;
+    Function GetCount : Integer;
+  protected
+    function DoGetEnumerator: TEnumerator<TPair<TKey,TValue>>; override;
+    procedure PairNotify(const Key: TKey; Value : TValue; Action: TCollectionNotification); virtual;
+    procedure KeyNotify(const Key: TKey; Action: TCollectionNotification); virtual;
+    procedure ValueNotify(const Value: TValue; Action: TCollectionNotification); virtual;
+  public
+    Type
+      TMyType = TDictionary<TKey,TValue>;
+      TMyPair = TPair<TKey,TValue>;
+
+    constructor Create(ACapacity: Integer); overload;
+    constructor Create2(const Collection: TEnumerable<TMyPair>); overload;
+    destructor Destroy; override;
+
+    procedure Add(const Key: TKey; const Value: TValue);
+    procedure Remove(const Key: TKey);
+    function ExtractPair(const Key: TKey): TMyPair;
+    procedure Clear;
+    function TryGetValue(const Key: TKey; out Value: TValue): Boolean;
+    procedure AddOrSetValue(const Key: TKey; const Value: TValue);
+    function ContainsKey(const Key: TKey): Boolean;
+    function ContainsValue(const Value: TValue): Boolean;
+    function ToArray: TArray<TMyPair>; override;
+
+    property Items[const Key: TKey]: TValue read GetItem write SetItem; default;
+    property Count: Integer read GetCount;
+
+    type
+      { TPairEnumerator }
+
+      TPairEnumerator = class(TEnumerator<TMyPair>)
+      private
+        FIter: TJSIterator;
+        FVal : TJSIteratorValue;
+        function GetCurrent: TMyPair;
+      protected
+        function DoGetCurrent: TMyPair; override;
+        function DoMoveNext: Boolean; override;
+      public
+        constructor Create(const ADictionary: TMyType);
+        function MoveNext: Boolean; reintroduce;
+        property Current: TMyPair read GetCurrent;
+      end;
+
+      { TKeyEnumerator }
+
+      TKeyEnumerator = class(TEnumerator<TKey>)
+      private
+        FIter: TJSIterator;
+        FVal : TJSIteratorValue;
+        function GetCurrent: TKey;
+      protected
+        function DoGetCurrent: TKey; override;
+        function DoMoveNext: Boolean; override;
+      public
+        constructor Create(const AIter: TJSIterator); overload;
+        constructor Create(const ADictionary: TMyType); overload;
+        function MoveNext: Boolean; reintroduce;
+        property Current: TKey read GetCurrent;
+      end;
+
+      { TValueEnumerator }
+
+      TValueEnumerator = class(TEnumerator<TValue>)
+      private
+        FIter: TJSIterator;
+        FVal : TJSIteratorValue;
+        function GetCurrent: TValue;
+      protected
+        function DoGetCurrent: TValue; override;
+        function DoMoveNext: Boolean; override;
+      public
+        constructor Create(const AIter: TJSIterator); overload;
+        constructor Create(const ADictionary: TMyType); overload;
+        function MoveNext: Boolean; reintroduce;
+        property Current: TValue read GetCurrent;
+      end;
+
+      { TValueCollection }
+
+      TValueCollection = class(TEnumerable<TValue>)
+      private
+        FMap: TJSMap;
+        function GetCount: Integer;
+      protected
+        function DoGetEnumerator: TEnumerator<TValue>; override;
+      public
+        constructor Create(const ADictionary: TMyType);
+        function GetEnumerator: TValueEnumerator; reintroduce;
+        function ToArray: TArray<TValue>; override;
+        property Count: Integer read GetCount;
+      end;
+
+      { TKeyCollection }
+
+      TKeyCollection = class(TEnumerable<TKey>)
+      private
+        FMap: TJSMap;
+        function GetCount: Integer;
+      protected
+        function DoGetEnumerator: TEnumerator<TKey>; override;
+      public
+        constructor Create(const ADictionary: TMyType);
+        function GetEnumerator: TKeyEnumerator; reintroduce;
+        function ToArray: TArray<TKey>; override;
+        property Count: Integer read GetCount;
+      end;
+
+  private
+    FOnKeyNotify: TCollectionNotifyEvent<TKey>;
+    FOnValueNotify: TCollectionNotifyEvent<TValue>;
+    FKeyCollection: TKeyCollection;
+    FValueCollection: TValueCollection;
+    function GetKeys: TKeyCollection;
+    function GetValues: TValueCollection;
+  public
+    function GetEnumerator: TPairEnumerator; reintroduce;
+    property Keys: TKeyCollection read GetKeys;
+    property Values: TValueCollection read GetValues;
+    property OnKeyNotify: TCollectionNotifyEvent<TKey> read FOnKeyNotify write FOnKeyNotify;
+    property OnValueNotify: TCollectionNotifyEvent<TValue> read FOnValueNotify write FOnValueNotify;
+  end;
+
 
 implementation
 
@@ -864,4 +1009,384 @@ begin
   Result := TMyArrayHelper.BinarySearch(FItems, AItem, AIndex, AComparer, 0, Count);
 end;
 
+{ TPair }
+
+constructor TPair<TKey,TValue>.Create(const AKey: TKey; const AValue: TValue);
+begin
+  Key:=aKey;
+  Value:=aValue;
+end;
+
+{ TDictionary }
+
+ResourceString
+  SErrDictKeyNotFound = 'Key value not found';
+  SErrDictDuplicateKey = 'Duplicate key value';
+
+function TDictionary<TKey, TValue>.GetItem(const Key: TKey): TValue;
+
+Var
+  V : JSValue;
+
+begin
+  V:=FMap.Get(Key);
+  if isUndefined(v) then
+    Raise EDictionary.Create(SErrDictKeyNotFound);
+  Result:=TValue(V);
+end;
+
+procedure TDictionary<TKey, TValue>.SetItem(const Key: TKey; const Value: TValue);
+
+Var
+  V : JSValue;
+
+begin
+  V:=FMap.Get(Key);
+  if isUndefined(v) then
+    ValueNotify(TValue(V),cnRemoved);
+  FMap.&Set(Key,Value);
+  ValueNotify(Value, cnAdded);
+end;
+
+procedure TDictionary<TKey, TValue>.DoAdd(const Key: TKey; const Value: TValue);
+begin
+  FMap.&Set(Key,Value);
+  KeyNotify(Key,cnAdded);
+  ValueNotify(Value,cnAdded);
+end;
+
+
+function TDictionary<TKey, TValue>.DoRemove(const Key: TKey; Notification: TCollectionNotification): TValue;
+Var
+  V : JSValue;
+
+begin
+  V:=FMap.Get(Key);
+  if Not isUndefined(v) then
+    begin
+    FMap.Delete(Key);
+    Result:=TValue(v);
+    KeyNotify(Key,Notification);
+    ValueNotify(Result,Notification);
+    end;
+end;
+
+function TDictionary<TKey, TValue>.GetCount: Integer;
+begin
+  Result:=FMap.Size;
+end;
+
+function TDictionary<TKey, TValue>.DoGetEnumerator: TEnumerator<TMyPair>;
+begin
+  Result:=TPairEnumerator.Create(Self);
+end;
+
+procedure TDictionary<TKey, TValue>.PairNotify(const Key: TKey; Value : TValue; Action: TCollectionNotification);
+
+begin
+  KeyNotify(Key,action);
+  ValueNotify(Value,action);
+end;
+
+procedure TDictionary<TKey, TValue>.KeyNotify(const Key: TKey; Action: TCollectionNotification);
+begin
+  if Assigned(FOnKeyNotify) then
+    FOnKeyNotify(Self,Key,Action);
+end;
+
+procedure TDictionary<TKey, TValue>.ValueNotify(const Value: TValue; Action: TCollectionNotification);
+begin
+  if Assigned(FOnValueNotify) then
+    FOnValueNotify(Self,Value,Action);
+end;
+
+constructor TDictionary<TKey, TValue>.Create(ACapacity: Integer = 0);
+begin
+
+  FMap:=TJSMap.New;
+end;
+
+constructor TDictionary<TKey, TValue>.Create2(const Collection: TEnumerable<TMyPair>);
+
+Var
+  aPair : TMyPair;
+
+begin
+  Create(0);
+  For aPair in Collection do
+    Add(aPair.Key,aPair.Value);
+end;
+
+destructor TDictionary<TKey, TValue>.Destroy;
+begin
+  FreeAndNil(FKeyCollection);
+  FreeAndNil(FValueCollection);
+  Clear;
+  FMap:=Nil;
+  inherited Destroy;
+end;
+
+procedure TDictionary<TKey, TValue>.Add(const Key: TKey; const Value: TValue);
+begin
+  if FMap.Has(Key) then
+    Raise EDictionary.Create(SErrDictDuplicateKey);
+  DoAdd(Key,Value);
+end;
+
+procedure TDictionary<TKey, TValue>.Remove(const Key: TKey);
+begin
+  doRemove(Key,cnRemoved);
+end;
+
+function TDictionary<TKey, TValue>.ExtractPair(const Key: TKey): TMyPair;
+
+begin
+  if FMap.Has(Key) then
+    begin
+    Result.Create(Key,TValue(FMap.get(key)));
+    FMap.Delete(Key);
+    end
+  else
+    Result.Create(Key,Default(TValue));
+end;
+
+procedure TDictionary<TKey, TValue>.Clear;
+begin
+  FMap.Clear;
+end;
+
+
+function TDictionary<TKey, TValue>.TryGetValue(const Key: TKey; out Value: TValue): Boolean;
+begin
+  Result:=FMap.Has(Key);
+  If Result then
+    Value:=TValue(FMap.get(Key));
+end;
+
+procedure TDictionary<TKey, TValue>.AddOrSetValue(const Key: TKey; const Value: TValue);
+begin
+  if Not FMap.Has(Key) then
+    DoAdd(Key,Value)
+  else
+    SetItem(Key,Value);
+end;
+
+function TDictionary<TKey, TValue>.ContainsKey(const Key: TKey): Boolean;
+begin
+  Result:=FMap.Has(Key);
+end;
+
+function TDictionary<TKey, TValue>.ContainsValue(const Value: TValue): Boolean;
+
+Var
+  It : TJSIterator;
+  Res : TJSIteratorValue;
+
+begin
+  Result:=False;
+  It:=FMap.Values;
+  Repeat
+    Res:=It.next;
+    if not Res.done then
+      Result:=(Value=TValue(Res.value));
+  Until (Result or Res.done);
+end;
+
+function TDictionary<TKey, TValue>.ToArray: TArray<TMyPair>;
+begin
+  Result:=inherited ToArray;
+end;
+
+function TDictionary<TKey, TValue>.GetKeys: TKeyCollection;
+begin
+  if FKeyCollection=Nil then
+    FKeyCollection:=TKeyCollection.Create(Self);
+  Result:=FKeyCollection;
+end;
+
+function TDictionary<TKey, TValue>.GetValues: TValueCollection;
+begin
+  if FValueCollection=Nil then
+    FValueCollection:=TValueCollection.Create(Self);
+  Result:=FValueCollection;
+end;
+
+function TDictionary<TKey, TValue>.GetEnumerator: TPairEnumerator;
+begin
+  Result:=TPairEnumerator.Create(Self);
+end;
+
+{ TDictionary.TPairEnumerator }
+
+function TDictionary<TKey, TValue>.TPairEnumerator.GetCurrent: TMyPair;
+begin
+  Result:=DoGetCurrent;
+end;
+
+function TDictionary<TKey, TValue>.TPairEnumerator.DoGetCurrent: TMyPair;
+
+Var
+  A : TJSValueDynArray;
+
+begin
+  A:=TJSValueDynArray(FVal.Value);
+  Result.Create(TKey(A[0]),TValue(A[1]));
+end;
+
+function TDictionary<TKey, TValue>.TPairEnumerator.DoMoveNext: Boolean;
+begin
+  FIter.Next;
+  Result:=Not FVal.Done;
+end;
+
+constructor TDictionary<TKey, TValue>.TPairEnumerator.Create(const ADictionary: TMyType);
+begin
+  FIter:=ADictionary.FMap.Entries;
+end;
+
+function TDictionary<TKey, TValue>.TPairEnumerator.MoveNext: Boolean;
+begin
+  Result:=DoMoveNext;
+end;
+
+{ TDictionary.TKeyEnumerator }
+
+function TDictionary<TKey, TValue>.TKeyEnumerator.GetCurrent: TKey;
+begin
+  Result:=DoGetCurrent;
+end;
+
+function TDictionary<TKey, TValue>.TKeyEnumerator.DoGetCurrent: TKey;
+begin
+  Result:=TKey(FVal.Value);
+end;
+
+function TDictionary<TKey, TValue>.TKeyEnumerator.DoMoveNext: Boolean;
+begin
+  FIter.Next;
+  Result:=Not FVal.Done;
+end;
+
+constructor TDictionary<TKey, TValue>.TKeyEnumerator.Create(const ADictionary: TMyType);
+begin
+  Create(ADictionary.FMap.Keys);
+end;
+
+constructor TDictionary<TKey, TValue>.TKeyEnumerator.Create(const AIter : TJSIterator);
+begin
+  FIter:=aIter;
+end;
+
+function TDictionary<TKey, TValue>.TKeyEnumerator.MoveNext: Boolean;
+begin
+  Result:=DoMoveNext;
+end;
+
+{ TDictionary.TValueEnumerator }
+
+function TDictionary<TKey, TValue>.TValueEnumerator.GetCurrent: TValue;
+begin
+  Result:=DoGetCurrent;
+end;
+
+function TDictionary<TKey, TValue>.TValueEnumerator.DoGetCurrent: TValue;
+begin
+  Result:=TValue(FVal.Value);
+end;
+
+function TDictionary<TKey, TValue>.TValueEnumerator.DoMoveNext: Boolean;
+begin
+  FIter.Next;
+  Result:=Not FVal.Done;
+end;
+
+constructor TDictionary<TKey, TValue>.TValueEnumerator.Create(const ADictionary: TMyType);
+begin
+  Create(aDictionary.FMap.Values);
+end;
+
+constructor TDictionary<TKey, TValue>.TValueEnumerator.Create(const AIter: TJSIterator);
+begin
+  FIter:=AIter;
+end;
+
+function TDictionary<TKey, TValue>.TValueEnumerator.MoveNext: Boolean;
+begin
+  Result:=DoMoveNext;
+end;
+
+{ TDictionary.TValueCollection }
+
+function TDictionary<TKey, TValue>.TValueCollection.GetCount: Integer;
+begin
+  Result:=FMap.Size;
+end;
+
+function TDictionary<TKey, TValue>.TValueCollection.DoGetEnumerator: TEnumerator<TValue>;
+begin
+  Result:=TValueEnumerator.Create(FMap.Values);
+end;
+
+constructor TDictionary<TKey, TValue>.TValueCollection.Create(const ADictionary: TMyType);
+begin
+  FMap:=ADictionary.FMap;
+end;
+
+function TDictionary<TKey, TValue>.TValueCollection.GetEnumerator: TValueEnumerator;
+begin
+  Result:=TValueEnumerator(DoGetEnumerator);
+end;
+
+function TDictionary<TKey, TValue>.TValueCollection.ToArray: TArray<TValue>;
+
+Var
+  I : Integer;
+  P : TValue;
+
+begin
+  SetLength(Result,FMap.Size);
+  For P in Self do
+    begin
+    Result[i]:=P;
+    Inc(I);
+    End;
+end;
+
+{ TDictionary.TKeyCollection }
+
+function TDictionary<TKey, TValue>.TKeyCollection.GetCount: Integer;
+begin
+  Result:=FMap.Size;
+end;
+
+function TDictionary<TKey, TValue>.TKeyCollection.DoGetEnumerator: TEnumerator<TKey>;
+begin
+  Result:=GetEnumerator;
+end;
+
+constructor TDictionary<TKey, TValue>.TKeyCollection.Create(const ADictionary: TMyType);
+begin
+  FMap:=aDictionary.FMap;
+end;
+
+function TDictionary<TKey, TValue>.TKeyCollection.GetEnumerator: TKeyEnumerator;
+begin
+  Result:=TKeyEnumerator.Create(FMap.Keys);
+end;
+
+function TDictionary<TKey, TValue>.TKeyCollection.ToArray: TArray<TKey>;
+begin
+  Result:=inherited ToArray;
+end;
+
+Type
+  TMyDict = TDictionary<integer,string>;
+
+Var
+  MyDict : TMyDict;
+
+begin
+  MyDict:=TMyDict.Create;
+  MyDict.Add(1,'aloga');
+  MyDict.Free;
 end.

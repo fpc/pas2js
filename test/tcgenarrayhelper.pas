@@ -58,7 +58,7 @@ procedure TTestArrayHelper.CheckBinarySearch(constref AArray: TArray<Integer>;
 
 begin
   CheckEquals(AExpectedResult,
-    TArrayHelper<Integer>.BinarySearch(AArray,AValue,ASearchResult,aComparer),
+    TArrayHelper<Integer>.BinarySearch(AArray,AValue,ASearchResult,aComparer,0,Length(AArray)),
     'Wrong BinarySearch result for ' + AValue.ToString);
 end;
 

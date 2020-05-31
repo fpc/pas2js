@@ -9,16 +9,32 @@ uses
 
 Type
   TMySimpleDict = Class(Specialize TDictionary<Integer,String>);
-
+{$IFDEF FPC}
+  EDictionary = EListError;
+  TMyPair = specialize TPair<Integer,String>;
+{$ENDIF}
   { TTestSimpleDictionary }
 
   TTestSimpleDictionary = Class(TTestCase)
   Private
     FDict : TMySimpleDict;
+    FnotifyMessage : String;
+    FCurrentKeyNotify : Integer;
+    FCurrentValueNotify : Integer;
+    FExpectKeys : Array of Integer;
+    FExpectValues : Array of String;
+    FExpectValueAction,
+    FExpectKeyAction: Array of TCollectionNotification;
     procedure DoAdd(aCount: Integer; aOffset: Integer=0);
     procedure DoAdd2;
+    Procedure DoneExpectKeys;
+    Procedure DoneExpectValues;
     procedure DoGetValue(aKey: Integer; Match: String; ExceptionClass: TClass=nil);
+    procedure DoKeyNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: Integer; AAction: TCollectionNotification);
+    procedure DoValueNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: String; AAction: TCollectionNotification);
   Public
+    Procedure SetExpectKeys(aMessage : string; AKeys : Array of Integer; AActions : Array of TCollectionNotification; DoReverse : Boolean = False);
+    Procedure SetExpectValues(aMessage : string; AKeys : Array of String; AActions : Array of TCollectionNotification; DoReverse : Boolean = False);
     Procedure SetUp; override;
     Procedure TearDown; override;
     Property Dict : TMySimpleDict Read FDict;
@@ -32,7 +48,17 @@ Type
     Procedure TestAddDuplicate;
     Procedure TestAddOrSet;
     Procedure TestContainsKey;
+    Procedure TestContainsValue;
     Procedure TestDelete;
+    Procedure TestToArray;
+    procedure TestKeys;
+    Procedure TestValues;
+    Procedure TestEnumerator;
+    Procedure TestNotification;
+    procedure TestNotificationDelete;
+    procedure TestValueNotification;
+    procedure TestValueNotificationDelete;
+    procedure TestKeyValueNotificationSet;
   end;
 
 implementation
@@ -43,10 +69,19 @@ procedure TTestSimpleDictionary.SetUp;
 begin
   inherited SetUp;
   FDict:=TMySimpleDict.Create;
+  FCurrentKeyNotify:=0;
+  FCurrentValueNotify:=0;
+  FExpectKeys:=[];
+  FExpectKeyAction:=[];
+  FExpectValues:=[];
+  FExpectValueAction:=[];
 end;
 
 procedure TTestSimpleDictionary.TearDown;
 begin
+  // So we don't get clear messages
+  FDict.OnKeyNotify:=Nil;
+  FDict.OnValueNotify:=Nil;
   FreeAndNil(FDict);
   inherited TearDown;
 end;
@@ -137,6 +172,81 @@ begin
     end;
 end;
 
+procedure TTestSimpleDictionary.DoKeyNotify(ASender: TObject;  {$ifdef fpc}constref{$else}const{$endif}  AItem: Integer; AAction: TCollectionNotification);
+begin
+  Writeln(FnotifyMessage+' Notification',FCurrentKeyNotify);
+  AssertSame(FnotifyMessage+' Correct sender', FDict,aSender);
+  if (FCurrentKeyNotify>=Length(FExpectKeys)) then
+    Fail(FnotifyMessage+' Too many notificiations');
+  AssertEquals(FnotifyMessage+' Notification Key no '+IntToStr(FCurrentKeyNotify),FExpectKeys[FCurrentKeyNotify],aItem);
+  Inc(FCurrentKeyNotify);
+end;
+
+procedure TTestSimpleDictionary.DoValueNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: String; AAction: TCollectionNotification);
+begin
+  Writeln(FnotifyMessage+' value Notification',FCurrentValueNotify);
+  AssertSame(FnotifyMessage+' value Correct sender', FDict,aSender);
+  if (FCurrentValueNotify>=Length(FExpectValues)) then
+    Fail(FnotifyMessage+' Too many value notificiations');
+  AssertEquals(FnotifyMessage+' Notification value no '+IntToStr(FCurrentValueNotify),FExpectValues[FCurrentValueNotify],aItem);
+  Inc(FCurrentValueNotify);
+end;
+
+procedure TTestSimpleDictionary.SetExpectKeys(aMessage: string; AKeys: array of Integer;
+  AActions: array of TCollectionNotification; DoReverse: Boolean = False);
+
+Var
+  I,L : integer;
+
+begin
+  FnotifyMessage:=aMessage;
+  FCurrentKeyNotify:=0;
+  L:=Length(aKeys);
+  AssertEquals('SetExpectkeys: Lengths arrays equal',l,Length(aActions));
+  SetLength(FExpectKeys,L);
+  SetLength(FExpectKeyAction,L);
+  Dec(L);
+  if DoReverse then
+    For I:=0 to L do
+      begin
+      FExpectKeys[L-i]:=AKeys[i];
+      FExpectKeyAction[L-i]:=AActions[I];
+      end
+  else
+    For I:=0 to L do
+      begin
+      FExpectKeys[i]:=AKeys[i];
+      FExpectKeyAction[i]:=AActions[I];
+      end;
+end;
+
+procedure TTestSimpleDictionary.SetExpectValues(aMessage: string; AKeys: array of String;
+  AActions: array of TCollectionNotification; DoReverse: Boolean);
+Var
+  I,L : integer;
+
+begin
+  FnotifyMessage:=aMessage;
+  FCurrentValueNotify:=0;
+  L:=Length(aKeys);
+  AssertEquals('SetExpectValues: Lengths arrays equal',l,Length(aActions));
+  SetLength(FExpectValues,L);
+  SetLength(FExpectValueAction,L);
+  Dec(L);
+  if DoReverse then
+    For I:=0 to L do
+      begin
+      FExpectValues[L-i]:=AKeys[i];
+      FExpectValueAction[L-i]:=AActions[I];
+      end
+  else
+    For I:=0 to L do
+      begin
+      FExpectValues[i]:=AKeys[i];
+      FExpectValueAction[i]:=AActions[I];
+      end;
+end;
+
 procedure TTestSimpleDictionary.TestGetValue;
 
 Var
@@ -160,6 +270,16 @@ procedure TTestSimpleDictionary.DoAdd2;
 
 begin
   Dict.Add(2,'A new 2');
+end;
+
+procedure TTestSimpleDictionary.DoneExpectKeys;
+begin
+  AssertEquals(FnotifyMessage+' Expected number of keys seen',Length(FExpectKeys),FCurrentKeyNotify);
+end;
+
+procedure TTestSimpleDictionary.DoneExpectValues;
+begin
+  AssertEquals(FnotifyMessage+' Expected number of values seen',Length(FExpectValues),FCurrentValueNotify);
 end;
 
 procedure TTestSimpleDictionary.TestAddDuplicate;
@@ -188,12 +308,153 @@ begin
   AssertFalse('Has not 4',Dict.ContainsKey(4));
 end;
 
+procedure TTestSimpleDictionary.TestContainsValue;
+
+Var
+  I : Integer;
+
+begin
+  DoAdd(3);
+  For I:=1 to 3 do
+    AssertTrue('Has '+IntToStr(i),Dict.ContainsValue(IntToStr(i)));
+  AssertFalse('Has not 4',Dict.ContainsValue('4'));
+end;
+
 procedure TTestSimpleDictionary.TestDelete;
+
 begin
   DoAdd(3);
   Dict.Remove(2);
   AssertEquals('Count',2,Dict.Count);
   AssertFalse('Has not 2',Dict.ContainsKey(2));
+end;
+
+procedure TTestSimpleDictionary.TestToArray;
+
+Var
+{$ifdef fpc}
+  A : specialize TArray<TMyPair>;
+{$else}
+  A : specialize TArray<TMySimpleDict.TMyPair>;
+{$endif}
+  I : Integer;
+  SI : String;
+
+begin
+  DoAdd(3);
+  A:=Dict.ToArray;
+  AssertEquals('Length Ok',3,Length(A));
+  For I:=1 to 3 do
+    begin
+    SI:=IntToStr(I);
+    AssertEquals('key '+SI,I,A[i-1].Key);
+    AssertEquals('Value '+SI,SI,A[i-1].Value);
+    end;
+end;
+
+procedure TTestSimpleDictionary.TestKeys;
+
+Var
+  A : Array of Integer;
+  I : Integer;
+  SI : String;
+
+begin
+  DoAdd(3);
+  A:=Dict.Keys.ToArray;
+  AssertEquals('Length Ok',3,Length(A));
+  For I:=1 to 3 do
+    begin
+    SI:=IntToStr(I);
+    AssertEquals('key '+SI,I,A[i-1]);
+    end;
+end;
+
+procedure TTestSimpleDictionary.TestValues;
+Var
+  A : Array of String;
+  I : Integer;
+  SI : String;
+
+begin
+  DoAdd(3);
+  A:=Dict.Values.ToArray;
+  AssertEquals('Length Ok',3,Length(A));
+  For I:=1 to 3 do
+    begin
+    SI:=IntToStr(I);
+    AssertEquals('Value '+SI,SI,A[i-1]);
+    end;
+end;
+
+procedure TTestSimpleDictionary.TestEnumerator;
+
+Var
+{$ifdef fpc}
+  A : TMyPair;
+{$else}
+  A : TMySimpleDict.TMyPair;
+{$endif}
+  I : Integer;
+  SI : String;
+
+begin
+  DoAdd(3);
+  I:=1;
+  For A in Dict do
+    begin
+    SI:=IntToStr(I);
+    AssertEquals('key '+SI,I,A.Key);
+    AssertEquals('Value '+SI,SI,A.Value);
+    Inc(I);
+    end;
+end;
+
+procedure TTestSimpleDictionary.TestNotification;
+begin
+  Dict.OnKeyNotify:=@DoKeyNotify;
+  SetExpectKeys('Add',[1,2,3],[cnAdded,cnAdded,cnAdded]);
+  DoAdd(3);
+  DoneExpectKeys;
+end;
+
+procedure TTestSimpleDictionary.TestNotificationDelete;
+
+begin
+  DoAdd(3);
+  Dict.OnKeyNotify:=@DoKeyNotify;
+  SetExpectKeys('Clear',[1,2,3],[cnRemoved,cnRemoved,cnRemoved],{$IFDEF FPC}true{$ELSE}False{$endif});
+  Dict.Clear;
+  DoneExpectKeys;
+end;
+
+procedure TTestSimpleDictionary.TestValueNotification;
+begin
+  Dict.OnValueNotify:=@DoValueNotify;
+  SetExpectValues('Add',['1','2','3'],[cnAdded,cnAdded,cnAdded]);
+  DoAdd(3);
+  DoneExpectValues;
+end;
+
+procedure TTestSimpleDictionary.TestValueNotificationDelete;
+begin
+  DoAdd(3);
+  Dict.OnValueNotify:=@DoValueNotify;
+  SetExpectValues('Clear',['1','2','3'],[cnRemoved,cnRemoved,cnRemoved],{$IFDEF FPC}true{$ELSE}False{$endif});
+  Dict.Clear;
+  DoneExpectValues;
+end;
+
+procedure TTestSimpleDictionary.TestKeyValueNotificationSet;
+begin
+  DoAdd(3);
+  Dict.OnValueNotify:=@DoValueNotify;
+  Dict.OnKeyNotify:=@DoKeyNotify;
+  SetExpectValues('Set',['2','Six'],[cnRemoved,cnAdded]);
+  SetExpectKeys('Set',[],[]);
+  Dict[2]:='Six';
+  DoneExpectKeys;
+  DoneExpectValues;
 end;
 
 begin

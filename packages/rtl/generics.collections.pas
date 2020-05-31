@@ -220,6 +220,7 @@ type
     function DoRemove(const Key: TKey; Notification: TCollectionNotification): TValue;
     Function GetCount : Integer;
   protected
+    Function CanClearMap : Boolean; virtual;
     function DoGetEnumerator: TEnumerator<TPair<TKey,TValue>>; override;
     procedure PairNotify(const Key: TKey; Value : TValue; Action: TCollectionNotification); virtual;
     procedure KeyNotify(const Key: TKey; Action: TCollectionNotification); virtual;
@@ -275,7 +276,7 @@ type
         function DoMoveNext: Boolean; override;
       public
         constructor Create(const AIter: TJSIterator); overload;
-        constructor Create(const ADictionary: TMyType); overload;
+        constructor Create2(const ADictionary: TMyType); overload;
         function MoveNext: Boolean; reintroduce;
         property Current: TKey read GetCurrent;
       end;
@@ -292,7 +293,7 @@ type
         function DoMoveNext: Boolean; override;
       public
         constructor Create(const AIter: TJSIterator); overload;
-        constructor Create(const ADictionary: TMyType); overload;
+        constructor Create2(const ADictionary: TMyType); overload;
         function MoveNext: Boolean; reintroduce;
         property Current: TValue read GetCurrent;
       end;
@@ -1042,7 +1043,7 @@ Var
 
 begin
   V:=FMap.Get(Key);
-  if isUndefined(v) then
+  if Not isUndefined(v) then
     ValueNotify(TValue(V),cnRemoved);
   FMap.&Set(Key,Value);
   ValueNotify(Value, cnAdded);
@@ -1102,7 +1103,6 @@ end;
 
 constructor TDictionary<TKey, TValue>.Create(ACapacity: Integer = 0);
 begin
-
   FMap:=TJSMap.New;
 end;
 
@@ -1150,9 +1150,39 @@ begin
     Result.Create(Key,Default(TValue));
 end;
 
-procedure TDictionary<TKey, TValue>.Clear;
+Function TDictionary<TKey, TValue>.CanClearMap : Boolean;
+
 begin
-  FMap.Clear;
+  Result:=(FOnKeyNotify=Nil) and (FOnValueNotify=Nil);
+end;
+
+procedure TDictionary<TKey, TValue>.Clear;
+
+Var
+  Iter : TJSIterator;
+  IVal : TJSIteratorValue;
+  A : TJSValueDynArray;
+  K : TKey;
+  V : TValue;
+
+begin
+  if CanClearMap then
+    Fmap.Clear
+  else
+    begin
+    Iter:=FMap.Entries;
+    Repeat
+      IVal:=Iter.next;
+      if not ival.Done then
+        begin
+        A:=TJSValueDynArray(IVal.Value);
+        K:=TKey(A[0]);
+        V:=TValue(A[1]);
+        FMap.delete(k);
+        PairNotify(K,V,cnRemoved);
+        end;
+    Until Ival.Done;
+    end;
 end;
 
 
@@ -1235,7 +1265,7 @@ end;
 
 function TDictionary<TKey, TValue>.TPairEnumerator.DoMoveNext: Boolean;
 begin
-  FIter.Next;
+  FVal:=FIter.Next;
   Result:=Not FVal.Done;
 end;
 
@@ -1263,11 +1293,11 @@ end;
 
 function TDictionary<TKey, TValue>.TKeyEnumerator.DoMoveNext: Boolean;
 begin
-  FIter.Next;
+  FVal:=FIter.Next;
   Result:=Not FVal.Done;
 end;
 
-constructor TDictionary<TKey, TValue>.TKeyEnumerator.Create(const ADictionary: TMyType);
+constructor TDictionary<TKey, TValue>.TKeyEnumerator.Create2(const ADictionary: TMyType);
 begin
   Create(ADictionary.FMap.Keys);
 end;
@@ -1296,11 +1326,11 @@ end;
 
 function TDictionary<TKey, TValue>.TValueEnumerator.DoMoveNext: Boolean;
 begin
-  FIter.Next;
+  FVal:=FIter.Next;
   Result:=Not FVal.Done;
 end;
 
-constructor TDictionary<TKey, TValue>.TValueEnumerator.Create(const ADictionary: TMyType);
+constructor TDictionary<TKey, TValue>.TValueEnumerator.Create2(const ADictionary: TMyType);
 begin
   Create(aDictionary.FMap.Values);
 end;

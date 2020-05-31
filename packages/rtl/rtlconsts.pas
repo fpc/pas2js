@@ -23,7 +23,8 @@ Resourcestring
   SMapKeyError                  = 'Key not found : %s';
   SListIndexError               = 'List index (%s) out of bounds';
   SSortedListError              = 'Operation not allowed on sorted list';
-  SDuplicateString              = 'String list does not allow duplicates';  
+  SDuplicateString              = 'String list does not allow duplicates';
+  SDuplicateItem                = 'ThreadList does not allow duplicates';
   SErrFindNeedsSortedList       = 'Cannot use find on unsorted list';
 
   SInvalidName                  = 'Invalid component name: "%s"';

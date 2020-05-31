@@ -133,6 +133,9 @@ type
   end;
 
   { TList }
+{$SCOPEDENUMS ON}
+  TDirection = (FromBeginning,fromEnd);
+{$SCOPEDENUMS OFF}
 
   TList<T> = class(TCustomList<T>)
   private
@@ -168,6 +171,7 @@ type
     procedure InsertRange(AIndex: SizeInt; const AEnumerable: TEnumerable<T>); overload;
 
     function Remove(const AValue: T): SizeInt;
+    function RemoveItem(const AValue: T; Direction : TDirection): SizeInt;
     procedure Delete(AIndex: SizeInt); inline;
     procedure DeleteRange(AIndex, ACount: SizeInt);
     function ExtractIndex(const AIndex: SizeInt): T; overload;
@@ -196,6 +200,27 @@ type
 
     property Count: SizeInt read FLength write SetCount;
     property Items[Index: SizeInt]: T read GetItem write SetItem; default;
+  end;
+
+  { TThreadList }
+  // This is provided for delphi/FPC compatibility
+  // No locking is done, since Javascript is single-threaded. We do keep a lock count for debugging purposes.
+
+  TThreadList<T> = class
+  private
+    FList: TList<T>;
+    FLock: Integer;
+    FDuplicates: TDuplicates;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    procedure Add(const Item: T);
+    procedure Clear;
+    function LockList: TList<T>;
+    procedure Remove(const Item: T); inline;
+    procedure RemoveItem(const Item: T; Direction: TDirection);
+    procedure UnlockList; inline;
+    property Duplicates: TDuplicates read FDuplicates write FDuplicates;
   end;
 
   { TPair }
@@ -848,6 +873,17 @@ begin
   end;
 end;
 
+function TList<T>.RemoveItem(const AValue: T; Direction : TDirection): SizeInt;
+
+begin
+  if Direction=TDirection.FromEnd then
+    Result := LastIndexOf(AValue)
+  else
+    Result := IndexOf(AValue);
+  if Result >= 0 then
+    DoRemove(Result, cnRemoved);
+end;
+
 function TList<T>.Remove(const AValue: T): SizeInt;
 begin
   Result := IndexOf(AValue);
@@ -1415,8 +1451,75 @@ Type
 Var
   MyDict : TMyDict;
 
+{ TThreadList }
+
+constructor TThreadList<T>.Create;
 begin
-  MyDict:=TMyDict.Create;
-  MyDict.Add(1,'aloga');
-  MyDict.Free;
+  inherited Create;
+  FLock:=0;
+  FList := TList<T>.Create;
+  FDuplicates := dupIgnore;
+end;
+
+destructor TThreadList<T>.Destroy;
+begin
+  // No need to unlock.
+  FList.Free;
+  inherited Destroy;
+end;
+
+procedure TThreadList<T>.Add(const Item: T);
+begin
+  LockList;
+  try
+    if (Duplicates = dupAccept) or (FList.IndexOf(Item) = -1) then
+      FList.Add(Item)
+    else if Duplicates = dupError then
+      raise EListError.Create(SDuplicateItem);
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadList<T>.Clear;
+begin
+  LockList;
+  try
+    FList.Clear;
+  finally
+    UnlockList;
+  end;
+end;
+
+function TThreadList<T>.LockList: TList<T>;
+begin
+  Inc(FLock);
+  if (FLock>1) then
+    Writeln('Locking already locked list, lockcount : ',FLock);
+  Result:=FList;
+end;
+
+procedure TThreadList<T>.Remove(const Item: T);
+
+begin
+  RemoveItem(T,TDirection.FromBeginning);
+end;
+
+procedure TThreadList<T>.RemoveItem(const Item: T; Direction: TDirection);
+begin
+  LockList;
+  try
+    FList.RemoveItem(T,Direction);
+  finally
+    UnlockList;
+  end;
+end;
+
+procedure TThreadList<T>.UnlockList;
+begin
+  Dec(FLock);
+  if (FLock<0) then
+    Writeln('Unlocking already unlocked list, lockcount : ',FLock);
+end;
+
 end.

@@ -29,7 +29,8 @@ uses
 //  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers
 //  tcgenarrayhelper,
 //  tcstringhelp
-  tcgenericdictionary,
+//  tcgenericdictionary,
+  tcgenericlist,
   strutils, sysutils, webutils;
 
 var

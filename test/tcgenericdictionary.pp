@@ -365,7 +365,7 @@ end;
 
 procedure TTestSimpleDictionary.DoKeyNotify(ASender: TObject;  {$ifdef fpc}constref{$else}const{$endif}  AItem: Integer; AAction: TCollectionNotification);
 begin
-  Writeln(FnotifyMessage+' Notification',FCurrentKeyNotify);
+  // Writeln(FnotifyMessage+' Notification',FCurrentKeyNotify);
   AssertSame(FnotifyMessage+' Correct sender', FDict,aSender);
   if (FCurrentKeyNotify>=Length(FExpectKeys)) then
     Fail(FnotifyMessage+' Too many notificiations');
@@ -375,7 +375,7 @@ end;
 
 procedure TTestSimpleDictionary.DoValueNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: String; AAction: TCollectionNotification);
 begin
-  Writeln(FnotifyMessage+' value Notification',FCurrentValueNotify);
+  // Writeln(FnotifyMessage+' value Notification',FCurrentValueNotify);
   AssertSame(FnotifyMessage+' value Correct sender', FDict,aSender);
   if (FCurrentValueNotify>=Length(FExpectValues)) then
     Fail(FnotifyMessage+' Too many value notificiations');

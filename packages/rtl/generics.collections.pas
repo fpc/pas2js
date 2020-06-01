@@ -84,11 +84,12 @@ type
   protected
     type
       TMyEnumerator = TEnumerator<T>;
-      TMyArray = TArray<T>;
     function DoGetEnumerator: TMyEnumerator; virtual; abstract;
   public
+    type
+      TMyArray = TArray<T>;
     function GetEnumerator: TMyEnumerator; inline;
-    function ToArray: TMyArray; virtual; overload;
+    function ToArray: TMyArray; virtual;
   end;
 
   { TCustomList }
@@ -109,8 +110,6 @@ type
     procedure SetCapacity(AValue: SizeInt); virtual; abstract;
     function GetCount: SizeInt; virtual;
   public
-    function ToArray: TArray<T>; override;
-
     property Count: SizeInt read GetCount;
     property Capacity: SizeInt read GetCapacity write SetCapacity;
     property OnNotify: TCollectionNotifyEvent<T> read FOnNotify write FOnNotify;
@@ -152,11 +151,12 @@ type
   public
     type
       TEnumerator = class(TCustomListEnumerator<T>);
+      TMyType = TList<T>;
     function GetEnumerator: TEnumerator; reintroduce;
   public
     constructor Create; overload;
-    constructor Create(const AComparer: IComparer<T>); overload;
-    constructor Create(ACollection: TEnumerable<T>); overload;
+    constructor Create2(const AComparer: IComparer<T>); overload;
+    constructor Create3(ACollection: TEnumerable<T>); overload;
 
     destructor Destroy; override;
 
@@ -200,6 +200,19 @@ type
 
     property Count: SizeInt read FLength write SetCount;
     property Items[Index: SizeInt]: T read GetItem write SetItem; default;
+  end;
+
+
+  TObjectList<T: class> = class(TList<T>)
+  private
+    FObjectsOwner: Boolean;
+  protected
+    procedure Notify(const aValue: T; Action: TCollectionNotification); override;
+  public
+    constructor Create(aOwnsObjects: Boolean = True); overload;
+    constructor Create2(const AComparer: IComparer<T>; aOwnsObjects: Boolean = True); overload;
+    constructor Create3(const aCollection: TEnumerable<T>; aOwnsObjects: Boolean = True); overload;
+    property OwnsObjects: Boolean read FObjectsOwner write FObjectsOwner;
   end;
 
   { TThreadList }
@@ -673,10 +686,6 @@ begin
   Result := FLength;
 end;
 
-function TCustomList<T>.ToArray: TArray<T>;
-begin
-  Result := ToArray;
-end;
 
 { TCustomListEnumerator }
 
@@ -774,13 +783,13 @@ begin
   FComparer := TComparer<T>.Default;
 end;
 
-constructor TList<T>.Create(const AComparer: IComparer<T>);
+constructor TList<T>.Create2(const AComparer: IComparer<T>);
 begin
   InitializeList;
   FComparer := AComparer;
 end;
 
-constructor TList<T>.Create(ACollection: TEnumerable<T>);
+constructor TList<T>.Create3(ACollection: TEnumerable<T>);
 var
   LItem: T;
 begin
@@ -1462,11 +1471,37 @@ begin
   Result:=inherited ToArray;
 end;
 
-Type
-  TMyDict = TDictionary<integer,string>;
+
+{ TObjectList<T> }
+
+procedure TObjectList<T>.Notify(const aValue: T; Action: TCollectionNotification);
 
 Var
-  MyDict : TMyDict;
+  A : TObject absolute aValue; // needed to fool compiler
+
+begin
+  inherited Notify(aValue, Action);
+  if FObjectsOwner and (action = cnRemoved) then
+    a.Free;
+end;
+
+constructor TObjectList<T>.Create(AOwnsObjects: Boolean);
+begin
+  inherited Create;
+  FObjectsOwner := AOwnsObjects;
+end;
+
+constructor TObjectList<T>.Create2(const AComparer: IComparer<T>; AOwnsObjects: Boolean);
+begin
+  inherited Create2(AComparer);
+  FObjectsOwner := AOwnsObjects;
+end;
+
+constructor TObjectList<T>.Create3(const ACollection: TEnumerable<T>; aOwnsObjects: Boolean);
+begin
+  inherited Create3(ACollection);
+  FObjectsOwner := AOwnsObjects;
+end;
 
 { TThreadList }
 

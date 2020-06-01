@@ -26,10 +26,10 @@ program testrtl;
 
 uses
   browserconsole, consoletestrunner, frmrtlrun,
-//  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers
+  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers,
 //  tcgenarrayhelper,
-//  tcstringhelp
-//  tcgenericdictionary,
+  tcstringhelp,
+  tcgenericdictionary,
   tcgenericlist,
   strutils, sysutils, webutils;
 

@@ -421,7 +421,6 @@ begin
 end;
 
 begin
-  RegisterTests([TTestSimpleList//, TTestSingleObjectList
-                 ]);
+  RegisterTests([ TTestSimpleList,TTestSingleObjectList]);
 end.
 

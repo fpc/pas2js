@@ -30,7 +30,7 @@ uses
 //  tcgenarrayhelper,
 //  tcstringhelp
   tcgenericdictionary,
-  strutils, sysutils;
+  strutils, sysutils, webutils;
 
 var
   Application : TTestRunner;
@@ -41,5 +41,6 @@ begin
   Application.RunFormClass:=TConsoleRunner;
   Application.Initialize;
   Application.Run;
+
 //  Application.Free;
 end.

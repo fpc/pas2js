@@ -255,7 +255,7 @@ type
       TMyType = TDictionary<TKey,TValue>;
       TMyPair = TPair<TKey,TValue>;
 
-    constructor Create(ACapacity: Integer); overload;
+    constructor Create(ACapacity: Integer=0); overload;
     constructor Create2(const Collection: TEnumerable<TMyPair>); overload;
     destructor Destroy; override;
 
@@ -368,6 +368,23 @@ type
     property OnValueNotify: TCollectionNotifyEvent<TValue> read FOnValueNotify write FOnValueNotify;
   end;
 
+    TDictionaryOwnership = (doOwnsKeys, doOwnsValues);
+    TDictionaryOwnerships = set of TDictionaryOwnership;
+
+    { TObjectDictionary }
+
+    TObjectDictionary<TKey,TValue> = class(TDictionary<TKey,TValue>)
+    private
+      FOwnerships: TDictionaryOwnerships;
+    protected
+      Function CanClearMap : Boolean; override;
+      procedure KeyNotify(const Key: TKey; Action: TCollectionNotification); override;
+      procedure ValueNotify(const Value: TValue; Action: TCollectionNotification); override;
+    public
+      constructor Create2(aOwnerships: TDictionaryOwnerships; ACapacity: Integer); overload;
+      constructor Create(aOwnerships: TDictionaryOwnerships); overload;
+      Property OwnerShips : TDictionaryOwnerships Read FOwnerships Write FOwnerShips;
+    end;
 
 implementation
 
@@ -1520,6 +1537,46 @@ begin
   Dec(FLock);
   if (FLock<0) then
     Writeln('Unlocking already unlocked list, lockcount : ',FLock);
+end;
+
+{ TObjectDictionary }
+
+function TObjectDictionary<TKey, TValue>.CanClearMap: Boolean;
+begin
+  Result:=(Inherited CanClearMap) and (FOwnerships=[]);
+end;
+
+procedure TObjectDictionary<TKey, TValue>.KeyNotify(const Key: TKey; Action: TCollectionNotification);
+
+Var
+  A : TObject absolute key; // Avoid typecast, refused by compiler
+
+begin
+  inherited KeyNotify(Key, Action);
+  if (doOwnsKeys in FOwnerships) and (Action = cnRemoved) then
+    A.Free;
+end;
+
+procedure TObjectDictionary<TKey, TValue>.ValueNotify(const Value: TValue; Action: TCollectionNotification);
+
+Var
+  A : TObject absolute Value; // Avoid typecast, refused by compiler
+
+begin
+  inherited ValueNotify(Value, Action);
+  if (doOwnsValues in FOwnerships) and (Action = cnRemoved) then
+    A.Free;
+end;
+
+constructor TObjectDictionary<TKey, TValue>.Create2(aOwnerships: TDictionaryOwnerships; ACapacity: Integer);
+begin
+  Create(aOwnerShips);
+end;
+
+constructor TObjectDictionary<TKey, TValue>.Create(aOwnerships: TDictionaryOwnerships);
+begin
+  Inherited Create;
+  FOwnerShips:=aOwnerships;
 end;
 
 end.

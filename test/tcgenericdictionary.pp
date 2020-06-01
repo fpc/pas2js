@@ -61,7 +61,198 @@ Type
     procedure TestKeyValueNotificationSet;
   end;
 
+  { TMyObject }
+
+  TMyObject = Class(TObject)
+  Private
+    fOnDestroy : TNotifyEvent;
+    FID : Integer;
+  public
+    Constructor Create(aID : Integer; aOnDestroy : TNotifyEvent);
+    destructor destroy; override;
+    Property ID : Integer Read FID;
+  end;
+
+  TSingleObjectDict = Class(Specialize TObjectDictionary<Integer,TMyObject>);
+  TDualObjectDict = Class(Specialize TObjectDictionary<TMyObject,TMyObject>);
+
+  { TTestSingleObjectDict }
+
+  TTestSingleObjectDict = Class(TTestCase)
+  private
+    FDict: TSingleObjectDict;
+    FList : TFPList;
+    procedure DoAdd(aID: Integer);
+    procedure DoDestroy(Sender: TObject);
+  Public
+    Procedure SetUp; override;
+    Procedure TearDown; override;
+    Property Dict : TSingleObjectDict Read FDict;
+  Published
+    Procedure TestEmpty;
+    Procedure TestFreeOnRemove;
+    Procedure TestNoFreeOnRemove;
+  end;
+
+  TTestDualObjectDict = Class(TTestCase)
+  private
+    FDict: TDualObjectDict;
+    FList : TFPList;
+    procedure DoAdd(aID: Integer);
+    procedure DoDestroy(Sender: TObject);
+  Public
+    Procedure SetUp; override;
+    Procedure TearDown; override;
+    Property Dict : TDualObjectDict Read FDict;
+  Published
+    Procedure TestEmpty;
+    Procedure TestFreeOnRemove;
+    Procedure TestNoFreeOnRemove;
+  end;
+
 implementation
+
+{ TTestSingleObjectDict }
+
+procedure TTestSingleObjectDict.SetUp;
+begin
+  FDict:=TSingleObjectDict.Create([doOwnsValues]);
+  FList:=TFPList.Create;
+  inherited SetUp;
+end;
+
+procedure TTestSingleObjectDict.TearDown;
+begin
+  FreeAndNil(FDict);
+  FreeAndNil(FList);
+  inherited TearDown;
+end;
+
+procedure TTestSingleObjectDict.TestEmpty;
+begin
+  AssertNotNull('Have object',Dict);
+  AssertEquals('Have empty object',0,Dict.Count);
+end;
+
+procedure TTestSingleObjectDict.DoAdd(aID : Integer);
+
+Var
+  O :  TMyObject;
+
+begin
+  O:=TMyObject.Create(aID,@DoDestroy);
+  FList.Add(O);
+  FDict.Add(aID,O);
+end;
+
+procedure TTestSingleObjectDict.DoDestroy(Sender: TObject);
+
+Var
+  I : Integer;
+
+begin
+  I:=FList.IndexOf(Sender);
+  AssertTrue('Have object in list',I<>-1);
+  FList.Delete(I);
+end;
+
+procedure TTestSingleObjectDict.TestFreeOnRemove;
+
+begin
+  DoAdd(1);
+  AssertEquals('Have obj',1,FList.Count);
+  Dict.Remove(1);
+  AssertEquals('Have no obj',0,FList.Count);
+end;
+
+procedure TTestSingleObjectDict.TestNoFreeOnRemove;
+begin
+  Dict.OwnerShips:=[];
+  DoAdd(1);
+  AssertEquals('Have obj',1,FList.Count);
+  Dict.Remove(1);
+  AssertEquals('Have  obj',1,FList.Count);
+end;
+
+{ TTestDualObjectDict }
+
+procedure TTestDualObjectDict.SetUp;
+begin
+  FDict:=TDualObjectDict.Create([doOwnsKeys,doOwnsValues]);
+  FList:=TFPList.Create;
+  inherited SetUp;
+end;
+
+procedure TTestDualObjectDict.TearDown;
+begin
+  FreeAndNil(FDict);
+  FreeAndNil(FList);
+  inherited TearDown;
+end;
+
+procedure TTestDualObjectDict.TestEmpty;
+begin
+  AssertNotNull('Have object',Dict);
+  AssertEquals('Have empty object',0,Dict.Count);
+end;
+
+procedure TTestDualObjectDict.DoAdd(aID : Integer);
+
+Var
+  O1,O10 :  TMyObject;
+
+begin
+  O1:=TMyObject.Create(aID,@DoDestroy);
+  FList.Add(O1);
+  O10:=TMyObject.Create(aID*10,@DoDestroy);
+  FList.Add(O10);
+  FDict.Add(O1,O10);
+end;
+
+procedure TTestDualObjectDict.DoDestroy(Sender: TObject);
+
+Var
+  I : Integer;
+
+begin
+  I:=FList.IndexOf(Sender);
+  AssertTrue('Have object in list',I<>-1);
+  FList.Delete(I);
+end;
+
+procedure TTestDualObjectDict.TestFreeOnRemove;
+
+begin
+  DoAdd(1);
+  AssertEquals('Have obj',2,FList.Count);
+  Dict.Remove(TMyObject(FList[0]));
+  AssertEquals('Have no obj',0,FList.Count);
+end;
+
+procedure TTestDualObjectDict.TestNoFreeOnRemove;
+begin
+  Dict.OwnerShips:=[doOwnsValues];
+  DoAdd(1);
+  AssertEquals('Have obj',2,FList.Count);
+  Dict.Remove(TMyObject(FList[0]));
+  AssertEquals('Have  obj',1,FList.Count);
+  AssertEquals('Have key',1,TMyObject(Flist[0]).ID);
+end;
+
+{ TMyObject }
+
+constructor TMyObject.Create(aID: Integer; aOnDestroy: TNotifyEvent);
+begin
+  FOnDestroy:=aOnDestroy;
+  FID:=AID;
+end;
+
+destructor TMyObject.destroy;
+begin
+  if Assigned(FOnDestroy) then
+    FOnDestroy(Self);
+  inherited destroy;
+end;
 
 { TTestSimpleDictionary }
 
@@ -458,6 +649,8 @@ begin
 end;
 
 begin
-  RegisterTest(TTestSimpleDictionary);
+  RegisterTests([TTestSimpleDictionary,
+                 TTestSingleObjectDict,
+                 TTestDualObjectDict]);
 end.
 

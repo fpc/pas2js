@@ -1,3 +1,18 @@
+{
+    This file is part of the Pas2JS run time library.
+    Copyright (C) 2019 Michael Van Canneyt
+
+    FullCalendar mappings for pas2js
+
+    See the file COPYING.FPC, included in this distribution,
+    for details about the copyright.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+ **********************************************************************}
+
 unit libfullcalendar;
 
 {$mode objfpc}
@@ -386,6 +401,18 @@ Type
     Procedure remove;
   end;
 
+  TCalendarEventRenderInfo = record
+    event: TCalendarEvent;
+    el : TJSHTMLElement;
+    isMirror : Boolean;
+    isStart : Boolean;
+    isEnd : Boolean;
+    view : TFullCalendarView;
+  end;
+
+
+  TCalendarEventRenderCallback = reference to procedure(Info : TCalendarEventRenderInfo);
+
   TCalendarEventSourceArray = Array of TCalendarEventSource;
 
   TFullCalendarOptions = Class external name 'Object' (TJSObject)
@@ -457,6 +484,8 @@ Type
     nowStr : string; external name 'now';
     nowInt : nativeInt; external name 'now';
     nowFunc : TDateFunction; external name 'now';
+    eventLimit : Boolean;
+    eventLimitInt : Integer; external name 'eventLimit';
     events : TBaseCalendarEventArray;
     eventsStr : string; external name 'events'; // JSON feed
     eventsFunc : TCalendarEventGenerator; external name 'events'; // JSON feed
@@ -464,6 +493,7 @@ Type
     eventsArr : TCalendarEventArray; external name 'events'; // JSON feed
     eventsObjList : TJSObjectDynArray ; external name 'events'; // Roll your own
     eventSources : TCalendarEventSourceArray;
+    eventRender : TCalendarEventRenderCallback;
     startParam : string;
     endParam : string;
     timeZoneParam : string;
@@ -638,4 +668,3 @@ begin
 end;
 
 end.
-

@@ -341,6 +341,7 @@ function GetEnvironmentString(Index: Integer): String;
 procedure ShowException(ExceptObject: TObject; ExceptAddr: Pointer = Nil);
 Procedure Abort;
 
+
 {*****************************************************************************
                                Events
 *****************************************************************************}
@@ -7893,7 +7894,6 @@ Function TLongBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False
 begin
   Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
 end;
-
 
 end.
 

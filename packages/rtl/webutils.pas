@@ -7,11 +7,11 @@ interface
 uses
   web, js;
 
-function Sleep(ms: NativeInt): TJSPromise;
+function AsyncSleep(ms: NativeInt): TJSPromise;
 
 implementation
 
-function Sleep(ms: NativeInt): TJSPromise;
+function AsyncSleep(ms: NativeInt): TJSPromise;
 
 begin
   Result := TJSPromise.New(

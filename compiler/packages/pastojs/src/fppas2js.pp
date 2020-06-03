@@ -16772,15 +16772,37 @@ function TPasToJSConverter.CreateRTTIMemberField(V: TPasVariable;
 // create $r.addField("varname",typeinfo);
 var
   Call: TJSCallExpression;
+  function VarTypeInfoAlreadyCreated(VarType: TPasType): boolean;
+  var
+    i: Integer;
+    PrevMember: TPasElement;
+  begin
+    i:=Index-1;
+    while (i>=0) do
+      begin
+      PrevMember:=TPasElement(Members[i]);
+      if (PrevMember is TPasVariable) and (TPasVariable(PrevMember).VarType=VarType)
+          and IsElementUsed(PrevMember) then
+        exit(true);
+      dec(i);
+      end;
+    Result:=false;
+  end;
+
 var
   JSTypeInfo: TJSElement;
   aName: String;
+  VarType: TPasType;
 begin
   Result:=nil;
-  if (V.VarType<>nil) and (V.VarType.Name='') then
-    CreateRTTIAnonymous(V.VarType,AContext);
+  VarType:=V.VarType;
+  if (VarType<>nil) and (VarType.Name='') then
+    begin
+    if not VarTypeInfoAlreadyCreated(VarType) then
+      CreateRTTIAnonymous(VarType,AContext);
+    end;
 
-  JSTypeInfo:=CreateTypeInfoRef(V.VarType,AContext,V);
+  JSTypeInfo:=CreateTypeInfoRef(VarType,AContext,V);
   // Note: create JSTypeInfo first, it may raise an exception
   Call:=CreateCallExpression(V);
   // $r.addField

@@ -27496,6 +27496,7 @@ begin
   Add('    VarShI: shortint;');
   Add('    VarBy: byte;');
   Add('    VarExt: longint external name ''VarExt'';');
+  Add('    ArrA, ArrB: array of byte;');
   Add('  end;');
   Add('var p: pointer;');
   Add('  Obj: tobject;');
@@ -27519,8 +27520,12 @@ begin
     '    this.VarW = 0;',
     '    this.VarShI = 0;',
     '    this.VarBy = 0;',
+    '    this.ArrA = [];',
+    '    this.ArrB = [];',
     '  };',
     '  this.$final = function () {',
+    '    this.ArrA = undefined;',
+    '    this.ArrB = undefined;',
     '  };',
     '  var $r = this.$rtti;',
     '  $r.addField("VarLI", rtl.longint);',
@@ -27534,6 +27539,11 @@ begin
     '  $r.addField("VarShI", rtl.shortint);',
     '  $r.addField("VarBy", rtl.byte);',
     '  $r.addField("VarExt", rtl.longint);',
+    '  $mod.$rtti.$DynArray("TObject.ArrB$a", {',
+    '    eltype: rtl.byte',
+    '  });',
+    '  $r.addField("ArrA", $mod.$rtti["TObject.ArrB$a"]);',
+    '  $r.addField("ArrB", $mod.$rtti["TObject.ArrB$a"]);',
     '});',
     'this.p = null;',
     'this.Obj = null;',
@@ -28553,7 +28563,7 @@ begin
   StartProgram(false);
   Add('type');
   Add('  TFloatRec = record');
-  Add('    d: array of char;');
+  Add('    c,d: array of char;');
   // Add('    i: array of array of longint;');
   Add('  end;');
   Add('var p: pointer;');
@@ -28566,11 +28576,13 @@ begin
   CheckSource('TestRTTI_Record',
     LinesToStr([ // statements
     'rtl.recNewT($mod, "TFloatRec", function () {',
+    '  this.c = [];',
     '  this.d = [];',
     '  this.$eq = function (b) {',
-    '    return this.d === b.d;',
+    '    return (this.c === b.c) && (this.d === b.d);',
     '  };',
     '  this.$assign = function (s) {',
+    '    this.c = s.c;',
     '    this.d = s.d;',
     '    return this;',
     '  };',
@@ -28578,6 +28590,7 @@ begin
     '    eltype: rtl.char',
     '  });',
     '  var $r = $mod.$rtti.$Record("TFloatRec", {});',
+    '  $r.addField("c", $mod.$rtti["TFloatRec.d$a"]);',
     '  $r.addField("d", $mod.$rtti["TFloatRec.d$a"]);',
     '});',
     'this.p = null;',

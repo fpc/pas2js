@@ -1847,7 +1847,7 @@ type
       AContext: TConvertContext); virtual;
     Function CreateRTTINewType(El: TPasType; const CallFuncName: string;
       IsForward: boolean; AContext: TConvertContext; out ObjLit: TJSObjectLiteral): TJSCallExpression; virtual;
-    Function CreateRTTIMemberField(V: TPasVariable; AContext: TConvertContext): TJSElement; virtual;
+    Function CreateRTTIMemberField(Members: TFPList; Index: integer; AContext: TConvertContext): TJSElement; virtual;
     Function CreateRTTIMemberMethod(Proc: TPasProcedure; AContext: TConvertContext): TJSElement; virtual;
     Function CreateRTTIMemberProperty(Prop: TPasProperty; AContext: TConvertContext): TJSElement; virtual;
     Procedure CreateRTTIAnonymous(El: TPasType; AContext: TConvertContext); virtual;
@@ -15333,6 +15333,7 @@ var
   VarSt: TJSVariableStatement;
   NewEl: TJSElement;
   C: TClass;
+  Members: TFPList;
 begin
   ok:=false;
   Call:=nil;
@@ -15346,16 +15347,17 @@ begin
     // add $r to local vars, to avoid name clashes and for nicer debugging
     FuncContext.AddLocalVar(GetBIName(pbivnRTTILocal),nil);
 
-    For i:=0 to El.Members.Count-1 do
+    Members:=El.Members;
+    For i:=0 to Members.Count-1 do
       begin
-      P:=TPasElement(El.Members[i]);
+      P:=TPasElement(Members[i]);
       if P.Visibility in [visPrivate,visStrictPrivate] then
         continue;
       if not IsElementUsed(P) then continue;
       NewEl:=nil;
       C:=P.ClassType;
       if C=TPasVariable then
-        NewEl:=CreateRTTIMemberField(TPasVariable(P),FuncContext)
+        NewEl:=CreateRTTIMemberField(Members,i,FuncContext)
       else if C.InheritsFrom(TPasProcedure) then
         NewEl:=CreateRTTIMemberMethod(TPasProcedure(P),FuncContext)
       else if C=TPasProperty then
@@ -16006,14 +16008,16 @@ var
   NewEl: TJSElement;
   VarSt: TJSVariableStatement;
   C: TClass;
+  Members: TFPList;
 begin
   // add $r to local vars, to avoid name clashes and for nicer debugging
   FuncContext.AddLocalVar(GetBIName(pbivnRTTILocal),nil);
 
   HasRTTIMembers:=false;
-  For i:=0 to El.Members.Count-1 do
+  Members:=El.Members;
+  For i:=0 to Members.Count-1 do
     begin
-    P:=TPasElement(El.Members[i]);
+    P:=TPasElement(Members[i]);
     //writeln('TPasToJSConverter.ConvertClassType RTTI El[',i,']=',GetObjName(P));
     if El.ObjKind=okInterface then
       // all interface methods are published
@@ -16023,7 +16027,7 @@ begin
     NewEl:=nil;
     C:=P.ClassType;
     if C=TPasVariable then
-      NewEl:=CreateRTTIMemberField(TPasVariable(P),FuncContext)
+      NewEl:=CreateRTTIMemberField(Members,i,FuncContext)
     else if C.InheritsFrom(TPasProcedure) then
       NewEl:=CreateRTTIMemberMethod(TPasProcedure(P),FuncContext)
     else if C=TPasProperty then
@@ -16767,11 +16771,13 @@ begin
   end;
 end;
 
-function TPasToJSConverter.CreateRTTIMemberField(V: TPasVariable;
-  AContext: TConvertContext): TJSElement;
+function TPasToJSConverter.CreateRTTIMemberField(Members: TFPList;
+  Index: integer; AContext: TConvertContext): TJSElement;
 // create $r.addField("varname",typeinfo);
 var
+  V: TPasVariable;
   Call: TJSCallExpression;
+
   function VarTypeInfoAlreadyCreated(VarType: TPasType): boolean;
   var
     i: Integer;
@@ -16795,6 +16801,7 @@ var
   VarType: TPasType;
 begin
   Result:=nil;
+  V:=TPasVariable(Members[Index]);
   VarType:=V.VarType;
   if (VarType<>nil) and (VarType.Name='') then
     begin

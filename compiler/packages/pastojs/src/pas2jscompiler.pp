@@ -1,4 +1,4 @@
-{ Author: Mattias Gaertner  2019  mattias@freepascal.org
+{ Author: Mattias Gaertner  2020  mattias@freepascal.org
 
 Abstract:
   TPas2jsCompiler is the wheel boss of the pas2js compiler.
@@ -44,7 +44,7 @@ uses
 const
   VersionMajor = 1;
   VersionMinor = 4;
-  VersionRelease = 24;
+  VersionRelease = 26;
   VersionExtra = '';
   DefaultConfigFile = 'pas2js.cfg';
 

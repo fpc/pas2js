@@ -357,7 +357,7 @@ begin
   For I:=1 to 3 do
     begin
     SI:=IntToStr(I);
-    AssertEquals('Value '+SI,SI,A[3-i]);
+    AssertEquals('Value '+SI,SI,A[i-1]);
     end;
 end;
 
@@ -371,12 +371,12 @@ Var
 
 begin
   DoAdd(3);
-  I:=3;
+  I:=1;
   For A in Stack do
     begin
     SI:=IntToStr(i);
     AssertEquals('Value '+SI,SI,A);
-    Dec(I);
+    Inc(I);
     end;
 end;
 
@@ -392,7 +392,7 @@ procedure TTestSimpleStack.TestValueNotificationDelete;
 begin
   DoAdd(3);
   Stack.OnNotify:=@DoValueNotify;
-  SetExpectValues('Clear',['3','2','1'],[cnRemoved,cnRemoved,cnRemoved],{$IFDEF FPC}true{$ELSE}False{$endif});
+  SetExpectValues('Clear',['3','2','1'],[cnRemoved,cnRemoved,cnRemoved],False);
   Stack.Clear;
   DoneExpectValues;
 end;

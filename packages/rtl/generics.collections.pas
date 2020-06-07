@@ -314,7 +314,7 @@ type
 
       { TEnumerator }
 
-      TEnumerator = class(TCustomInvertedListEnumerator<T>)
+      TEnumerator = class(TCustomListEnumerator<T>)
       public
         constructor Create(AStack: TMyType);
       end;

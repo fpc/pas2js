@@ -25,13 +25,14 @@ program testrtl;
 {$mode objfpc}
 
 uses
-  browserconsole, consoletestrunner, frmrtlrun,
-  tcstream, tccompstreaming, simplelinkedlist, tcsyshelpers,
+  browserconsole, consoletestrunner, frmrtlrun, simplelinkedlist,
+//  tcstream, tccompstreaming, tcsyshelpers,
 //  tcgenarrayhelper,
-  tcstringhelp,
-  tcgenericdictionary,
-  tcgenericlist,
-  strutils, sysutils, webutils;
+//  tcstringhelp,
+//  tcgenericdictionary,
+//  tcgenericlist,
+  tcgenericqueue,
+  strutils, sysutils;
 
 var
   Application : TTestRunner;

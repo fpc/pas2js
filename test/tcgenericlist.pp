@@ -96,7 +96,7 @@ end;
 procedure TTestSingleObjectList.TearDown;
 begin
   FreeAndNil(FList);
-  FreeAndNil(FList);
+  FreeAndNil(FOList);
   inherited TearDown;
 end;
 

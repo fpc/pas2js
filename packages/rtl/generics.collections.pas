@@ -236,6 +236,56 @@ type
     property Duplicates: TDuplicates read FDuplicates write FDuplicates;
   end;
 
+  { TQueue }
+
+  TQueue<T> = class(TCustomList<T>)
+  private
+    FMaxGapLength: Integer;
+    FLow: SizeInt;
+  protected
+    function DoGetEnumerator: TEnumerator<T>; override;
+  public
+    type
+      TMyType = TQueue<T>;
+      { TEnumerator }
+      TEnumerator = class(TCustomListEnumerator<T>)
+      public
+        constructor Create(AQueue: TMyType);
+      end;
+    function GetEnumerator: TEnumerator; reintroduce;
+  protected
+    Procedure Rebase; virtual;
+    procedure SetCapacity(AValue: SizeInt); override;
+    function DoRemove(AIndex: SizeInt; ACollectionNotification: TCollectionNotification): T; override;
+    function GetCount: SizeInt; override;
+  public
+    Constructor Create; overload;
+    constructor Create2(ACollection: TEnumerable<T>); overload;
+    destructor Destroy; override;
+    procedure Enqueue(const AValue: T);
+    function Dequeue: T;
+    function Extract: T;
+    function Peek: T;
+    procedure Clear;
+    procedure TrimExcess; override;
+    Property MaxGapLength : Integer Read FMaxGapLength Write FMaxGapLength;
+  end;
+
+  { TObjectQueue }
+
+  TObjectQueue<T: class> = class(TQueue<T>)
+  private
+    FOwnsObjects: Boolean;
+  protected
+    procedure Notify(const Value: T; Action: TCollectionNotification); override;
+  public
+    constructor Create(AOwnsObjects: Boolean = True); overload;
+    constructor Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
+    procedure Dequeue; reintroduce;
+    property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
+  end;
+
+
   { TPair }
 
   TPair<TKey,TValue> = record
@@ -718,7 +768,6 @@ procedure TList<T>.SetCapacity(AValue: SizeInt);
 begin
   if AValue < Count then
     Count := AValue;
-
   SetLength(FItems, AValue);
 end;
 
@@ -1612,6 +1661,167 @@ constructor TObjectDictionary<TKey, TValue>.Create(aOwnerships: TDictionaryOwner
 begin
   Inherited Create;
   FOwnerShips:=aOwnerships;
+end;
+
+{ TQueue }
+
+function TQueue<T>.DoGetEnumerator: TEnumerator<T>;
+begin
+  Result:=GetEnumerator;
+end;
+
+function TQueue<T>.GetEnumerator: TEnumerator;
+begin
+  Result := TEnumerator.Create(Self);
+end;
+
+procedure TQueue<T>.SetCapacity(AValue: SizeInt);
+begin
+  if AValue < Count then
+    raise EArgumentOutOfRangeException.Create(SArgumentOutOfRange);
+  if FLow>0 then
+    Rebase;
+  SetLength(FItems,aValue);
+end;
+
+function TQueue<T>.DoRemove(AIndex: SizeInt; ACollectionNotification: TCollectionNotification): T;
+
+begin
+  if (FLow>=FLength) then
+    raise EArgumentOutOfRangeException.Create(SArgumentOutOfRange);
+  Result := FItems[AIndex];
+  FItems[AIndex] := Default(T);
+  Inc(FLow);
+  if FLow >= FLength then
+    begin
+    FLow:=0;
+    FLength:=0;
+    end;
+  Notify(Result, ACollectionNotification);
+end;
+
+function TQueue<T>.GetCount: SizeInt;
+begin
+  Result:=FLength-FLow;
+end;
+
+constructor TQueue<T>.Create;
+begin
+  FMaxGapLength:=10;
+end;
+
+constructor TQueue<T>.Create2(ACollection: TEnumerable<T>);
+
+var
+  Itm: T;
+
+begin
+  Create;
+  for Itm in ACollection do
+    Enqueue(Itm);
+end;
+
+destructor TQueue<T>.Destroy;
+begin
+  Clear;
+  inherited Destroy;
+end;
+
+procedure TQueue<T>.Enqueue(const AValue: T);
+begin
+  if Capacity<=FLength then
+    SetCapacity(FLength+10);
+  FItems[FLength]:=aValue;
+  Inc(FLength);
+  Notify(aValue,cnAdded);
+end;
+
+function TQueue<T>.Dequeue: T;
+begin
+  Result := DoRemove(FLow, cnRemoved);
+  if FLow>FMaxGapLength then
+    Rebase;
+end;
+
+function TQueue<T>.Extract: T;
+begin
+  Result := DoRemove(FLow, cnExtracted);
+  if FLow>FMaxGapLength then
+    Rebase;
+end;
+
+function TQueue<T>.Peek: T;
+begin
+  if (Count=0) then
+      raise EArgumentOutOfRangeException.Create(SArgumentOutOfRange);
+  Result:=FItems[FLow];
+end;
+
+procedure TQueue<T>.Clear;
+begin
+  while Count <> 0 do
+    Dequeue;
+end;
+
+procedure TQueue<T>.Rebase;
+
+Var
+  I,Spare : integer;
+
+begin
+  Spare:=Capacity-Count;
+  if FLow>0 then
+    begin
+    For I:=Flow to FLength do
+      FItems[I-FLow]:=FItems[I];
+    SetLength(FItems,FLength+Spare);
+    FLength:=FLength-Flow+1;
+    Flow:=0;
+    end;
+end;
+
+procedure TQueue<T>.TrimExcess;
+begin
+  Rebase;
+  SetCapacity(Count);
+end;
+
+{ TQueue.TEnumerator }
+
+constructor TQueue<T>.TEnumerator.Create(AQueue: TMyType);
+begin
+  aQueue.Rebase;
+  Inherited Create(aQueue);
+end;
+
+{ TObjectQueue }
+
+procedure TObjectQueue<T>.Notify(const Value: T; Action: TCollectionNotification);
+
+Var
+  A : TObject absolute Value;
+
+begin
+  inherited Notify(Value, Action);
+  if OwnsObjects and (Action = cnRemoved) then
+    A.Free;
+end;
+
+constructor TObjectQueue<T>.Create(AOwnsObjects: Boolean);
+begin
+  Inherited create;
+  FOwnsObjects:=aOwnsObjects;
+end;
+
+constructor TObjectQueue<T>.Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
+begin
+  inherited Create2(Collection);
+  FOwnsObjects := AOwnsObjects;
+end;
+
+procedure TObjectQueue<T>.Dequeue;
+begin
+  Inherited DeQueue;
 end;
 
 end.

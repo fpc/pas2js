@@ -122,8 +122,18 @@ begin
 end;
 
 procedure TTestSingleObjectDict.TearDown;
+
+Var
+  I : integer;
+  A : TObject;
+
 begin
   FreeAndNil(FDict);
+  for I:=0 to FList.Count-1 do
+    begin
+    A:=TObject(FList[i]);
+    A.Free;
+    end;
   FreeAndNil(FList);
   inherited TearDown;
 end;
@@ -184,8 +194,17 @@ begin
 end;
 
 procedure TTestDualObjectDict.TearDown;
+Var
+  I : integer;
+  A : TObject;
+
 begin
   FreeAndNil(FDict);
+  for I:=0 to FList.Count-1 do
+    begin
+    A:=TObject(FList[i]);
+    A.Free;
+    end;
   FreeAndNil(FList);
   inherited TearDown;
 end;

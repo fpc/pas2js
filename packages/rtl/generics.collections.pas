@@ -113,13 +113,26 @@ type
     property Count: SizeInt read GetCount;
     property Capacity: SizeInt read GetCapacity write SetCapacity;
     property OnNotify: TCollectionNotifyEvent<T> read FOnNotify write FOnNotify;
-
     procedure TrimExcess; virtual; abstract;
   end;
 
   { TCustomListEnumerator }
 
   TCustomListEnumerator<T> = class abstract(TEnumerator<T>)
+  private
+    FList: TCustomList<T>;
+    FIndex: SizeInt;
+  protected
+    function DoMoveNext: boolean; override;
+    function DoGetCurrent: T; override;
+    function GetCurrent: T; virtual;
+  public
+    constructor Create(AList: TCustomList<T>);
+  end;
+
+  { TCustomInvertedListEnumerator }
+
+  TCustomInvertedListEnumerator<T> = class abstract(TEnumerator<T>)
   private
     FList: TCustomList<T>;
     FIndex: SizeInt;
@@ -268,6 +281,8 @@ type
     function Peek: T;
     procedure Clear;
     procedure TrimExcess; override;
+    // Maximum gap (=amount of empty slots in array before first element)
+    // before doing a rebase of the list. Defaults to 10.
     Property MaxGapLength : Integer Read FMaxGapLength Write FMaxGapLength;
   end;
 
@@ -281,7 +296,51 @@ type
   public
     constructor Create(AOwnsObjects: Boolean = True); overload;
     constructor Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
-    procedure Dequeue; reintroduce;
+    procedure Dequeue; reintroduce; // Can't use the result, it might have been freed;
+    property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
+  end;
+
+  { TStack }
+
+  TStack<T> = class(TCustomList<T>)
+  private
+  protected
+    function DoRemove(AIndex: SizeInt; ACollectionNotification: TCollectionNotification): T; override;
+    procedure SetCapacity(AValue: SizeInt); override;
+    function DoGetEnumerator: TEnumerator<T>; override;
+  public
+    type
+      TMyType = TStack<T>;
+
+      { TEnumerator }
+
+      TEnumerator = class(TCustomInvertedListEnumerator<T>)
+      public
+        constructor Create(AStack: TMyType);
+      end;
+    function GetEnumerator: TEnumerator; reintroduce;
+  Public
+    destructor Destroy; override;
+    procedure Clear;
+    procedure Push(const aValue: T);
+    function Pop: T;
+    function Peek: T;
+    function Extract: T;
+    procedure TrimExcess;
+    property Count: SizeInt read GetCount;
+  end;
+
+  { TObjectStack }
+
+  TObjectStack<T: class> = class(TStack<T>)
+  private
+    FOwnsObjects: Boolean;
+  protected
+    procedure Notify(const aValue: T; Action: TCollectionNotification); override;
+  public
+    constructor Create(AOwnsObjects: Boolean = True); overload;
+    constructor Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
+    procedure Pop; reintroduce; // Can't use the result, it might have been freed;
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
 
@@ -1814,14 +1873,160 @@ begin
 end;
 
 constructor TObjectQueue<T>.Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
+Var
+  A : T;
+
 begin
-  inherited Create2(Collection);
-  FOwnsObjects := AOwnsObjects;
+  Create(aOwnsObjects);
+  For A in Collection do
+    EnQueue(A);
 end;
 
 procedure TObjectQueue<T>.Dequeue;
 begin
   Inherited DeQueue;
+end;
+
+{ TStack }
+
+function TStack<T>.DoRemove(aIndex : SizeInt; ACollectionNotification: TCollectionNotification): T;
+
+begin
+  if (FLength=0) or (aIndex<>FLength-1) then
+    raise EArgumentOutOfRangeException.Create(SArgumentOutOfRange);
+  Result:=FItems[AIndex];
+  FItems[AIndex] := Default(T);
+  Dec(FLength);
+  Notify(Result, ACollectionNotification);
+end;
+
+procedure TStack<T>.SetCapacity(aValue: SizeInt);
+
+begin
+  if AValue < Count then
+    raise EArgumentOutOfRangeException.Create(SArgumentOutOfRange);
+  SetLength(FItems,aValue);
+end;
+
+function TStack<T>.DoGetEnumerator: TEnumerator<T>;
+begin
+  Result:=GetEnumerator;
+end;
+
+function TStack<T>.GetEnumerator: TEnumerator;
+begin
+  Result:=TEnumerator.Create(Self);
+end;
+
+
+destructor TStack<T>.Destroy;
+begin
+  Clear;
+  inherited Destroy;
+end;
+
+procedure TStack<T>.Clear;
+begin
+  While Count>0 do Pop;
+end;
+
+procedure TStack<T>.Push(const aValue: T);
+begin
+  if Capacity<=FLength then
+    SetCapacity(FLength+10);
+  FItems[FLength]:=aValue;
+  Inc(FLength);
+  Notify(aValue,cnAdded);
+end;
+
+function TStack<T>.Pop: T;
+begin
+  Result:=DoRemove(FLength-1,cnRemoved);
+end;
+
+function TStack<T>.Peek: T;
+begin
+  if Count<1 then
+    raise EArgumentOutOfRangeException.Create(SArgumentOutOfRange);
+  Result:=FItems[FLength-1];
+end;
+
+function TStack<T>.Extract: T;
+begin
+  Result:=DoRemove(FLength-1,cnExtracted);
+end;
+
+procedure TStack<T>.TrimExcess;
+begin
+  SetCapacity(FLength);
+end;
+
+{ TCustomInvertedListEnumerator }
+
+function TCustomInvertedListEnumerator<T>.DoMoveNext: boolean;
+begin
+  Result:=FIndex>0;
+  If Result then
+    Dec(FIndex);
+end;
+
+function TCustomInvertedListEnumerator<T>.DoGetCurrent: T;
+begin
+  Result:=FList.FItems[FIndex];
+end;
+
+function TCustomInvertedListEnumerator<T>.GetCurrent: T;
+begin
+  Result:=DoGetCurrent;
+end;
+
+constructor TCustomInvertedListEnumerator<T>.Create(AList: TCustomList<T>);
+begin
+  inherited Create;
+  FList:=AList;
+  FIndex:=AList.FLength;
+end;
+
+{ TStack.TEnumerator }
+
+constructor TStack<T>.TEnumerator.Create(AStack: TMyType);
+begin
+  Inherited Create(aStack);
+end;
+
+{ TObjectStack }
+
+procedure TObjectStack<T>.Notify(const aValue: T; Action: TCollectionNotification);
+
+Var
+  A : T absolute aValue;
+
+begin
+  inherited Notify(aValue, Action);
+  if (Action=cnRemoved) and FOwnsObjects then
+    a.Free;
+end;
+
+constructor TObjectStack<T>.Create(AOwnsObjects: Boolean);
+begin
+  Inherited Create;
+  FOwnsObjects:=aOwnsObjects;
+end;
+
+constructor TObjectStack<T>.Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
+
+Var
+  A : T;
+
+begin
+  Create(aOwnsObjects);
+  For A in Collection do
+    Push(A);
+end;
+
+procedure TObjectStack<T>.Pop;
+begin
+  Inherited Pop;
 end;
 
 end.

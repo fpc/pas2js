@@ -1,4 +1,4 @@
-unit tcgenericlist;
+unit tcgenericqueue;
 
 {$mode objfpc}
 
@@ -9,16 +9,16 @@ uses
 
 
 Type
-  TMySimpleList = Class(Specialize TList<String>);
+  TMySimpleQueue = Class(Specialize TQueue<String>);
 {$IFDEF FPC}
   EList = EListError;
 {$ENDIF}
 
-  { TTestSimpleList }
+  { TTestSimpleQueue }
 
-  TTestSimpleList = Class(TTestCase)
+  TTestSimpleQueue = Class(TTestCase)
   Private
-    FList : TMySimpleList;
+    FQueue : TMySimpleQueue;
     FnotifyMessage : String;
     FCurrentValueNotify : Integer;
     FExpectValues : Array of String;
@@ -26,26 +26,24 @@ Type
     procedure DoAdd(aCount: Integer; aOffset: Integer=0);
     procedure DoAdd2;
     Procedure DoneExpectValues;
-    procedure DoGetValue(aKey: Integer; Match: String; ExceptionClass: TClass=nil);
+    procedure DoGetValue(Match: String; ExceptionClass: TClass=nil);
     procedure DoValueNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: String; AAction: TCollectionNotification);
   Public
     Procedure SetExpectValues(aMessage : string; AKeys : Array of String; AActions : Array of TCollectionNotification; DoReverse : Boolean = False);
     Procedure SetUp; override;
     Procedure TearDown; override;
-    Property List : TMySimpleList Read FList;
+    Property Queue : TMySimpleQueue Read FQueue;
   Published
     Procedure TestEmpty;
     Procedure TestAdd;
     Procedure TestClear;
     Procedure TestGetValue;
-    Procedure TestSetValue;
-    Procedure TestContainsValue;
-    Procedure TestDelete;
+    Procedure TestPeek;
+    Procedure TestDequeue;
     Procedure TestToArray;
     Procedure TestEnumerator;
     procedure TestValueNotification;
     procedure TestValueNotificationDelete;
-    procedure TestValueNotificationSet;
   end;
 
   { TMyObject }
@@ -60,115 +58,87 @@ Type
     Property ID : Integer Read FID;
   end;
 
-  TSingleObjectList = Class(Specialize TObjectList<TMyObject>);
+  TSingleObjectQueue = Class(Specialize TObjectQueue<TMyObject>);
 
-  { TTestSingleObjectList }
+  { TTestSingleObjectQueue }
 
-  TTestSingleObjectList = Class(TTestCase)
+  TTestSingleObjectQueue = Class(TTestCase)
   private
-    FOList: TSingleObjectList;
+    FOQueue: TSingleObjectQueue;
     FList : TFPList;
     procedure DoAdd(aID: Integer);
     procedure DoDestroy(Sender: TObject);
   Public
     Procedure SetUp; override;
     Procedure TearDown; override;
-    Property List : TSingleObjectList Read FOList;
+    Property Queue : TSingleObjectQueue Read FOQueue;
   Published
     Procedure TestEmpty;
-    Procedure TestFreeOnRemove;
-    Procedure TestNoFreeOnRemove;
-    Procedure TestFreeOnDelete;
-    Procedure TestNoFreeDelete;
+    Procedure TestFreeOnDequeue;
+    Procedure TestNoFreeOnDeQueue;
   end;
 
 implementation
 
-{ TTestSingleObjectList }
+{ TTestSingleObjectQueue }
 
-procedure TTestSingleObjectList.SetUp;
+procedure TTestSingleObjectQueue.SetUp;
 begin
-  FOList:=TSingleObjectList.Create(True);
+  FOQueue:=TSingleObjectQueue.Create(True);
   FList:=TFPList.Create;
   inherited SetUp;
 end;
 
-procedure TTestSingleObjectList.TearDown;
-
-Var
-  I : Integer;
-  A : TObject;
+procedure TTestSingleObjectQueue.TearDown;
 begin
-  for I:=0 to FList.Count-1 do
-    begin
-    A:=TObject(FList[i]);
-    A.Free;
-    end;
+  FreeAndNil(FOQueue);
   FreeAndNil(FList);
-  FreeAndNil(FOList);
   inherited TearDown;
 end;
 
-procedure TTestSingleObjectList.TestEmpty;
+procedure TTestSingleObjectQueue.TestEmpty;
 begin
-  AssertNotNull('Have object',List);
-  AssertEquals('Have empty object',0,List.Count);
+  AssertNotNull('Have object',Queue);
+  AssertEquals('Have empty object',0,Queue.Count);
 end;
 
-procedure TTestSingleObjectList.DoAdd(aID : Integer);
+procedure TTestSingleObjectQueue.DoAdd(aID : Integer);
 
 Var
   O :  TMyObject;
 
 begin
   O:=TMyObject.Create(aID,@DoDestroy);
-  FOList.Add(O);
+  FOQueue.EnQueue(O);
   FList.Add(O);
 end;
 
-procedure TTestSingleObjectList.DoDestroy(Sender: TObject);
+procedure TTestSingleObjectQueue.DoDestroy(Sender: TObject);
 
 Var
   I : Integer;
 
 begin
   I:=FList.IndexOf(Sender);
-  AssertTrue('Have object in list',I<>-1);
+  AssertTrue('Have object in Queue',I<>-1);
   FList.Delete(I);
 end;
 
-procedure TTestSingleObjectList.TestFreeOnRemove;
+procedure TTestSingleObjectQueue.TestFreeOnDeQueue;
 
 begin
   DoAdd(1);
   AssertEquals('Have obj',1,FList.Count);
-  List.Remove(TMyObject(FList[0]));
+  Queue.Dequeue;
   AssertEquals('Have no obj',0,FList.Count);
 end;
 
-procedure TTestSingleObjectList.TestNoFreeOnRemove;
+procedure TTestSingleObjectQueue.TestNoFreeOnDeQueue;
 begin
-  List.OwnsObjects:=False;
+  Queue.OwnsObjects:=False;
   DoAdd(1);
   AssertEquals('Have obj',1,FList.Count);
-  List.Remove(TMyObject(FList[0]));
-  AssertEquals('Have  obj',1,FList.Count);
-end;
-
-procedure TTestSingleObjectList.TestFreeOnDelete;
-begin
-  DoAdd(1);
-  AssertEquals('Have obj',1,FList.Count);
-  List.Delete(0);
-  AssertEquals('Have no obj',0,FList.Count);
-end;
-
-procedure TTestSingleObjectList.TestNoFreeDelete;
-begin
-  List.OwnsObjects:=False;
-  DoAdd(1);
-  AssertEquals('Have obj',1,FList.Count);
-  List.Delete(0);
+  Queue.DeQueue;
   AssertEquals('Have  obj',1,FList.Count);
 end;
 
@@ -188,63 +158,61 @@ begin
   inherited destroy;
 end;
 
-{ TTestSimpleList }
+{ TTestSimpleQueue }
 
-procedure TTestSimpleList.SetUp;
+procedure TTestSimpleQueue.SetUp;
 begin
   inherited SetUp;
-  FList:=TMySimpleList.Create;
+  FQueue:=TMySimpleQueue.Create;
   FCurrentValueNotify:=0;
   FExpectValues:=[];
   FExpectValueAction:=[];
 end;
 
-procedure TTestSimpleList.TearDown;
+procedure TTestSimpleQueue.TearDown;
 begin
   // So we don't get clear messages
-  FList.OnNotify:=Nil;
-  FreeAndNil(FList);
+  FQueue.OnNotify:=Nil;
+  FreeAndNil(FQueue);
   inherited TearDown;
 end;
 
-procedure TTestSimpleList.TestEmpty;
+procedure TTestSimpleQueue.TestEmpty;
 begin
-  AssertNotNull('Have dictionary',List);
-  AssertEquals('empty dictionary',0,List.Count);
+  AssertNotNull('Have dictionary',Queue);
+  AssertEquals('empty dictionary',0,Queue.Count);
 end;
 
-procedure TTestSimpleList.DoAdd(aCount : Integer; aOffset : Integer=0);
+procedure TTestSimpleQueue.DoAdd(aCount : Integer; aOffset : Integer=0);
 
 Var
   I : Integer;
 
 begin
   if aOffset=-1 then
-    aOffset:=List.Count;
+    aOffset:=Queue.Count;
   For I:=aOffset+1 to aOffset+aCount do
-    List.Add(IntToStr(i));
+    Queue.EnQueue(IntToStr(i));
 end;
 
-procedure TTestSimpleList.TestAdd;
+procedure TTestSimpleQueue.TestAdd;
 
 begin
   DoAdd(1);
-  AssertEquals('Count OK',1,List.Count);
-  AssertTrue('Has added value',List.Contains('1'));
+  AssertEquals('Count OK',1,Queue.Count);
   DoAdd(1,1);
-  AssertEquals('Count OK',2,List.Count);
-  AssertTrue('Has added value',List.Contains('2'));
+  AssertEquals('Count OK',2,Queue.Count);
 end;
 
-procedure TTestSimpleList.TestClear;
+procedure TTestSimpleQueue.TestClear;
 begin
   DoAdd(3);
-  AssertEquals('Count OK',3,List.Count);
-  List.Clear;
-  AssertEquals('Count after clear OK',0,List.Count);
+  AssertEquals('Count OK',3,Queue.Count);
+  Queue.Clear;
+  AssertEquals('Count after clear OK',0,Queue.Count);
 end;
 
-procedure TTestSimpleList.DoGetValue(aKey: Integer; Match: String; ExceptionClass: TClass);
+procedure TTestSimpleQueue.DoGetValue(Match: String; ExceptionClass: TClass);
 
 Var
   EC : TClass;
@@ -253,7 +221,7 @@ Var
 begin
   EC:=Nil;
   try
-    A:=List.Items[aKey];
+    A:=Queue.DeQueue;
   except
     On E : Exception do
       begin
@@ -265,7 +233,7 @@ begin
     begin
     if EC<>Nil then
       Fail('Got exception '+EC.ClassName+' with message: '+EM);
-    AssertEquals('Value is correct for '+IntToStr(aKey),Match,A)
+    AssertEquals('Value is correct',Match,A)
     end
   else
     begin
@@ -276,10 +244,10 @@ begin
     end;
 end;
 
-procedure TTestSimpleList.DoValueNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: String; AAction: TCollectionNotification);
+procedure TTestSimpleQueue.DoValueNotify(ASender: TObject; {$ifdef fpc}constref{$else}const{$endif} AItem: String; AAction: TCollectionNotification);
 begin
 //  Writeln(FnotifyMessage+' value Notification',FCurrentValueNotify);
-  AssertSame(FnotifyMessage+' value Correct sender', FList,aSender);
+  AssertSame(FnotifyMessage+' value Correct sender', FQueue,aSender);
   if (FCurrentValueNotify>=Length(FExpectValues)) then
     Fail(FnotifyMessage+' Too many value notificiations');
   AssertEquals(FnotifyMessage+' Notification value no '+IntToStr(FCurrentValueNotify),FExpectValues[FCurrentValueNotify],aItem);
@@ -287,7 +255,7 @@ begin
 end;
 
 
-procedure TTestSimpleList.SetExpectValues(aMessage: string; AKeys: array of String;
+procedure TTestSimpleQueue.SetExpectValues(aMessage: string; AKeys: array of String;
   AActions: array of TCollectionNotification; DoReverse: Boolean);
 Var
   I,L : integer;
@@ -314,7 +282,7 @@ begin
       end;
 end;
 
-procedure TTestSimpleList.TestGetValue;
+procedure TTestSimpleQueue.TestGetValue;
 
 Var
   I : integer;
@@ -322,50 +290,44 @@ Var
 begin
   DoAdd(3);
   For I:=1 to 3 do
-    DoGetValue(i-1,IntToStr(I));
-  DoGetValue(3,'4',EArgumentOutOfRangeException);
+    DoGetValue(IntToStr(I));
+  DoGetValue('4',EArgumentOutOfRangeException);
 end;
 
-procedure TTestSimpleList.TestSetValue;
-begin
-  TestGetValue;
-  List.Items[1]:='Six';
-  DoGetValue(1,'Six');
-end;
-
-procedure TTestSimpleList.DoAdd2;
-
-begin
-  List.Add('A new 2');
-end;
-
-procedure TTestSimpleList.DoneExpectValues;
-begin
-  AssertEquals(FnotifyMessage+' Expected number of values seen',Length(FExpectValues),FCurrentValueNotify);
-end;
-
-procedure TTestSimpleList.TestContainsValue;
-
+procedure TTestSimpleQueue.TestPeek;
 Var
-  I : Integer;
+  I : integer;
 
 begin
   DoAdd(3);
   For I:=1 to 3 do
-    AssertTrue('Has '+IntToStr(i),List.Contains(IntToStr(i)));
-  AssertFalse('Has not 4',List.Contains('4'));
+    begin
+    AssertEquals('Peek ',IntToStr(I),FQueue.Peek);
+    DoGetValue(IntToStr(I));
+    end;
 end;
 
-procedure TTestSimpleList.TestDelete;
+
+procedure TTestSimpleQueue.DoAdd2;
+
+begin
+  Queue.Enqueue('A new 2');
+end;
+
+procedure TTestSimpleQueue.DoneExpectValues;
+begin
+  AssertEquals(FnotifyMessage+' Expected number of values seen',Length(FExpectValues),FCurrentValueNotify);
+end;
+
+procedure TTestSimpleQueue.TestDequeue;
 
 begin
   DoAdd(3);
-  List.Remove('2');
-  AssertEquals('Count',2,List.Count);
-  AssertFalse('Has not 2',List.Contains('2'));
+  AssertEquals('1',Queue.Dequeue);
+  AssertEquals('Count',2,Queue.Count);
 end;
 
-procedure TTestSimpleList.TestToArray;
+procedure TTestSimpleQueue.TestToArray;
 
 Var
   A : specialize TArray<String>;
@@ -375,7 +337,7 @@ Var
 
 begin
   DoAdd(3);
-  A:=List.ToArray;
+  A:=Queue.ToArray;
   AssertEquals('Length Ok',3,Length(A));
   For I:=1 to 3 do
     begin
@@ -385,7 +347,7 @@ begin
 end;
 
 
-procedure TTestSimpleList.TestEnumerator;
+procedure TTestSimpleQueue.TestEnumerator;
 
 Var
   A : String;
@@ -395,7 +357,7 @@ Var
 begin
   DoAdd(3);
   I:=1;
-  For A in List do
+  For A in Queue do
     begin
     SI:=IntToStr(I);
     AssertEquals('Value '+SI,SI,A);
@@ -403,33 +365,24 @@ begin
     end;
 end;
 
-procedure TTestSimpleList.TestValueNotification;
+procedure TTestSimpleQueue.TestValueNotification;
 begin
-  List.OnNotify:=@DoValueNotify;
+  Queue.OnNotify:=@DoValueNotify;
   SetExpectValues('Add',['1','2','3'],[cnAdded,cnAdded,cnAdded]);
   DoAdd(3);
   DoneExpectValues;
 end;
 
-procedure TTestSimpleList.TestValueNotificationDelete;
+procedure TTestSimpleQueue.TestValueNotificationDelete;
 begin
   DoAdd(3);
-  List.OnNotify:=@DoValueNotify;
+  Queue.OnNotify:=@DoValueNotify;
   SetExpectValues('Clear',['1','2','3'],[cnRemoved,cnRemoved,cnRemoved],{$IFDEF FPC}true{$ELSE}False{$endif});
-  List.Clear;
-  DoneExpectValues;
-end;
-
-procedure TTestSimpleList.TestValueNotificationSet;
-begin
-  DoAdd(3);
-  List.OnNotify:=@DoValueNotify;
-  SetExpectValues('Set',['2','Six'],[cnRemoved,cnAdded]);
-  List[1]:='Six';
+  Queue.Clear;
   DoneExpectValues;
 end;
 
 begin
-  RegisterTests([ TTestSimpleList,TTestSingleObjectList]);
+  RegisterTests([ TTestSimpleQueue,TTestSingleObjectQueue]);
 end.
 

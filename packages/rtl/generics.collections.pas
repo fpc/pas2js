@@ -168,8 +168,8 @@ type
     function GetEnumerator: TEnumerator; reintroduce;
   public
     constructor Create; overload;
-    constructor Create2(const AComparer: IComparer<T>); overload;
-    constructor Create3(ACollection: TEnumerable<T>); overload;
+    constructor Create(const AComparer: IComparer<T>); overload;
+    constructor Create(ACollection: TEnumerable<T>); overload;
 
     destructor Destroy; override;
 
@@ -223,8 +223,8 @@ type
     procedure Notify(const aValue: T; Action: TCollectionNotification); override;
   public
     constructor Create(aOwnsObjects: Boolean = True); overload;
-    constructor Create2(const AComparer: IComparer<T>; aOwnsObjects: Boolean = True); overload;
-    constructor Create3(const aCollection: TEnumerable<T>; aOwnsObjects: Boolean = True); overload;
+    constructor Create(const AComparer: IComparer<T>; aOwnsObjects: Boolean = True); overload;
+    constructor Create(const aCollection: TEnumerable<T>; aOwnsObjects: Boolean = True); overload;
     property OwnsObjects: Boolean read FObjectsOwner write FObjectsOwner;
   end;
 
@@ -273,7 +273,7 @@ type
     function GetCount: SizeInt; override;
   public
     Constructor Create; overload;
-    constructor Create2(ACollection: TEnumerable<T>); overload;
+    constructor Create(ACollection: TEnumerable<T>); overload;
     destructor Destroy; override;
     procedure Enqueue(const AValue: T);
     function Dequeue: T;
@@ -295,7 +295,7 @@ type
     procedure Notify(const Value: T; Action: TCollectionNotification); override;
   public
     constructor Create(AOwnsObjects: Boolean = True); overload;
-    constructor Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
+    constructor Create(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
     procedure Dequeue; reintroduce; // Can't use the result, it might have been freed;
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
@@ -339,7 +339,7 @@ type
     procedure Notify(const aValue: T; Action: TCollectionNotification); override;
   public
     constructor Create(AOwnsObjects: Boolean = True); overload;
-    constructor Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
+    constructor Create(const Collection: TEnumerable<T>; AOwnsObjects: Boolean = True); overload;
     procedure Pop; reintroduce; // Can't use the result, it might have been freed;
     property OwnsObjects: Boolean read FOwnsObjects write FOwnsObjects;
   end;
@@ -378,7 +378,7 @@ type
       TMyPair = TPair<TKey,TValue>;
 
     constructor Create(ACapacity: Integer=0); overload;
-    constructor Create2(const Collection: TEnumerable<TMyPair>); overload;
+    constructor Create(const Collection: TEnumerable<TMyPair>); overload;
     destructor Destroy; override;
 
     procedure Add(const Key: TKey; const Value: TValue);
@@ -423,7 +423,7 @@ type
         function DoMoveNext: Boolean; override;
       public
         constructor Create(const AIter: TJSIterator); overload;
-        constructor Create2(const ADictionary: TMyType); overload;
+        constructor Create(const ADictionary: TMyType); overload;
         function MoveNext: Boolean; reintroduce;
         property Current: TKey read GetCurrent;
       end;
@@ -440,7 +440,7 @@ type
         function DoMoveNext: Boolean; override;
       public
         constructor Create(const AIter: TJSIterator); overload;
-        constructor Create2(const ADictionary: TMyType); overload;
+        constructor Create(const ADictionary: TMyType); overload;
         function MoveNext: Boolean; reintroduce;
         property Current: TValue read GetCurrent;
       end;
@@ -503,7 +503,7 @@ type
       procedure KeyNotify(const Key: TKey; Action: TCollectionNotification); override;
       procedure ValueNotify(const Value: TValue; Action: TCollectionNotification); override;
     public
-      constructor Create2(aOwnerships: TDictionaryOwnerships; ACapacity: Integer); overload;
+      constructor Create(aOwnerships: TDictionaryOwnerships; ACapacity: Integer); overload;
       constructor Create(aOwnerships: TDictionaryOwnerships); overload;
       Property OwnerShips : TDictionaryOwnerships Read FOwnerships Write FOwnerShips;
     end;
@@ -891,13 +891,13 @@ begin
   FComparer := TComparer<T>.Default;
 end;
 
-constructor TList<T>.Create2(const AComparer: IComparer<T>);
+constructor TList<T>.Create(const AComparer: IComparer<T>);
 begin
   InitializeList;
   FComparer := AComparer;
 end;
 
-constructor TList<T>.Create3(ACollection: TEnumerable<T>);
+constructor TList<T>.Create(ACollection: TEnumerable<T>);
 var
   LItem: T;
 begin
@@ -1276,7 +1276,7 @@ begin
   FMap:=TJSMap.New;
 end;
 
-constructor TDictionary<TKey, TValue>.Create2(const Collection: TEnumerable<TMyPair>);
+constructor TDictionary<TKey, TValue>.Create(const Collection: TEnumerable<TMyPair>);
 
 Var
   aPair : TMyPair;
@@ -1467,7 +1467,7 @@ begin
   Result:=Not FVal.Done;
 end;
 
-constructor TDictionary<TKey, TValue>.TKeyEnumerator.Create2(const ADictionary: TMyType);
+constructor TDictionary<TKey, TValue>.TKeyEnumerator.Create(const ADictionary: TMyType);
 begin
   Create(ADictionary.FMap.Keys);
 end;
@@ -1500,7 +1500,7 @@ begin
   Result:=Not FVal.Done;
 end;
 
-constructor TDictionary<TKey, TValue>.TValueEnumerator.Create2(const ADictionary: TMyType);
+constructor TDictionary<TKey, TValue>.TValueEnumerator.Create(const ADictionary: TMyType);
 begin
   Create(aDictionary.FMap.Values);
 end;
@@ -1599,15 +1599,15 @@ begin
   FObjectsOwner := AOwnsObjects;
 end;
 
-constructor TObjectList<T>.Create2(const AComparer: IComparer<T>; AOwnsObjects: Boolean);
+constructor TObjectList<T>.Create(const AComparer: IComparer<T>; AOwnsObjects: Boolean);
 begin
-  inherited Create2(AComparer);
+  inherited Create(AComparer);
   FObjectsOwner := AOwnsObjects;
 end;
 
-constructor TObjectList<T>.Create3(const ACollection: TEnumerable<T>; aOwnsObjects: Boolean);
+constructor TObjectList<T>.Create(const ACollection: TEnumerable<T>; aOwnsObjects: Boolean);
 begin
-  inherited Create3(ACollection);
+  inherited Create(ACollection);
   FObjectsOwner := AOwnsObjects;
 end;
 
@@ -1711,7 +1711,7 @@ begin
     A.Free;
 end;
 
-constructor TObjectDictionary<TKey, TValue>.Create2(aOwnerships: TDictionaryOwnerships; ACapacity: Integer);
+constructor TObjectDictionary<TKey, TValue>.Create(aOwnerships: TDictionaryOwnerships; ACapacity: Integer);
 begin
   Create(aOwnerShips);
 end;
@@ -1769,7 +1769,7 @@ begin
   FMaxGapLength:=10;
 end;
 
-constructor TQueue<T>.Create2(ACollection: TEnumerable<T>);
+constructor TQueue<T>.Create(ACollection: TEnumerable<T>);
 
 var
   Itm: T;
@@ -1872,7 +1872,7 @@ begin
   FOwnsObjects:=aOwnsObjects;
 end;
 
-constructor TObjectQueue<T>.Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
+constructor TObjectQueue<T>.Create(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
 Var
   A : T;
 
@@ -2013,7 +2013,7 @@ begin
   FOwnsObjects:=aOwnsObjects;
 end;
 
-constructor TObjectStack<T>.Create2(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
+constructor TObjectStack<T>.Create(const Collection: TEnumerable<T>; AOwnsObjects: Boolean);
 
 Var
   A : T;

@@ -2466,6 +2466,9 @@ begin
   ReRender:=IsRendered;
   if ReRender then
     UnRender(ParentElement);
+  If (aValue=Nil) and (csDestroying in ComponentState) then
+    exit;
+  // here we re-render if needed
   InvalidateParentElement;
   If Assigned(aValue) then
     begin
@@ -2709,7 +2712,6 @@ begin
   EnsureElement;
   For I:=0 to ChildCount-1 do
     Children[i].Refresh;
-
 end;
 
 procedure TCustomWebWidget.Unrender;

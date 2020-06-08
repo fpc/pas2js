@@ -213,6 +213,7 @@ Type
   Published
     Property Value;
     Property ValueName;
+    Property Required;
     Property TextType : TInputTextType Read GetTextType Write SetTextType;
     property AsNumber : NativeInt Read GetAsNumber Write SetAsNumber;
     Property MaxLength : NativeInt Read GetMaxLength Write SetMaxLength;
@@ -296,6 +297,7 @@ Type
     function InputType : String; override;
     Class Function AllowChildren : Boolean; override;
   Published
+    Property Required;
     Property ValueName;
     Property Date : TDateTime Read GetDate Write SetDate;
   end;
@@ -332,6 +334,7 @@ Type
     Property FileInfos[aIndex : Integer] : TFileInfo Read GetFileInfo;
   Published
     Property ValueName;
+    Property Required;
     Property Multiple : Boolean Read GetMultiple Write SetMultiple;
   end;
 
@@ -344,6 +347,7 @@ Type
   Published
     Property ValueName;
     Property Value;
+    Property Required;
   end;
 
   { TTextAreaWidget }
@@ -1351,6 +1355,7 @@ end;
 
 procedure TCustomTextWidget.SetEnvelopeTag(AValue: TTextTag);
 begin
+  // Writeln('Setting text tag : ',aValue);
   if FEnvelopeTag=AValue then Exit;
   FEnvelopeTag:=AValue;
   if (FEnvelopeTag=ttCustom) and (FCustomTag='') then
@@ -1380,6 +1385,7 @@ end;
 
 procedure TCustomTextWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 begin
+  // Writeln('ApplyWidgetSettings: ',aElement.tagName);
   inherited ApplyWidgetSettings(aElement);
   ApplyText(aElement);
 end;
@@ -1398,6 +1404,7 @@ begin
   Result:=TextTagNames[FEnvelopeTag];
   if Result='' then
     Result:='div';
+  // Writeln('Getting element tag: ',Result);
 end;
 
 { TTextLinesWidget }
@@ -2523,7 +2530,7 @@ begin
     Result:=Inp.InnerText
   else
     Result:=FText;
-  Writeln('Getting text: ',Result,' inner : ',FText);
+  // Writeln('Getting text: ',Result,' inner : ',FText);
 end;
 
 function TCustomInputWidget.GetReadOnly: Boolean;

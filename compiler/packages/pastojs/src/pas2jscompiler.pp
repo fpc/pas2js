@@ -4711,7 +4711,6 @@ var
   var
     aFile: TPas2jsCompilerFile;
   begin
-    writeln('AAA1 TryUnitName ',TestUnitName);
     if FoundPasFilename='' then
     begin
       // search loaded units
@@ -4753,7 +4752,7 @@ var
   i: Integer;
 
 begin
-  writeln('TPas2jsCompiler.GetUnitInfo ',UseUnitName,' in=',InFileName,' ',GetObjName(PCUSupport));
+  //writeln('TPas2jsCompiler.GetUnitInfo ',UseUnitName,' in=',InFileName,' ',GetObjName(PCUSupport));
   Result:=Default(TFindUnitInfo);
   FoundPasFilename:='';
   FoundPasIsForeign:=false;

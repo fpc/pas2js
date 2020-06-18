@@ -1910,10 +1910,10 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property bodyUsed: Boolean read fbodyUsed;
     function arrayBuffer(): TJSPromise; // resolves to TJSArrayBuffer
     //function blob(): TJSPromise; // resolves to TJSBlob
-    function blob: TJSBlob; async;
+    function blob: TJSBlob; {$IFNDEF SkipAsync}async;{$ENDIF}
     function json(): TJSPromise; // resolves to JSON / TJSValue
     //function text(): TJSPromise; // resolves to USVString, always decoded using UTF-8
-    function text(): string; async;
+    function text(): string; {$IFNDEF SkipAsync}async;{$ENDIF}
   end;
 
   TJSResponse = class external name 'Response' (TJSBody)
@@ -2059,7 +2059,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Function confirm(Const aMsg : String) :  boolean;
     function fetch(resource: String; init: TJSObject): TJSPromise; overload; external name 'fetch';
     //function fetch(resource: String): TJSPromise; overload; external name 'fetch';
-    function fetch(resource: String): TJSResponse; async; overload; external name 'fetch';
+    function fetch(resource: String): TJSResponse; {$IFNDEF SkipAsync}async;{$ENDIF} overload; external name 'fetch';
     function fetch(resource: TJSObject; init: TJSObject): TJSPromise; overload; external name 'fetch';
     function fetch(resource: TJSObject): TJSPromise; overload; external name 'fetch';
     procedure focus;

@@ -1045,6 +1045,7 @@ end;
 
 function TObject.GetInterfaceByStr(const iidstr: String; out obj): boolean;
 begin
+  Result:=false;
   if not TJSObj(IObjectInstance)['$str'] then
     TJSObj(IObjectInstance)['$str']:=GUIDToString(IObjectInstance);
   if iidstr = TJSObj(IObjectInstance)['$str'] then
@@ -1055,9 +1056,8 @@ begin
   asm
     var i = rtl.getIntfG(this,iidstr,2);
     obj.set(i);
-    return i!==null;
+    Result=(i!==null);
   end;
-  Result:=false;
 end;
 
 function TObject.GetInterfaceWeak(const iid: TGuid; out obj): boolean;

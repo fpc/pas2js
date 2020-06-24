@@ -888,7 +888,7 @@ asm
     };
     if (Result === "") TI = TI.ancestor;
   };
-  return Result;
+  // return Result;
 end;
 end;
 
@@ -914,7 +914,7 @@ asm
     if (MN === "") TI = TI.ancestor;
   };
   if (MN !== "") Result = this[MN];
-  return Result;
+//  return Result;
 end;
 end;
 

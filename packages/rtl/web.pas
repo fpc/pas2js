@@ -1945,6 +1945,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   TJSDOMHighResTimeStamp = Double;
   TFrameRequestCallback = procedure (aTime: TJSDOMHighResTimeStamp);
 
+  TJSPostMessageOptions = class external name 'Object' (TJSObject)
+    targetOrigin : string;
+    transfer : TJSValueDynArray;
+  end;
+
   TJSWindowArray = Array of TJSWindow;
   TJSWindow = class external name 'Window' (TJSObject)
   Private
@@ -2073,6 +2078,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function open(Const aURL,aTarget : String) : TJSWindow; overload;
     function open(Const aURL,aTarget : String; AOptions : TJSObject) : TJSWindow; overload;
     procedure postMessage(aMessage : JSValue);
+    procedure postMessage(aMessage : JSValue; aOptions : TJSPostMessageOptions);
     procedure postMessage(aMessage : JSValue; aTransfer : TJSValueDynArray);
     procedure postMessage(aMessage : JSValue; aTarget : string);
     procedure postMessage(aMessage : JSValue; aTarget : string; aTransfer : TJSValueDynArray);

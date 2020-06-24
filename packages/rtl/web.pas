@@ -1004,14 +1004,15 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Procedure clear;  
     procedure count; overload;
     procedure count(aCounter : String);
-    procedure error(Obj1 : JSValue); varargs;
+    procedure debug(Obj1 : JSValue); varargs of JSValue;
+    procedure error(Obj1 : JSValue); varargs of JSValue;
     procedure group; overload;
     procedure group(aLabel : String); overload;
     procedure groupCollapsed; overload;
     procedure groupCollapsed(aLabel : String);overload;
     procedure groupEnd;
-    procedure info(Obj1 : JSValue); varargs;
-    procedure log(Obj1 : JSValue); varargs;
+    procedure info(Obj1 : JSValue); varargs of JSValue;
+    procedure log(Obj1 : JSValue); varargs of JSValue;
     procedure table(args: array of JSValue); overload;
     procedure table(args: array of JSValue; Columns : Array of string);
     procedure table(args: TJSObject); overload;
@@ -1019,7 +1020,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure time(aName : string);
     procedure timeEnd(aName : string);
     procedure trace;
-    procedure warn(Obj1 : JSValue); varargs;
+    procedure warn(Obj1 : JSValue); varargs of JSValue;
   end;
 
 //  TJSBufferSource = class external name 'BufferSource' end;

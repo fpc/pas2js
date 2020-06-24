@@ -1676,7 +1676,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     constructor new(aURL : string);
     procedure postMessage(aValue : JSValue);
     procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
-    procedure terminate;
   end;
 
   TJSMessagePort = class external name 'MessagePort' (TJSEventTarget)
@@ -2073,6 +2072,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function open(Const aURL : String) : TJSWindow; overload;
     function open(Const aURL,aTarget : String) : TJSWindow; overload;
     function open(Const aURL,aTarget : String; AOptions : TJSObject) : TJSWindow; overload;
+    procedure postMessage(aMessage : JSValue);
+    procedure postMessage(aMessage : JSValue; aTransfer : TJSValueDynArray);
     procedure postMessage(aMessage : JSValue; aTarget : string);
     procedure postMessage(aMessage : JSValue; aTarget : string; aTransfer : TJSValueDynArray);
     procedure print;

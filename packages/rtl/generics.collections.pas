@@ -530,7 +530,6 @@ class function TCustomArrayHelper<T>.BinarySearch(const AValues: array of T;
   const AItem: T; out AFoundIndex: SizeInt; const AComparer: IComparer<T>
   ): Boolean;
 begin
-  Writeln('Here too',Length(aValues));
   Result := BinarySearch(AValues, AItem, AFoundIndex, AComparer,
                          0, Length(AValues));
 end;
@@ -539,7 +538,6 @@ class function TCustomArrayHelper<T>.BinarySearch(const AValues: array of T;
   const AItem: T; out ASearchResult: TBinarySearchResult;
   const AComparer: IComparer<T>): Boolean;
 begin
-  Writeln('Here',Length(aValues));
   Result := BinarySearch(AValues, AItem, ASearchResult, AComparer,
                          0, Length(AValues));
 end;
@@ -600,17 +598,17 @@ var
   imin, imax, imid, ilo: Int32;
 
 begin
-  Writeln('Enter ',Length(aValues),' Idx ',aIndex,' acount: ',aCount);
+  // Writeln('Enter ',Length(aValues),' Idx ',aIndex,' acount: ',aCount);
   // continually narrow search until just one element remains
   imin := AIndex;
   imax := Pred(AIndex + ACount);
-  Writeln('Start Imax, imin : ',Imax, ' - ', imin);
+  // Writeln('Start Imax, imin : ',Imax, ' - ', imin);
   ilo:=imid * imid;
   imid:=ilo*imid;
   while (imin < imax) do
   begin
     imid := (imax+imin) div 2;
-    writeln('imid',imid);
+    // writeln('imid',imid);
 
     ASearchResult.CompareResult := AComparer.Compare(AValues[imid], AItem);
     // reduce the search
@@ -632,28 +630,24 @@ begin
   //   otherwise imax == imin
 
   // deferred test for equality
-  Writeln('End Imax, imin : ',Imax, ' - ', imin);
-  if (imax = imin) then
-  begin
+  // Writeln('End Imax, imin : ',Imax, ' - ', imin);
+  Result:=(imax = imin);
+  if Result then
+    begin
     ASearchResult.CompareResult := AComparer.Compare(AValues[imin], AItem);
     ASearchResult.CandidateIndex := imin;
-    if (ASearchResult.CompareResult = 0) then
-    begin
-      ASearchResult.FoundIndex := imin;
-      Exit(True);
-    end else
-    begin
+    Result:=(ASearchResult.CompareResult = 0);
+    if Result then
+      ASearchResult.FoundIndex := imin
+    else
       ASearchResult.FoundIndex := -1;
-      Exit(False);
-    end;
-  end
+    end
   else
-  begin
+    begin
     ASearchResult.CompareResult := 0;
     ASearchResult.FoundIndex := -1;
     ASearchResult.CandidateIndex := -1;
-    Exit(False);
-  end;
+    end;
 end;
 
 class function TArrayHelper<T>.BinarySearch(const AValues: array of T;
@@ -696,30 +690,25 @@ begin
 
   // deferred test for equality
   LCompare := AComparer.Compare(AValues[imin], AItem);
-  if (imax = imin) and (LCompare = 0) then
-  begin
-    AFoundIndex := imin;
-    Exit(True);
-  end
+  Result:=(imax = imin) and (LCompare = 0);
+  if Result then
+    AFoundIndex := imin
   else
-  begin
     AFoundIndex := -1;
-    Exit(False);
-  end;
 end;
 
 { TEnumerator }
 
 function TEnumerator<T>.MoveNext: boolean;
 begin
-  Exit(DoMoveNext);
+  Result:=DoMoveNext;
 end;
 
 { TEnumerable }
 
 function TEnumerable<T>.GetEnumerator: TMyEnumerator;
 begin
-  Exit(DoGetEnumerator);
+  Result:=DoGetEnumerator;
 end;
 
 function TEnumerable<T>.ToArray: TMyArray;
@@ -1059,9 +1048,9 @@ var
 begin
   LIndex := IndexOf(AValue);
   if LIndex < 0 then
-    Exit(Default(T));
-
-  Result := DoRemove(LIndex, cnExtracted);
+    Result:=Default(T)
+  else
+    Result := DoRemove(LIndex, cnExtracted);
 end;
 
 procedure TList<T>.Exchange(AIndex1, AIndex2: SizeInt);
@@ -1124,7 +1113,7 @@ begin
   for i := 0 to Count - 1 do
     if FComparer.Compare(AValue, FItems[i]) = 0 then
       Exit(i);
-  Result := -1;
+  Result:=-1;
 end;
 
 function TList<T>.LastIndexOf(const AValue: T): SizeInt;
@@ -1134,7 +1123,7 @@ begin
   for i := Count - 1 downto 0 do
     if FComparer.Compare(AValue, FItems[i]) = 0 then
       Exit(i);
-  Result := -1;
+  Result:=-1;
 end;
 
 procedure TList<T>.Reverse;

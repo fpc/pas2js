@@ -901,7 +901,7 @@ function isUndefined(const v: JSValue): boolean; assembler;
 function isDefined(const v: JSValue): boolean; assembler;
 function isUTF16Char(const v: JSValue): boolean; assembler;
 function isExt(const InstanceOrClass, aClass: JSValue): boolean; external name 'rtl.isExt'; // aClass can be a JS object or function
-function jsInstanceOf(const aFunction, aFunctionWithPrototype: JSValue): String; assembler;
+function jsInstanceOf(const aFunction, aFunctionWithPrototype: JSValue): Boolean; assembler;
 function jsTypeOf(const v: JSValue): String; external name 'typeof';
 function jsIsNaN(const v: JSValue): boolean; external name 'isNaN';// true if value cannot be converted to a number. e.g. True on NaN, undefined, {}, '123'. False on true, null, '', ' ', '1A'
 function jsIsFinite(const v: JSValue): boolean; external name 'isFinite';// true if value is a Finite number
@@ -1043,7 +1043,7 @@ asm
 end;
 
 function jsInstanceOf(const aFunction, aFunctionWithPrototype: JSValue
-  ): String; assembler;
+  ): Boolean; assembler;
 asm
   return aFunction instanceof aFunctionWithPrototype;
 end;

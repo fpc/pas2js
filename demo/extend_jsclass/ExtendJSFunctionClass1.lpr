@@ -1,14 +1,17 @@
+{ Demo showing how to create a Pascal class descendant from a JS function.
+}
 program ExtendJSFunctionClass1;
 
 {$mode objfpc}
 {$ModeSwitch externalclass}
 
 uses
-  JS, Classes, SysUtils, Web;
+  JS, browserconsole;
 
 type
 
-  { TJSPerson - a JS function, which is used like a class }
+  { TJSPerson - a JS function, which is used like a class
+    Person is declared in the html }
 
   TJSPerson = class external name 'Person'(TJSFunction)
   public

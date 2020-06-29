@@ -1176,6 +1176,7 @@ type
   TPRResolveVarAccesses = set of TResolvedRefAccess;
 
 const
+  rraAllRead = [rraRead,rraReadAndAssign,rraVarParam];
   rraAllWrite = [rraAssign,rraReadAndAssign,rraVarParam,rraOutParam];
 
   ResolvedToPSRefAccess: array[TResolvedRefAccess] of TPSRefAccess = (

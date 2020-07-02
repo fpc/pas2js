@@ -1847,9 +1847,46 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSBlob = class;
 
+  TJSParamEnumCallBack = reference to procedure (const aKey,aValue : string);
+  TJSURLSearchParams = class external name 'URLSearchParams' (TJSObject)
+  Public
+    Procedure append(const aName,aValue : string);
+    Procedure delete(const aName : string);
+    Function entries : TJSIterator;
+    Procedure foreach(aEnumCallBack : TJSParamEnumCallBack);
+    function get(const aName : string) : JSValue;
+    // If you're sure the value exists...
+    function getString(const aName : string) : string; external name 'get';
+    function getAll(const aName : string) : TStringDynArray;
+    function has(const aName : string) : Boolean;
+    Function keys : TJSIterator; reintroduce;
+    Procedure set_(const aName,aValue : string); external name 'set';
+    Procedure sort;
+    Function values : TJSIterator; reintroduce;
+  end;
+
   TJSURL = class external name 'URL' (TJSObject)
+  Private
+    FOrigin : String; external name 'origin';
+    FSearchParams : TJSURLSearchParams; external name 'searchParams';
   public
-    class function createObjectURL(const v: JSValue): string; overload;
+    hash : string;
+    host : string;
+    hostname : string;
+    href : string;
+    password : string;
+    pathname : string;
+    port : string;
+    protocol : string;
+    search : string;
+    username : string;
+    constructor new(aURL : String);
+    constructor new(aURL,aBase : String);
+    class function createObjectURL(const v: JSValue): string;
+    class function revokeObjectURL(const S : String): string;
+    function toJSON : String;
+    Property Origin : String Read FOrigin;
+    property SearchParams : TJSURLSearchParams read FSearchParams;
   end;
 
   TJSCSSStyleDeclaration = class; // forward

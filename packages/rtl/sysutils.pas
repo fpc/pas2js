@@ -2018,7 +2018,7 @@ end;
 
 function AnsiSameText(const s1, s2: String): Boolean; assembler;
 asm
-  return s1.localeCompare(s2) == 0;
+  return s1.toLowerCase() == s2.toLowerCase();
 end;
 
 function AnsiCompareStr(const s1, s2: String): Integer;

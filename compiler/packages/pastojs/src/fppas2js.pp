@@ -15394,7 +15394,10 @@ begin
           // clone sub static array
           VarAssignSt.Expr:=CreateCloneStaticArray(PasVar,TPasArrayType(PasVarType),
                                               SrcExpr,aContext);
-          end;
+          end
+        else
+          // reference dynamic array
+          VarAssignSt.Expr:=CreateArrayRef(PasVar,SrcExpr);
         end
       else if PasVarClass=TPasSetType then
         begin
@@ -22473,12 +22476,9 @@ begin
           PasVarType:=aResolver.ResolveAliasType(PasVar.VarType);
           if PasVarType.ClassType=TPasArrayType then
             begin
-            if length(TPasArrayType(PasVarType).Ranges)>0 then
-              begin
-              // sub static array
-              NewFields.Add(PasVar);
-              continue;
-              end;
+            // sub array
+            NewFields.Add(PasVar);
+            continue;
             end
           else if PasVarType.ClassType=TPasRecordType then
             begin

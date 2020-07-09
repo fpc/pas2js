@@ -3996,6 +3996,7 @@ begin
     S:='';
     For I:=0 to Length(AValue) do
       TJSString(S).Concat(IntToHex(aValue[i],2));
+    Result:=S;
     end;
 end;
 

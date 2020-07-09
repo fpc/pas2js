@@ -657,9 +657,18 @@ function TDateTimeFieldComparer.Compare(RowIndex: Integer; aValue: JSValue): Int
 var
   D1,D2 : TDateTime;
 
+  Function ToDate(v: JSValue) : TDateTime;
+
+  begin
+    if IsDate(v) then
+      Result:= JSDateToDateTime(TJSDate(v))
+    else
+      Result:=Dataset.ConvertDateTimeField(String(v),Self.Field);
+  end;
+
 begin
-  D1:=Dataset.ConvertDateTimeField(String(GetFieldValue(Rowindex)),Self.Field);
-  D2:=Dataset.ConvertDateTimeField(String(aValue),Self.Field);
+  D1:=ToDate(GetFieldValue(RowIndex));
+  D2:=ToDate(aValue);
   Result:=Round(D1-D2);
 end;
 

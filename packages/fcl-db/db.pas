@@ -3932,6 +3932,8 @@ begin
     end
   else if IsNumber(aValue) then
     Result:=TDateTime(AValue)
+  else if IsDate(aValue) then
+    Result:=JSDateToDateTime(TJSDate(aValue));
 end;
 
 function TDataSet.ConvertDateTimeToNative(aField: TField; aValue : TDateTime) : JSValue;

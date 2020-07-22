@@ -24,12 +24,12 @@ uses JS, ROSDK;
 
 Type
   TDAUserInfo = Class;
-  TDASuccessEvent = Procedure (res : JSValue) of object;
-  TDAFailedEvent = Procedure (response : TJSOBject; fail : String) of object;
+  TDASuccessEvent = Reference to Procedure (res : JSValue);
+  TDAFailedEvent = Reference to Procedure (response : TROMessage; Err : TJSError);
 
   TDALoginSuccessEvent = Reference to Procedure (result : Boolean; UserInfo : TDAUserInfo);
 
-  TDABaseLoginService = class external name 'RemObjects.DataAbstract.Server.SimpleLoginService' (TJSObject)
+  TDABaseLoginService = class external name 'RemObjects.DataAbstract.Server.SimpleLoginService' (TROService)
   Public
     Constructor new(ch : TROHTTPClientChannel; msg : TROMessage; aServiceName : string);
     Procedure LoginEx(aLoginString :String; aSuccess : TDALoginSuccessEvent; aFailure : TDAFailedEvent);

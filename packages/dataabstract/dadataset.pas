@@ -37,6 +37,8 @@ Type
     class function NewUnaryExpression(anExpression: TDAExpression; anOp: TDAUnaryOperator): TDAExpression;
     class function NewConstant(const aValue: jsValue): TDAExpression; overload;
     class function NewConstant(const aValue: jsValue; aType: TDADataType): TDAExpression; overload;
+    class function NewDateTimeConstant(const aValue: TJSDate): TDAExpression; overload;
+    class function NewDateTimeConstant(const aValue: TDateTime): TDAExpression; overload;
     class function NewList(const aValues: array of TDAExpression): TDAExpression;
     class function NewParameter(const aParameterName: string; aParameterType: TDADataType = datUnknown): TDAExpression;
     class function NewField(const aTableName,aFieldName: string): TDAExpression;
@@ -88,7 +90,7 @@ Type
   TDADataRequest = Class(TDataRequest)
   Public
     Procedure doSuccess(res : JSValue) ;
-    Procedure DoFail(response : TJSOBject; fail : String) ;
+    Procedure DoFail(response: TROMessage; fail: TjsError) ;
   End;
 
   { TDADataProxy }
@@ -111,7 +113,7 @@ Type
   TDAStreamerType = (stJSON,stBin);
 
   { TDAConnection }
-
+  TLoginFailedEvent = Reference to procedure (Msg : TROMessage; Err : String);
   TDAConnection = class(TComponent)
   private
     FDataService: TDADataAbstractService;
@@ -121,7 +123,7 @@ Type
     FMessageType: TDAMessageType;
     FMessage : TROmessage;
     FChannel : TROHTTPClientChannel;
-    FOnLoginFailed: TDAFailedEvent;
+    FOnLoginFailed: TLoginFailedEvent;
     FOnLogin: TDALoginSuccessEvent;
     FOnLogout: TDASuccessEvent;
     FOnLogoutailed: TDAFailedEvent;
@@ -138,6 +140,7 @@ Type
     procedure SetLoginServiceName(AValue: String);
     procedure SetMessageType(AValue: TDAMessageType);
     procedure SetURL(AValue: String);
+    procedure DoLoginFailed(Msg: TROMessage; aErr: TJSError);
   Protected
     Procedure CreateChannelAndMessage; virtual;
     function DetectMessageType(Const aURL: String): TDAMessageType; virtual;
@@ -177,7 +180,7 @@ Type
     // Called when login call is executed.
     Property OnLogin : TDALoginSuccessEvent Read FOnLogin Write FOnLogin;
     // Called when login call failed. When call was executed but user is wrong OnLogin is called !
-    Property OnLoginCallFailed : TDAFailedEvent Read FOnLoginFailed Write FOnLoginFailed;
+    Property OnLoginCallFailed : TLoginFailedEvent Read FOnLoginFailed Write FOnLoginFailed;
     // Called when logout call is executed.
     Property OnLogout : TDASuccessEvent Read FOnLogout Write FOnLogout;
     // Called when logout call failed.
@@ -258,6 +261,19 @@ end;
 class function TDAWhereClauseBuilder.NewConstant(const aValue: jsValue): TDAExpression;
 begin
   Result:=TDAConstantExpression.New(JSValueToDataTypeName(aValue),aValue,Ord(IsNull(aValue)));
+end;
+
+class function TDAWhereClauseBuilder.NewDateTimeConstant(const aValue: TJSDate): TDAExpression; overload;
+
+begin
+  Result:=TDAConstantExpression.New(DataTypeNames[datDateTime],Trunc(aValue.Time/1000),0);
+end;
+
+class function TDAWhereClauseBuilder.NewDateTimeConstant(const aValue: TDateTime): TDAExpression; overload;
+
+begin
+  Result:=NewDateTimeConstant(DateTimeToJSDate(aValue));
+//  Result:=TDAConstantExpression.New(DataTypeNames[datDateTime],DateTimeToJSDate(('yyyy"-"mm"-"dd"T"hh":"nn":"ss',aValue),0);
 end;
 
 class function TDAWhereClauseBuilder.NewConstant(const aValue: jsValue; aType: TDADataType): TDAExpression;
@@ -499,15 +515,37 @@ begin
     Raise EDADataset.Create('No login service available. ');
 end;
 
+procedure TDAConnection.DoLoginFailed(Msg : TROMessage; aErr : TJSError);
+
+Var
+  ErrMsg : String;
+
+begin
+  if Assigned(FonLoginFailed) then
+    begin
+    if IsObject(aErr) then
+      if TJSObject(aErr).HasOwnProperty('message') then
+        ErrMsg:=aErr.Message
+      else
+        ErrMsg:='Error object: '+TJSJSON.Stringify(aErr)
+    else if IsString(aErr) then
+      ErrMsg:=String(JSValue(aErr))
+    else
+      ErrMsg:='Unknown error';
+    FOnLoginFailed(Msg,errMsg);
+    end;
+end;
+
+
 procedure TDAConnection.Login(aUserName, aPassword: String);
 
 begin
-  EnsureLoginService.Login(aUserName,aPassword,FOnLogin,FOnLoginFailed);
+  EnsureLoginService.Login(aUserName,aPassword,FOnLogin,@DoLoginFailed);
 end;
 
 procedure TDAConnection.LoginEx(aLoginString: String);
 begin
-  EnsureLoginService.LoginEx(aLoginString,FOnLogin,FOnLoginFailed);
+  EnsureLoginService.LoginEx(aLoginString,FOnLogin,@DoLoginFailed);
 end;
 
 procedure TDAConnection.Logout;
@@ -534,10 +572,12 @@ begin
     Result:=Pred(Result);
   if Result=ftUnknown then
     case LowerCase(s) of
+     'widememo',
      'widestring' : result:=ftString;
      'currency' : result:=ftFloat;
      'decimal' : result:=ftFloat;
      'smallint' : result:=ftInteger;
+     'largeautoinc' : result:=ftLargeInt;
     else
       writeln('Unknown field type:',S)
     end;
@@ -732,7 +772,7 @@ end;
 
 { TDADataRequest }
 
-procedure TDADataRequest.DoFail(response: TJSOBject; fail: String);
+procedure TDADataRequest.DoFail(response: TROMessage; fail: TjsError);
 
 Var
   O : TJSOBject;
@@ -752,7 +792,7 @@ begin
       end;
     end
   else
-    Msg:=Fail;
+    Msg:=TJSJSON.Stringify(Fail);
   Success:=rrFail;
   ErrorMsg:=Msg;
   DoAfterRequest;

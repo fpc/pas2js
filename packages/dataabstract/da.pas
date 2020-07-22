@@ -336,7 +336,7 @@ Const
 
   UnaryOperatorNames: Array[TDAUnaryOperator] of string = ('Not', 'Minus');
 
-  DataTypeNames : Array[TDADataType] of string = ('Unknown', 'String', 'eTime', 'Float', 'Currency',
+  DataTypeNames : Array[TDADataType] of string = ('Unknown', 'String', 'DateTime', 'Float', 'Currency',
           'AutoInc', 'Integer', 'LargeInt', 'Boolean', 'Memo',
           'Blob', 'WideString', 'WideMemo', 'LargeAutoInc', 'Byte',
           'ShortInt', 'Word', 'SmallInt', 'Cardinal', 'LargeUInt',

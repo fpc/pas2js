@@ -29,11 +29,18 @@ Type
 
   TDALoginSuccessEvent = Reference to Procedure (result : Boolean; UserInfo : TDAUserInfo);
 
-  TDABaseLoginService = class external name 'RemObjects.DataAbstract.Server.SimpleLoginService' (TROService)
+  TDABaseLoginService = class external name 'RemObjects.DataAbstract.Server.SimpleLoginService' (TJSObject)
+  Private
+    fMessage : TROMessage;
+    fChannel : TROClientChannel;
+    fServiceName : String;
   Public
     Constructor new(ch : TROHTTPClientChannel; msg : TROMessage; aServiceName : string);
     Procedure LoginEx(aLoginString :String; aSuccess : TDALoginSuccessEvent; aFailure : TDAFailedEvent);
     Procedure Logout(aSuccess : TDASuccessEvent; aFailure : TDAFailedEvent);
+    Property Message : TROMessage Read fMessage;
+    Property Channel : TROClientChannel Read fChannel;
+    Property ServiceName : String Read fServiceName;
   end;
 
   TDASimpleLoginService = class external name 'RemObjects.DataAbstract.Server.SimpleLoginService' (TDABaseLoginService)

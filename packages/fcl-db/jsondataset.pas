@@ -1447,7 +1447,7 @@ Var
 
 begin
   For I:=0 to Fields.Count-1 do
-    if Fields[i].FieldKind in [fkCalculated,fkInternalCalc] then
+    if Fields[i].FieldKind in [fkCalculated,fkInternalCalc,fkLookup] then
       FieldMapper.RemoveField(FIelds[i].FieldName,FIelds[i].Index,Buf);
 
 end;

@@ -4419,11 +4419,17 @@ Var
 
 begin
   N:=S;
+  // Javascript Parseint allows 1.0 or 1E0 to be an integer, so we must check for this to get the same behaviour as FPC/Delphi.
+  if (Pos(DecimalSeparator,N)<>0) or (Pos('.',N)<>0) then
+    exit(False);
   case Copy(N,1,1) of
   '$': Radix:=16;
   '&': Radix:=8;
   '%': Radix:=2;
   end;
+  // Check for E after we know radix
+  if (Radix<>16) and (Pos('e',LowerCase(N))<>0) then
+    exit(False);
   If Radix<>10 then
     Delete(N,1,1);
   J:=parseInt(N,Radix);

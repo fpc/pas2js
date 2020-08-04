@@ -139,6 +139,15 @@ Type
     Procedure DropDownHide;
     Procedure DropDownUpdate;
     Procedure DropDownDispose;
+    Procedure Popover(options : TJSObject); external name 'popover';
+    Procedure Popover(aCommand : String); external name 'popover';
+    Procedure PopoverShow;
+    Procedure PopoverHide;
+    Procedure PopoverToggle;
+    Procedure PopoverDispose;
+    Procedure PopoverEnable;
+    Procedure PopoverToggleEnabled;
+    Procedure PopoverUpdate;
   end;
 
 implementation
@@ -304,5 +313,60 @@ procedure TBootstrap.DropDownDispose;
 begin
   dropdown('dispose');
 end;
+
+Procedure TBootstrap.PopoverShow;
+
+begin
+  Popover('show');
+end;
+
+
+Procedure TBootstrap.PopoverHide;
+
+begin
+
+  Popover('hide');
+end;
+
+
+Procedure TBootstrap.PopoverToggle;
+
+begin
+
+  Popover('toggle');
+end;
+
+
+Procedure TBootstrap.PopoverDispose;
+
+begin
+
+  Popover('dispose');
+end;
+
+
+Procedure TBootstrap.PopoverEnable;
+
+begin
+
+  Popover('enable');
+end;
+
+
+Procedure TBootstrap.PopoverToggleEnabled;
+
+begin
+
+  Popover('toggleEnabled');
+end;
+
+
+Procedure TBootstrap.PopoverUpdate;
+
+begin
+
+  Popover('update');
+end;
+
 
 end.

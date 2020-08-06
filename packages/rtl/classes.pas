@@ -7719,7 +7719,7 @@ begin
         if TTypeInfoSet(PropType).CompType.Kind=tkEnumeration then
           SetOrdProp(Instance, PropInfo, FDriver.ReadSet(TTypeInfoEnum(TTypeInfoSet(PropType).CompType)));
       end;
-    tkMethod:
+    tkMethod, tkRefToProcVar:
       if FDriver.NextValue = vaNil then
       begin
         FDriver.ReadValue;
@@ -7776,7 +7776,7 @@ begin
     {tkint64:
       SetInt64Prop(Instance, PropInfo, ReadInt64);}
     else
-      raise EReadError.CreateFmt(SUnknownPropertyType, [Ord(PropType.Kind)]);
+      raise EReadError.CreateFmt(SUnknownPropertyType, [Str(PropType.Kind)]);
   end;
 end;
 

@@ -60,7 +60,7 @@ Resourcestring
   SInvalidPropertyValue           = 'Invalid value for property';
   SInvalidImage                   = 'Invalid stream format';
   SUnknownProperty                = 'Unknown property: "%s"';
-  SUnknownPropertyType            = 'Unknown property type %d';
+  SUnknownPropertyType            = 'Unknown property type %s';
   SAncestorNotFound               = 'Ancestor class for "%s" not found.';
   SUnsupportedPropertyVariantType = 'Unsupported property variant type %d';
   SPropertyException              = 'Error reading %s%s%s: %s';

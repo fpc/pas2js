@@ -791,6 +791,17 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property Total : NativeUINT Read FTotal;
   end;
 
+  TJSCloseEvent = class external name 'CloseEvent' (TJSEvent)
+  private
+    fcode: Word; external name 'code';
+    freason: TJSDOMString; external name 'reason';
+    fwasClean: Boolean; external name 'wasClean';
+  public
+    property code: Word read fcode;
+    property reason: TJSDOMString read freason;
+    property wasClean: Boolean read fwasClean;
+  end; 
+
   TJSPageTransitionEventHandler = reference to function(aEvent : TJsPageTransitionEvent) : boolean; safecall;
   TJSHashChangeEventhandler = reference to function(aEvent : TJSHashChangeEvent) : boolean; safecall;
   TJSMouseWheelEventHandler = reference to function(aEvent : TJSWheelEvent) : boolean; safecall;

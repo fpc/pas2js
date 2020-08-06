@@ -158,6 +158,7 @@ begin
     P.Targets.AddProgram('webidl2pas.pp');
     {$IF FPC_FULLVERSION>=30101}
     P.Targets.AddProgram('compileserver.pp');
+    P.Targets.AddProgram('makestub.pp');
     P.Targets.AddLibrary('pas2jslib.pp');
     {$ENDIF}
     P.Targets.AddImplicitUnit('fpjson',False).ResourceStrings:=True;
@@ -194,6 +195,7 @@ begin
     P.Targets.AddImplicitUnit('webidlscanner',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('webidlparser',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('webidltopas',False).ResourceStrings:=True;
+    P.Targets.AddImplicitUnit('stubcreator',False).ResourceStrings:=True;
     // Determine unit files location
     BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));
     TmpCfg:='compiler/utils/pas2js/dist/pas2js.cfg';

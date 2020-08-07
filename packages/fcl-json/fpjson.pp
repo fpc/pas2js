@@ -758,10 +758,9 @@ Type
 
   EJSON = Class(Exception);
 
-  {$IFNDEF PAS2JS}
+
   TJSONParserHandler = Procedure(AStream : TStream; Const AUseUTF8 : Boolean; Out Data : TJSONData);
   TJSONStringParserHandler = Procedure(Const aJSON : TJSONStringType; Const AUseUTF8 : Boolean; Out Data : TJSONData);
-  {$ENDIF}
 
 Function SetJSONInstanceType(AType : TJSONInstanceType; AClass : TJSONDataClass) : TJSONDataClass;
 Function GetJSONInstanceType(AType : TJSONInstanceType) : TJSONDataClass;
@@ -790,14 +789,12 @@ Function CreateJSONObject(const Data : Array of {$IFDEF PAS2JS}jsvalue{$else}Con
 
 // These functions rely on a callback. If the callback is not set, they will raise an error.
 // When the jsonparser unit is included in the project, the callback is automatically set.
-{$IFNDEF PAS2JS}
 Function GetJSON(Const JSON : TJSONStringType; Const UseUTF8 : Boolean = True) : TJSONData;
 Function GetJSON(Const JSON : TStream; Const UseUTF8 : Boolean = True) : TJSONData;
 Function SetJSONParserHandler(AHandler : TJSONParserHandler) : TJSONParserHandler;
 Function SetJSONStringParserHandler(AHandler : TJSONStringParserHandler) : TJSONStringParserHandler;
 Function GetJSONParserHandler : TJSONParserHandler;
 Function GetJSONStringParserHandler: TJSONStringParserHandler;
-{$ENDIF}
 
 implementation
 
@@ -814,7 +811,6 @@ Resourcestring
   SErrCannotSetNotIsNull = 'IsNull cannot be set to False';
   SErrCannotAddArrayTwice = 'Adding an array object to an array twice is not allowed';
   SErrCannotAddObjectTwice = 'Adding an object to an array twice is not allowed';
-  SErrUnknownTypeInConstructor = 'Unknown type in JSON%s constructor: %d';
   SErrNotJSONData = 'Cannot add object of type %s to TJSON%s';
   SErrOddNumber = 'TJSONObject must be constructed with name,value pairs';
   SErrNameMustBeString = 'TJSONObject constructor element name at pos %d is not a string';
@@ -824,8 +820,11 @@ Resourcestring
   SErrWrongInstanceClass = 'Cannot set instance class: %s does not descend from %s.';
   {$IFNDEF PAS2JS}
   SErrPointerNotNil = 'Cannot add non-nil pointer to JSON%s';
-  SErrNoParserHandler = 'No JSON parser handler installed. Recompile your project with the jsonparser unit included';
+  SErrUnknownTypeInConstructor = 'Unknown type in JSON%s constructor: %d';
+  {$ELSE}
+  SErrUnknownTypeInConstructor = 'Unknown type in JSON%s constructor: %s';
   {$ENDIF}
+  SErrNoParserHandler = 'No JSON parser handler installed. Recompile your project with the jsonparser unit included';
 
 Var
   DefaultJSONInstanceTypes :
@@ -1079,7 +1078,7 @@ begin
   Result:=TJSONObjectClass(DefaultJSONInstanceTypes[jitObject]).Create(Data);
 end;
 
-{$IFNDEF PAS2JS}
+
 Var
   JPH : TJSONParserHandler;
   JPSH : TJSONStringParserHandler;
@@ -1106,13 +1105,13 @@ begin
     end;
     end;
 end;
-{$ENDIF}
 
-{$IFNDEF PAS2JS}
+
+
 function GetJSON(const JSON: TStream; const UseUTF8: Boolean): TJSONData;
 
 Var
-  S : TJSONStringType;
+  SS : TStringStream;
 
 begin
   Result:=Nil;
@@ -1122,10 +1121,20 @@ begin
     TJSONData.DoError(SErrNoParserHandler)
   else
     begin
-    S:='';
-    Setlength(S{%H-},JSON.Size);
-    if Length(S)>0 then
-      JSON.ReadBuffer(S[1],Length(S));
+{$IFNDEF PAS3JS}
+    SS:=TStringStream.Create('');
+{$ELSE}
+    if UseUTF8 Then
+      SS:=TStringStream.Create('',TENcoding.UTF8)
+    else
+      SS:=TStringStream.Create('');
+{$ENDIF}
+    try
+      SS.CopyFrom(JSON,0);
+      JPSH(SS.DataString,False,Result);
+    finally
+      SS.Free;
+    end;
     end;
 end;
 
@@ -1151,7 +1160,7 @@ function GetJSONStringParserHandler: TJSONStringParserHandler;
 begin
   Result:=JPSH;
 end;
-{$ENDIF}
+
 
 Type
   { TJSONEnumerator }

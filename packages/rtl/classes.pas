@@ -555,13 +555,18 @@ type
     function GetComponentCount: Integer;
     function GetComponentIndex: Integer;
     procedure Insert(AComponent: TComponent);
+    procedure ReadLeft(AReader: TReader);
+    procedure ReadTop(AReader: TReader);
     procedure Remove(AComponent: TComponent);
     procedure RemoveNotification(AComponent: TComponent);
     procedure SetComponentIndex(Value: Integer);
     procedure SetReference(Enable: Boolean);
+    procedure WriteLeft(AWriter: TWriter);
+    procedure WriteTop(AWriter: TWriter);
   protected
     FComponentStyle: TComponentStyle;
     procedure ChangeName(const NewName: TComponentName);
+    procedure DefineProperties(Filer: TFiler); override;
     procedure GetChildren(Proc: TGetChildProc; Root: TComponent); virtual;
     function GetChildOwner: TComponent; virtual;
     function GetChildParent: TComponent; virtual;
@@ -4328,6 +4333,20 @@ begin
 end;
 
 
+procedure TComponent.ReadLeft(AReader: TReader);
+
+begin
+  FDesignInfo := (FDesignInfo and $ffff0000) or (AReader.ReadInteger and $ffff);
+end;
+
+
+procedure TComponent.ReadTop(AReader: TReader);
+
+begin
+  FDesignInfo := ((AReader.ReadInteger and $ffff) shl 16) or (FDesignInfo and $ffff);
+end;
+
+
 procedure TComponent.Remove(AComponent: TComponent);
 
 begin
@@ -4383,6 +4402,22 @@ procedure TComponent.ChangeName(const NewName: TComponentName);
 
 begin
   FName:=NewName;
+end;
+
+
+procedure TComponent.DefineProperties(Filer: TFiler);
+
+var
+  Temp: LongInt;
+  Ancestor: TComponent;
+begin
+  Ancestor := TComponent(Filer.Ancestor);
+  if Assigned(Ancestor) then
+    Temp := Ancestor.FDesignInfo
+  else
+    Temp := 0;
+  Filer.DefineProperty('Left', @ReadLeft, @WriteLeft, (FDesignInfo and $ffff) <> (Temp and $ffff));
+  Filer.DefineProperty('Top', @ReadTop, @WriteTop, (FDesignInfo and $ffff0000) <> (Temp and $ffff0000));
 end;
 
 
@@ -4611,6 +4646,20 @@ begin
       TJSObject(aOwner)[String(TJSObject(aField)['name'])]:=aValue;
       end;
   end;
+end;
+
+
+procedure TComponent.WriteLeft(AWriter: TWriter);
+
+begin
+  AWriter.WriteInteger(FDesignInfo and $ffff);
+end;
+
+
+procedure TComponent.WriteTop(AWriter: TWriter);
+
+begin
+  AWriter.WriteInteger((FDesignInfo shr 16) and $ffff);
 end;
 
 

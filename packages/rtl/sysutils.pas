@@ -694,9 +694,6 @@ Type
   end;
 
 
-  TCompareOption = system.TCompareOption;
-  TCompareOptions = system.TCompareOptions;
-
 {$SCOPEDENUMS ON}
   TStringSplitOptions = (None, ExcludeEmpty);
 {$SCOPEDENUMS OFF}
@@ -4048,7 +4045,7 @@ begin
 end;
 
 function TryStrToDate(const S: String; out Value: TDateTime;
-                    const useformat : string; separator : char = #0): Boolean;
+                    const useformat : string; separator : char): Boolean;
 
 Var
   Msg : String;

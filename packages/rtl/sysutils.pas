@@ -1093,52 +1093,48 @@ Type
     Function TestBit(const Index:TNativeUIntBitIndex) :Boolean; inline;
   end;
 
-  {$SCOPEDENUMS ON}
-    TUseBoolStrs = (False, True);
-  {$SCOPEDENUMS OFF}
-
   TBooleanHelper = Type Helper for Boolean
   public
     Class Function Parse(const S: string): Boolean; inline; static;
     Class Function Size: Integer; inline; static;
-    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: Boolean = false): string; overload; inline; static;
     Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
   Public
     Function ToInteger: Integer; inline;
-    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+    Function ToString(UseBoolStrs: Boolean = False): string; overload; inline;
   end;
 
   TByteBoolHelper = Type Helper for ByteBool
   public
     Class Function Parse(const S: string): Boolean; inline; static;
     Class Function Size: Integer; inline; static;
-    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs : Boolean = False): string; overload; inline; static;
     Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
   Public
     Function ToInteger: Integer; inline;
-    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+    Function ToString(UseBoolStrs: Boolean = False): string; overload; inline;
   end;
 
   TWordBoolHelper = Type Helper for WordBool
   public
     Class Function Parse(const S: string): Boolean; inline; static;
     Class Function Size: Integer; inline; static;
-    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: Boolean = False): string; overload; inline; static;
     Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
   Public
     Function ToInteger: Integer; inline;
-    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+    Function ToString(UseBoolStrs: boolean = False): string; overload; inline;
   end;
 
   TLongBoolHelper = Type Helper for LongBool
   public
     Class Function Parse(const S: string): Boolean; inline; static;
     Class Function Size: Integer; inline; static;
-    Class Function ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline; static;
+    Class Function ToString(const AValue: Boolean; UseBoolStrs: Boolean= False): string; overload; inline; static;
     Class Function TryToParse(const S: string; out AValue: Boolean): Boolean; inline; static;
   public
     Function ToInteger: Integer; inline;
-    Function ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+    Function ToString(UseBoolStrs: Boolean = False): string; overload; inline;
   end;
 
 
@@ -7753,10 +7749,10 @@ begin
   Result:=1;
 end;
 
-Class Function TBooleanHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Class Function TBooleanHelper.ToString(const AValue: Boolean; UseBoolStrs: Boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(AValue,True);
 end;
 
 Class Function TBooleanHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
@@ -7771,10 +7767,10 @@ begin
   Result:=Integer(Self);
 end;
 
-Function TBooleanHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Function TBooleanHelper.ToString(UseBoolStrs: Boolean= False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(Self,True);
 end;
 
 { ---------------------------------------------------------------------
@@ -7793,10 +7789,10 @@ begin
   Result:=1;
 end;
 
-Class Function TByteBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Class Function TByteBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: Boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(AValue,True);
 end;
 
 Class Function TByteBoolHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
@@ -7811,10 +7807,10 @@ begin
   Result:=Integer(Self);
 end;
 
-Function TByteBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Function TByteBoolHelper.ToString(UseBoolStrs: Boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(Self,True);
 end;
 
 { ---------------------------------------------------------------------
@@ -7833,10 +7829,10 @@ begin
   Result:=2;
 end;
 
-Class Function TWordBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Class Function TWordBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(AValue,True);
 end;
 
 Class Function TWordBoolHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
@@ -7851,10 +7847,10 @@ begin
   Result:=Integer(Self);
 end;
 
-Function TWordBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Function TWordBoolHelper.ToString(UseBoolStrs: Boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(Self,True);
 end;
 
 { ---------------------------------------------------------------------
@@ -7874,10 +7870,10 @@ begin
   Result:=4;
 end;
 
-Class Function TLongBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Class Function TLongBoolHelper.ToString(const AValue: Boolean; UseBoolStrs: Boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(AValue,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(AValue,True);
 end;
 
 Class Function TLongBoolHelper.TryToParse(const S: string; out AValue: Boolean): Boolean; inline;
@@ -7892,10 +7888,10 @@ begin
   Result:=Integer(Self);
 end;
 
-Function TLongBoolHelper.ToString(UseBoolStrs: TUseBoolStrs = TUseBoolStrs.False): string; overload; inline;
+Function TLongBoolHelper.ToString(UseBoolStrs: Boolean = False): string; overload; inline;
 
 begin
-  Result:=BoolToStr(Self,UseBoolStrs=TUseBoolStrs.True);
+  Result:=BoolToStr(Self,True);
 end;
 
 end.

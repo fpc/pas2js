@@ -1250,7 +1250,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     JsonWebKey
     --------------------------------------------------------------------}
   
-  TStringDynArray = Array of String;
   TRsaOtherPrimesInfoDynArray = Array of RsaOtherPrimesInfo;
   JsonWebKey = record
     kty : String;

@@ -216,10 +216,10 @@ type
   private
     FOwnerInterface: IInterface;
   protected
-    function _AddRef: Integer;
-    function _Release: Integer;
+    function _AddRef: Integer; {$IFDEF MAKESTUB}stdcall;{$ENDIF}
+    function _Release: Integer; {$IFDEF MAKESTUB}stdcall;{$ENDIF}
   public
-    function QueryInterface(const IID: TGUID; out Obj): HRESULT; virtual;
+    function QueryInterface(const IID: TGUID; out Obj): HRESULT; virtual;{$IFDEF MAKESTUB} stdcall;{$ENDIF}
     procedure AfterConstruction; override;
   end;
 
@@ -591,15 +591,15 @@ type
     procedure ValidateContainer(AComponent: TComponent); virtual;
     procedure ValidateInsert(AComponent: TComponent); virtual;
   protected
-    function _AddRef: Integer;
-    function _Release: Integer;
+    function _AddRef: Integer; {$IFDEF MAKESTUB}stdcall;{$ENDIF}
+    function _Release: Integer;  {$IFDEF MAKESTUB}stdcall;{$ENDIF}
   public
     constructor Create(AOwner: TComponent); virtual; reintroduce;
     destructor Destroy; override;
     procedure BeforeDestruction; override;
     procedure DestroyComponents;
     procedure Destroying;
-    function QueryInterface(const IID: TGUID; out Obj): HRESULT; virtual;
+    function QueryInterface(const IID: TGUID; out Obj): HRESULT; virtual;  {$IFDEF MAKESTUB} stdcall;{$ENDIF}
     procedure WriteState(Writer: TWriter); virtual;
 //    function ExecuteAction(Action: TBasicAction): Boolean; virtual;
     function FindComponent(const AName: string): TComponent;

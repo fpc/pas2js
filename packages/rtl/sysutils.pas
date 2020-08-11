@@ -186,7 +186,7 @@ Const
   HexDisplayPrefix: string = '$';
   LeadBytes = [] unimplemented;
 
-Function CharInSet(Ch: Char;Const CSet : array of char) : Boolean;
+Function CharInSet(Ch: Char;Const CSet : array of char) : Boolean; overload;
 
 function LeftStr(const S: string; Count: Integer): String; assembler;
 function RightStr(const S: string; Count: Integer): String; assembler;
@@ -1254,13 +1254,13 @@ end;
 Type
   TCharSet = Set of Char;
 
-Function CharInSet(Ch: Char;Const CSet : TCharSet) : Boolean;
+Function CharInSet(Ch: Char;Const CSet : TCharSet) : Boolean; overload;
 
 begin
   Result:=Ch in CSet;
 end;
 
-function CharInSet(Ch: Char; const CSet: array of char): Boolean;
+function CharInSet(Ch: Char; const CSet: array of char): Boolean; overload;
 
 Var
   I : integer;

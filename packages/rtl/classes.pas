@@ -1659,7 +1659,7 @@ begin
     Result:=FOwnerInterface._Release;
 end;
 
-function TInterfacedPersistent.QueryInterface(const IID: TGUID; out Obj): integer;
+function TInterfacedPersistent.QueryInterface(const IID: TGUID; out Obj): HRESULT;
 begin
   Result:=E_NOINTERFACE;
   if GetInterface(IID, Obj)  then
@@ -4760,7 +4760,7 @@ begin
       TComponent(FComponents.Items[Runner]).Destroying;
 end;
 
-function TComponent.QueryInterface(const IID: TGUID; out Obj): integer;
+function TComponent.QueryInterface(const IID: TGUID; out Obj): HRESULT;
 begin
   if GetInterface(IID, Obj) then
     Result := S_OK

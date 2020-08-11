@@ -219,7 +219,7 @@ type
     function _AddRef: Integer;
     function _Release: Integer;
   public
-    function QueryInterface(const IID: TGUID; out Obj): integer; virtual;
+    function QueryInterface(const IID: TGUID; out Obj): HRESULT; virtual;
     procedure AfterConstruction; override;
   end;
 
@@ -599,7 +599,7 @@ type
     procedure BeforeDestruction; override;
     procedure DestroyComponents;
     procedure Destroying;
-    function QueryInterface(const IID: TGUID; out Obj): integer; virtual;
+    function QueryInterface(const IID: TGUID; out Obj): HRESULT; virtual;
     procedure WriteState(Writer: TWriter); virtual;
 //    function ExecuteAction(Action: TBasicAction): Boolean; virtual;
     function FindComponent(const AName: string): TComponent;

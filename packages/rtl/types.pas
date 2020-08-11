@@ -44,6 +44,8 @@ type
   TRect  = record
     Left, Top, Right, Bottom: Integer;
   end;
+  
+  HRESULT = Integer;
 
 function EqualRect(const r1,r2 : TRect) : Boolean;
 function Rect(Left, Top, Right, Bottom : Integer) : TRect;

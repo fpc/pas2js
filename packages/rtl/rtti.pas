@@ -166,8 +166,8 @@ type
   protected
     function GetVisibility: TMemberVisibility; override;
   public
-    //function GetValue(Instance: Pointer): TValue;
-    //procedure SetValue(Instance: Pointer; const AValue: TValue);
+    function GetValue(Instance: TObject): TValue;
+    procedure SetValue(Instance: TObject; const AValue: TValue);
     property PropertyType: TRttiType read GetPropertyType;
     property IsReadable: boolean read GetIsReadable;
     property IsWritable: boolean read GetIsWritable;
@@ -209,6 +209,7 @@ type
     function GetDeclaredMethods: TRttiMethodArray; virtual;
     function GetDeclaredFields: TRttiFieldArray; virtual;
 
+    property Handle: TTypeInfo read FTypeInfo;
     property IsInstance: boolean read GetIsInstance;
     //property isManaged: boolean read GetIsManaged;
     property IsOrdinal: boolean read GetIsOrdinal;
@@ -665,6 +666,16 @@ begin
 end;
 
 { TRttiProperty }
+
+function TRttiProperty.GetValue(Instance: TObject): TValue;
+begin
+  Result := TValue.FromJSValue(GetJSValueProp(Instance, TTypeMemberProperty(FTypeInfo)));
+end;
+
+procedure TRttiProperty.SetValue(Instance: TObject; const AValue: TValue);
+begin
+  SetJSValueProp(Instance, TTypeMemberProperty(FTypeInfo), AValue);
+end;
 
 function TRttiProperty.GetPropertyType: TRttiType;
 begin

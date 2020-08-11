@@ -1378,7 +1378,7 @@ type
     property RecordSize: Word read GetRecordSize;
     property State: TDataSetState read FState;
     property Fields : TFields read FFieldList;
-    property FieldValues[FieldName : string] : JSValue read GetFieldValues write SetFieldValues; default;
+    property FieldValues[const FieldName : string] : JSValue read GetFieldValues write SetFieldValues; default;
     property Filter: string read FFilterText write SetFilterText;
     property Filtered: Boolean read FFiltered write SetFiltered default False;
     property FilterOptions: TFilterOptions read FFilterOptions write SetFilterOptions;

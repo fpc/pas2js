@@ -2384,6 +2384,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function slice(aStart : NativeInt) : TJSBlob; overload;
     function slice(aStart,aEnd : NativeInt) : TJSBlob; overload;
     function slice(aStart,aEnd : NativeInt; AContentType : String) : TJSBlob; overload;
+    function arrayBuffer : TJSPromise;
     property size : NativeInt read FSize;
     property _type : string read FType;
   end;

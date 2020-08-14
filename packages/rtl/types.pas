@@ -29,6 +29,8 @@ type
   TByteDynArray = array of Byte;
 
   TDuplicates = (dupIgnore, dupAccept, dupError);
+  TProc = Reference to Procedure;
+  TProcString = Reference to Procedure(Const aString : String);
 
   TListCallback = procedure(data, arg: JSValue) of object;
   TListStaticCallback = procedure(data, arg: JSValue);

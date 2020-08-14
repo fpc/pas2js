@@ -21,6 +21,8 @@ uses
 
 type
   TNotifyEvent = procedure(Sender: TObject) of object;
+  TNotifyEventRef = reference to procedure(Sender: TObject);
+  TStringNotifyEventRef = Reference to Procedure(Sender: TObject; Const aString : String);
 
   // Notification operations :
   // Observer has changed, is freed, item added to/deleted from list, custom event.
@@ -258,7 +260,7 @@ type
     Function GetLBS : TTextLineBreakStyle;
     Procedure SetLBS (AValue : TTextLineBreakStyle);
     procedure SetCommaText(const Value: string);
-    procedure SetValue(const Name, Value: string);
+    procedure SetValue(const Name : String; Const Value: string);
     procedure SetDelimiter(c:Char);
     procedure SetQuoteChar(c:Char);
     procedure SetNameValueSeparator(c:Char);
@@ -295,9 +297,10 @@ type
     constructor Create; reintroduce;
     destructor Destroy; override;
     function Add(const S: string): Integer; virtual; overload;
-//    function AddFmt(const Fmt : string; const Args : Array of const): Integer; overload;
+    function Add(const Fmt : string; const Args : Array of JSValue): Integer; overload;
+    function AddFmt(const Fmt : string; const Args : Array of JSValue): Integer;
     function AddObject(const S: string; AObject: TObject): Integer; virtual; overload;
-//    function AddObject(const Fmt: string; Args : Array of const; AObject: TObject): Integer; overload;
+    function AddObject(const Fmt: string; Args : Array of JSValue; AObject: TObject): Integer; overload;
     procedure Append(const S: string);
     procedure AddStrings(TheStrings: TStrings); overload; virtual;
     procedure AddStrings(TheStrings: TStrings; ClearFirst : Boolean); overload;
@@ -322,6 +325,9 @@ type
     procedure InsertObject(Index: Integer; const S: string; AObject: TObject);
     procedure Move(CurIndex, NewIndex: Integer); virtual;
     procedure GetNameValue(Index : Integer; Out AName,AValue : String);
+    Procedure LoadFromURL(Const aURL : String; Async : Boolean = True; OnLoaded : TNotifyEventRef = Nil; OnError: TStringNotifyEventRef = Nil); virtual;
+    // Delphi compatibility. Must be an URL
+    Procedure LoadFromFile(Const aFileName : String; const OnLoaded : TProc = Nil; const AError: TProcString = Nil);
     function  ExtractName(Const S:String):String;
     Property TextLineBreakStyle : TTextLineBreakStyle Read GetLBS Write SetLBS;
     property Delimiter: Char read GetDelimiter write SetDelimiter;
@@ -813,6 +819,9 @@ type
     function Read(Buffer : TBytes; Offset, Count: LongInt): LongInt; override;
     function Seek(const Offset: NativeInt; Origin: TSeekOrigin): NativeInt; override;
     procedure SaveToStream(Stream: TStream);
+    Procedure LoadFromURL(Const aURL : String; Async : Boolean = True; OnLoaded : TNotifyEventRef = Nil; OnError: TStringNotifyEventRef = Nil); virtual;
+    // Delphi compatibility. Must be an URL
+    Procedure LoadFromFile(Const aFileName : String; const OnLoaded : TProc = Nil; const AError: TProcString = Nil);
     property Memory: TJSArrayBuffer read FMemory;
     Property SizeBoundsSeek : Boolean Read FSizeBoundsSeek Write FSizeBoundsSeek;
   end;
@@ -1369,6 +1378,18 @@ type
     Property Output: TStream Read Foutput Write Foutput;
   end;
 
+  TLoadHelper = Class (TObject)
+  Public
+  Type
+    TTextLoadedCallBack = reference to procedure (const aText : String);
+    TBytesLoadedCallBack = reference to procedure (const aBuffer : TJSArrayBuffer);
+    TErrorCallBack = reference to procedure (const aError : String);
+    Class Procedure LoadText(aURL : String; aSync : Boolean; OnLoaded : TTextLoadedCallBack; OnError : TErrorCallBack); virtual; abstract;
+    Class Procedure LoadBytes(aURL : String; aSync : Boolean; OnLoaded : TBytesLoadedCallBack; OnError : TErrorCallBack); virtual; abstract;
+  end;
+
+  TLoadHelperClass = Class of TLoadHelper;
+
 type
   TIdentMapEntry = record
     Value: Integer;
@@ -1402,6 +1423,7 @@ procedure GetFixupInstanceNames(Root: TComponent; const ReferenceRootName: strin
 procedure ObjectBinaryToText(aInput, aOutput: TStream);
 procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
 procedure ObjectTextToBinary(aInput, aOutput: TStream);
+Function SetLoadHelperClass(aClass : TLoadHelperClass) : TLoadHelperClass;
 
 Const
   // Some aliases
@@ -1422,6 +1444,21 @@ uses simplelinkedlist;
 var
   GlobalLoaded,
   IntConstList: TFPList;
+  GlobalLoadHelper : TLoadHelperClass;
+
+Function SetLoadHelperClass(aClass : TLoadHelperClass) : TLoadHelperClass;
+
+begin
+  Result:=GlobalLoadHelper;
+  GlobalLoadHelper:=aClass;
+end;
+
+Procedure CheckLoadHelper;
+
+begin
+  If (GlobalLoadHelper=Nil) then
+    Raise EInOutError.Create('No support for loading URLS. Include Rtl.BrowserLoadHelper in your project uses clause');
+end;
 
 type
   TIntConst = class
@@ -2613,7 +2650,7 @@ end;
   the special chars are needed.
 }
 
-Procedure Tstrings.CheckSpecialChars;
+procedure TStrings.CheckSpecialChars;
 
 begin
   If Not FSpecialCharsInited then
@@ -2627,7 +2664,7 @@ begin
     end;
 end;
 
-Function TStrings.GetSkipLastLineBreak : Boolean;
+function TStrings.GetSkipLastLineBreak: Boolean;
 
 begin
   CheckSpecialChars;
@@ -2641,13 +2678,14 @@ begin
   FSkipLastLineBreak:=AValue;
 end;
 
-Function TStrings.GetLBS : TTextLineBreakStyle;
+
+function TStrings.GetLBS: TTextLineBreakStyle;
 begin
   CheckSpecialChars;
   Result:=FLBS;
 end;
 
-Procedure TStrings.SetLBS (AValue : TTextLineBreakStyle);
+procedure TStrings.SetLBS(AValue: TTextLineBreakStyle);
 begin
   CheckSpecialChars;
   FLBS:=AValue;
@@ -2659,19 +2697,19 @@ begin
   FDelimiter:=c;
 end;
 
-Function TStrings.GetDelimiter : Char;
+function TStrings.GetDelimiter: Char;
 begin
   CheckSpecialChars;
   Result:=FDelimiter;
 end;
 
-procedure TStrings.SetLineBreak(Const S : String);
+procedure TStrings.SetLineBreak(const S: String);
 begin
   CheckSpecialChars;
   FLineBreak:=S;
 end;
 
-Function TStrings.GetLineBreak : String;
+function TStrings.GetLineBreak: String;
 begin
   CheckSpecialChars;
   Result:=FLineBreak;
@@ -2684,7 +2722,7 @@ begin
   FQuoteChar:=c;
 end;
 
-Function TStrings.GetQuoteChar :Char;
+function TStrings.GetQuoteChar: Char;
 begin
   CheckSpecialChars;
   Result:=FQuoteChar;
@@ -2696,7 +2734,7 @@ begin
   FNameValueSeparator:=c;
 end;
 
-Function TStrings.GetNameValueSeparator :Char;
+function TStrings.GetNameValueSeparator: Char;
 begin
   CheckSpecialChars;
   Result:=FNameValueSeparator;
@@ -2727,7 +2765,7 @@ begin
 end;
 
 
-Function TStrings.GetDelimitedText: string;
+function TStrings.GetDelimitedText: string;
 
 Var
   I: integer;
@@ -2759,7 +2797,7 @@ begin
     Result:=QuoteChar+QuoteChar;
 end;
 
-procedure TStrings.GetNameValue(Index : Integer; Out AName,AValue : String);
+procedure TStrings.GetNameValue(Index: Integer; out AName, AValue: String);
 
 Var L : longint;
 
@@ -2777,7 +2815,45 @@ begin
     AName:='';
 end;
 
-function TStrings.ExtractName(const s:String):String;
+procedure TStrings.LoadFromURL(const aURL: String; Async: Boolean; OnLoaded: TNotifyEventRef; OnError: TStringNotifyEventRef);
+
+  procedure DoLoaded(const aString : String);
+  begin
+    Text:=aString;
+    if Assigned(OnLoaded) then
+      OnLoaded(Self);
+  end;
+
+  procedure DoError(const AError : String);
+  begin
+    if Assigned(OnError) then
+      OnError(Self,aError)
+    else
+      Raise EInOutError.Create('Failed to load from URL:'+aError);
+  end;
+
+begin
+  CheckLoadHelper;
+  GlobalLoadHelper.LoadText(aURL,aSync,@DoLoaded,@DoError);
+end;
+
+procedure TStrings.LoadFromFile(const aFileName: String; const OnLoaded: TProc; const AError: TProcString);
+
+begin
+  LoadFromURL(aFileName,False,
+  Procedure (Sender : TObject)
+  begin
+    If Assigned(OnLoaded) then
+     OnLoaded
+  end,
+  Procedure (Sender : TObject; Const ErrorMsg : String)
+  begin
+    if Assigned(aError) then
+      aError(ErrorMsg)
+  end);
+end;
+
+function TStrings.ExtractName(const S: String): String;
 var
   L: Longint;
 begin
@@ -2798,7 +2874,7 @@ begin
   GetNameValue(Index,Result,V);
 end;
 
-Function TStrings.GetValue(const Name: string): string;
+function TStrings.GetValue(const Name: string): string;
 
 Var
   L : longint;
@@ -2811,7 +2887,7 @@ begin
     GetNameValue(L,N,Result);
 end;
 
-Function TStrings.GetValueFromIndex(Index: Integer): string;
+function TStrings.GetValueFromIndex(Index: Integer): string;
 
 Var
   N : String;
@@ -2820,7 +2896,7 @@ begin
   GetNameValue(Index,N,Result);
 end;
 
-Procedure TStrings.SetValueFromIndex(Index: Integer; const Value: string);
+procedure TStrings.SetValueFromIndex(Index: Integer; const Value: string);
 
 begin
   If (Value='') then
@@ -2834,7 +2910,7 @@ begin
     end;
 end;
 
-Procedure TStrings.SetDelimitedText(const AValue: string);
+procedure TStrings.SetDelimitedText(const AValue: string);
 var i,j:integer;
     aNotFirst:boolean;
 begin
@@ -2936,7 +3012,7 @@ begin
  end;
 end;
 
-Procedure TStrings.SetCommaText(const Value: string);
+procedure TStrings.SetCommaText(const Value: string);
 
 Var
   C1,C2 : Char;
@@ -2955,7 +3031,7 @@ begin
   end;
 end;
 
-Procedure TStrings.SetValue(const Name, Value: string);
+procedure TStrings.SetValue(const Name: String; const Value: string);
 
 Var L : longint;
 
@@ -2969,12 +3045,12 @@ begin
 end;
 
 
-Procedure TStrings.Error(const Msg: string; Data: Integer);
+procedure TStrings.Error(const Msg: string; Data: Integer);
 begin
   Raise EStringListError.CreateFmt(Msg,[IntToStr(Data)]);
 end;
 
-Function TStrings.GetCapacity: Integer;
+function TStrings.GetCapacity: Integer;
 
 begin
   Result:=Count;
@@ -2982,14 +3058,14 @@ end;
 
 
 
-Function TStrings.GetObject(Index: Integer): TObject;
+function TStrings.GetObject(Index: Integer): TObject;
 
 begin
   if Index=0 then ;
   Result:=Nil;
 end;
 
-Function TStrings.GetTextStr: string;
+function TStrings.GetTextStr: string;
 
 Var
   I : Longint;
@@ -3018,7 +3094,7 @@ end;
 
 
 
-Procedure TStrings.Put(Index: Integer; const S: string);
+procedure TStrings.Put(Index: Integer; const S: string);
 
 Var Obj : TObject;
 
@@ -3030,7 +3106,7 @@ end;
 
 
 
-Procedure TStrings.PutObject(Index: Integer; AObject: TObject);
+procedure TStrings.PutObject(Index: Integer; AObject: TObject);
 
 begin
   // Empty.
@@ -3040,14 +3116,14 @@ end;
 
 
 
-Procedure TStrings.SetCapacity(NewCapacity: Integer);
+procedure TStrings.SetCapacity(NewCapacity: Integer);
 
 begin
   // Empty.
   if NewCapacity=0 then ;
 end;
 
-Function TStrings.GetNextLineBreak (Const Value : String; Out S : String; Var P : Integer) : Boolean;
+function TStrings.GetNextLinebreak(const Value: String; out S: String; var P: Integer): Boolean;
 
 Var
   PP : Integer;
@@ -3065,7 +3141,7 @@ begin
   Result:=True;
 end;
 
-Procedure TStrings.DoSetTextStr(const Value: string; DoClear : Boolean);
+procedure TStrings.DoSetTextStr(const Value: string; DoClear: Boolean);
 
 Var
   S : String;
@@ -3084,21 +3160,21 @@ begin
   end;
 end;
 
-Procedure TStrings.SetTextStr(const Value: string);
+procedure TStrings.SetTextStr(const Value: string);
 
 begin
   CheckSpecialChars;
   DoSetTextStr(Value,True);
 end;
 
-Procedure TStrings.AddText(const S: string);
+procedure TStrings.AddText(const S: String);
 
 begin
   CheckSpecialChars;
   DoSetTextStr(S,False);
 end;
 
-Procedure TStrings.SetUpdateState(Updating: Boolean);
+procedure TStrings.SetUpdateState(Updating: Boolean);
 
 begin
   // FPONotifyObservers(Self,ooChange,Nil);
@@ -3107,7 +3183,7 @@ end;
 
 
 
-destructor TSTrings.Destroy;
+destructor TStrings.Destroy;
 
 begin
   inherited destroy;
@@ -3120,37 +3196,41 @@ begin
   FAlwaysQuote:=False;
 end;
 
-Function TStrings.Add(const S: string): Integer;
+function TStrings.Add(const S: string): Integer;
 
 begin
   Result:=Count;
   Insert (Count,S);
 end;
 
-(*
-function TStrings.AddFmt(const Fmt : string; const Args : Array of const): Integer;
+
+function TStrings.Add(const Fmt: string; const Args: array of JSValue): Integer;
 
 begin
   Result:=Add(Format(Fmt,Args));
 end;
-*)
 
-Function TStrings.AddObject(const S: string; AObject: TObject): Integer;
+function TStrings.AddFmt(const Fmt: string; const Args: array of JSValue): Integer;
+
+begin
+  Result:=Add(Format(Fmt,Args));
+end;
+
+
+function TStrings.AddObject(const S: string; AObject: TObject): Integer;
 
 begin
   Result:=Add(S);
   Objects[result]:=AObject;
 end;
 
-(*
-function TStrings.AddObject(const Fmt: string; Args : Array of const; AObject: TObject): Integer;
+function TStrings.AddObject(const Fmt: string; Args: array of JSValue; AObject: TObject): Integer;
 
 begin
   Result:=AddObject(Format(Fmt,Args),AObject);
 end;
-*)
 
-Procedure TStrings.Append(const S: string);
+procedure TStrings.Append(const S: string);
 
 begin
   Add (S);
@@ -3158,7 +3238,7 @@ end;
 
 
 
-Procedure TStrings.AddStrings(TheStrings: TStrings; ClearFirst : Boolean);
+procedure TStrings.AddStrings(TheStrings: TStrings; ClearFirst: Boolean);
 
 
 begin
@@ -3172,7 +3252,7 @@ begin
   end;
 end;
 
-Procedure TStrings.AddStrings(TheStrings: TStrings);
+procedure TStrings.AddStrings(TheStrings: TStrings);
 
 Var Runner : longint;
 begin
@@ -3180,7 +3260,7 @@ begin
     self.AddObject (Thestrings[Runner],TheStrings.Objects[Runner]);
 end;
 
-Procedure TStrings.AddStrings(const TheStrings: array of string);
+procedure TStrings.AddStrings(const TheStrings: array of string);
 
 Var Runner : longint;
 begin
@@ -3191,7 +3271,7 @@ begin
 end;
 
 
-Procedure TStrings.AddStrings(const TheStrings: array of string; ClearFirst : Boolean);
+procedure TStrings.AddStrings(const TheStrings: array of string; ClearFirst: Boolean);
 
 begin
   beginupdate;
@@ -3219,7 +3299,7 @@ begin
 end;
 
 
-Procedure TStrings.Assign(Source: TPersistent);
+procedure TStrings.Assign(Source: TPersistent);
 
 Var
   S : TStrings;
@@ -3248,7 +3328,7 @@ end;
 
 
 
-Procedure TStrings.BeginUpdate;
+procedure TStrings.BeginUpdate;
 
 begin
    if FUpdateCount = 0 then SetUpdateState(true);
@@ -3257,7 +3337,7 @@ end;
 
 
 
-Procedure TStrings.EndUpdate;
+procedure TStrings.EndUpdate;
 
 begin
   If FUpdateCount>0 then
@@ -3268,7 +3348,7 @@ end;
 
 
 
-Function TStrings.Equals(Obj: TObject): Boolean;
+function TStrings.Equals(Obj: TObject): Boolean;
 
 begin
   if Obj is TStrings then
@@ -3279,7 +3359,7 @@ end;
 
 
 
-Function TStrings.Equals(TheStrings: TStrings): Boolean;
+function TStrings.Equals(TheStrings: TStrings): Boolean;
 
 Var Runner,Nr : Longint;
 
@@ -3294,7 +3374,7 @@ end;
 
 
 
-Procedure TStrings.Exchange(Index1, Index2: Integer);
+procedure TStrings.Exchange(Index1, Index2: Integer);
 
 Var
   Obj : TObject;
@@ -3321,13 +3401,13 @@ begin
 end;
 
 
-Function TStrings.DoCompareText(const s1,s2 : string) : PtrInt;
+function TStrings.DoCompareText(const s1, s2: string): PtrInt;
 begin
   result:=CompareText(s1,s2);
 end;
 
 
-Function TStrings.IndexOf(const S: string): Integer;
+function TStrings.IndexOf(const S: string): Integer;
 begin
   Result:=0;
   While (Result<Count) and (DoCompareText(Strings[Result],S)<>0) do Result:=Result+1;
@@ -3335,7 +3415,7 @@ begin
 end;
 
 
-Function TStrings.IndexOfName(const Name: string): Integer;
+function TStrings.IndexOfName(const Name: string): Integer;
 Var
   len : longint;
   S : String;
@@ -3354,7 +3434,7 @@ begin
 end;
 
 
-Function TStrings.IndexOfObject(AObject: TObject): Integer;
+function TStrings.IndexOfObject(AObject: TObject): Integer;
 begin
   Result:=0;
   While (Result<count) and (Objects[Result]<>AObject) do Result:=Result+1;
@@ -3362,15 +3442,14 @@ begin
 end;
 
 
-Procedure TStrings.InsertObject(Index: Integer; const S: string;
-  AObject: TObject);
+procedure TStrings.InsertObject(Index: Integer; const S: string; AObject: TObject);
 
 begin
   Insert (Index,S);
   Objects[Index]:=AObject;
 end;
 
-Procedure TStrings.Move(CurIndex, NewIndex: Integer);
+procedure TStrings.Move(CurIndex, NewIndex: Integer);
 Var
   Obj : TObject;
   Str : String;
@@ -5960,7 +6039,7 @@ begin
 end;
 
 
-Class Function TCustomMemoryStream.MemoryToBytes(Mem : TJSArrayBuffer) : TBytes; overload;
+class function TCustomMemoryStream.MemoryToBytes(Mem: TJSArrayBuffer): TBytes;
 
 begin
   Result:=MemoryToBytes(TJSUint8Array.New(Mem));
@@ -6015,7 +6094,7 @@ begin
 end;
 
 
-function TCustomMemoryStream.Read(Buffer : TBytes; offset, Count: LongInt): LongInt;
+function TCustomMemoryStream.Read(Buffer: TBytes; Offset, Count: LongInt): LongInt;
 
 Var
   I,Src,Dest : Integer;
@@ -6065,6 +6144,44 @@ procedure TCustomMemoryStream.SaveToStream(Stream: TStream);
 begin
   if FSize>0 then
     Stream.WriteBuffer(TMemoryStream.MemoryToBytes(Memory),FSize);
+end;
+
+procedure TCustomMemoryStream.LoadFromURL(const aURL: String; Async: Boolean; OnLoaded: TNotifyEventRef; OnError: TStringNotifyEventRef = Nil);
+
+  procedure DoLoaded(const abytes : TJSArrayBuffer);
+  begin
+    SetPointer(aBytes,aBytes.byteLength);
+    if Assigned(OnLoaded) then
+      OnLoaded(Self);
+  end;
+
+  procedure DoError(const AError : String);
+  begin
+    if Assigned(OnError) then
+      OnError(Self,aError)
+    else
+      Raise EInOutError.Create('Failed to load from URL:'+aError);
+  end;
+
+begin
+  CheckLoadHelper;
+  GlobalLoadHelper.LoadBytes(aURL,aSync,@DoLoaded,@DoError);
+end;
+
+procedure TCustomMemoryStream.LoadFromFile(const aFileName: String; const OnLoaded: TProc; const AError: TProcString);
+
+begin
+  LoadFromURL(aFileName,False,
+    Procedure (Sender : TObject)
+    begin
+      If Assigned(OnLoaded) then
+       OnLoaded
+    end,
+    Procedure (Sender : TObject; Const ErrorMsg : String)
+    begin
+      if Assigned(aError) then
+        aError(ErrorMsg)
+    end);
 end;
 
 

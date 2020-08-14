@@ -26,7 +26,7 @@ unit browserconsole;
 interface
 
 uses
-  js,web, sysutils;
+  js, web, Rtl.BrowserLoadHelper,sysutils;
 
 Const
   BrowserLineBreak = #10;

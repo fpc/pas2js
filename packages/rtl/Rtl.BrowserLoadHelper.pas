@@ -30,7 +30,10 @@ class procedure TBrowserLoadHelper.LoadText(aURL: String; aSync: Boolean; OnLoad
   begin
     Result:=False;
     If (Res.status<>200) then
-      OnError('Error '+IntToStr(Res.Status)+ ': '+Res.StatusText)
+      begin
+      If Assigned(OnError) then
+        OnError('Error '+IntToStr(Res.Status)+ ': '+Res.StatusText)
+      end
     else
       Res.Text._then(
         function (value : JSValue) : JSValue
@@ -54,15 +57,15 @@ begin
     With TJSXMLHttpRequest.new do
       begin
       open('GET', aURL, False);
-      responseType:='text';
       AddEventListener('load',Procedure (oEvent: JSValue)
         begin
-        OnLoaded(string(response));
+        OnLoaded(responseText);
         end
       );
       AddEventListener('error',Procedure (oEvent: JSValue)
         begin
-        OnError(TJSError(oEvent).Message);
+        if Assigned(OnError) then
+          OnError(TJSError(oEvent).Message);
         end
       );
       send();

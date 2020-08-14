@@ -6,7 +6,7 @@ uses
   browserconsole, Classes;
 
 Var
-  SS : TStringStream;
+  SS,SS2,SS3 : TStringStream;
 
 begin
   Writeln('Loading synchronously');
@@ -18,30 +18,22 @@ begin
     SS.Free;
   end;
   Writeln('Loading asynchronously');
-  SS:=TStringStream.Create('');
-  try
-    SS.LoadFromURL('bytes.txt',False,procedure(Sender: tobject)
+  SS2:=TStringStream.Create('');
+  SS2.LoadFromURL('bytes.txt',True,procedure(Sender: tobject)
     begin
-    Writeln('Loaded 2: ',SS.DataString);
+      Writeln('Loaded 2: ',SS2.DataString);
     end
-    )
-  finally
-    SS.Free;
-  end;
+    );
   Writeln('Loading non-existing file');
-  SS:=TStringStream.Create('');
-  try
-    SS.LoadFromURL('bytesnonexist.txt',False,procedure(Sender: tobject)
+  SS3:=TStringStream.Create('');
+  SS3.LoadFromURL('bytesnonexist.txt',True,procedure(Sender: tobject)
     begin
-    Writeln('Loaded 3: ',SS.DataString);
+      Writeln('Loaded 3: ',SS3.DataString);
     end
-    ,
+  ,
     procedure(Sender: tobject; Const aError : string)
     begin
-    Writeln('Load error: ',aError);
+      Writeln('Load error: ',aError);
     end
-    )
-  finally
-    SS.Free;
-  end;
+  );
 end.

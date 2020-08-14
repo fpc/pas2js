@@ -50,7 +50,7 @@ const
                                Base types
 *****************************************************************************}
 type
-  HRESULT = Integer; // For Delphi compatibility
+  HRESULT = Longint; // For Delphi compatibility
   Int8 = ShortInt;
   UInt8 = Byte;
   Int16 = SmallInt;

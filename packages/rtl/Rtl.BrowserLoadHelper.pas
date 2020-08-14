@@ -74,6 +74,17 @@ end;
 
 class procedure TBrowserLoadHelper.LoadBytes(aURL: String; aSync: Boolean; OnLoaded: TBytesLoadedCallBack; OnError: TErrorCallBack);
 
+  function doFetchFail(response : JSValue) : JSValue;
+
+  begin
+    Result:=False;
+    if isObject(Response) and (TJSObject(Response) is TJSError) then
+      OnError('Error 999: '+TJSError(Response).Message)
+    else
+      OnError('Error 999: unknown error');
+  end;
+
+
   function doFetchOK(response : JSValue) : JSValue;
 
   var
@@ -90,20 +101,15 @@ class procedure TBrowserLoadHelper.LoadBytes(aURL: String; aSync: Boolean; OnLoa
       Res.Blob._then(
         function (value : JSValue) : JSValue
           begin
-          OnLoaded(TJSArrayBuffer(value));
+          TJSBlob(Value).ArrayBuffer._then(function(arr : JSValue) : JSValue
+            begin
+            OnLoaded(TJSArrayBuffer(arr))
+            end
+          ).Catch(@DoFetchFail);
           end
-      );
+        );
   end;
 
-  function doFetchFail(response : JSValue) : JSValue;
-
-  begin
-    Result:=False;
-    if isObject(Response) and (TJSObject(Response) is TJSError) then
-      OnError('Error 999: '+TJSError(Response).Message)
-    else
-      OnError('Error 999: unknown error');
-  end;
 
   function StringToArrayBuffer(str : string) : TJSArrayBuffer;
 

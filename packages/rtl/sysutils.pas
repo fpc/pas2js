@@ -1251,6 +1251,7 @@ begin
   Raise EAbort.Create(SAbortError);
 end;
 
+{$IFNDEF MAKESTUB}
 Type
   TCharSet = Set of Char;
 
@@ -1259,6 +1260,7 @@ Function CharInSet(Ch: Char;Const CSet : TCharSet) : Boolean; overload;
 begin
   Result:=Ch in CSet;
 end;
+{$ENDIF}
 
 function CharInSet(Ch: Char; const CSet: array of char): Boolean; overload;
 

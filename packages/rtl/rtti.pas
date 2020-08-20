@@ -61,6 +61,7 @@ type
     function GetArrayElement(aIndex: SizeInt): TValue;
     //ToDo: procedure SetArrayElement(aIndex: SizeInt; constref AValue: TValue);
     function IsType(ATypeInfo: PTypeInfo): boolean;
+    function AsJSValue: JSValue;
   end;
 
   TRttiType = class;
@@ -509,6 +510,11 @@ begin
   else
     Result:=false;
   end;
+end;
+
+function TValue.AsJSValue: JSValue;
+begin
+  Result := FData;
 end;
 
 { TRttiInstanceType }

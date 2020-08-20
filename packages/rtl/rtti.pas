@@ -236,7 +236,8 @@ type
     constructor Create(ATypeInfo: PTypeInfo);
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
-    //function GetDeclaredProperties: TRttiPropertyArray;
+    function GetProperty(const AName: string): TRttiProperty; override;
+    function GetDeclaredProperties: TRttiPropertyArray; override;
   end;
 
   EInvoke = EJS;
@@ -529,6 +530,36 @@ begin
   inherited Create(ATypeInfo);
 end;
 
+function TRttiInstanceType.GetProperty(const AName: string): TRttiProperty;
+var
+  A: Integer;
+
+  Info: TTypeInfoClass;
+
+begin
+  Info := TTypeInfoClass(FTypeInfo);
+  Result := nil;
+
+  for A := 0 to Pred(Info.PropCount) do
+    if Info.GetProp(A).Name = AName then
+      Exit(TRttiProperty.Create(Self, Info.GetProp(A)));
+end;
+
+function TRttiInstanceType.GetDeclaredProperties: TRttiPropertyArray;
+var
+  A: Integer;
+
+  Info: TTypeInfoClass;
+
+begin
+  Info := TTypeInfoClass(FTypeInfo);
+
+  SetLength(Result, Info.PropCount);
+
+  for A := 0 to Pred(Info.PropCount) do
+    Result[A] := TRttiProperty.Create(Self, Info.GetProp(A));
+end;
+
 { TRTTIContext }
 
 class constructor TRTTIContext.Init;
@@ -567,7 +598,11 @@ begin
     Result:=TRttiType(FPool[Name])
   else
     begin
-    Result:=TRttiType.Create(aTypeInfo);
+      case T.Kind of
+        tkClass: Result:=TRttiInstanceType.Create(aTypeInfo);
+        else Result:=TRttiType.Create(aTypeInfo);
+      end;
+
     FPool[Name]:=Result;
     end;
 end;

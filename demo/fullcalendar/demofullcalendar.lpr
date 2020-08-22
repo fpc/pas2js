@@ -3,7 +3,7 @@ program demofullcalendar;
 {$mode objfpc}
 
 uses
-  dateutils, browserapp, JS, Classes, SysUtils, Web, libfullcalendar;
+  dateutils, browserapp, types, JS, Classes, SysUtils, Web, libfullcalendar4;
 
 type
 

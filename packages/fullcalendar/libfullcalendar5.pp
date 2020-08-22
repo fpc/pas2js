@@ -2,7 +2,7 @@
     This file is part of the Pas2JS run time library.
     Copyright (C) 2019 Michael Van Canneyt
 
-    FullCalendar mappings for pas2js
+    FullCalendar version 5 mappings for pas2js
 
     See the file COPYING.FPC, included in this distribution,
     for details about the copyright.
@@ -13,7 +13,7 @@
 
  **********************************************************************}
 
-unit libfullcalendar;
+unit libfullcalendar5;
 
 {$mode objfpc}
 {$modeswitch externalclass}
@@ -58,6 +58,20 @@ Const
   fcDateFormatLong = 'long';
   fcDateFormatShort = 'short';
   fcDateFormatNarrow = 'narrow';
+  
+  fcEventDisplayAuto = 'auto';
+  fcEventDisplayBlock = 'block';
+  fcEventDisplayListItem = 'list-item';
+  fcEventDisplayBackground = 'background';
+  fcEventDisplayInverseBackground = 'inverse-background';
+  fcEventDisplayNone = 'none';
+
+  fcSlotFuture = 'fc-slot-future';
+  fcSlotPast = 'fc-slot-past';
+  fcSlotFri = 'fc-slot-fri';
+  fcSlotSat = 'fc-slot-sat';
+  fcSlotSun = 'fc-slot-sun';
+  fcSlotToday = 'fc-slot-today';
 
 Type
   TProcedural = reference to procedure;
@@ -95,8 +109,8 @@ Type
 
   TCalendarHeaderFooterOptions = Class external name 'Object' (TJSObject)
     // use the fcHeaderFooter consts
-    left : string;
-    right : string;
+    start : string;
+    end_ : string; external name 'end';
     center : string;
   end;
 
@@ -249,7 +263,7 @@ Type
     resourceEditable : Boolean;
     resourceId : String;
     resourceIds : TStringDynArray;
-    rendering : string;
+    display : string;
     overlap : boolean;
     constraint : string;
     constraintObj : TBusinessHoursSpec; external name 'constraint';
@@ -383,7 +397,7 @@ Type
 
 
   TGenerateEventsCallBack = Procedure (Res : TBaseCalendarEventArray);
-  TGenerateEventsFailureCallBack = Procedure (Res : TBaseCalendarEventArray);
+  TGenerateEventsFailureCallBack = Procedure (Res : JSValue);
   TCalendarEventGenerator = reference to Procedure (info : TEventGeneratorInfo; successCallBack : TGenerateEventsCallBack; FailCallBack : TGenerateEventsFailureCallBack);
   TCalendarLoadingCallback = reference to procedure (isLoading : Boolean);
   TSelectOverlapHandler = reference to function(Event : TJSObject) : boolean;
@@ -404,33 +418,158 @@ Type
   TCalendarEventRenderInfo = record
     event: TCalendarEvent;
     el : TJSHTMLElement;
-    isMirror : Boolean;
+    timeText : string;
     isStart : Boolean;
     isEnd : Boolean;
+    isMirror : Boolean;
+    isPast : Boolean;
+    isFuture : Boolean;
+    isToday : Boolean;
     view : TFullCalendarView;
   end;
 
+  TCalendarEventContentObj = Class external name 'Object' (TJSObject)
+    html : string;
+    domNodes : Array of TJSHTMLElement;
+  end;
+  TSlotLabelContentObj = TCalendarEventContentObj;
+  TSlotLaneContentObj = TCalendarEventContentObj;
+  TweekNumberContentObj = TCalendarEventContentObj;
+  TViewContentObj = TCalendarEventContentObj;
 
-  TCalendarEventRenderCallback = reference to procedure(Info : TCalendarEventRenderInfo);
+  TRevertHandler = reference to procedure;
+  TAddEventInfo = Class external name 'Object' (TJSObject)
+    event : TCalendarEvent;
+    relatedEvents : TCalendarEventArray;
+    revert : TRevertHandler; 
+  end;
 
+  TChangeEventInfo = Class external name 'Object' (TJSObject)
+    event : TCalendarEvent;
+    oldevent : TCalendarEvent;
+    relatedEvents : TCalendarEventArray;
+    revert : TRevertHandler;
+  end;
+
+  TRemoveEventInfo = Class external name 'Object' (TJSObject)
+    event : TCalendarEvent;
+    relatedEvents : TCalendarEventArray;
+    revert : TRevertHandler; 
+  end;
+  
+  TCalendarViewRenderInfo = record
+    view: TFullCalendarView;
+    el : TJSHTMLElement;
+  end;  
+  
+  TDayHeaderRenderInfo = Record
+    date : TJSDate;
+    text : string;
+    isPast : Boolean;
+    isFuture : Boolean;
+    isToday : Boolean;
+    isOther : boolean;
+    resource : TJSObject;
+    el : TJSHTMLElement;
+  end;
+
+  TDayCellRenderInfo = Record
+    date : TJSDate;
+    dayNumberText : string;
+    isPast : Boolean;
+    isFuture : Boolean;
+    isToday : Boolean;
+    isOther : boolean;
+    resource : TJSObject;
+    el : TJSHTMLElement;
+  end;
+
+  TSlotLabelRenderInfo = Record
+    date : TJSDate;
+    text : string;
+    isPast : Boolean;
+    isFuture : Boolean;
+    isToday : Boolean;
+    lebel : Integer;
+    el : TJSHTMLElement;
+  end;
+  TSlotLaneRenderInfo = TSlotLabelRenderInfo;
+
+  TWeekNumberRenderInfo = Record
+    num : integer;
+    text : string;
+    date : TJSDate;
+  end;
+
+  TCalendarEventClassNamesCallback = reference to function(Info : TCalendarEventRenderInfo) : string;
+  TCalendarEventContentCallback = reference to function (Info : TCalendarEventRenderInfo) : TCalendarEventContentObj;
+  TCalendarEventMountCallback = reference to Procedure (Info : TCalendarEventRenderInfo);
+
+  TEventSortCallBack = reference to function (ev1,ev2 : TCalendarEvent) : Integer;
   TCalendarEventSourceArray = Array of TCalendarEventSource;
+  TAddEventCallBack = reference to procedure (addInfo : TAddEventInfo);
+  TChangeEventCallBack = reference to procedure (changeInfo : TChangeEventInfo);
+  TRemoveEventCallBack = reference to procedure (removeInfo : TRemoveEventInfo);
 
+  TCalendarViewClassNamesCallback = reference to function(Info : TCalendarViewRenderInfo) : string;
+  TCalendarViewMountCallback = reference to Procedure (Info : TCalendarViewRenderInfo);
+
+  TDayHeaderClassNamesCallback = reference to function(Info : TDayHeaderRenderInfo) : string;
+  TDayHeaderContentStrCallback = reference to function (Info : TDayHeaderRenderInfo) : string;
+  TDayHeaderContentObjCallback = reference to function (Info : TDayHeaderRenderInfo) : TCalendarEventContentObj;
+  TDayHeaderMountCallback = reference to Procedure (Info : TDayHeaderRenderInfo);
+
+  TDayCellClassNamesCallback = reference to function(Info : TDayCellRenderInfo) : string;
+  TDayCellContentStrCallback = reference to function (Info : TDayCellRenderInfo) : string;
+  TDayCellContentObjCallback = reference to function (Info : TDayCellRenderInfo) : TCalendarEventContentObj;
+  TDayCellMountCallback = reference to Procedure (Info : TDayCellRenderInfo);
+
+  TSlotLabelClassNamesCallback = reference to function(Info : TSlotLabelRenderInfo) : string;
+  TSlotLabelContentStrCallback = reference to function (Info : TSlotLabelRenderInfo) : string;
+  TSlotLabelContentObjCallback = reference to function (Info : TSlotLabelRenderInfo) : TCalendarEventContentObj;
+  TSlotLabelMountCallback = reference to Procedure (Info : TSlotLabelRenderInfo);
+
+  TSlotLaneClassNamesCallback = reference to function(Info : TSlotLaneRenderInfo) : string;
+  TSlotLaneContentStrCallback = reference to function (Info : TSlotLaneRenderInfo) : string;
+  TSlotLaneContentObjCallback = reference to function (Info : TSlotLaneRenderInfo) : TCalendarEventContentObj;
+  TSlotLaneMountCallback = reference to Procedure (Info : TSlotLaneRenderInfo);
+
+  TweekNumberClassNamesCallback = reference to function(Info : TweekNumberRenderInfo) : string;
+  TweekNumberContentStrCallback = reference to function (Info : TweekNumberRenderInfo) : string;
+  TweekNumberContentObjCallback = reference to function (Info : TweekNumberRenderInfo) : TCalendarEventContentObj;
+  TweekNumberMountCallback = reference to Procedure (Info : TweekNumberRenderInfo);
+
+  
+  
   TFullCalendarOptions = Class external name 'Object' (TJSObject)
     plugins : TStringDynArray;
     pluginRaw : TJSArray; external name 'plugins';
     rerenderDelay : NativeInt;
-    defaultDate : TJSDate;
-    defaultDateStr : string; external name 'defaultDate';
-    defaultDateInt : nativeInt; external name 'defaultDate';
+    initialDate : TJSDate;
+    initialDateStr : string; external name 'initialDate';
+    initialDateInt : nativeInt; external name 'initialDate';
+    defaultAllDay : Boolean;
+    defaultAllDayEventDuration : TDuration;
+    defaultAllDayEventDurationStr : String; external name 'defaultAllDayEventDuration';
+    defaultTimedEventDuration : TDuration;
+    defaultTimedEventDurationStr : String; external name 'defaultTimedEventDuration';
+    forceEventDuration : Boolean;
+    eventDisplay : string;
+    eventAdd : TAddEventCallBack; 
+    eventChange : TChangeEventCallBack; 
+    eventRemove : TRemoveEventCallBack; 
+    eventColor : String;
+    eventBorderColor : String;
+    eventTextColor : String;
+    eventBackgroundColor : String;
     dateIncrement : TDuration;
     dateIncrementStr : string; external name 'dateIncrement';
     dateAlignment : String;
     validRange : TDateRange;
-    defaultView : string;
-    header : TCalendarHeaderFooterOptions;
-    headerBool : Boolean; external name 'header';
-    footer : TCalendarHeaderFooterOptions;
-    footerBool : Boolean; external name 'footer';
+    headerToolbar : TCalendarHeaderFooterOptions;
+    headerToolbarBool : Boolean; external name 'headerToolbar';
+    footerToolbar : TCalendarHeaderFooterOptions;
+    footerToolbarBool : Boolean; external name 'footerToolbar';
     titleFormat : TDateFormatter;
     titleFormatStr : string; external name 'titleFormat';
     titleFormatFunc : TDateFormatHandler; external name 'titleFormat';
@@ -446,20 +585,67 @@ Type
     bootstrapFontAwesomeRec : TFontAwesomeSpecRec;
     weekends : boolean;
     hiddenDays : TNativeIntDynArray;
-    columnHeader : Boolean;
-    columnHeaderFormat : TDateFormatter;
-    columnHeaderText : TDateFormatHandler;
-    columnHeaderHTML : TDateFormatHandler;
+    dayHeader : Boolean;
+    dayHeaderFormat : TDateFormatter;
+    dayHeaderClassNames : String;
+    dayHeaderClassNamesFunc : TDayHeaderClassnamesCallback; external name 'dayHeaderClassNames';
+    dayHeaderContent : TDayHeaderClassnamesCallback;
+    dayHeaderContentStr : TDayHeaderContentStrCallback; external name 'dayHeaderContent';
+    dayHeaderContentObj : TDayHeaderContentObjCallback; external name 'dayHeaderContent';
+    dayHeaderDidMount : TDayHeaderMountCallBack;
+    dayHeaderWillUnmount : TDayHeaderMountCallBack;
+
+    dayCellClassNames : String;
+    dayCellClassNamesFunc : TDayCellClassnamesCallback; external name 'dayCellClassNames';
+    dayCellContent : TDayCellClassnamesCallback;
+    dayCellContentStr : TDayCellContentStrCallback; external name 'dayCellContent';
+    dayCellContentObj : TDayCellContentObjCallback; external name 'dayCellContent';
+    dayCellDidMount : TDayCellMountCallBack;
+    dayCellWillUnmount : TDayCellMountCallBack;
+    
     slotDuration : TDuration;
     slotDurationStr : string; external name 'slotDuration';
     slotLabelInterval : TDuration;
     slotLabelIntervalStr : string; external name 'slotLabelInterval';
     slotLabelFormat : TDateFormatter;
     slotLabelFormatStr : String;
-    minTime : TDuration;
-    minTimeStr : string; external name 'minTime';
-    maxTime : TDuration;
-    maxTimeStr : string; external name 'maxTime';
+    slotMinTime : TDuration;
+    slotMinTimeStr : string; external name 'slotMinTime';
+    slotMaxTime : TDuration;
+    slotMaxTimeStr : string; external name 'slotMaxTime';
+    slotMinWidth : Integer;
+    
+    slotLabelClassNames : String;
+    slotLabelClassNamesFunc : TSlotLabelClassNamesCallback; external name 'slotLabelClassNames';
+    slotLabelContent : String;
+    slotLabelContentObj : TSlotLabelContentObj; external name 'slotLabelContent';
+    slotLabelContentObjFunc : TSlotLabelContentObjCallback; external name 'slotLabelContent';
+    slotLabelContentStrFunc : TSlotLabelContentStrCallback; external name 'slotLabelContent';
+    slotLabelDidMount : TSlotLabelMountCallback;
+    slotLabelWillUnmout : TSlotLabelMountCallback;
+
+    slotLaneClassNames : String;
+    slotLaneClassNamesFunc : TSlotLaneClassNamesCallback; external name 'slotLaneClassNames';
+    slotLaneContent : String;
+    slotLaneContentObj : TSlotLaneContentObj; external name 'slotLaneContent';
+    slotLaneContentObjFunc : TSlotLaneContentObjCallback; external name 'slotLaneContent';
+    slotLaneContentStrFunc : TSlotLaneClassNamesCallback; external name 'slotLaneContent';
+    slotLaneDidMount : TSlotLaneMountCallback;
+    slotLaneWillUnmout : TSlotLaneMountCallback;
+    
+    weekText : string;
+    weekNumberFormat : TDateFormatter;
+    weekNumberFormatStr : String; external name 'weekNumberFormat';
+    weekNumberClassNames : String;
+    weekNumberClassNamesFunc : TweekNumberClassNamesCallback; external name 'weekNumberClassNames';
+    weekNumberContent : String;
+    weekNumberContentObj : TweekNumberContentObj; external name 'weekNumberContent';
+    weekNumberContentObjFunc : TweekNumberContentObjCallback; external name 'weekNumberContent';
+    weekNumberContentStrFunc : TweekNumberClassNamesCallback; external name 'weekNumberContent';
+    weekNumberDidMount : TweekNumberMountCallback;
+    weekNumberWillUnmout : TweekNumberMountCallback;
+    
+    
     scrollTime : TDuration;
     scrollTimeStr : string; external name 'scrollTime';
     firstDay : Integer;
@@ -493,10 +679,27 @@ Type
     eventsArr : TCalendarEventArray; external name 'events'; // JSON feed
     eventsObjList : TJSObjectDynArray ; external name 'events'; // Roll your own
     eventSources : TCalendarEventSourceArray;
-    eventRender : TCalendarEventRenderCallback;
+    eventClassNames : String;
+    eventClassNamesFunc : TCalendarEventClassNamesCallback; external name 'eventClassNames';
+    eventContent : String;
+    eventContentObj : TCalendarEventContentObj; external name 'eventContent';
+    eventContentObjFunc : TCalendarEventContentCallback; external name 'eventContent';
+    eventContentStrFunc : TCalendarEventClassNamesCallback; external name 'eventContent';
+    eventDidMount : TCalendarEventMountCallback;
+    eventWillUnmout : TCalendarEventMountCallback;
+    eventTimeFormat : TDateFormatter;
+    eventOrder : String;
+    eventOrderArr : TStringDynArray; external name 'eventOrder';
+    eventOrderFunc : TEventSortCallBack; external name 'eventOrder';  
+    progressiveEventRendering : Boolean;
+    
+    displayEventTime : Boolean;
+    displayEventEnd: Boolean;
+    nextDayTreshold : String;
     startParam : string;
     endParam : string;
     timeZoneParam : string;
+    timeZone : string;
     lazyFetching : Boolean;
     loading : TCalendarLoadingCallback;
     selectable : boolean;
@@ -516,6 +719,14 @@ Type
     listDayAltFormat : TDateFormatter;
     listDayAltBool : Boolean; external name 'listDayAltFormat';
     noEventsMessage : String;
+    weekNumbers : Boolean;
+    dayMaxEvents : Integer;
+    dayMaxEventsBool : Boolean; external name 'dayMaxEvents';
+    initialView : string;
+    viewClassNames : String;
+    viewClassNamesFunc : TCalendarViewClassNamesCallback; external name 'eventClassNames';
+    viewDidMount : TCalendarViewMountCallback; 
+    viewWillUnmount : TCalendarViewMountCallback;
   end;
 
   { TFullCalendarView }

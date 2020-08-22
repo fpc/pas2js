@@ -81,6 +81,42 @@ Type
     display : string;
   end;
 
+  TBootstrapDelayObject = Class External name 'Object' (TJSObject)
+    show : integer;
+    hide : integer;
+  End;
+
+  TBootstrapPlacementCallBack = reference to procedure (popoverEl,triggerEl : TJSHTMLElement);
+  TBootstrapProcCallBack = reference to procedure;
+
+  TBootstrapPopoverOptions = Class external name 'Object' (TJSObject)
+    animation :  boolean;
+    container : string;
+    containerEl : TJSHTMLElement; external name 'container';
+    containerBool : Boolean; external name 'container';
+    content : string;
+    contentEl : TJSHTMLElement; external name 'container';
+    contentProc : TBootstrapProcCallBack; external name 'content';
+    delay : Integer;
+    delayObj : TBootstrapDelayObject; external name 'delay';
+    html : Boolean;
+    placement: string;
+    placementFunc : TBootstrapPlacementCallBack; external name 'placement';
+    selector : string;
+    selectorBool : boolean; external name 'selector';
+    template : string;
+    title : string;
+    titleEl : TJSHTMLElement; external name 'title';
+    titleProc : TBootstrapProcCallBack; external name 'tirle';
+    trigger : string;
+    offset : integer;
+    offsetStr : string; external name 'offset';
+    fallBackPlacement : string;
+    fallBackPlacementArr : string; external name 'fallBackPlacement';
+    boundary : string;
+    boundaryEl : TJSHTMLElement; external name 'boundary';
+  End;
+
   TBootstrap = Class helper for TJQuery
     Procedure modal; external name 'modal';
     Procedure modal(aCommand : string); external name 'modal';
@@ -140,6 +176,7 @@ Type
     Procedure DropDownUpdate;
     Procedure DropDownDispose;
     Procedure Popover(options : TJSObject); external name 'popover';
+    Procedure Popover(options : TBootstrapPopoverOptions); external name 'popover';
     Procedure Popover(aCommand : String); external name 'popover';
     Procedure PopoverShow;
     Procedure PopoverHide;

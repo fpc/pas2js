@@ -13,7 +13,7 @@
 
  **********************************************************************}
 
-unit libfullcalendar;
+unit libfullcalendar4;
 
 {$mode objfpc}
 {$modeswitch externalclass}

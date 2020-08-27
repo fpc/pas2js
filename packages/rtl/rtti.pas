@@ -200,6 +200,7 @@ type
     destructor Destroy; override;
     function GetAttributes: TCustomAttributeArray; override;
     function GetField(const AName: string): TRttiField; virtual;
+    function GetMethods: TRttiMethodArray; virtual;
     function GetMethods(const aName: String): TRttiMethodArray; virtual;
     function GetMethod(const aName: String): TRttiMethod; virtual;
     function GetProperty(const AName: string): TRttiProperty; virtual;
@@ -225,6 +226,17 @@ type
   { TRttiStructuredType }
 
   TRttiStructuredType = class abstract(TRttiType)
+  protected
+    function GetDeclaredProperties: TRttiPropertyArray; override;
+    function GetMethod(const aName: String): TRttiMethod; override;
+    function GetMethods: TRttiMethodArray; override;
+    function GetMethods(const aName: String): TRttiMethodArray; override;
+    function GetProperty(const AName: string): TRttiProperty; override;
+    function GetStructTypeInfo: TTypeInfoStruct;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property StructTypeInfo: TTypeInfoStruct read GetStructTypeInfo;
   end;
 
   { TRttiInstanceType }
@@ -237,8 +249,17 @@ type
     constructor Create(ATypeInfo: PTypeInfo);
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
-    function GetProperty(const AName: string): TRttiProperty; override;
-    function GetDeclaredProperties: TRttiPropertyArray; override;
+  end;
+
+  TRttiInterfaceType = class(TRttiStructuredType)
+  private
+    function GetGUID: TGUID;
+    function GetInterfaceTypeInfo: TTypeInfoInterface;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property GUID: TGUID read GetGUID;
+    property InterfaceTypeInfo: TTypeInfoInterface read GetInterfaceTypeInfo;
   end;
 
   EInvoke = EJS;
@@ -255,6 +276,7 @@ type
     constructor Create(InterfaceTypeInfo: Pointer); overload; assembler;
     constructor Create(InterfaceTypeInfo: Pointer;
       const InvokeEvent: TVirtualInterfaceInvokeEvent); overload;
+    function QueryInterface(const iid: TGuid; out obj): Integer; override;
     property OnInvoke: TVirtualInterfaceInvokeEvent read FOnInvoke write FOnInvoke;
   end;
 
@@ -517,6 +539,91 @@ begin
   Result := FData;
 end;
 
+{ TRttiStructuredType }
+
+function TRttiStructuredType.GetMethods: TRttiMethodArray;
+var
+  A: Integer;
+
+begin
+  SetLength(Result, StructTypeInfo.MethodCount);
+
+  for A := 0 to Pred(StructTypeInfo.MethodCount) do
+    Result[A] := TRttiMethod.Create(Self, StructTypeInfo.GetMethod(A));
+end;
+
+function TRttiStructuredType.GetMethods(const aName: String): TRttiMethodArray;
+var
+  A: Integer;
+
+  Method: TTypeMemberMethod;
+
+begin
+  SetLength(Result, StructTypeInfo.MethodCount);
+
+  for A := 0 to Pred(StructTypeInfo.MethodCount) do
+  begin
+    Method := StructTypeInfo.GetMethod(A);
+
+    if aName = Method.Name then
+      Result[A] := TRttiMethod.Create(Self, Method);
+  end;
+end;
+
+function TRttiStructuredType.GetMethod(const aName: String): TRttiMethod;
+var
+  A: Integer;
+
+  Method: TTypeMemberMethod;
+
+begin
+  Result := nil;
+
+  for A := 0 to Pred(StructTypeInfo.MethodCount) do
+  begin
+    Method := StructTypeInfo.GetMethod(A);
+
+    if aName = Method.Name then
+      Exit(TRttiMethod.Create(Self, Method));
+  end;
+end;
+
+function TRttiStructuredType.GetProperty(const AName: string): TRttiProperty;
+var
+  A: Integer;
+
+begin
+  Result := nil;
+
+  for A := 0 to Pred(StructTypeInfo.PropCount) do
+    if StructTypeInfo.GetProp(A).Name = AName then
+      Exit(TRttiProperty.Create(Self, StructTypeInfo.GetProp(A)));
+end;
+
+function TRttiStructuredType.GetDeclaredProperties: TRttiPropertyArray;
+var
+  A: Integer;
+
+begin
+  SetLength(Result, StructTypeInfo.PropCount);
+
+  for A := 0 to Pred(StructTypeInfo.PropCount) do
+    Result[A] := TRttiProperty.Create(Self, StructTypeInfo.GetProp(A));
+end;
+
+function TRttiStructuredType.GetStructTypeInfo: TTypeInfoStruct;
+begin
+  Result:=TTypeInfoStruct(FTypeInfo);
+end;
+
+constructor TRttiStructuredType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoStruct) then
+    raise EInvalidCast.Create('');
+
+  inherited Create(ATypeInfo);
+end;
+
 { TRttiInstanceType }
 
 function TRttiInstanceType.GetClassTypeInfo: TTypeInfoClass;
@@ -526,7 +633,7 @@ end;
 
 function TRttiInstanceType.GetMetaClassType: TClass;
 begin
-  Result:=TTypeInfoClass(FTypeInfo).ClassType;
+  Result:=ClassTypeInfo.ClassType;
 end;
 
 constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
@@ -536,34 +643,28 @@ begin
   inherited Create(ATypeInfo);
 end;
 
-function TRttiInstanceType.GetProperty(const AName: string): TRttiProperty;
-var
-  A: Integer;
+{ TRttiInterfaceType }
 
-  Info: TTypeInfoClass;
-
+constructor TRttiInterfaceType.Create(ATypeInfo: PTypeInfo);
 begin
-  Info := TTypeInfoClass(FTypeInfo);
-  Result := nil;
-
-  for A := 0 to Pred(Info.PropCount) do
-    if Info.GetProp(A).Name = AName then
-      Exit(TRttiProperty.Create(Self, Info.GetProp(A)));
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoInterface) then
+    raise EInvalidCast.Create('');
+  inherited Create(ATypeInfo);
 end;
 
-function TRttiInstanceType.GetDeclaredProperties: TRttiPropertyArray;
+function TRttiInterfaceType.GetGUID: TGUID;
 var
-  A: Integer;
-
-  Info: TTypeInfoClass;
+  Guid: String;
 
 begin
-  Info := TTypeInfoClass(FTypeInfo);
+  Guid := String(InterfaceTypeInfo.InterfaceType['$guid']);
 
-  SetLength(Result, Info.PropCount);
+  TryStringToGUID(Guid, Result);
+end;
 
-  for A := 0 to Pred(Info.PropCount) do
-    Result[A] := TRttiProperty.Create(Self, Info.GetProp(A));
+function TRttiInterfaceType.GetInterfaceTypeInfo: TTypeInfoInterface;
+begin
+  Result := TTypeInfoInterface(FTypeInfo);
 end;
 
 { TRTTIContext }
@@ -606,6 +707,7 @@ begin
     begin
       case T.Kind of
         tkClass: Result:=TRttiInstanceType.Create(aTypeInfo);
+        tkInterface: Result:=TRttiInterfaceType.Create(aTypeInfo);
         else Result:=TRttiType.Create(aTypeInfo);
       end;
 
@@ -804,6 +906,11 @@ begin
   if AName='' then ;
 end;
 
+function TRttiType.GetMethods: TRttiMethodArray;
+begin
+  Result:=nil;
+end;
+
 function TRttiType.GetMethods(const aName: String): TRttiMethodArray;
 begin
   Result:=nil;
@@ -873,6 +980,11 @@ constructor TVirtualInterface.Create(InterfaceTypeInfo: Pointer;
 begin
   Create(InterfaceTypeInfo);
   OnInvoke:=InvokeEvent;
+end;
+
+function TVirtualInterface.QueryInterface(const iid: TGuid; out obj): Integer;
+begin
+  Result := inherited QueryInterface(iid, obj);
 end;
 
 function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;

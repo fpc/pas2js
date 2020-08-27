@@ -29,6 +29,8 @@ procedure ReloadEnvironmentStrings;
 
 implementation
 
+uses Rtl.BrowserLoadHelper;
+
 var
   EnvNames: TJSObject;
   Params : TStringDynArray;

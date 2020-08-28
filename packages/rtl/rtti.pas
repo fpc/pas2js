@@ -110,11 +110,14 @@ type
     FTypeInfo: TTypeMember;
     FParent: TRttiType;
   protected
+    function GetMemberTypeInfo: TTypeMember;
     function GetName: string; override;
     function GetVisibility: TMemberVisibility; virtual;
   public
     constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
     function GetAttributes: TCustomAttributeArray; override;
+
+    property MemberTypeInfo: TTypeMember read GetMemberTypeInfo;
     property Visibility: TMemberVisibility read GetVisibility;
     property Parent: TRttiType read FParent;
   end;
@@ -136,6 +139,7 @@ type
 
   TRttiMethod = class(TRttiMember)
   private
+    function GetMethodTypeInfo: TTypeMemberMethod;
     function GetIsClassMethod: boolean;
     function GetIsConstructor: boolean;
     function GetIsDestructor: boolean;
@@ -145,6 +149,7 @@ type
     function GetMethodKind: TMethodKind;
     function GetReturnType: TRttiType;
   public
+    property MethodTypeInfo: TTypeMemberMethod read GetMethodTypeInfo;
     property ReturnType: TRttiType read GetReturnType;
     property MethodKind: TMethodKind read GetMethodKind;
     property IsConstructor: boolean read GetIsConstructor;
@@ -161,14 +166,17 @@ type
 
   TRttiProperty = class(TRttiMember)
   private
+    function GetPropertyTypeInfo: TTypeMemberProperty;
     function GetPropertyType: TRttiType;
     function GetIsWritable: boolean;
     function GetIsReadable: boolean;
   protected
     function GetVisibility: TMemberVisibility; override;
   public
+    constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
     function GetValue(Instance: TObject): TValue;
     procedure SetValue(Instance: TObject; const AValue: TValue);
+    property PropertyTypeInfo: TTypeMemberProperty read GetPropertyTypeInfo;
     property PropertyType: TRttiType read GetPropertyType;
     property IsReadable: boolean read GetIsReadable;
     property IsWritable: boolean read GetIsWritable;
@@ -749,7 +757,11 @@ end;
 
 constructor TRttiMember.Create(AParent: TRttiType; ATypeInfo: TTypeMember);
 begin
+  if not (ATypeInfo is TTypeMember) then
+    raise EInvalidCast.Create('');
+
   inherited Create();
+
   FParent := AParent;
   FTypeInfo:=ATypeInfo;
 end;
@@ -757,6 +769,11 @@ end;
 function TRttiMember.GetAttributes: TCustomAttributeArray;
 begin
   Result:=inherited GetAttributes;
+end;
+
+function TRttiMember.GetMemberTypeInfo: TTypeMember;
+begin
+  Result := TTypeMember(FTypeInfo);
 end;
 
 { TRttiField }
@@ -768,71 +785,89 @@ end;
 
 { TRttiMethod }
 
+function TRttiMethod.GetMethodTypeInfo: TTypeMemberMethod;
+begin
+  Result := TTypeMemberMethod(FTypeInfo);
+end;
+
 function TRttiMethod.GetIsClassMethod: boolean;
 begin
-  Result:=TTypeMemberMethod(FTypeInfo).MethodKind in [mkClassFunction,mkClassProcedure];
+  Result:=MethodTypeInfo.MethodKind in [mkClassFunction,mkClassProcedure];
 end;
 
 function TRttiMethod.GetIsConstructor: boolean;
 begin
-  Result:=TTypeMemberMethod(FTypeInfo).MethodKind=mkConstructor;
+  Result:=MethodTypeInfo.MethodKind=mkConstructor;
 end;
 
 function TRttiMethod.GetIsDestructor: boolean;
 begin
-  Result:=TTypeMemberMethod(FTypeInfo).MethodKind=mkDestructor;
+  Result:=MethodTypeInfo.MethodKind=mkDestructor;
 end;
 
 function TRttiMethod.GetIsExternal: boolean;
 begin
-  Result:=(TTypeMemberMethod(FTypeInfo).ProcSig.Flags and 4)>0; // pfExternal
+  Result:=(MethodTypeInfo.ProcSig.Flags and 4)>0; // pfExternal
 end;
 
 function TRttiMethod.GetIsStatic: boolean;
 begin
-  Result:=(TTypeMemberMethod(FTypeInfo).ProcSig.Flags and 1)>0; // pfStatic
+  Result:=(MethodTypeInfo.ProcSig.Flags and 1)>0; // pfStatic
 end;
 
 function TRttiMethod.GetIsVarArgs: boolean;
 begin
-  Result:=(TTypeMemberMethod(FTypeInfo).ProcSig.Flags and 2)>0; // pfVarargs
+  Result:=(MethodTypeInfo.ProcSig.Flags and 2)>0; // pfVarargs
 end;
 
 function TRttiMethod.GetMethodKind: TMethodKind;
 begin
-  Result:=TTypeMemberMethod(FTypeInfo).MethodKind;;
+  Result:=MethodTypeInfo.MethodKind;;
 end;
 
 function TRttiMethod.GetReturnType: TRttiType;
 begin
-  Result := GRttiContext.GetType(TTypeMemberMethod(FTypeInfo).ProcSig.ResultType);
+  Result := GRttiContext.GetType(MethodTypeInfo.ProcSig.ResultType);
 end;
 
 { TRttiProperty }
 
+constructor TRttiProperty.Create(AParent: TRttiType; ATypeInfo: TTypeMember);
+begin
+  if not (ATypeInfo is TTypeMemberProperty) then
+    raise EInvalidCast.Create('');
+
+  inherited;
+end;
+
+function TRttiProperty.GetPropertyTypeInfo: TTypeMemberProperty;
+begin
+  Result := TTypeMemberProperty(FTypeInfo);
+end;
+
 function TRttiProperty.GetValue(Instance: TObject): TValue;
 begin
-  Result := TValue.FromJSValue(GetJSValueProp(Instance, TTypeMemberProperty(FTypeInfo)));
+  Result := TValue.FromJSValue(GetJSValueProp(Instance, PropertyTypeInfo));
 end;
 
 procedure TRttiProperty.SetValue(Instance: TObject; const AValue: TValue);
 begin
-  SetJSValueProp(Instance, TTypeMemberProperty(FTypeInfo), AValue);
+  SetJSValueProp(Instance, PropertyTypeInfo, AValue);
 end;
 
 function TRttiProperty.GetPropertyType: TRttiType;
 begin
-  Result := GRttiContext.GetType(FTypeInfo);
+  Result := GRttiContext.GetType(PropertyTypeInfo.TypeInfo);
 end;
 
 function TRttiProperty.GetIsWritable: boolean;
 begin
-  Result := TTypeMemberProperty(FTypeInfo).Setter<>'';
+  Result := PropertyTypeInfo.Setter<>'';
 end;
 
 function TRttiProperty.GetIsReadable: boolean;
 begin
-  Result := TTypeMemberProperty(FTypeInfo).Getter<>'';
+  Result := PropertyTypeInfo.Getter<>'';
 end;
 
 function TRttiProperty.GetVisibility: TMemberVisibility;

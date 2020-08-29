@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/foundicons/3.0.0/foundation-icons.min.css"/>
+<!--
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css"/>
+-->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+  <link rel="stylesheet" href="css/widgetsdemo.css"/>
+  <script src="https://code.jquery.com/jquery-3.4.1.slim.js" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" crossorigin="anonymous"></script>
+  <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.js" crossorigin="anonymous"></script>
+  <title>Webwidgets Demo</title>
+  <script src="webwidgetsdemo.js"></script>
+</head>
+<body>
+  <div class="banner container-fluid">
+     <h2  class="text-center">
+      <span "align-middle">WebWidgets demo</span>
+    </h2>  </div>
+  <div class="container-fluid"/>
+    <div class="row">
+      <div id="demoarea" class="col-10">
+        <div class="row">
+          <div id="demolist" class="col-2"></div>
+          <div id="democontainer" class="col-10"></div>
+        </div>
+        <div class="row">
+          <div class="col-2">
+            <div class="form-check">
+              <label class="form-check-label">
+                <input type="checkbox" id="showconsole" class="form-check-input" checked>Show pas2js console
+              </label>
+            </div>
+          </div>
+
+        </div>
+        <div class="row">
+          <div id="pasjsconsole" class="col-12 democonsole"></div>
+        </div>
+      </div>
+      <div id="propertygrid" class="col-2">
+      </div>
+    </div>
+  </div>
+  <script>
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-program consoledemo;
+program htmldemo;
 
 {$mode objfpc}
 

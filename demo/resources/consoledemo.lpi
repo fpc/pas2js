@@ -23,7 +23,6 @@
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="0"/>
     </RunParams>
     <Units>
       <Unit>
@@ -38,7 +37,6 @@
       <Filename Value="consoledemo"/>
     </Target>
     <SearchPaths>
-      <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="js"/>
     </SearchPaths>
     <Parsing>
@@ -58,21 +56,21 @@
       </Debugging>
     </Linking>
     <Other>
-      <CustomOptions Value="-Jeutf-8 -Jminclude -Jirtl.js -JRjs"/>
+      <CustomOptions Value="-Jeutf-8 -Jminclude"/>
       <CompilerPath Value="$(pas2js)"/>
     </Other>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="3">
-      <Item1>
+    <Exceptions>
+      <Item>
         <Name Value="EAbort"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <Name Value="ECodetoolError"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <Name Value="EFOpenError"/>
-      </Item3>
+      </Item>
     </Exceptions>
   </Debugging>
 </CONFIG>

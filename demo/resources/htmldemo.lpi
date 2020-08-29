@@ -28,13 +28,11 @@
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="0"/>
     </RunParams>
     <Units>
       <Unit>
         <Filename Value="htmldemo.lpr"/>
         <IsPartOfProject Value="True"/>
-        <UnitName Value="consoledemo"/>
       </Unit>
       <Unit>
         <Filename Value="htmldemo.html"/>
@@ -47,7 +45,7 @@
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
-    <Target FileExt=".js">
+    <Target>
       <Filename Value="htmldemo"/>
     </Target>
     <SearchPaths>
@@ -71,21 +69,21 @@
       </Debugging>
     </Linking>
     <Other>
-      <CustomOptions Value="-Jeutf-8 -Jirtl.js -Jc -Jminclude -JRjs"/>
+      <CustomOptions Value="-Jeutf-8 -Jirtl.js -Jc  -JRjs"/>
       <CompilerPath Value="$(pas2js)"/>
     </Other>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="3">
-      <Item1>
+    <Exceptions>
+      <Item>
         <Name Value="EAbort"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <Name Value="ECodetoolError"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <Name Value="EFOpenError"/>
-      </Item3>
+      </Item>
     </Exceptions>
   </Debugging>
 </CONFIG>

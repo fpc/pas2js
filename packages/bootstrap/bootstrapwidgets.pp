@@ -20,7 +20,7 @@ unit bootstrapwidgets;
 interface
 
 uses
-  Classes, SysUtils, js, libjquery, libbootstrap, web, webwidget;
+  Classes, SysUtils, js, libjquery, libbootstrap, web, webwidget, htmlwidgets;
 
 Type
 
@@ -110,6 +110,23 @@ Type
     Property ToastIcon : String Read FToastIcon Write FToastIcon;
   end;
 
+  { TBootstrapButton }
+
+  TBootstrapButton = class (TButtonWidget)
+  private
+    FContextual: TContextual;
+    FOutLine: Boolean;
+    procedure SetContextual(AValue: TContextual);
+    procedure SetOutLine(AValue: Boolean);
+  Protected
+    Function RecalcClasses(aOldContextual : TContextual; aOldOutline : Boolean) : String;
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  Published
+    Property Contextual : TContextual Read FContextual Write SetContextual default cPrimary;
+    Property Outline : Boolean Read FOutLine Write SetOutLine;
+  end;
+
 Const
   ContextualNames : Array[TContextual] of string = ('','primary','secondary','success','danger','warning','info','light','dark');
 
@@ -121,6 +138,52 @@ function Toasts: TToastManager;
 begin
   Result:=TToastManager.Instance;
 end;
+
+{ TBootstrapButton }
+
+procedure TBootstrapButton.SetContextual(AValue: TContextual);
+
+Var
+  Old : TContextual;
+
+begin
+  if FContextual=AValue then Exit;
+  old:=FContextual;
+  FContextual:=AValue;
+  RecalcClasses(Old,FOutline);
+end;
+
+procedure TBootstrapButton.SetOutLine(AValue: Boolean);
+
+Var
+  Old : Boolean;
+
+begin
+  if FOutLine=AValue then Exit;
+  old:=FoutLine;
+  FOutLine:=AValue;
+  RecalcClasses(FContextual,Old);
+end;
+
+function TBootstrapButton.RecalcClasses(aOldContextual: TContextual; aOldOutline: Boolean): String;
+
+Const
+  OL : Array[Boolean] of string = ('','outline-');
+Var
+  c : String;
+
+begin
+  Result:='btn btn-'+OL[FOutLine]+ContextualNames[FContextual];
+  C:=RemoveClasses(Classes,'btn-'+OL[aOldOutLine]+ContextualNames[aOldContextual]);
+  Classes:=AddClasses(C,Result);
+end;
+
+constructor TBootstrapButton.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  Contextual:=cPrimary;
+end;
+
 
 { TToastManager }
 
@@ -259,7 +322,7 @@ begin
     Result:=Result+'<img src="'+HeaderImage+'" class="rounded mr-2">';
   Result:=Result+'<div class="mr-auto">'+Header+'</div>';
   if (SmallHeader<>'') then
-    Result:=Result+'<small>'+SmallHeader+'</div>';
+    Result:=Result+'<small>'+SmallHeader+'</small>';
   if CloseButton then
     Result:=Result+CloseButtonHTML;
   Result:=Result+'</div>';

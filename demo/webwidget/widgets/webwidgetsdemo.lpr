@@ -4,7 +4,7 @@ program webwidgetsdemo;
 
 uses
   browserconsole, browserapp, JS, Classes, SysUtils, Web, widgetdemo, frmDemo, Rtl.TemplateLoader,
-  demohtmlwidgets, democonsts, webrouter;
+  demohtmlwidgets, democonsts, webrouter, demobootstrap;
 
 type
   TMyApplication = class(TBrowserApplication)

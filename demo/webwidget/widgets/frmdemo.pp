@@ -89,7 +89,7 @@ begin
   FContainer.ParentID:=SDemoContainerID;
   FContainer.Refresh;
   FContainer.ShowDemo;
-  FPropertyGrid.Subject:=FContainer.WidgetInstance;
+  FPropertyGrid.Subject:=FContainer.InspectorInstance;
   FPropertyGrid.LookupRoot:=FContainer;
   FPropertyGrid.Refresh;
 end;

@@ -20,6 +20,8 @@ Type
     procedure DoClick(Sender: TObject; Event: TJSEvent); virtual;
     // Event that can be used by descendents to attach to OnChange
     procedure DoChange(Sender: TObject; Event: TJSEvent); virtual;
+    // Override this to return something else but the widget itself
+    function GetInspectorInstance: TObject; virtual;
   Public
     function HTMLTag: String; override;
     function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
@@ -27,7 +29,10 @@ Type
     Class Function Description : String; virtual;
     Class function WebWidgetClass : TCustomWebWidgetClass; virtual; abstract;
     Class Function RegisterDemo : TDemoRegistration;
+    // The widget instance
     Property WidgetInstance : TCustomWebWidget Read FWidgetInstance;
+    // The object to show in object inspector. By default, this is the widget instance
+    Property InspectorInstance : TObject Read GetInspectorInstance;
     Procedure ShowDemo; virtual;
   end;
   TDemoContainerClass = Class of TDemoContainer;
@@ -184,6 +189,11 @@ begin
 end;
 
 { TDemoContainer }
+
+function TDemoContainer.GetInspectorInstance: TObject;
+begin
+  Result:=WidgetInstance;
+end;
 
 procedure TDemoContainer.DoClick(Sender: TObject; Event: TJSEvent);
 begin

@@ -127,6 +127,33 @@ Type
     Property Outline : Boolean Read FOutLine Write SetOutLine;
   end;
 
+  { TRowWidget }
+
+  TRowWidget = Class(TDIVWidget)
+  Protected
+    Function WidgetClasses: String; override;
+  end;
+
+  { TColWidget }
+  TColMediaSize = (cmsDefault,cmsXL,cmsLG,cmsMD,cmsSM);
+  TColWidget = Class(TDIVWidget)
+  private
+    FSpan : Array[TColMediaSize] of Integer;
+    function GetSpan(AIndex: Integer): Integer;
+    procedure SetSpan(AIndex: Integer; AValue: Integer);
+  Protected
+    Function RecalcClasses(aRemoveSize : TColmediaSize;aRemoveValue : Integer) : String;
+    Function WidgetClasses: String; override;
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  Published
+    Property DefaultColSpan : Integer Index 0 Read GetSpan Write SetSpan;
+    Property ExtraLargeColSpan : Integer Index 1 Read GetSpan Write SetSpan;
+    Property LargeColSpan : Integer Index 2 Read GetSpan Write SetSpan;
+    Property MediumColSpan : Integer Index 3 Read GetSpan Write SetSpan;
+    Property SmallColSpan : Integer Index 4 Read GetSpan Write SetSpan;
+  end;
+
 Const
   ContextualNames : Array[TContextual] of string = ('','primary','secondary','success','danger','warning','info','light','dark');
 
@@ -137,6 +164,62 @@ Implementation
 function Toasts: TToastManager;
 begin
   Result:=TToastManager.Instance;
+end;
+
+{ TColWidget }
+
+function TColWidget.GetSpan(AIndex: Integer): Integer;
+begin
+  Result:=FSpan[TColMediaSize(aIndex)];
+end;
+
+procedure TColWidget.SetSpan(AIndex: Integer; AValue: Integer);
+
+Var
+  aOld : integer;
+
+begin
+  if aValue=FSpan[TColMediaSize(aIndex)] then exit;
+  aOld:=FSpan[TColMediaSize(aIndex)];
+  FSpan[TColMediaSize(aIndex)]:=aValue;
+  recalcClasses(TColMediaSize(aIndex),aOld);
+end;
+
+function TColWidget.RecalcClasses(aRemoveSize : TColmediaSize; aRemoveValue: Integer): String;
+
+Const
+  IdxNames : Array[TColMediaSize] of string = ('-','-xl-','-lg-','-md-','-sm-');
+
+Var
+  c : String;
+  S : TColmediaSize;
+begin
+  Result:='';
+  C:=RemoveClasses(Classes,' col-'+IdxNames[aRemoveSize]+IntToStr(aRemoveValue));
+  For S in TColmediaSize do
+    begin
+    if FSpan[S]<>0 then
+      Result:=Result+' col-'+IdxNames[S]+IntToStr(FSpan[S]);
+    Classes:=AddClasses(C,Result);
+    end;
+end;
+
+function TColWidget.WidgetClasses: String;
+begin
+  Result:='col '+inherited WidgetClasses;
+end;
+
+constructor TColWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  DefaultColSpan:=12;
+end;
+
+{ TRowWidget }
+
+function TRowWidget.WidgetClasses: String;
+begin
+  Result:='row '+inherited WidgetClasses;
 end;
 
 { TBootstrapButton }

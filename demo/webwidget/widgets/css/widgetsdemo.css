@@ -1,12 +1,7 @@
-.banner {
-  background-color: var(--blue);
-/*
-  background-size: 128px 40px;
-  background-repeat: no-repeat;
-  background-size: cover;*/
-*/
-  color: white !important;
-  height: 50px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 #democontainer {

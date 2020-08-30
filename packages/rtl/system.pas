@@ -253,6 +253,53 @@ const
 function GUIDToString(const GUID: TGUID): string; external name 'rtl.guidrToStr';
 
 {*****************************************************************************
+                                  RTTI support
+*****************************************************************************}
+type
+  // if you change the following enumeration type in any way
+  // you also have to change the rtl.js in an appropriate way !
+  TTypeKind = (
+    tkUnknown,  // 0
+    tkInteger,  // 1
+    tkChar,     // 2 in Delphi/FPC tkWChar, tkUChar
+    tkString,   // 3 in Delphi/FPC tkSString, tkWString or tkUString
+    tkEnumeration, // 4
+    tkSet,      // 5
+    tkDouble,   // 6
+    tkBool,     // 7
+    tkProcVar,  // 8  function or procedure
+    tkMethod,   // 9  proc var of object
+    tkArray,    // 10 static array
+    tkDynArray, // 11
+    tkRecord,   // 12
+    tkClass,    // 13
+    tkClassRef, // 14
+    tkPointer,  // 15
+    tkJSValue,  // 16
+    tkRefToProcVar, // 17  variable of procedure type
+    tkInterface, // 18
+    //tkObject,
+    //tkSString,tkLString,tkAString,tkWString,
+    //tkVariant,
+    //tkWChar,
+    //tkInt64,
+    //tkQWord,
+    //tkInterfaceRaw,
+    //tkUString,tkUChar,
+    tkHelper,   // 19
+    //tkFile,
+    tkExtClass  // 20
+    );
+  TTypeKinds = set of TTypeKind;
+
+const
+  tkFloat = tkDouble; // for compatibility with Delphi/FPC
+  tkProcedure = tkProcVar; // for compatibility with Delphi
+  tkAny = [Low(TTypeKind)..High(TTypeKind)];
+  tkMethods = [tkMethod];
+  tkProperties = tkAny-tkMethods-[tkUnknown];
+
+{*****************************************************************************
                               Array of const support
 *****************************************************************************}
 

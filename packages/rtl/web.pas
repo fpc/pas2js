@@ -2850,7 +2850,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property ch: String read Fch write Fch;
     property chOff: String read FchOff write FchOff;
     property colSpan: Integer read FcolSpan write FcolSpan;
-    property headers: String read Fheaders write Fheaders;
+    property headers: String read Fheaders;
     property height: String read Fheight write Fheight;
     property noWrap: Boolean read FnoWrap write FnoWrap;
     property rowSpan: Integer read FrowSpan write FrowSpan;

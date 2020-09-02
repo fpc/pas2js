@@ -9858,6 +9858,7 @@ begin
   FPos := 0;
   FBufLen := CharsRead;
   FEofReached:=CharsRead = 0;
+  FBuf[CharsRead] := #0;
 end;
 
 procedure TParser.CheckLoadBuffer; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
@@ -10122,7 +10123,7 @@ end;
 constructor TParser.Create(Stream: TStream);
 begin
   fStream:=Stream;
-  SetLength(fBuf,ParseBufSize);
+  SetLength(fBuf,Succ(ParseBufSize));
   fBufLen:=0;
   fPos:=0;
   fDeltaPos:=1;

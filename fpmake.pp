@@ -129,6 +129,7 @@ end;
 Var
   P : TPackage;
   UnitDir,DemoDir,BD, TmpCfg: String;
+  T: TTarget;
 
 begin
   With Installer do
@@ -159,7 +160,9 @@ begin
     {$IF FPC_FULLVERSION>=30101}
     P.Targets.AddProgram('compileserver.pp');
     P.Targets.AddProgram('makestub.pp');
-    P.Targets.AddLibrary('pas2jslib.pp');
+    T:=P.Targets.AddLibrary('pas2jslib.pp');
+    if Defaults.OS=Linux then
+      T.Options.Add('-olibpas2js.so');
     {$ENDIF}
     P.Targets.AddImplicitUnit('fpjson',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('fppas2js',False).ResourceStrings:=True;

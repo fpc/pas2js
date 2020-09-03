@@ -22,6 +22,7 @@ uses
 
 resourcestring
   SErrInvokeInvalidCodeAddr = 'CodeAddress is not a function';
+  SErrTypeIsNotEnumerated  = 'Type %s is not an enumerated type';
 
 type
 
@@ -270,6 +271,38 @@ type
     property InterfaceTypeInfo: TTypeInfoInterface read GetInterfaceTypeInfo;
   end;
 
+  { TRttiOrdinalType }
+
+  TRttiOrdinalType = class(TRttiType)
+  private
+    function GetMaxValue: Integer; virtual;
+    function GetMinValue: Integer; virtual;
+    function GetOrdType: TOrdType;
+    function GetOrdinalTypeInfo: TTypeInfoInteger;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property OrdType: TOrdType read GetOrdType;
+    property MinValue: Integer read GetMinValue;
+    property MaxValue: Integer read GetMaxValue;
+    property OrdinalTypeInfo: TTypeInfoInteger read GetOrdinalTypeInfo;
+  end;
+
+  { TRttiEnumerationType }
+
+  TRttiEnumerationType = class(TRttiOrdinalType)
+  private
+    function GetEnumerationTypeInfo: TTypeInfoEnum;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property EnumerationTypeInfo: TTypeInfoEnum read GetEnumerationTypeInfo;
+
+    function GetNames: TStringArray;
+    generic class function GetName<T>(AValue: T): String;
+    generic class function GetValue<T>(const AValue: String): T;
+  end;
+
   EInvoke = EJS;
 
   TVirtualInterfaceInvokeEvent = function(const aMethodName: string;
@@ -317,6 +350,88 @@ asm
     IntfType = Object.getPrototypeOf(IntfType);
   } while(IntfType!=null);
   IntfVar.set(i);
+end;
+
+{ TRttiOrdinalType }
+
+function TRttiOrdinalType.GetMaxValue: Integer;
+begin
+  Result := OrdinalTypeInfo.MaxValue;
+end;
+
+function TRttiOrdinalType.GetMinValue: Integer;
+begin
+  Result := OrdinalTypeInfo.MinValue;
+end;
+
+function TRttiOrdinalType.GetOrdType: TOrdType;
+begin
+  Result := OrdinalTypeInfo.OrdType;
+end;
+
+function TRttiOrdinalType.GetOrdinalTypeInfo: TTypeInfoInteger;
+begin
+  Result := TTypeInfoInteger(FTypeInfo);
+end;
+
+constructor TRttiOrdinalType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoInteger) then
+    raise EInvalidCast.Create('');
+
+  inherited Create(ATypeInfo);
+end;
+
+{ TRttiEnumerationType }
+
+function TRttiEnumerationType.GetEnumerationTypeInfo: TTypeInfoEnum;
+begin
+  Result := TTypeInfoEnum(FTypeInfo);
+end;
+
+function TRttiEnumerationType.GetNames: TStringArray;
+var
+  A, NamesSize: Integer;
+
+begin
+  NamesSize := GetEnumNameCount(EnumerationTypeInfo);
+
+  SetLength(Result, NamesSize);
+
+  for A := 0 to Pred(NamesSize) do
+    Result[A] := EnumerationTypeInfo.EnumType.IntToName[A + MinValue];
+end;
+
+generic class function TRttiEnumerationType.GetName<T>(AValue: T): String;
+
+Var
+  P : PTypeInfo;
+
+begin
+  P:=TypeInfo(T);
+  if not (TTypeInfo(P).kind=tkEnumeration) then
+    raise EInvalidCast.CreateFmt(SErrTypeIsNotEnumerated,[TTypeInfo(P).Name]);
+  Result := GetEnumName(TTypeInfoEnum(P), Integer(JSValue(AValue)));
+end;
+
+generic class function TRttiEnumerationType.GetValue<T>(const AValue: String): T;
+
+Var
+  P : PTypeInfo;
+
+begin
+  P:=TypeInfo(T);
+  if not (TTypeInfo(P).kind=tkEnumeration) then
+    raise EInvalidCast.CreateFmt(SErrTypeIsNotEnumerated,[TTypeInfo(P).Name]);
+  Result := T(JSValue(GetEnumValue(TTypeInfoEnum(TypeInfo(T)), AValue)));
+end;
+
+constructor TRttiEnumerationType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoEnum) then
+    raise EInvalidCast.Create('');
+
+  inherited Create(ATypeInfo);
 end;
 
 { TValue }

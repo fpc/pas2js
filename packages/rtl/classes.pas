@@ -10600,6 +10600,6 @@ end;
 
 
 initialization
-  ClassList:=TJSObject.create(nil);
+  ClassList:=TJSObject.New;
 end.
 

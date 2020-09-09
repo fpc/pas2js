@@ -531,6 +531,7 @@ Type
     property SelectedIndex;
     Property Multiple;
     property size;
+    property Classes;
   end;
 
   { TLabelWidget }
@@ -797,6 +798,13 @@ Type
     Property OnFooterRowClick;
   end;
 
+  { TDivWidget }
+
+  TDivWidget = Class(TWebWidget)
+  Protected
+     Function HTMLTag : String; override;
+  end;
+
 Function ViewPort : TViewPort;
 
 Const
@@ -821,6 +829,13 @@ end;
 
 Const
   CellTags : Array[TRowKind] of string = ('th','td','td');
+
+{ TDivWidget }
+
+function TDivWidget.HTMLTag: String;
+begin
+  Result:='DIV';
+end;
 
 { TSelectWidget.TStringsSelectOptionEnumerator }
 

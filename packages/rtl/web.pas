@@ -2099,6 +2099,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     touchmove : TJSTouchEventHandler;
     touchcancel : TJSTouchEventHandler;
     procedure addEventListener(aname : string; aListener : TJSEventHandler);
+    procedure addEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure addEventListener(aname : string; aListener : JSValue);
     Procedure alert(Const Msg : String);
     Function atob(Const aValue : string) : string;
@@ -3710,6 +3711,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSHTMLAudioElement = Class external name 'HTMLAudioElement' (TJSHTMLMediaElement)
 
+  end;
+  TJSHTMLVideoElement = Class external name 'HTMLVideoElement' (TJSHTMLMediaElement)
   end;
 
   TJSFormDataEntryValue = String;

@@ -5829,8 +5829,8 @@ end;
 procedure TField.SetParentComponent(Value: TComponent);
 
 begin
-  if not (csLoading in ComponentState) then
-    DataSet := Value as TDataSet;
+  // if not (csLoading in ComponentState) then
+  DataSet := Value as TDataSet;
 end;
 
 procedure TField.SetSize(AValue: Integer);

@@ -256,6 +256,7 @@ type
     function GetMetaClassType: TClass;
   public
     constructor Create(ATypeInfo: PTypeInfo);
+    function GetIsInstance: boolean; override;
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
   end;
@@ -764,6 +765,11 @@ begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
     raise EInvalidCast.Create('');
   inherited Create(ATypeInfo);
+end;
+
+function TRttiInstanceType.GetIsInstance: boolean;
+begin
+  Result:=True;
 end;
 
 { TRttiInterfaceType }

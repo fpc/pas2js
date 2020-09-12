@@ -236,6 +236,7 @@ type
 
   TRttiStructuredType = class abstract(TRttiType)
   protected
+    function GetAncestor: TRttiStructuredType; virtual; abstract;
     function GetDeclaredProperties: TRttiPropertyArray; override;
     function GetMethod(const aName: String): TRttiMethod; override;
     function GetMethods: TRttiMethodArray; override;
@@ -254,6 +255,8 @@ type
   private
     function GetClassTypeInfo: TTypeInfoClass;
     function GetMetaClassType: TClass;
+  protected
+    function GetAncestor: TRttiStructuredType; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
     function GetIsInstance: boolean; override;
@@ -261,10 +264,14 @@ type
     property MetaClassType: TClass read GetMetaClassType;
   end;
 
+  { TRttiInterfaceType }
+
   TRttiInterfaceType = class(TRttiStructuredType)
   private
     function GetGUID: TGUID;
     function GetInterfaceTypeInfo: TTypeInfoInterface;
+  protected
+    function GetAncestor: TRttiStructuredType; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
 
@@ -667,49 +674,70 @@ end;
 
 function TRttiStructuredType.GetMethods: TRttiMethodArray;
 var
-  A: Integer;
+  A, MethodCount: Integer;
+
+  BaseClass: TRttiStructuredType;
 
 begin
+  BaseClass := Self;
+  MethodCount := 0;
+
+  while Assigned(BaseClass) do
+  begin
+    Inc(MethodCount, BaseClass.StructTypeInfo.MethodCount);
+
+    BaseClass := BaseClass.GetAncestor;
+  end;
+
   SetLength(Result, StructTypeInfo.MethodCount);
 
-  for A := 0 to Pred(StructTypeInfo.MethodCount) do
-    Result[A] := TRttiMethod.Create(Self, StructTypeInfo.GetMethod(A));
+  BaseClass := Self;
+
+  while Assigned(BaseClass) do
+  begin
+    for A := 0 to Pred(BaseClass.StructTypeInfo.MethodCount) do
+    begin
+      Dec(MethodCount);
+
+      Result[MethodCount] := TRttiMethod.Create(BaseClass, BaseClass.StructTypeInfo.GetMethod(A));
+    end;
+
+    BaseClass := BaseClass.GetAncestor;
+  end;
 end;
 
 function TRttiStructuredType.GetMethods(const aName: String): TRttiMethodArray;
 var
-  A: Integer;
+  Method: TRttiMethod;
 
-  Method: TTypeMemberMethod;
+  MethodCount: Integer;
 
 begin
-  SetLength(Result, StructTypeInfo.MethodCount);
+  MethodCount := 0;
 
-  for A := 0 to Pred(StructTypeInfo.MethodCount) do
-  begin
-    Method := StructTypeInfo.GetMethod(A);
-
+  for Method in GetMethods do
     if aName = Method.Name then
-      Result[A] := TRttiMethod.Create(Self, Method);
-  end;
+      Inc(MethodCount);
+
+  SetLength(Result, MethodCount);
+
+  for Method in GetMethods do
+    if aName = Method.Name then
+    begin
+      Dec(MethodCount);
+
+      Result[MethodCount] := Method;
+    end;
 end;
 
 function TRttiStructuredType.GetMethod(const aName: String): TRttiMethod;
 var
-  A: Integer;
-
-  Method: TTypeMemberMethod;
+  Method: TRttiMethod;
 
 begin
-  Result := nil;
-
-  for A := 0 to Pred(StructTypeInfo.MethodCount) do
-  begin
-    Method := StructTypeInfo.GetMethod(A);
-
+  for Method in GetMethods do
     if aName = Method.Name then
-      Exit(TRttiMethod.Create(Self, Method));
-  end;
+      Exit(Method);
 end;
 
 function TRttiStructuredType.GetProperty(const AName: string): TRttiProperty;
@@ -760,6 +788,11 @@ begin
   Result:=ClassTypeInfo.ClassType;
 end;
 
+function TRttiInstanceType.GetAncestor: TRttiStructuredType;
+begin
+  Result := GRttiContext.GetType(ClassTypeInfo.Ancestor) as TRttiStructuredType;
+end;
+
 constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
@@ -794,6 +827,11 @@ end;
 function TRttiInterfaceType.GetInterfaceTypeInfo: TTypeInfoInterface;
 begin
   Result := TTypeInfoInterface(FTypeInfo);
+end;
+
+function TRttiInterfaceType.GetAncestor: TRttiStructuredType;
+begin
+  Result := GRttiContext.GetType(InterfaceTypeInfo.Ancestor) as TRttiStructuredType;
 end;
 
 { TRTTIContext }

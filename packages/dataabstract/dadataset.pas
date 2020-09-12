@@ -45,6 +45,7 @@ Type
     class function NewNull: TDAExpression;
     class function NewIsNotNull: TDAExpression; overload;
     class function NewIsNotNull(const aTableName,aFieldName: string): TDAExpression; overload;
+    class function NewIsNull(const aTableName,aFieldName: string): TDAExpression; overload;
     class function NewMacro(const aName: string): TDAExpression; overload;
     class function NewMacro(const aName: string; const aValues: array of TDAExpression): TDAExpression; overload;
     class function NewBetweenExpression(aExpression, aLower, aUpper: TDAExpression): TDAExpression; overload;
@@ -315,6 +316,12 @@ end;
 class function TDAWhereClauseBuilder.NewIsNotNull(const aTableName, aFieldName: string): TDAExpression;
 begin
   Result:=NewBinaryExpression(NewField(aTableName,aFieldName),NewIsNotNull,dboEqual);
+end;
+
+class function TDAWhereClauseBuilder.NewIsNull(const aTableName,
+  aFieldName: string): TDAExpression;
+begin
+  Result:=NewBinaryExpression(NewField(aTableName,aFieldName),TDANullExpression.new,dboEqual);
 end;
 
 class function TDAWhereClauseBuilder.NewMacro(const aName: string): TDAExpression;

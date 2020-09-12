@@ -154,6 +154,75 @@ Type
     Property SmallColSpan : Integer Index 4 Read GetSpan Write SetSpan;
   end;
 
+  { TBootstrapModal }
+  TOnModalHideEvent = Procedure (Sender : TObject; El : TJSHTMLElement; Values : TStrings) of object;
+
+  TModalItemKind = (mikValue,mikClose);
+
+  { TModalReferenceItem }
+
+  TModalReferenceItem = Class(TReferenceItem)
+  private
+    FInitialValue: String;
+    FKind: TModalItemKind;
+  Protected
+    Function GetValue: String;
+    Procedure SetValue(aValue: String);
+  Public
+    Procedure Assign(Source : TPersistent); override;
+    Property Value : String Read GetValue Write SetValue;
+  Published
+    Property Kind : TModalItemKind Read FKind Write FKind;
+    Property InitialValue : String Read FInitialValue Write FInitialValue;
+  end;
+
+  { TModalReferences }
+
+  TModalReferences = Class(TWebWidgetReferences)
+  private
+    function GetMR(aIndex : Integer): TModalReferenceItem;
+    procedure SetMR(aIndex : Integer; AValue: TModalReferenceItem);
+  Public
+    Function Add(Const aName : String; aSelector : String; aKind : TModalItemKind) : TModalReferenceItem; overload;
+    Property ModalRefs[aIndex : Integer] : TModalReferenceItem Read GetMR Write SetMR; default;
+  end;
+
+  TBootstrapModal = Class(TCustomTemplateWidget)
+  private
+    FHideEl : TJSHTMLElement;
+    FBackDrop: Boolean;
+    FFocus: Boolean;
+    FKeyBoard: Boolean;
+    FOnHide: TOnModalHideEvent;
+    FShowOnRender: Boolean;
+    FTemplate: String;
+    FShowing : Boolean;
+    function GetModalReferences: TModalReferences;
+    function HideClick(Event: TJSEvent): Boolean;
+    procedure SetModalReferences(AValue: TModalReferences);
+    procedure SetTemplate(AValue: String);
+  protected
+    Function BootstrapHide(Event : TJSEvent) : Boolean;
+    Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
+    Function GetTemplateHTML: String; override;
+    Procedure RefreshReferences; override;
+    Function CreateReferences: TWebWidgetReferences; override;
+  Public
+    procedure GetValues(aList: TStrings);
+    Procedure Show;
+    Procedure Hide;
+    Property Showing : Boolean Read FShowing;
+  Published
+    Property ShowOnRender: Boolean Read FShowOnRender Write FShowOnrender;
+    Property BackDrop : Boolean Read FBackDrop Write FBackDrop;
+    Property KeyBoard : Boolean Read FKeyBoard Write FKeyBoard;
+    Property Focus : Boolean Read FFocus Write FFocus;
+    Property Template : String Read FTemplate Write SetTemplate;
+    Property OnHide : TOnModalHideEvent Read FOnHide Write FOnHide;
+    Property References : TModalReferences Read GetModalReferences Write SetModalReferences;
+  end;
+
+
 Const
   ContextualNames : Array[TContextual] of string = ('','primary','secondary','success','danger','warning','info','light','dark');
 
@@ -526,5 +595,193 @@ procedure TSimpleToastWidget.Hide;
 begin
   JQuery(Element).Toast('hide');
 end;
+
+{ TModalReferenceItem }
+
+procedure TModalReferenceItem.Assign(Source: TPersistent);
+begin
+  if Source is TModalReferenceItem then
+    Self.Kind:=TModalReferenceItem(Source).Kind
+  else
+    inherited Assign(Source);
+end;
+
+function TModalReferenceItem.GetValue: String;
+begin
+  if (Kind=mikValue) and (Element<>Nil) then
+    Result:=TJSHTMLInputElement(Element).value;
+end;
+
+procedure TModalReferenceItem.SetValue(aValue: String);
+begin
+  if (Kind=mikValue) and (Element<>Nil) then
+    TJSHTMLInputElement(Element).value:=aValue;
+end;
+
+{ TModalReferences }
+
+function TModalReferences.GetMR(aIndex : Integer): TModalReferenceItem;
+begin
+  Result:=TModalReferenceItem(Items[aIndex])
+end;
+
+procedure TModalReferences.SetMR(aIndex : Integer; AValue: TModalReferenceItem);
+begin
+  Items[aIndex]:=aValue;
+end;
+
+function TModalReferences.Add(const aName: String; aSelector: String; aKind: TModalItemKind): TModalReferenceItem;
+begin
+  Result:=TModalReferenceItem(Inherited Add(aName,aselector));
+  Result.Kind:=aKind;
+end;
+
+{ TBootstrapModal }
+
+procedure TBootstrapModal.Hide;
+
+begin
+  if Assigned(Element) then
+    jQuery(Element).ModalHide;
+end;
+
+function TBootstrapModal.HideClick (Event : TJSEvent): Boolean;
+
+begin
+  // Writeln('In hide click');
+  FHideEl:=TJSHtmlElement(Event.targetElement);
+  Hide;
+end;
+
+function TBootstrapModal.GetModalReferences: TModalReferences;
+begin
+  Result:=TModalReferences(Inherited References);
+end;
+
+procedure TBootstrapModal.SetModalReferences(AValue: TModalReferences);
+begin
+  References.Assign(aValue);
+end;
+
+procedure TBootstrapModal.SetTemplate(AValue: String);
+begin
+  if FTemplate=AValue then Exit;
+  if Showing Then
+    Raise EWidgets.Create('Cannot set template while showing bootstrap modal');
+  FTemplate:=AValue;
+  If IsRendered then
+    Refresh;
+end;
+
+procedure TBootstrapModal.GetValues(aList: TStrings);
+
+Var
+  I : integer;
+  Itm : TModalReferenceItem;
+
+begin
+  For I:=0 to references.Count-1 do
+    begin
+    Itm:=references[i];
+    if (itm.Kind=mikValue) and assigned(itm.Element) then
+      aList.Values[Itm.Name]:=Itm.Value
+    end;
+end;
+
+
+function TBootstrapModal.BootstrapHide(Event: TJSEvent): Boolean;
+
+Var
+  L : Tstrings;
+  I,C : integer;
+
+begin
+  Result:=False;
+  FShowing:=False;
+  // Writeln('In bootstraphide callback ', assigned(onhide));
+  If Assigned(OnHide) then
+    begin
+    C:=0;
+    L:=Nil;
+    For I:=0 to references.Count-1 do
+      if references[i].Kind=mikValue then Inc(C);
+    if C>0 then
+      begin
+      L:=TStringList.Create;
+      GetValues(L);
+      end;
+    Try
+      OnHide(Self,FHideEl,L);
+    finally
+      L.Free;
+    end;
+    end;
+end;
+
+function TBootstrapModal.DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement;
+
+begin
+  FHideEl:=Nil;
+  Result:=inherited DoRenderHTML(aParent, aElement);
+  JQuery(Result).modal(New([
+    'backdrop', BackDrop,
+    'keyboard', keyboard,
+    'focus',Focus,
+    'show',ShowOnRender
+  ]));
+  jQuery(Result).on_('hidden.bs.modal',@BootstrapHide);
+end;
+
+function TBootstrapModal.GetTemplateHTML: String;
+begin
+  Result:=FTemplate;
+end;
+
+procedure TBootstrapModal.RefreshReferences;
+
+Var
+  I : Integer;
+  E : TJSHTMLElement;
+  MR : TModalReferenceItem;
+
+begin
+  inherited RefreshReferences;
+  E:=References.FindElementByName('OK');
+  if (E<>Nil) then
+    jQuery(E).on_('click',@HideClick);
+  for I:=0 to References.Count-1 do
+    begin
+    MR:=References[i];
+    if (MR.Kind=mikClose) then
+      begin
+      if MR.Exists then
+        if Not MR.IsArray then
+          jQuery(MR.Element).on_('click',@HideClick)
+        else
+          For E in MR.Elements do
+            jQuery(E).on_('click',@HideClick);
+        end
+    else if (MR.Kind=mikValue) then
+      begin
+      if (MR.element<>Nil) and (MR.InitialValue<>'') then
+        MR.Value:=MR.InitialValue;
+      end;
+    end;
+end;
+
+function TBootstrapModal.CreateReferences: TWebWidgetReferences;
+begin
+  Result:=TModalReferences.Create(Self,TModalReferenceItem);
+end;
+
+procedure TBootstrapModal.Show;
+begin
+  FHideEl:=Nil;
+  if not IsRendered then
+    Refresh;
+  JQuery(Element).ModalShow;
+  FShowing:=True;
+end;
+
 
 end.

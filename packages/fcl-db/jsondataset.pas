@@ -1463,7 +1463,7 @@ begin
     RemoveCalcFields(FEditRow);
     end
   else
-    FEditRow:=TJSObject.new;
+    FEditRow:=FFieldMapper.CreateRow;
 //  Writeln('TBaseJSONDataSet.InternalEdit: ',FEditRow);
 end;
 

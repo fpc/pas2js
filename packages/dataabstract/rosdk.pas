@@ -212,7 +212,18 @@ Type
     function encodeInt(data : NativeInt; bits : Integer; Signed : boolean) : String;
   end;
 
+Function ExtractErrorMsg(jsError : TJSError) : String;
+
 implementation
+
+Function ExtractErrorMsg(jsError : TJSError) : String;
+begin
+  if Assigned(jsError) and isString(jsError.message) then
+    Result:=jsError.message
+  else
+    Result:='Unknown error'
+end;
+
 
 end.
 

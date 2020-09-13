@@ -15,6 +15,10 @@
  **********************************************************************}
 unit dadataset;
 
+{$mode objfpc}
+{$modeswitch externalclass}
+
+
 interface
 
 uses Types, Classes, DB, jsonDataset, JS, rosdk, da, dasdk;
@@ -54,11 +58,36 @@ Type
     class function GetWhereClause (aExpression : TDAExpression) : String;
   end;
 
+Type
+  TDADataRow = Class external name 'Object' (TJSObject)
+    _new,
+    _old : TJSValueDynArray;
+  end;
+  TDaDataRowArray = Array of TDADataRow;
+
+  TResolvedRow = Class external name 'Object' (TJSObject)
+    changes : TDAChange;
+    fields : TLogFieldArray;
+  end;
+
+  { TDAArrayFieldMapper }
+
+  TDAArrayFieldMapper = Class(TJSONArrayFieldMapper)
+  Public
+    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
+    procedure SetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row,Data : JSValue); override;
+    Function GetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
+    Function CreateRow : JSValue; override;
+  end;
+
 
   { TDADataset }
+  TDADatasetOption = (doRefreshAllFields);
+  TDADatasetOptions = Set of TDADatasetOption;
 
   TDADataset = class(TBaseJSONDataset)
   private
+    FDAOptions: TDADatasetOptions;
     FParams: TParams;
     FTableName: String;
     FDAConnection: TDAConnection;
@@ -67,7 +96,15 @@ Type
     function DataTypeToFieldType(s: String): TFieldType;
     procedure SetParams(AValue: TParams);
   Protected
+    function DoResolveRecordUpdate(anUpdate : TRecordUpdateDescriptor): Boolean; override;
     Procedure MetaDataToFieldDefs; override;
+    Procedure InternalEdit; override;
+    Procedure InternalDelete; override;
+    // These operate on metadata received from DA.
+    function GetDAFields: TDAFieldArray;
+    function GetExcludedFields : TNativeIntDynArray;
+    Function GetLoggedFields : TLogFieldArray;
+    function GetKeyFields: TStringDynArray;
   Public
     constructor create(aOwner : TComponent); override;
     Destructor Destroy; override;
@@ -84,6 +121,7 @@ Type
     Property DAConnection : TDAConnection Read FDAConnection Write FDAConnection;
     Property Params : TParams Read FParams Write SetParams;
     Property WhereClause : String Read FWhereClause Write FWhereClause;
+    Property DAOptions : TDADatasetOptions Read FDAOptions Write FDAOptions;
   end;
 
 
@@ -100,6 +138,7 @@ Type
   private
     FConnection: TDAConnection;
     function ConvertParams(DADS: TDADataset): TDADataParameterDataArray;
+    procedure ProcessUpdateResult(Res: JSValue; aBatch: TRecordUpdateBatch);
   Protected
     Function GetDataRequestClass : TDataRequestClass; override;
   Public
@@ -147,6 +186,8 @@ Type
     function DetectMessageType(Const aURL: String): TDAMessageType; virtual;
     Function CreateDataService : TDADataAbstractService; virtual;
     Function CreateLoginService : TDASimpleLoginService; virtual;
+    Function CreateStreamer : TDADataStreamer;
+    Function InterpretMessage(aRes : JSValue) : String;
   Public
     Constructor create(aOwner : TComponent); override;
     Destructor Destroy; override;
@@ -197,6 +238,35 @@ uses strutils, sysutils;
 
 resourcestring
   SErrInvalidDate = '%s is not a valid date value for %s';
+
+{ TDAArrayFieldMapper }
+
+procedure TDAArrayFieldMapper.RemoveField(const FieldName: String; FieldIndex: Integer; Row: JSValue);
+
+begin
+  Inherited RemoveField(FieldName,FieldIndex,TDADataRow(Row)._new);
+end;
+
+procedure TDAArrayFieldMapper.SetJSONDataForField(const FieldName: String; FieldIndex: Integer; Row, Data: JSValue);
+begin
+  Inherited SetJSONDataForField(FieldName,FieldIndex,TDADataRow(Row)._new,Data);
+end;
+
+function TDAArrayFieldMapper.GetJSONDataForField(const FieldName: String; FieldIndex: Integer; Row: JSValue): JSValue;
+begin
+  Result:=Inherited GetJSONDataForField(FieldName,FieldIndex,TDADataRow(Row)._new);
+end;
+
+function TDAArrayFieldMapper.CreateRow: JSValue;
+
+begin
+  Result:=TDADataRow.New;
+  With TDADataRow(Result) do
+    begin
+    _new:=[];
+    _old:=[];
+    end;
+end;
 
 { TDAWhereClauseBuilder }
 
@@ -486,6 +556,21 @@ begin
   Result:=TDASimpleLoginService.New(FChannel,FMessage,LoginServiceName);
 end;
 
+function TDAConnection.CreateStreamer: TDADataStreamer;
+begin
+  Case StreamerType of
+    stJSON : Result:=TDAJSONDataStreamer.new;
+    stBIN: Result:=TDABIN2DataStreamer.new;
+  end;
+end;
+
+function TDAConnection.InterpretMessage(aRes: JSValue): String;
+begin
+  Result:=String(aRes);
+  if (EnsureMessageType=mtJSON) then
+    Result:=TROUtil.Frombase64(Result);
+end;
+
 constructor TDAConnection.create(aOwner: TComponent);
 begin
   inherited create(aOwner);
@@ -596,6 +681,35 @@ begin
   FParams.Assign(AValue);
 end;
 
+function TDADataset.DoResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor): Boolean;
+
+Var
+  rIdx,I : Integer;
+  Fld : TField;
+  ResRow : TResolvedRow;
+  aRow : JSValue;
+
+begin
+  Result:=True;
+  if Assigned(anupDate.ServerData) and (anUpdate.Status<>usDeleted) then
+     begin
+     rIdx:=NativeInt(anUpdate.Bookmark.Data);
+     if Not (rIdx>=0) and (rIdx<Rows.Length) then
+        exit;
+     // Apply new values
+     aRow:=Rows[rIdx];
+     ResRow:=TResolvedRow(anUpdate.ServerData);
+     With ResRow do
+       for I:=0 to Length(Fields)-1 do
+         if (doRefreshAllFields in DAOptions) or (Changes.old[I]<>Changes.new_[I]) then
+            begin
+            Fld:=FieldByName(Fields[i].Name);
+            FieldMapper.SetJSONDataForField(Fld,aRow,Changes.New_[i]);
+            end;
+     TDADataRow(aRow)._old:=[];
+     end;
+end;
+
 function TDADataset.ConvertToDateTime(aField: TField; aValue: JSValue; ARaiseException: Boolean): TDateTime;
 begin
   Result:=0;
@@ -619,6 +733,100 @@ begin
   if Not isArray(Metadata['fields']) then
     exit;
   CreateFieldDefs(TJSArray(Metadata['fields']));
+end;
+
+procedure TDADataset.InternalEdit;
+
+Var
+  D : TDADataRow;
+
+begin
+  Inherited;
+  D:=TDADataRow(ActiveBuffer.Data);
+  if Length(D._old)=0 then
+    begin
+    asm
+    this.FEditRow._old=this.FEditRow._new.slice();
+    end;
+    end;
+  if Not isDefined(D._new) then
+    ActiveBuffer.Data:=FieldMapper.CreateRow
+end;
+
+procedure TDADataset.InternalDelete;
+begin
+  inherited InternalDelete;
+  asm
+    var len=this.FDeletedRows.length-1;
+    this.FDeletedRows[len]._old=this.FDeletedRows[len]._new.slice();
+  end;
+end;
+
+function TDADataset.GetDAFields: TDAFieldArray;
+
+begin
+  if Assigned(metadata) and Metadata.HasOwnProperty('fields') and isArray(MetaData['fields']) then
+    Result:=TDAFieldArray(Metadata['fields'])
+  else
+    Result:=nil;
+end;
+
+function TDADataset.GetExcludedFields: TNativeIntDynArray;
+
+Var
+  Flds : TDAFieldArray;
+  I : Integer;
+
+begin
+  Result:=[];
+  Flds:=GetDaFields;
+  For I:=0 to Length(Flds)-1 do
+    if not Flds[i].logChanges then
+      TJSArray(Result).Push(i);
+end;
+
+function TDADataset.GetKeyFields: TStringDynArray;
+
+Var
+  Flds : TDAFieldArray;
+  I,aLen : Integer;
+begin
+  Result:=[];
+  Flds:=GetDaFields;
+  aLen:=0;
+  SetLength(Result,Length(Flds));
+  For I:=0 to Length(Flds)-1 do
+    begin
+    if Flds[i].HasOwnProperty('inPrimaryKey') and  SameText(Flds[i].inPrimaryKey,'True') then
+      begin
+      Result[aLen]:=Flds[i].Name;
+      Inc(aLen);
+      end;
+    end;
+  SetLength(Result,aLen);
+end;
+
+
+function TDADataset.GetLoggedFields: TLogFieldArray;
+
+Var
+  Flds : TDAFieldArray;
+  I,aLen : Integer;
+begin
+  Result:=[];
+  Flds:=GetDaFields;
+  aLen:=0;
+  SetLength(Result,Length(Flds));
+  For I:=0 to Length(Flds)-1 do
+    begin
+    if Flds[i].logChanges then
+      begin
+      Result[aLen].name:=Flds[i].Name;
+      Result[aLen].datatype:=Flds[i].type_;
+      Inc(aLen);
+      end;
+    end;
+  SetLength(Result,aLen);
 end;
 
 function TDADataset.DoGetDataProxy: TDataProxy;
@@ -700,7 +908,7 @@ end;
 
 function TDADataset.CreateFieldMapper: TJSONFieldMapper;
 begin
-  Result := TJSONArrayFieldMapper.Create;
+  Result := TDAArrayFieldMapper.Create;
 end;
 
 { TDADataProxy }
@@ -734,6 +942,7 @@ Var
   DADS : TDADataset;
   PA : TDADataParameterDataArray;
   DS : TDADataAbstractService;
+
 begin
   // DA does not support this option...
   if loAtEOF in aRequest.LoadOptions then
@@ -772,14 +981,142 @@ begin
   Result:=TDADataRequest;
 end;
 
-function TDADataProxy.ProcessUpdateBatch(aBatch: TRecordUpdateBatch): Boolean;
+
+procedure TDADataProxy.ProcessUpdateResult(Res: JSValue;aBatch: TRecordUpdateBatch);
+
+Var
+  I : Integer;
+  aDelta : TDADelta;
+  aDeltas : TDADeltas;
+  aStreamer : TDADataStreamer;
+  C : TDaChange;
+  ResolvedRow : TResolvedRow;
+
 begin
-  Result:=False;
+  aStreamer:=Connection.CreateStreamer;
+  aStreamer.Stream:=Connection.InterpretMessage(Res);
+  aStreamer.initializeRead;
+  aDeltas:=aStreamer.ReadDelta;
+  if Length(aDeltas.deltas)>1 then
+    begin
+    For I:=0 to aBatch.List.Count-1 do
+      aBatch.List[i].ResolveFailed('More than 1 delta in result');
+    Exit;
+    end;
+  aDelta:=aDeltas.Deltas[0];
+  For C in aDelta.data do
+    begin
+    Case C.Status of
+     'failed' :
+        aBatch.List[C.recid].ResolveFailed(C.Message);
+     'resolved':
+        begin
+        ResolvedRow:=TResolvedRow.new;
+        ResolvedRow.changes:=C;
+        ResolvedRow.fields:=aDelta.LoggedFields;
+        aBatch.List[C.recid].Resolve(ResolvedRow);
+        end;
+    end;
+    end;
+  For I:=0 to aBatch.List.Count-1 do
+    if aBatch.List[i].ResolveStatus=rsResolving then
+      aBatch.List[i].Resolve(Null);
+  If Assigned(aBatch.OnResolve) then
+    ABatch.OnResolve(Self,aBatch);
+end;
+
+
+function TDADataProxy.ProcessUpdateBatch(aBatch: TRecordUpdateBatch): Boolean;
+
+  Procedure UpdateSuccess(res : JSValue);
+
+  begin
+    ProcessUpdateResult(Res,aBatch)
+  end;
+
+  Procedure UpdateFailure(response : TROMessage; Err : TJSError);
+
+  var
+     I : Integer;
+     aDesc : TRecordUpdateDescriptor;
+
+  begin
+    For I:=0 to aBatch.List.Count-1 do
+      begin
+      aDesc:=aBatch.List[i];
+      aDesc.ResolveFailed(extractErrorMsg(Err));
+      end;
+    If Assigned(aBatch.OnResolve) then
+      ABatch.OnResolve(Self,aBatch);
+  end;
+
+  Procedure ExcludeItems(aList : TNativeIntDynArray; aValue : TJSValueDynArray);
+
+  Var
+     I : Integer;
+
+  begin
+    // Backwards or index will shift with each delete!
+    for I:=Length(aList)-1 downto 1 do
+       TJSArray(aValue).Splice(aList[I],1);
+  end;
+
+
+
+Const
+  ChangeTypes : Array[TUpdateStatus] of String = ('update','insert','delete');
+
+Var
+  lDataset : TDaDataset;
+  excludedFields : TNativeIntDynArray;
+  I : Integer;
+  aDesc : TRecordUpdateDescriptor;
+  aDelta : TDADelta;
+  aDeltas : TDADeltas;
+  aChange : TDAChange;
+  DS : TDADataAbstractService;
+  DStr : TDADataStreamer;
+  S : String;
+
+
+begin
+  lDataset:=TDADataset(aBatch.Dataset);
+  aDeltas:=TDADeltas.New;
+  aDelta:=TDADelta.New;
+  aDelta.Name:=lDataset.TableName;
+  aDelta.keyFields:=lDataset.GetKeyFields;
+  aDelta.loggedFields:=lDataset.GetLoggedFields;
+  excludedFields:=lDataset.GetExcludedFields;
+  TJSArray(aDeltas.deltas).Push(aDelta);
+  For I:=0 to aBatch.List.Count-1 do
+    begin
+    aDesc:=aBatch.List[i];
+    aChange:=TDaChange.New;
+    aChange.Status:='pending';
+    if aDesc.Status=usInserted then
+      aChange.old:=TJSValueDynArray(TJSArray(TDADataRow(aDesc.Data)._new).Slice())
+    else
+      aChange.old:=TJSValueDynArray(TJSArray(TDADataRow(aDesc.Data)._old).Slice());
+    aChange.new_:=TJSValueDynArray(TJSArray(TDADataRow(aDesc.Data)._new).Slice());
+    excludeItems(ExcludedFields,aChange.new_);
+    excludeItems(ExcludedFields,aChange.old);
+    aChange.changeType:=ChangeTypes[aDesc.Status];
+    aChange.recid:=I;
+    TJSArray(aDelta.data).push(aChange);
+    end;
+  DStr:=Connection.CreateStreamer;
+  DStr.initializeWrite;
+  DStr.writeDelta(aDeltas);
+  DStr.finalizeWrite;
+  S:=DStr.Stream;
+  DS:=Connection.EnsureDataservice;
+  DS.UpdateData(S,@UpdateSuccess,@UpdateFailure);
+  Result:=True;
 end;
 
 { TDADataRequest }
 
-procedure TDADataRequest.DoFail(response: TROMessage; fail: TjsError);
+procedure TDADataRequest.DoFail(response: TROMessage; fail: TJSError);
 
 Var
   O : TJSOBject;
@@ -805,11 +1142,14 @@ begin
   DoAfterRequest;
 end;
 
+
+
 procedure TDADataRequest.doSuccess(res: JSValue);
 
 Var
   S : String;
-  Rows : TJSArray;
+  Rows : TDADataRowArray;
+  aRow : TDADataRow;
   DADS : TDADataset;
   DStr : TDADataStreamer;
   DT : TDADatatable;
@@ -820,25 +1160,25 @@ begin
   DADS:=Dataset as TDADataset;
   if not Assigned(DADS.DAConnection) then
     Raise EDADataset.Create(DADS.Name+': Cannot process response, connection not available');
-  S:=String(Res);
-  if (DADS.DAConnection.EnsureMessageType=mtJSON) then
-    S:=TROUtil.Frombase64(S);
-  Case DADS.DAConnection.StreamerType of
-    stJSON : DStr:=TDAJSONDataStreamer.new;
-    stBIN: DStr:=TDABIN2DataStreamer.new;
-  end;
+  DStr:=DADS.DAConnection.CreateStreamer;
+  S:=DADS.DAConnection.InterpretMessage(Res);
   DStr.Stream:=S;
   DStr.initializeRead;
   DT:=TDADataTable.New;
   DT.name:=DADS.TableName;
   DStr.ReadDataset(DT);
   // Writeln('Row count : ',Length(DT.rows));
-  Rows:=TJSArray.New(Length(DT.rows));
+  SetLength(Rows,Length(DT.rows));
   for I:=0 to length(DT.rows)-1 do
-     Rows[i]:=DT.Rows[i].__newValues;
+      begin
+      aRow:=TDADataRow.New;
+      aRow._new:=TJSValueDynArray(DT.Rows[i].__newValues);
+      aRow._old:=[];
+      Rows[i]:=aRow;
+      end;
   (Dataset as TDADataset).Metadata:=New(['fields',TJSArray(DT.Fields)]);
   // Data:=aJSON['data'];
-  (Dataset as TDADataset).Rows:=Rows;
+  (Dataset as TDADataset).Rows:=TJSArray(Rows);
   Success:=rrOK;
   DoAfterRequest;
 end;

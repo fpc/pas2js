@@ -65,8 +65,8 @@ Type
     function getStream : TDAStream;
     procedure setStream(aStream : TDAStream);
     procedure readDataset(aDataset : TDADataTable);
-    function readDelta : TDADelta;
-    procedure writeDelta(aDelta : TDADelta);
+    function readDelta : TDADeltas;
+    procedure writeDelta(aDelta : TDADeltas);
     Property Stream : TDAStream Read getStream write setStream;
   end;
 
@@ -96,13 +96,19 @@ Type
   end;
 
   TDAChange = class external name 'RemObjects.DataAbstract.Change' (TJSObject)
+    recid : Nativeint;
+    changetype : string;
+    status : string;
+    message : string;
+    old : TJSValueDynArray;
+    new_ : TJSValueDynArray; external name 'new';
   end;
 
   TDAChangeArray = array of TDAChange;
   
   TLogField = record
     name : string;
-    datatype : string;
+    datatype : string; external name 'type';
   end;
   TLogFieldArray = array of TLogfield;
   
@@ -115,13 +121,15 @@ Type
   Public
     Function intFindId(anId : Integer) : TDAChange;
     Property data : TDAChangeArray Read FData;
-    Property keyFields : TStringDynArray Read FKeyFields;
-    Property LoggedFields : TLogFieldArray Read FLoggedFields; 
-    Property Name : String Read FName;
+    Property keyFields : TStringDynArray Read FKeyFields Write FKeyFields;
+    Property LoggedFields : TLogFieldArray Read FLoggedFields Write FLoggedFields;
+    Property Name : String Read FName Write FName;
   end;
+  TDADeltaArray = Array of TDADelta;
 
   TDADeltas = class external name 'RemObjects.DataAbstract.Deltas' (TJSObject)
   Public
+    deltas : TDADeltaArray;
     Function FindByName (Const aName : String) : TDADelta;
   end;
 
@@ -193,7 +201,7 @@ Type
     dictionaryEntry : String;
     displayLabel : String;
     displayWidth : integer;
-    inPrimaryKey : Boolean;
+    inPrimaryKey : string;
     visible : boolean;
     required : boolean;
     size : integer;

@@ -98,6 +98,8 @@ type
                     coLingCasing, coDigitAsNumbers, coStringSort});
   TCompareOptions = set of TCompareOption;
 
+  generic TArray<T> = array of T;
+
 {*****************************************************************************
             TObject, TClass, IUnknown, IInterface, TInterfacedObject
 *****************************************************************************}

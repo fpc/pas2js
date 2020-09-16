@@ -655,8 +655,6 @@ Function EncodeHTMLEntities (S : String) : String;
   ---------------------------------------------------------------------}
 
 Type
-
-  generic TArray<T> = array of T;
   TCharArray = Array of char;
 
   TByteBitIndex = 0..7;

@@ -280,7 +280,7 @@ var rtl = {
       // if root is an "object" then c.$ancestor === Object.getPrototypeOf(c)
       // if root is a "function" then c.$ancestor === c.__proto__, Object.getPrototypeOf(c) returns the root
     } else {
-      c = {};
+      c = { $ancestor: null };
       c.$create = function(fn,args){
         if (args == undefined) args = [];
         var o = Object.create(this);
@@ -314,6 +314,7 @@ var rtl = {
     // If newinstancefnname is given, use that function to create the new object.
     // If exist call BeforeDestruction and AfterConstruction.
     var c = Object.create(ancestor);
+    c.$ancestor = null; // no pascal ancestor
     c.$create = function(fn,args){
       if (args == undefined) args = [];
       var o = null;
@@ -332,6 +333,7 @@ var rtl = {
         if (o.AfterConstruction) o.AfterConstruction();
       } catch($e){
         // do not call BeforeDestruction
+        console.log($e);
         if (o.Destroy) o.Destroy();
         if (o.$final) this.$final();
         throw $e;
@@ -355,7 +357,7 @@ var rtl = {
       c.$ancestor = ancestor;
       // c.$ancestor === Object.getPrototypeOf(c)
     } else {
-      c = {};
+      c = { $ancestor = null };
     };
     parent[name] = c;
     c.$class = c; // Note: o.$class === Object.getPrototypeOf(o)
@@ -374,13 +376,13 @@ var rtl = {
   tObjectDestroy: "Destroy",
 
   free: function(obj,name){
-    if (obj[name]==null) return;
+    if (obj[name]==null) return null;
     obj[name].$destroy(rtl.tObjectDestroy);
     obj[name]=null;
   },
 
   freeLoc: function(obj){
-    if (obj==null) return;
+    if (obj==null) return null;
     obj.$destroy(rtl.tObjectDestroy);
     return null;
   },
@@ -453,6 +455,7 @@ var rtl = {
   EInvalidCast: null,
   EAbstractError: null,
   ERangeError: null,
+  EIntOverflow: null;
   EPropWriteOnly: null,
 
   raiseE: function(typename){
@@ -749,6 +752,12 @@ var rtl = {
   checkMethodCall: function(obj,type){
     if (rtl.isObject(obj) && rtl.is(obj,type)) return;
     rtl.raiseE("EInvalidCast");
+  },
+
+  oc: function(i){
+    // overflow check integer
+    if ((Math.floor(i)===i) && (i>=-0x1fffffffffffff) && (i<=0x1fffffffffffff)) return i;
+    rtl.raiseE('EIntOverflow');
   },
 
   rc: function(i,minval,maxval){
@@ -1095,6 +1104,7 @@ var rtl = {
         s=' '+s;
         l++;
       };
+      return s;
     };
   },
 

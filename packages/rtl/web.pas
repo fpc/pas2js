@@ -2115,6 +2115,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function fetch(resource: String): TJSResponse; {$IFNDEF SkipAsync}async;{$ENDIF} overload; external name 'fetch';
     function fetch(resource: TJSObject; init: TJSObject): TJSPromise; overload; external name 'fetch';
     function fetch(resource: TJSObject): TJSPromise; overload; external name 'fetch';
+    function asyncfetch(resource: String): TJSResponse; {$IFNDEF SkipAsync}async;{$ENDIF} overload; external name 'fetch';
+    function asyncfetch(resource: TJSObject; init: TJSObject): TJSResponse; {$IFNDEF SkipAsync} async;{$ENDIF} overload; external name 'fetch';
+    function asyncfetch(resource: TJSObject): TJSResponse;  {$IFNDEF SkipAsync}async;{$ENDIF}  overload;external name 'fetch';
     procedure focus;
     Function getComputedStyle(aElement : TJSElement) : TJSCSSStyleDeclaration; overload;
     Function getComputedStyle(aElement,aPseudoElement : TJSElement) : TJSCSSStyleDeclaration; overload;

@@ -63,6 +63,7 @@ type
     //ToDo: procedure SetArrayElement(aIndex: SizeInt; constref AValue: TValue);
     function IsType(ATypeInfo: PTypeInfo): boolean;
     function AsJSValue: JSValue;
+    class function Empty: TValue; static;
   end;
 
   TRttiType = class;
@@ -668,6 +669,11 @@ end;
 function TValue.AsJSValue: JSValue;
 begin
   Result := FData;
+end;
+
+class function TValue.Empty: TValue;
+begin
+  Result.FTypeInfo := nil;
 end;
 
 { TRttiStructuredType }

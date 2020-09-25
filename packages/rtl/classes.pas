@@ -1403,7 +1403,7 @@ type
 
 procedure RegisterInitComponentHandler(ComponentClass: TComponentClass;   Handler: TInitComponentHandler);
 Procedure RegisterClass(AClass : TPersistentClass);
-Procedure RegisterClasses(AClasses : TArray<TPersistentClass>);
+Procedure RegisterClasses(AClasses : specialize TArray<TPersistentClass>);
 Function GetClass(AClassName : string) : TPersistentClass;
 procedure RegisterFindGlobalComponentProc(AFindGlobalComponent: TFindGlobalComponent);
 procedure UnregisterFindGlobalComponentProc(AFindGlobalComponent: TFindGlobalComponent);
@@ -9319,7 +9319,7 @@ begin
   ClassList[AClass.ClassName]:=AClass;
 end;
 
-Procedure RegisterClasses(AClasses : TArray<TPersistentClass>);
+Procedure RegisterClasses(AClasses : specialize TArray<TPersistentClass>);
 var
   AClass : TPersistentClass;
 

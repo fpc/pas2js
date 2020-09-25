@@ -7,7 +7,6 @@ interface
 //uses Classes;
 
 type
-  TArray<T> = array of T;
 
   { IComparer }
 

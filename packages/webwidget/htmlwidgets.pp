@@ -805,6 +805,11 @@ Type
      Function HTMLTag : String; override;
   end;
 
+  TParagraphWidget = Class(TWebWidget)
+  Protected
+     Function HTMLTag : String; override;
+  end;
+
 Function ViewPort : TViewPort;
 
 Const
@@ -835,6 +840,13 @@ Const
 function TDivWidget.HTMLTag: String;
 begin
   Result:='DIV';
+end;
+
+
+function  TParagraphWidget.HTMLTag : String;
+
+begin
+  Result:='P';
 end;
 
 { TSelectWidget.TStringsSelectOptionEnumerator }

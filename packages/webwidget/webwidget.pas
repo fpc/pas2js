@@ -2974,14 +2974,16 @@ end;
 
 function TCustomWebWidget.RemoveClasses(const aClasses: String; Normalize : Boolean = false): String;
 begin
-  Result:=RemoveClasses(FClasses,aClasses,Normalize);
+  FClasses:=RemoveClasses(FClasses,aClasses,Normalize);
+  Result:=FClasses;
   if IsRendered then
     Result:=RemoveClasses(FElement,aClasses,Normalize)
 end;
 
 function TCustomWebWidget.AddClasses(const aClasses: String; Normalize: Boolean): String;
 begin
-  Result:=AddClasses(FClasses,aClasses,Normalize);
+  FClasses:=AddClasses(FClasses,aClasses,Normalize);
+  Result:=FClasses;
   if IsRendered then
     Result:=AddClasses(FElement,aClasses,Normalize)
 end;

@@ -731,14 +731,15 @@ begin
     Inc(MethodCount, BaseClass.StructTypeInfo.MethodCount);
     BaseClass := BaseClass.GetAncestor;
   end;
-  SetLength(Result, StructTypeInfo.MethodCount);
+  SetLength(Result, MethodCount);
   BaseClass := Self;
+  MethodCount:=0;
   while Assigned(BaseClass) do
   begin
     for A := 0 to Pred(BaseClass.StructTypeInfo.MethodCount) do
     begin
-      Dec(MethodCount);
       Result[MethodCount] := TRttiMethod.Create(BaseClass, BaseClass.StructTypeInfo.GetMethod(A));
+      Inc(MethodCount);
     end;
     BaseClass := BaseClass.GetAncestor;
   end;

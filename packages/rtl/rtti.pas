@@ -25,7 +25,6 @@ resourcestring
   SErrTypeIsNotEnumerated  = 'Type %s is not an enumerated type';
 
 type
-
   { TValue }
 
   TValue = record
@@ -162,7 +161,8 @@ type
     property IsVarArgs: boolean read GetIsVarArgs;
     //function GetParameters:
   end;
-  TRttiMethodArray = array of TRttiMethod;
+
+  TRttiMethodArray = specialize TArray<TRttiMethod>;
 
   { TRttiProperty }
 
@@ -188,7 +188,8 @@ type
     property IsWritable: boolean read GetIsWritable;
     property Visibility: TMemberVisibility read GetVisibility;
   end;
-  TRttiPropertyArray = array of TRttiProperty;
+
+  TRttiPropertyArray = specialize TArray<TRttiProperty>;
 
   { TRttiType }
 
@@ -242,16 +243,24 @@ type
   { TRttiStructuredType }
 
   TRttiStructuredType = class abstract(TRttiType)
+  private
+    FMethods: TRttiMethodArray;
+    FProperties: TRttiPropertyArray;
   protected
     function GetAncestor: TRttiStructuredType; virtual; abstract;
+    function GetStructTypeInfo: TTypeInfoStruct;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    destructor Destroy; override;
+
+    function GetDeclaredMethods: TRttiMethodArray;
     function GetDeclaredProperties: TRttiPropertyArray; override;
     function GetMethod(const aName: String): TRttiMethod; override;
     function GetMethods: TRttiMethodArray; override;
     function GetMethods(const aName: String): TRttiMethodArray; override;
+    function GetProperties: TRttiPropertyArray;
     function GetProperty(const AName: string): TRttiProperty; override;
-    function GetStructTypeInfo: TTypeInfoStruct;
-  public
-    constructor Create(ATypeInfo: PTypeInfo);
 
     property StructTypeInfo: TTypeInfoStruct read GetStructTypeInfo;
   end;
@@ -720,27 +729,22 @@ end;
 
 function TRttiStructuredType.GetMethods: TRttiMethodArray;
 var
-  A, MethodCount: Integer;
+  A, Start: Integer;
+
   BaseClass: TRttiStructuredType;
+
+  Declared: TRttiMethodArray;
 
 begin
   BaseClass := Self;
-  MethodCount := 0;
+  Result := nil;
   while Assigned(BaseClass) do
   begin
-    Inc(MethodCount, BaseClass.StructTypeInfo.MethodCount);
-    BaseClass := BaseClass.GetAncestor;
-  end;
-  SetLength(Result, MethodCount);
-  BaseClass := Self;
-  MethodCount:=0;
-  while Assigned(BaseClass) do
-  begin
-    for A := 0 to Pred(BaseClass.StructTypeInfo.MethodCount) do
-    begin
-      Result[MethodCount] := TRttiMethod.Create(BaseClass, BaseClass.StructTypeInfo.GetMethod(A));
-      Inc(MethodCount);
-    end;
+    Declared := BaseClass.GetDeclaredMethods;
+    Start := Length(Result);
+    SetLength(Result, Start + Length(Declared));
+    for A := Low(Declared) to High(Declared) do
+      Result[Start + A] := Declared[A];
     BaseClass := BaseClass.GetAncestor;
   end;
 end;
@@ -764,6 +768,32 @@ begin
     end;
 end;
 
+function TRttiStructuredType.GetProperties: TRttiPropertyArray;
+var
+  A, Start: Integer;
+
+  BaseClass: TRttiStructuredType;
+
+  Declared: TRttiPropertyArray;
+
+begin
+  BaseClass := Self;
+  Result := nil;
+
+  while Assigned(BaseClass) do
+  begin
+    Declared := BaseClass.GetDeclaredProperties;
+    Start := Length(Result);
+
+    SetLength(Result, Start + Length(Declared));
+
+    for A := Low(Declared) to High(Declared) do
+      Result[Start + A] := Declared[A];
+
+    BaseClass := BaseClass.GetAncestor;
+  end;
+end;
+
 function TRttiStructuredType.GetMethod(const aName: String): TRttiMethod;
 var
   Method: TRttiMethod;
@@ -776,53 +806,30 @@ end;
 
 function TRttiStructuredType.GetProperty(const AName: string): TRttiProperty;
 var
-  A : Integer;
-  BaseClass : TRttiStructuredType;
+  Prop: TRttiProperty;
 
 begin
-  BaseClass := Self;
-  while Assigned(BaseClass) do
-     begin
-     for A := 0 to Pred(BaseClass.StructTypeInfo.PropCount) do
-       if StructTypeInfo.GetProp(A).Name = AName then
-         Exit(TRttiProperty.Create(BaseClass, BaseClass.StructTypeInfo.GetProp(A)));
-     BaseClass:=BaseClass.GetAncestor;
-     end;
+  for Prop in GetProperties do
+    if Prop.Name = AName then
+      Exit(Prop);
 end;
 
 function TRttiStructuredType.GetDeclaredProperties: TRttiPropertyArray;
 var
-  A, PropertyCount: Integer;
-
-  BaseClass: TRttiStructuredType;
+  A, PropCount: Integer;
 
 begin
-  BaseClass := Self;
-  PropertyCount := 0;
-
-  while Assigned(BaseClass) do
+  if not Assigned(FProperties) then
   begin
-    Inc(PropertyCount, BaseClass.StructTypeInfo.PropCount);
+    PropCount := StructTypeInfo.PropCount;
 
-    BaseClass := BaseClass.GetAncestor;
+    SetLength(FProperties, PropCount);
+
+    for A := 0 to Pred(PropCount) do
+      FProperties[A] := TRttiProperty.Create(Self, StructTypeInfo.GetProp(A));
   end;
 
-  SetLength(Result, PropertyCount);
-
-  BaseClass := Self;
-  PropertyCount := 0;
-
-  while Assigned(BaseClass) do
-  begin
-    for A := 0 to Pred(BaseClass.StructTypeInfo.PropCount) do
-    begin
-      Result[PropertyCount] := TRttiProperty.Create(BaseClass, BaseClass.StructTypeInfo.GetProp(A));
-
-      Inc(PropertyCount);
-    end;
-
-    BaseClass := BaseClass.GetAncestor;
-  end;
+  Result := FProperties;
 end;
 
 function TRttiStructuredType.GetStructTypeInfo: TTypeInfoStruct;
@@ -836,6 +843,41 @@ begin
     raise EInvalidCast.Create('');
 
   inherited Create(ATypeInfo);
+end;
+
+destructor TRttiStructuredType.Destroy;
+var
+  Method: TRttiMethod;
+
+  Prop: TRttiProperty;
+
+begin
+  for Method in FMethods do
+    Method.Free;
+
+  for Prop in FProperties do
+    Prop.Free;
+
+  inherited Destroy;
+end;
+
+function TRttiStructuredType.GetDeclaredMethods: TRttiMethodArray;
+var
+  A, MethodCount: Integer;
+
+  BaseClass: TRttiStructuredType;
+
+begin
+  if not Assigned(FMethods) then
+  begin
+    MethodCount := StructTypeInfo.MethodCount;
+    SetLength(FMethods, MethodCount);
+
+    for A := 0 to Pred(MethodCount) do
+      FMethods[A] := TRttiMethod.Create(Self, StructTypeInfo.GetMethod(A));
+  end;
+
+  Result := FMethods;
 end;
 
 { TRttiInstanceType }

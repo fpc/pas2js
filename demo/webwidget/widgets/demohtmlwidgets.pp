@@ -108,10 +108,112 @@ Type
     Procedure ShowDemo; override;
   end;
 
+  { TSelectWidgetDemo }
+
+  TSelectWidgetDemo = Class(TDemoContainer)
+  public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+    Procedure ShowDemo; override;
+  end;
+
+  { TTagWidgetDemo }
+
+  TTagWidgetDemo = class(TDemoContainer)
+  public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+  end;
+
+  { TDivWidgetDemo }
+
+  TDivWidgetDemo = class(TDemoContainer)
+  public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+  end;
+  { TTagWidgetDemo }
+
+  { TParagraphWidget }
+
+  TParagraphWidgetDemo = class(TDemoContainer)
+  public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+  end;
+
+  { TAudioWidgetDemo }
+
+  TAudioWidgetDemo = class(TDemoContainer)
+  public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+  end;
+
+  { TVideoWidgetDemo }
+
+  TVideoWidgetDemo = class(TDemoContainer)
+  public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+  end;
+
 
 implementation
 
 uses democonsts;
+
+{ TVideoWidgetDemo }
+
+class function TVideoWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+
+begin
+  Result:=TVideoWidget;
+end;
+
+{ TAudioWidgetDemo }
+
+class function TAudioWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TAudioWidget;
+end;
+
+
+{ TSelectWidgetDemo }
+
+class function TSelectWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TSelectWidget;
+end;
+
+procedure TSelectWidgetDemo.ShowDemo;
+
+begin
+  inherited ShowDemo;
+  With TSelectWidget(WidgetInstance).Items do
+     begin
+     Add('Item 1');
+     Add('Item 2');
+     Add('Item 3');
+     Add('Item 4');
+     Add('Item 5');
+     end;
+end;
+
+{ TParagraphWidget }
+
+class function TParagraphWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TParagraphWidget;
+end;
+
+{ TDivWidgetDemo }
+
+class function TDivWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TDivWidget
+end;
+
+{ TTagWidgetDemo }
+
+class function TTagWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TTagWidget;
+end;
 
 { TTextLinesWidgetDemo }
 
@@ -316,6 +418,11 @@ initialization
   TTextAreaDemo.RegisterDemo;
   TLabelWidgetDemo.RegisterDemo;
   TTextWidgetDemo.RegisterDemo;
-  TTextLinesWidgetDemo.RegisterDemo;
+  TTagWidgetDemo.RegisterDemo;
+  TDivWidgetDemo.RegisterDemo;
+  TParagraphWidgetDemo.RegisterDemo;
+  TSelectWidgetDemo.RegisterDemo;
+  TAudioWidgetDemo.RegisterDemo;
+  TVideoWidgetDemo.RegisterDemo;
 end.
 

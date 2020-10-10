@@ -799,16 +799,131 @@ Type
   end;
 
   { TDivWidget }
+  THTMLElementTag = (
+      etUnknown, eta, etabbr, etacronym, etaddress, etapplet, etarea, etb, etbase,
+      etbasefont, etbdo, etbig, etblockquote, etbody, etbr, etbutton,
+      etcaption, etcenter, etcite, etcode, etcol, etcolgroup, etdd, etdel,
+      etdfn, etdir, etdiv, etdl, etdt, etem, etfieldset, etfont, etform,
+      etframe, etframeset, eth1, eth2, eth3, eth4, eth5, eth6, ethead, ethr,
+      ethtml, eti, etiframe, etimg, etinput, etins, etisindex, etkbd, etlabel,
+      etlegend, etli, etlink, etmap, etmenu, etmeta, etnoframes, etnoscript,
+      etobject, etol, etoptgroup, etoption, etp, etparam, etpre, etq, ets,
+      etsamp, etscript, etselect, etsmall, etspan, etstrike, etstrong,
+      etstyle, etsub, etsup, ettable, ettbody, ettd, ettextarea, ettfoot,
+      etth, etthead, ettitle, ettr, ettt, etu, etul, etvar,
+      etText,etAudio,etVideo,etSource
+  );
+  THTMLElementTagSet = set of THTMLElementTag;
 
-  TDivWidget = Class(TWebWidget)
+  { TCustomTagWidget }
+
+  TCustomTagWidget = Class(TWebWidget)
+  private
+    FElementTag: THTMLElementTag;
+    FTextContent: String;
+    procedure SetElementTag(AValue: THTMLElementTag);
+    procedure SetTextContent(AValue: String);
   Protected
-     Function HTMLTag : String; override;
+    Procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
+    Function HTMLTag : String; override;
+    // Set tag you wish to use
+    Property elementTag : THTMLElementTag Read FElementTag Write SetElementTag;
+    // If set, the text will be set as InnerText of the tag
+    Property TextContent : String Read FTextContent Write SetTextContent;
   end;
 
-  TParagraphWidget = Class(TWebWidget)
-  Protected
-     Function HTMLTag : String; override;
+  { TTagWidget }
+
+  TTagWidget = Class(TCustomTagWidget)
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  Published
+    Property elementTag;
+    Property TextContent;
   end;
+
+  TDivWidget = Class(TCustomTagWidget)
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  end;
+
+  { TParagraphWidget }
+
+  TParagraphWidget = Class(TCustomTagWidget)
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  end;
+
+  { TMediaWidget }
+
+  TMediaWidget = Class(TCustomTagWidget)
+  private
+    Const
+      MaxAttrs = 20;
+      PropAttrs : Array[0..MaxAttrs] of string
+         = ('src','defaultPlaybackRate','duration','playbackRate','ended', // 0..4
+            'paused','seeking','sinkId','mediaGroup','currentSrc', // 5..9
+            'volume','controls','autoplay','crossOrigin', 'defaultMuted', // 10..14
+            'currentTime', 'disableRemotePlayback', 'preservesPitch','loop','muted', // 15..19
+            'preload' // 20
+            );
+
+    function GetAudioTrack: TJSHTMLAudioTrackList;
+    function getBool(AIndex: Integer): Boolean;
+    function GetError: TJSMEdiaError;
+    function getFloat(AIndex: Integer): Double;
+    function GetSrcObj: TJSHTMLMediaStream;
+    function getString(AIndex: Integer): String;
+    function GetTextTrack: TJSHTMLTextTrackList;
+    function GetVideoTrack: TJSHTMLVideoTrackList;
+    procedure SetBool(AIndex: Integer; AValue: Boolean);
+    procedure SetFloat(AIndex: Integer; AValue: Double);
+    procedure SetString(AIndex: Integer; AValue: String);
+    function getEl: TJSObject;
+  Public
+    Property DefaultPlayBackRate : Double Index 1 Read getFloat;
+    Property Duration : Double Index 2 Read getFloat;
+    Property PlayBackRate : Double Index 3 Read getFloat;
+    Property Ended : Boolean Index 4 Read getBool;
+    Property Paused : Boolean Index 5 Read getBool;
+    Property Seeking : Boolean Index 6 Read getBool;
+    Property SinkID : String Index 7 Read getString Write SetString;
+    Property MediaGroup : String Index 8 Read getString Write SetString;
+    Property SrcObject : TJSHTMLMediaStream Read GetSrcObj;
+    Property textTracks : TJSHTMLTextTrackList Read GetTextTrack;
+    Property videoTracks : TJSHTMLVideoTrackList Read GetVideoTrack;
+    Property audioTracks : TJSHTMLAudioTrackList Read GetAudioTrack;
+    Property Error : TJSMEdiaError Read GetError;
+    Property CurrentSrc : String Index 9 Read getString;
+  Published
+    Property Src : String Index 0 Read getString Write SetString;
+    Property Controls : Boolean Index 11 Read getBool Write SetBool;
+    Property AutoPlay : Boolean Index 12 Read getBool Write SetBool;
+    Property CrossOrigin : String index 13 Read getString Write SetString;
+    Property DefaultMuted : Boolean Index 14 Read getBool Write SetBool;
+    Property CurrentTime : Double Index 15 Read getFloat Write SetFloat;
+    Property DisableRemotePlayback : Boolean Index 16 Read getBool Write SetBool;
+    Property PreservesPitch : Boolean Index 17 Read getBool Write SetBool;
+    Property Loop : Boolean Index 18 Read getBool Write SetBool;
+    Property Muted : Boolean Index 19 Read getBool Write SetBool;
+    Property Preload : String Index 20 Read getString Write SetString;
+    Property Volume : Double Index 10 Read getFloat Write SetFloat;
+  end;
+
+  { TVideoWidget }
+
+  TVideoWidget = Class(TMediaWidget)
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  end;
+
+  { TAudioWidget }
+
+  TAudioWidget = Class(TMediaWidget)
+  Public
+    Constructor Create(aOwner : TComponent); override;
+  end;
+
 
 Function ViewPort : TViewPort;
 
@@ -816,6 +931,22 @@ Const
   TextTagNames : Array[TTextTag] of string
    = ('p','b','i','u','s','span','quote','blockquote','h1','h2','h3','h4','h5','h6','pre','ruby','article','address','abbr','');
   RowKindNames  : Array[TRowKind] of string = ('header','body','footer');
+
+  HTMLTagNames : Array[THTMLElementTag] of string = (
+    '?', 'a', 'abbr', 'acronym', 'address', 'applet', 'area', 'b', 'base',
+    'basefont', 'bdo', 'big', 'blockquote', 'body', 'br', 'button',
+    'caption', 'center', 'cite', 'code', 'col', 'colgroup', 'dd', 'del',
+    'dfn', 'dir', 'div', 'dl', 'dt', 'em', 'fieldset', 'font', 'form',
+    'frame', 'frameset', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'head', 'hr',
+    'html', 'i', 'iframe', 'img', 'input', 'ins', 'isindex', 'kbd', 'label',
+    'legend', 'li', 'link', 'map', 'menu', 'meta', 'noframes', 'noscript',
+    'object', 'ol', 'optgroup', 'option', 'p', 'param', 'pre', 'q', 's',
+    'samp', 'script', 'select', 'small', 'span', 'strike', 'strong',
+    'style', 'sub', 'sup', 'table', 'tbody', 'td', 'textarea', 'tfoot',
+    'th', 'thead', 'title', 'tr', 'tt', 'u', 'ul', 'var',
+    'Text','Audio','Video','Source'
+  );
+
 
 implementation
 
@@ -835,19 +966,166 @@ end;
 Const
   CellTags : Array[TRowKind] of string = ('th','td','td');
 
-{ TDivWidget }
+{ TTagWidget }
 
-function TDivWidget.HTMLTag: String;
+constructor TTagWidget.Create(aOwner: TComponent);
 begin
-  Result:='DIV';
+  inherited Create(aOwner);
+  ElementTag:=etdiv;
+end;
+
+{ TMediaWidget }
+
+function TMediaWidget.GetAudioTrack: TJSHTMLAudioTrackList;
+
+begin
+  if Assigned(Element) then
+    Result:=TJSHTMLMediaElement(Element).AudioTracks
+  else
+    Result:=Nil;
+end;
+
+function TMediaWidget.getBool(AIndex: Integer): Boolean;
+
+Var
+  El : TJSObject;
+  Att : String;
+
+begin
+  El:=GetEl;
+  Att:=PropAttrs[aIndex];
+  Result:=Assigned(el) and isDefined(El[Att]) and (Boolean(El[Att]));
+end;
+
+function TMediaWidget.GetError: TJSMEdiaError;
+begin
+  If Assigned(Element) then
+    Result:=TJSHTMLMediaElement(Element).Error
+  else
+    Result:=Nil;
+end;
+
+function TMediaWidget.getFloat(AIndex: Integer): Double;
+
+Var
+  El : TJSObject;
+  Att : String;
+
+begin
+  El:=GetEl;
+  Att:=PropAttrs[aIndex];
+  if Assigned(el) and isDefined(El[Att]) then
+    Result:=Double(El[Att])
+  else
+    Result:=0;
+end;
+
+function TMediaWidget.GetSrcObj: TJSHTMLMediaStream;
+begin
+  If Assigned(Element) then
+    Result:=TJSHTMLMediaElement(Element).srcObject
+  else
+    Result:=Nil;
+end;
+
+function TMediaWidget.getString(AIndex: Integer): String;
+
+Var
+  El : TJSObject;
+  Att : String;
+
+begin
+  El:=GetEl;
+  Att:=PropAttrs[aIndex];
+  if Assigned(el) and isDefined(El[Att]) then
+    Result:=String(El[Att])
+  else
+    Result:='';
 end;
 
 
-function  TParagraphWidget.HTMLTag : String;
-
+function TMediaWidget.GetTextTrack: TJSHTMLTextTrackList;
 begin
-  Result:='P';
+  If Assigned(Element) then
+    Result:=TJSHTMLMediaElement(Element).TextTracks
+  else
+    Result:=Nil;
 end;
+
+function TMediaWidget.GetVideoTrack: TJSHTMLVideoTrackList;
+begin
+  If Assigned(Element) then
+    Result:=TJSHTMLMediaElement(Element).VideoTracks
+  else
+    Result:=Nil;
+end;
+
+procedure TMediaWidget.SetBool(AIndex: Integer; AValue: Boolean);
+Var
+  El : TJSObject;
+  Att : String;
+begin
+  El:=GetEl;
+  Att:=PropAttrs[aIndex];
+  if Assigned(el) then
+    El[Att]:=aValue
+  else
+    Attrs[Att]:=IntToStr(Ord(AValue));
+end;
+
+procedure TMediaWidget.SetFloat(AIndex: Integer; AValue: Double);
+Var
+  El : TJSObject;
+  Att,S : String;
+begin
+  El:=GetEl;
+  Att:=PropAttrs[aIndex];
+  if Assigned(el) then
+    El[Att]:=aValue
+  else
+    begin
+    Str(aValue,S);
+    Attrs[Att]:=S;
+    end;
+end;
+
+procedure TMediaWidget.SetString(AIndex: Integer; AValue: String);
+
+Var
+  El : TJSObject;
+  Att : String;
+begin
+  El:=GetEl;
+  Att:=PropAttrs[aIndex];
+  if Assigned(el) then
+    El[Att]:=aValue
+  else
+    Attrs[Att]:=aValue;
+end;
+
+function TMediaWidget.getEl: TJSObject;
+begin
+  Result:=Element;
+  if Not Assigned(Result) then
+    Result:=Self.StoredAttrs;
+end;
+
+{ TVideoWidget }
+
+constructor TVideoWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  elementTag:=etVideo;
+end;
+
+{ TAudioWidget }
+
+constructor TAudioWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  elementTag:=etAudio;
+end;
+
 
 { TSelectWidget.TStringsSelectOptionEnumerator }
 
@@ -2686,6 +2964,54 @@ begin
   inherited SetName(NewName);
   if (Value=Old) then
     Value:=NewName;
+end;
+
+
+{ TCustomTagWidget }
+
+procedure TCustomTagWidget.SetElementTag(AValue: THTMLElementTag);
+
+begin
+  if FElementTag=AValue then Exit;
+  FElementTag:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+procedure TCustomTagWidget.SetTextContent(AValue: String);
+begin
+  if FTextContent=AValue then Exit;
+  FTextContent:=AValue;
+  if IsRendered then
+    Refresh;
+end;
+
+procedure TCustomTagWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
+begin
+  inherited ApplyWidgetSettings(aElement);
+  if FTextContent<>'' then
+    aElement.InnerText:=TextContent;
+end;
+
+function TCustomTagWidget.HTMLTag: String;
+
+begin
+  Result:=HTMLTagNames[ElementTag];
+end;
+
+{ TDivWidget }
+
+
+constructor TDivWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  ElementTag:=etDiv;
+end;
+
+constructor TParagraphWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  ElementTag:=etP;
 end;
 
 

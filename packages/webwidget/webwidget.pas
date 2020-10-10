@@ -321,6 +321,7 @@ Type
     FVisible : Boolean;
     FDisplay : String;
     FReferences : TWebWidgetReferences;
+    FAttrs : TJSObject;
     function GetChildCount: Integer;
     function GetChild(aIndex : Integer): TCustomWebWidget;
     function GetClasses: String;
@@ -351,6 +352,8 @@ Type
     procedure SetReferences(AValue: TWebWidgetReferences);
     procedure SetStyles(AValue: TWebWidgetStyles);
     procedure SetVisible(AValue: Boolean);
+    procedure SetAttr(const aName : string; AValue: String);
+    Function GetAttr(const aName : String) : String;
     // This protected section is not meant to be made public
   Protected
     // Events mechanism
@@ -442,6 +445,8 @@ Type
     Property ExternalElement : Boolean Read GetExternalElement;
     // since reading references creates the collection, we want a way to see if there are any without creating them.
     Property HaveReferences : Boolean Read GetHaveReferences;
+    // Property attrs
+    Property StoredAttrs : TJSObject Read FAttrs;
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
@@ -459,6 +464,7 @@ Type
     function RemoveStyle(const aName: String): String;
     // Remove data from dataset
     Procedure RemoveData(const aName : String);
+    // Set attributes
     // Re-render
     Procedure Refresh;
     // Unrender
@@ -504,6 +510,8 @@ Type
     Property Elements[const aName : string] : TJSHTMLElement Read GetReference;
     // Easy access to an element list
     Property ElementList[const aName : string] : TJSHTMLElementArray Read GetReferenceList;
+    // Easy access to attributed
+    Property Attrs[const aName : string] : String Read GetAttr Write SetAttr;
     // Events of TWebWidget
     Property BeforeRenderHTML : TNotifyEvent Read FBeforeRenderHTML Write FBeforeRenderHTML;
     Property AfterRenderHTML : TNotifyEvent Read FAfterRenderHTML Write FAfterRenderHTML;
@@ -955,7 +963,7 @@ Type
 
 implementation
 
-uses TypInfo;
+uses Strutils, TypInfo;
 
 ResourceString
    SErrCannotSetParentAndElementID = 'ElementID and ParentID cannot be set at the same time.';
@@ -2396,6 +2404,15 @@ begin
   Result:=FVisible;
 end;
 
+procedure TCustomWebWidget.SetAttr(const aName : string; AValue: String);
+begin
+  if IsRendered then
+    Element[aName]:=aValue;
+  if Not Assigned(FAttrs) then
+    FAttrs:=TJSObject.New;
+  FAttrs[aName]:=aValue;
+end;
+
 procedure TCustomWebWidget.SetClasses(AValue: String);
 begin
   FClasses:=AddClasses(AValue,WidgetClasses);
@@ -2561,6 +2578,19 @@ begin
     ApplyVisible(el,aValue)
   else
     FVisible:=aValue;
+end;
+
+function TCustomWebWidget.GetAttr(const aName: String): String;
+Var
+  el : TJSObject;
+begin
+  Result:='';
+  if IsRendered then
+    el:=Element
+  else
+    el:=FAttrs;
+  if Assigned(el) and isDefined(el[aName]) then
+    Result:=String(el[aName]);
 end;
 
 procedure TCustomWebWidget.ApplyVisible(aElement: TJSHTMLElement;AValue: Boolean);
@@ -2749,6 +2779,10 @@ begin
   if (StyleRefresh = srAlways)
      or ((FelementID<>'') and (FElementID<>'')) then
     FStyles.RefreshFromDom(aElement,False);
+  if Assigned(FAttrs) then
+    for S in TJSObject.getOwnPropertyNames(FAttrs) do
+      if IndexText(S,['id','class'])=-1 then
+        aElement[S]:=String(FAttrs[S]);
 end;
 
 function TCustomWebWidget.DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement;

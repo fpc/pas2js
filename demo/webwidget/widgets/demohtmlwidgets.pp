@@ -152,10 +152,98 @@ Type
     class function WebWidgetClass: TCustomWebWidgetClass; override;
   end;
 
+  { TEventTableWidgetDemo }
+
+  TEventTableWidgetDemo = Class(TDemoContainer)
+  private
+    procedure DoGetCellData(Sender: TObject; Enum: TTableRowEnumerator; aCell: TTableWidgetCellData);
+  Public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+    Procedure ShowDemo; override;
+  end;
+
+  { TStringsTableWidgetDemo }
+
+  TStringsTableWidgetDemo = Class(TDemoContainer)
+  Public
+    class function WebWidgetClass: TCustomWebWidgetClass; override;
+    Procedure ShowDemo; override;
+  end;
+
 
 implementation
 
 uses democonsts;
+
+{
+  Countrycodes are included as a JSON javascript definition in the HTML file, countrycodes.js
+  We define it here as an external.
+}
+
+{$modeswitch externalclass}
+
+Type
+  TCountry = Class external name 'Object' (TJSObject)
+    name,code : string;
+  end;
+
+Var
+  CountryCodes : Array of TCountry; external name 'countrycodes';
+
+{ TStringsTableWidgetDemo }
+
+class function TStringsTableWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TStringsTableWidget;
+end;
+
+procedure TStringsTableWidgetDemo.ShowDemo;
+
+Var
+  STW : TStringsTableWidget;
+  I : Integer;
+
+begin
+  inherited ShowDemo;
+  STW:=TStringsTableWidget(WidgetInstance);
+  STW.Classes:='table table-bordered table-striped table-hover table-sm';
+  STW.CustomColumns.Add('ISO');
+  STW.CustomColumns.Add('Country');
+  STW.BeginUpdate;
+  STW.RowCount:=Length(CountryCodes);
+  For I:=0 to Length(CountryCodes)-1 do
+    begin
+    STW.Cells[0,I]:=CountryCodes[i].code;
+    STW.Cells[1,i]:=CountryCodes[i].Name;
+    end;
+  STW.EndUpdate;
+end;
+
+{ TEventTableWidgetDemo }
+
+procedure TEventTableWidgetDemo.DoGetCellData(Sender: TObject; Enum: TTableRowEnumerator; aCell: TTableWidgetCellData);
+
+begin
+  if aCell.Kind=rkBody then
+    case aCell.Col of
+      0 : aCell.Text:='Value '+IntToStr(aCell.Row+1);
+      1 : aCell.Widget:=TTextInputWidget.Create(Self);
+    end;
+end;
+
+class function TEventTableWidgetDemo.WebWidgetClass: TCustomWebWidgetClass;
+begin
+  Result:=TEventTableWidget;
+end;
+
+procedure TEventTableWidgetDemo.ShowDemo;
+begin
+  inherited ShowDemo;
+  TEventTableWidget(WidgetInstance).OnGetCellData:=@DoGetCellData;
+  TEventTableWidget(WidgetInstance).CustomColumns.Add('Name');
+  TEventTableWidget(WidgetInstance).CustomColumns.Add('Value');
+  TEventTableWidget(WidgetInstance).RowCount:=10;
+end;
 
 { TVideoWidgetDemo }
 
@@ -424,5 +512,7 @@ initialization
   TSelectWidgetDemo.RegisterDemo;
   TAudioWidgetDemo.RegisterDemo;
   TVideoWidgetDemo.RegisterDemo;
+  TEventTableWidgetDemo.RegisterDemo;
+  TStringsTableWidgetDemo.RegisterDemo;
 end.
 

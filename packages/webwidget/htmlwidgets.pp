@@ -688,6 +688,7 @@ Type
     FTableID: String;
     FTag: String;
     FText: String;
+    FWidget: TWebWidget;
   Protected
     Procedure SetRowColKind(aRow,aCol : Integer; aKind : TRowKind); virtual;
     Procedure Reset; // do not reset row,col, column
@@ -703,6 +704,7 @@ Type
     Property Text : String Read FText Write FText;
     Property AsHTML : Boolean Read FAsHTML Write FAsHTML;
     Property Content : TJSHTMLElement Read FContent Write FContent;
+    Property Widget : TWebWidget Read FWidget Write FWidget;
     Property TableID : String Read FTableID;
   end;
 
@@ -742,10 +744,11 @@ Type
     FOnRowClick: THTMLNotifyEvent;
     FTableOptions: TTableOptions;
     FOnGetCellData : TOnCellDataEvent;
+    FWidgets : Array of TWebWidget;
+    FUpdateCount : Integer;
     procedure SetCaption(AValue: String);
     procedure SetColumns(AValue: TCustomTableColumns);
     procedure SetTableOptions(AValue: TTableOptions);
-  Public
   Protected
     procedure AppendCaption(aCaptionElement: TJSHTMLElement); virtual;
     procedure RenderData(aElement: TJSHTMLElement); virtual;
@@ -781,11 +784,71 @@ Type
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    Procedure BeginUpdate;
+    Procedure EndUpdate;
     Procedure RefreshBody;
   end;
 
-  TTableWidget = Class(TCustomTableWidget)
+  { TEventTableWidget }
+
+  TEventTableWidget = Class(TCustomTableWidget)
+  private
+    FRowCount: Integer;
+    procedure SetRowCount(AValue: Integer);
+  Protected
+    Function GetBodyRowEnumerator : TTableRowEnumerator; override;
+  Published
+    Property RowCount : Integer Read FRowCount Write SetRowCount;
+    Property CustomColumns;
+    Property TableOptions;
+    Property Caption;
+    Property OnGetCellData;
+    Property OnCellClick;
+    Property OnHeaderCellClick;
+    Property OnFooterCellClick;
+    Property OnRowClick;
+    Property OnHeaderRowClick;
+    Property OnFooterRowClick;
+  end;
+
+  { TCustomStringsTableWidget }
+
+  TCustomStringsTableWidget = Class(TCustomTableWidget)
+  private
+    Type
+      TRow = Array of string;
+  private
+    FRows : Array of TRow;
+    function GetRowCount: Integer;
+    procedure SetRowCount(AValue: Integer);
+  Protected
+    Type
+      TStringRowsEnumerator = Class(TTableRowCountEnumerator)
+        Procedure GetCellData(aCell : TTableWidgetCellData); override;
+      end;
+  Protected
+    Procedure CheckIndex(aCol,aRow : Integer);
+    function GetCell(aCol, aRow : integer): String;
+    procedure SetCell(aCol, aRow : integer; AValue: String);
+    Function GetBodyRowEnumerator : TTableRowEnumerator; override;
   Public
+    Property RowCount : Integer Read GetRowCount Write SetRowCount;
+    Property Cells[aCol,aRow : integer] : String Read GetCell Write SetCell;
+    Property CustomColumns;
+    Property TableOptions;
+    Property Caption;
+    Property OnGetCellData;
+    Property OnCellClick;
+    Property OnHeaderCellClick;
+    Property OnFooterCellClick;
+    Property OnRowClick;
+    Property OnHeaderRowClick;
+    Property OnFooterRowClick;
+  end;
+
+  TStringsTableWidget = Class(TCustomStringsTableWidget)
+  Published
+    Property RowCount;
     Property CustomColumns;
     Property TableOptions;
     Property Caption;
@@ -954,6 +1017,9 @@ uses DateUtils;
 
 resourcestring
   SErrInvalidIndex = 'Index %d not in valid range of [0..%d]';
+  SErrInvalidRowCount = 'Invalid row count: %d';
+  SRow = 'Row';
+  SCol = 'Column';
 
 Function ViewPort : TViewPort;
 
@@ -965,6 +1031,77 @@ end;
 
 Const
   CellTags : Array[TRowKind] of string = ('th','td','td');
+
+{ TEventTableWidget }
+
+procedure TEventTableWidget.SetRowCount(AValue: Integer);
+begin
+  if FRowCount=AValue then Exit;
+  BeginUpdate;
+  FRowCount:=AValue;
+  EndUpdate;
+end;
+
+function TEventTableWidget.GetBodyRowEnumerator: TTableRowEnumerator;
+begin
+  Result:=TTableRowCountEnumerator.Create(Self,RowCount);
+end;
+
+{ TCustomStringsTableWidget.TStringRowsEnumerator }
+
+procedure TCustomStringsTableWidget.TStringRowsEnumerator.GetCellData(aCell: TTableWidgetCellData);
+begin
+  aCell.Text:=TCustomStringsTableWidget(Table).Cells[aCell.Col,aCell.Row];
+end;
+
+{ TCustomStringsTableWidget }
+
+function TCustomStringsTableWidget.GetCell(aCol, aRow : integer): String;
+begin
+  CheckIndex(aCol,aRow);
+  Result:=FRows[aRow][aCol];
+end;
+
+function TCustomStringsTableWidget.GetRowCount: Integer;
+begin
+  Result:=Length(FRows);
+end;
+
+procedure TCustomStringsTableWidget.SetCell(aCol, aRow : integer; AValue: String);
+begin
+  CheckIndex(aCol,aRow);
+  BeginUpdate;
+  try
+    FRows[aRow][aCol]:=AValue;
+  Finally
+    EndUpdate;
+  end;
+end;
+
+function TCustomStringsTableWidget.GetBodyRowEnumerator: TTableRowEnumerator;
+begin
+  Result:=TStringRowsEnumerator.Create(Self,RowCount);
+end;
+
+procedure TCustomStringsTableWidget.SetRowCount(AValue: Integer);
+begin
+  if AValue<0 then
+     raise EWidgets.CreateFmt(SerrInvalidRowCount, [aValue]);
+  BeginUpdate;
+  try
+    SetLength(FRows,aValue);
+  Finally
+    EndUpdate;
+  end;
+end;
+
+procedure TCustomStringsTableWidget.CheckIndex(aCol, aRow: Integer);
+begin
+  If (aCol<0) or (aCol>=CustomColumns.Count) then
+    Raise EWidgets.CreateFmt(SCol+' '+SErrInvalidIndex,[aCol,0,CustomColumns.Count-1]);
+  If (aRow<0) or (aRow>=RowCount) then
+    Raise EWidgets.CreateFmt(SRow+' '+SErrInvalidIndex,[aRow,0,RowCount-1]);
+end;
 
 { TTagWidget }
 
@@ -1203,6 +1340,7 @@ begin
   FText:='';
   FContent:=Nil;
   FAsHTML:=False;
+  FWidget:=Nil;
 end;
 
 constructor TTableWidgetCellData.Create(aTable: TCustomTableWidget; aTableID: String);
@@ -1344,11 +1482,13 @@ Var
   elID : string;
 begin
   K:=aCell.Kind;
-  if toCellID in TableOptions then
+  if (toCellID in TableOptions) or Assigned(aCell.Widget) then
     elID:=aCell.TableID+'-'+RowKindNames[K]+'-'+IntToStr(ACell.Row)+'-'+IntToStr(aCell.Col)
   else
     elID:='';
   C:=CreateElement(aCell.Tag,elID);
+  if aCell.Widget<>Nil then
+    aCell.Widget.ParentID:=elID;
   if aCell.Content<>Nil then
     C.AppendChild(aCell.Content)
   else if aCell.AsHTML then
@@ -1390,6 +1530,8 @@ begin
      end;
   if Assigned(M) then
     C.OnClick:=M;
+  if aCell.Widget<>Nil then
+    TJSArray(FWidgets).Push(aCell.Widget);
   Result:=C;
 end;
 
@@ -1484,8 +1626,10 @@ procedure TCustomTableWidget.RenderData(aElement: TJSHTMLElement);
 Var
   El : TJSHTMLElement;
   aCell : TTableWidgetCellData;
+  W : TWebWidget;
 
 begin
+  FWidgets:=[];
   if (Caption<>'') then
     begin
     El:=CreateElement('caption',aElement.ID+'-caption');
@@ -1528,6 +1672,9 @@ begin
     aCell.SetRowColKind(-1,-1,rkFooter);
     RenderRows(El,rkFooter,aCell);
     end;
+  for W in FWidgets do
+    W.Refresh;
+  FWidgets:=[];
 end;
 
 function TCustomTableWidget.CreateCellData(const aTableID : String): TTableWidgetCellData;
@@ -1562,6 +1709,19 @@ destructor TCustomTableWidget.Destroy;
 begin
   FreeAndNil(FColumns);
   inherited Destroy;
+end;
+
+procedure TCustomTableWidget.BeginUpdate;
+begin
+  Inc(FUpDateCount);
+end;
+
+procedure TCustomTableWidget.EndUpdate;
+begin
+  if (FUpdateCount>0) then
+    Dec(FUpDateCount);
+  if (FUpdateCount=0) and IsRendered then
+    Refresh;
 end;
 
 procedure TCustomTableWidget.RefreshBody;

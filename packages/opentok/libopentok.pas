@@ -383,10 +383,10 @@ Type
     FframeRate : Byte;external name 'frameRate';
     FmaxResolution : TOTMediaResolution; external name 'maxResolution';
     Fresolution : string; external name 'resolution';
-    FvideoSource : JSValue; external name 'audioSource';
-    FvideoSourceString : String; external name 'audioSource';
-    FvideoSourceBoolean : boolean; external name 'audioSource';
-    FvideoSourceTrack : TJSMediaStreamTrack; external name 'audioSource';
+    FvideoSource : JSValue; external name 'videoSource';
+    FvideoSourceString : String; external name 'videoSource';
+    FvideoSourceBoolean : boolean; external name 'videoSource';
+    FvideoSourceTrack : TJSMediaStreamTrack; external name 'videoSource';
   Public
     Property AudioSource : JSValue Read FaudioSource Write FaudioSource;
     Property AudioSourceString : String Read FaudioSourceString Write FaudioSourceString;

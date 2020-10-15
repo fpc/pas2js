@@ -44,7 +44,7 @@ uses
 const
   VersionMajor = 1;
   VersionMinor = 4;
-  VersionRelease = 30;
+  VersionRelease = 32;
   VersionExtra = '';
   DefaultConfigFile = 'pas2js.cfg';
 

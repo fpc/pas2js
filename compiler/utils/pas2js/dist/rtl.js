@@ -455,7 +455,7 @@ var rtl = {
   EInvalidCast: null,
   EAbstractError: null,
   ERangeError: null,
-  EIntOverflow: null;
+  EIntOverflow: null,
   EPropWriteOnly: null,
 
   raiseE: function(typename){

@@ -357,7 +357,7 @@ var rtl = {
       c.$ancestor = ancestor;
       // c.$ancestor === Object.getPrototypeOf(c)
     } else {
-      c = { $ancestor = null };
+      c = { $ancestor : null };
     };
     parent[name] = c;
     c.$class = c; // Note: o.$class === Object.getPrototypeOf(o)

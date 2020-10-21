@@ -16268,7 +16268,7 @@ begin
     if NeedClass then
       // append '.$class'
       TargetJS:=CreateDotExpression(Expr,TargetJS,
-                             CreatePrimitiveDotExpr(GetBIName(pbivnPtrClass),PosEl));
+                        CreatePrimitiveDotExpr(GetBIName(pbivnPtrClass),PosEl));
 
     Call:=CreateCallExpression(Expr);
     // "rtl.createCallback"
@@ -21525,6 +21525,9 @@ begin
 
   aResolver.ComputeElement(El,ExprResolved,ExprFlags);
   ExprIsTempValid:=false;
+  {$IFDEF VerbosePas2JS}
+  writeln('TPasToJSConverter.CreateProcCallArg Arg=',GetResolverResultDbg(ArgResolved),' Expr=',GetResolverResultDbg(ExprResolved));
+  {$ENDIF}
 
   // consider TargetArg access
   if NeedVar then
@@ -21536,14 +21539,25 @@ begin
 
     if ArgTypeIsArray then
       begin
+      // array as argument
       if ExprResolved.BaseType=btNil then
         begin
         // nil to array ->  pass []
         Result:=TJSArrayLiteral(CreateElement(TJSArrayLiteral,El));
         exit;
+        end
+      else
+        Result:=CreateArrayInit(TPasArrayType(ArgTypeEl),El,El,AContext);
+      end
+    else if ExprResolved.BaseType=btProc then
+      begin
+      if (ArgTypeEl is TPasProcedureType)
+          and (msDelphi in AContext.CurrentModeSwitches)
+          and (ExprResolved.IdentEl is TPasProcedure) then
+        begin
+        // Delphi allows passing a proc address without @
+        Result:=CreateCallback(El,ExprResolved,AContext);
         end;
-      // array as argument
-      Result:=CreateArrayInit(TPasArrayType(ArgTypeEl),El,El,AContext);
       end;
 
     if Result=nil then

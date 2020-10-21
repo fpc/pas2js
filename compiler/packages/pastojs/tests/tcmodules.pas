@@ -518,6 +518,7 @@ type
     Procedure TestClass_WithClassInstDoProperty;
     Procedure TestClass_WithClassInstDoPropertyWithParams;
     Procedure TestClass_WithClassInstDoFunc;
+    Procedure TestClass_ProcVarDelphi;
     Procedure TestClass_TypeCast;
     Procedure TestClass_TypeCastUntypedParam;
     Procedure TestClass_Overloads;
@@ -13476,6 +13477,53 @@ begin
     '$mod.i = $with2.GetSize();',
     '$mod.i = $with2.GetSize();',
     '$with2.SetSize($mod.i);',
+    '']));
+end;
+
+procedure TTestModule.TestClass_ProcVarDelphi;
+begin
+  StartProgram(false);
+  Add([
+  '{$mode delphi}',
+  'type',
+  '  TProc = procedure of object;',
+  '  TObject = class',
+  '    procedure Run;',
+  '    procedure Fly(const p: TProc);',
+  '  end;',
+  'procedure TObject.Run;',
+  'var o: TObject;',
+  'begin',
+  '  Fly(Run);',
+  '  Fly(Self.Run);',
+  '  with Self do Fly(Run);',
+  '  with o do Fly(Run);',
+  'end;',
+  'procedure TObject.Fly(const p: TProc);',
+  'begin',
+  'end;',
+  'begin',
+  '']);
+  ConvertProgram;
+  CheckSource('TestClass_ProcVarDelphi',
+    LinesToStr([ // statements
+    'rtl.createClass($mod, "TObject", null, function () {',
+    '  this.$init = function () {',
+    '  };',
+    '  this.$final = function () {',
+    '  };',
+    '  this.Run = function () {',
+    '    var o = null;',
+    '    this.Fly(rtl.createCallback(this, "Run"));',
+    '    this.Fly(rtl.createCallback(this, "Run"));',
+    '    this.Fly(rtl.createCallback(this, "Run"));',
+    '    o.Fly(rtl.createCallback(o, "Run"));',
+    '  };',
+    '  this.Fly = function (p) {',
+    '  };',
+    '});',
+    '']),
+    LinesToStr([ // $mod.$main
     '']));
 end;
 

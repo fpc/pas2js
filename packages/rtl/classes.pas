@@ -1249,7 +1249,8 @@ type
                   toComma, // ,
                   toDot, // .
                   toEqual, // =
-                  toColon // :
+                  toColon, // :
+                  toPlus // +
                   );
 
   TParser = class(TObject)
@@ -9843,7 +9844,8 @@ const
     ',',
     '.',
     '=',
-    ':'
+    ':',
+    '+'
   );
 
 function TParser.GetTokenName(aTok: TParserToken): string;
@@ -10251,6 +10253,7 @@ begin
       '.' : SetToken(toDot);
       '=' : SetToken(toEqual);
       ':' : SetToken(toColon);
+      '+' : SetToken(toPlus);
       else
         HandleUnknown;
     end;
@@ -10379,7 +10382,7 @@ var
    ws : string;
 begin
   ws:=left+parser.TokenString;
-  while (parser.NextToken = classes.toString) and (Parser.TokenString='+') do
+  while parser.NextToken = toPlus do
     begin
     parser.NextToken;   // Get next string fragment
     if not (parser.Token=Classes.toString) then

@@ -296,6 +296,10 @@ type
   public
     constructor Create; reintroduce;
     destructor Destroy; override;
+    function ToObjectArray: TObjectDynArray; overload;
+    function ToObjectArray(aStart,aEnd : Integer): TObjectDynArray; overload;
+    function ToStringArray: TStringDynArray; overload;
+    function ToStringArray(aStart,aEnd : Integer): TStringDynArray; overload;
     function Add(const S: string): Integer; virtual; overload;
     function Add(const Fmt : string; const Args : Array of JSValue): Integer; overload;
     function AddFmt(const Fmt : string; const Args : Array of JSValue): Integer;
@@ -3183,19 +3187,53 @@ begin
   if Updating then ;
 end;
 
-
-
 destructor TStrings.Destroy;
 
 begin
   inherited destroy;
 end;
 
-
 constructor TStrings.Create;
 begin
   inherited Create;
   FAlwaysQuote:=False;
+end;
+
+function TStrings.ToObjectArray: TObjectDynArray;
+
+begin
+  Result:=ToObjectArray(0,Count-1);
+end;
+
+function TStrings.ToObjectArray(aStart,aEnd : Integer): TObjectDynArray;
+Var
+  I : Integer;
+
+begin
+  Result:=Nil;
+  if aStart>aEnd then exit;
+  SetLength(Result,aEnd-aStart+1);
+  For I:=aStart to aEnd do
+    Result[i-aStart]:=Objects[i];
+end;
+
+function TStrings.ToStringArray: TStringDynArray;
+
+begin
+  Result:=ToStringArray(0,Count-1);
+end;
+
+function TStrings.ToStringArray(aStart,aEnd : Integer): TStringDynArray;
+
+Var
+  I : Integer;
+
+begin
+  Result:=Nil;
+  if aStart>aEnd then exit;
+  SetLength(Result,aEnd-aStart+1);
+  For I:=aStart to aEnd do
+    Result[i-aStart]:=Strings[i];
 end;
 
 function TStrings.Add(const S: string): Integer;

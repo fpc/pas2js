@@ -35,6 +35,7 @@ type
   // This class is responsible for mapping the field objects of the records.
   TJSONFieldMapper = Class(TObject)
   Public
+    Function CopyRow(aRow : JSValue) : JSValue; virtual;
     // Remove a field from the
     Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); virtual; abstract;
     // Return row TJSONData instance with data for field 'FieldName' or 'FieldIndex'.
@@ -993,6 +994,11 @@ end;
 
 { TJSONFieldMapper }
 
+function TJSONFieldMapper.CopyRow(aRow: JSValue): JSValue;
+begin
+  Result:=TJSJSON.parse(TJSJSON.stringify(aRow));
+end;
+
 function TJSONFieldMapper.GetJSONDataForField(F: TField; Row: JSValue  ): JSValue;
 begin
   // This supposes that Index is correct, i.e. the field positions have not been changed.
@@ -1459,7 +1465,7 @@ begin
   FEditIdx:=FCurrentIndex.RecordIndex[FCurrent];
   if not isUndefined(Rows[FEditIdx]) then
     begin
-    FEditRow:=TJSJSON.parse(TJSJSON.stringify(Rows[FEditIdx]));
+    FEditRow:=FieldMapper.CopyRow(Rows[FEditIdx]);
     RemoveCalcFields(FEditRow);
     end
   else
@@ -1521,7 +1527,7 @@ begin
       begin // Append
       FDefaultIndex.Append(Idx);
       for I:=0 to FIndexes.Count-1 do
-	    if Assigned(FIndexes[i].Findex) then
+        if Assigned(FIndexes[i].Findex) then
           begin
           NewIdx:=FIndexes[i].Findex.Append(Idx);
           if FIndexes[i].Findex=FCurrentIndex then

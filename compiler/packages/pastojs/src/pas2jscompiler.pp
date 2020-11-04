@@ -43,10 +43,10 @@ uses
   FPPas2Js, FPPJsSrcMap, Pas2jsLogger, Pas2jsFS, Pas2jsPParser, Pas2jsUseAnalyzer;
 
 const
-  VersionMajor = 1;
-  VersionMinor = 5;
-  VersionRelease = 1;
-  VersionExtra = '';
+  VersionMajor = 2;
+  VersionMinor = 0;
+  VersionRelease = 0;
+  VersionExtra = 'RC1';
   DefaultConfigFile = 'pas2js.cfg';
 
 //------------------------------------------------------------------------------

@@ -3162,6 +3162,8 @@ function TDataSet.GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;
 
 begin
   Result:=TJSObject(buffer.data).Properties[Field.FieldName];
+  if isUndefined(Result) then
+    Result:=Null;
 end;
 
 
@@ -5563,7 +5565,11 @@ begin
   If FValidating then
     result:=FValueBuffer
   else
+    begin
     Result:=FDataset.GetFieldData(Self);
+    If IsUndefined(Result) then
+      Result:=Null;
+    end;
 end;
 
 function TField.GetDataSize: Integer;

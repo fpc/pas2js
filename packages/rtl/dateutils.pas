@@ -2442,8 +2442,11 @@ begin
     begin
     lH:=StrToIntDef(Copy(AValue,P[ppHour],2),-1);
     lMi:=StrToIntDef(Copy(AValue,P[ppMinute],2),-1);
-    lS:=StrToIntDef(Copy(AValue,P[ppSec],2),-1);
-
+    // Bug ID 37974
+    if (Length(AValue)>=P[ppSec]) then
+      lS:=StrToIntDef(Copy(AValue,P[ppSec],2),-1)
+    else
+      LS:=0;
     if (Length(AValue)>=P[ppMSec]) then
       lmS := StrToIntDef(Copy(AValue,P[ppMSec],3),-1);
     end

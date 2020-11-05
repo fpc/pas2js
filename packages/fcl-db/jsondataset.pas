@@ -1698,6 +1698,8 @@ begin
       R:=Buffer.data;
     end;
   Result:=FFieldMapper.GetJSONDataForField(Field,R);
+  if isUndefined(Result) then
+    Result:=Null;
 end;
 
 procedure TBaseJSONDataSet.SetFieldData(Field: TField; var Buffer: TDatarecord; AValue : JSValue);

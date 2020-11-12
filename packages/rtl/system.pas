@@ -87,7 +87,6 @@ type
 
   UnicodeString = type String;
   WideString = type String;
-  WideChar = char;
   UnicodeChar = char;
 
   TDynArrayIndex = NativeInt;

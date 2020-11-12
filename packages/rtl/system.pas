@@ -86,7 +86,6 @@ type
   NativeLargeUInt = NativeUInt;
 
   WideString = type String;
-  WideChar = char;
   UnicodeChar = char;
 
   TDynArrayIndex = NativeInt;

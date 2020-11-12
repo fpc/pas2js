@@ -254,7 +254,7 @@ type
 
     destructor Destroy; override;
 
-    function GetDeclaredMethods: TRttiMethodArray;
+    function GetDeclaredMethods: TRttiMethodArray; override;
     function GetDeclaredProperties: TRttiPropertyArray; override;
     function GetMethod(const aName: String): TRttiMethod; override;
     function GetMethods: TRttiMethodArray; override;
@@ -323,7 +323,7 @@ type
     property EnumerationTypeInfo: TTypeInfoEnum read GetEnumerationTypeInfo;
 
     function GetNames: TStringArray;
-    generic class function GetName<T>(AValue: T): String;
+    generic class function GetName<T>(AValue: T): String; reintroduce;
     generic class function GetValue<T>(const AValue: String): T;
   end;
 

@@ -15,7 +15,7 @@ unit SysUtils;
 {$mode objfpc}
 {$modeswitch typehelpers}
 {$modeswitch advancedrecords}
-
+{$WARN 5078 off : }
 interface
 
 uses
@@ -249,13 +249,16 @@ Function StrToNativeInt(const S : String) : NativeInt;
 // For compatibility
 Function StrToInt64(const S : String) : NativeLargeInt;
 Function StrToInt64Def(const S : String; ADefault : NativeLargeInt) : NativeLargeInt;
-Function TryStrToInt64(const S : String; Out res : NativeLargeInt) : Boolean;
+Function TryStrToInt64(const S : String; Out res : NativeLargeInt) : Boolean; overload;
+Function TryStrToInt64(const S : String; Out res : Int64) : Boolean; unimplemented; overload; // only 53 bits
 Function StrToQWord(const S : String) : NativeLargeUInt;
 Function StrToQWordDef(const S : String; ADefault : NativeLargeUInt) : NativeLargeUInt;
-Function TryStrToQWord(const S : String; Out res : NativeLargeUInt) : Boolean;
+Function TryStrToQWord(const S : String; Out res : NativeLargeUInt) : Boolean; overload;
+Function TryStrToQWord(const S : String; Out res : QWord) : Boolean; unimplemented; overload; // only 52 bits
 Function StrToUInt64(const S : String) : NativeLargeUInt;
 Function StrToUInt64Def(const S : String; ADefault : NativeLargeUInt) : NativeLargeUInt;
-Function TryStrToUInt64(const S : String; Out res : NativeLargeUInt) : Boolean;
+Function TryStrToUInt64(const S : String; Out res : NativeLargeUInt) : Boolean; overload;
+Function TryStrToUInt64(const S : String; Out res : UInt64) : Boolean; unimplemented; overload; // only 52 bits
 Function StrToDWord(const S : String) : DWord;
 Function StrToDWordDef(const S : String; ADefault : DWord) : DWord;
 Function TryStrToDWord(const S : String; Out res : DWord) : Boolean;
@@ -4495,6 +4498,11 @@ begin
     Res:=R;
 end;
 
+function TryStrToInt64(const S: String; out res: Int64): Boolean;
+begin
+  Result:=TryStrToInt64(S,NativeLargeInt(res));
+end;
+
 function StrToInt64Def(const S: String; ADefault: NativeLargeInt
   ): NativeLargeInt;
 
@@ -4526,6 +4534,11 @@ begin
     Res:=R;
 end;
 
+function TryStrToQWord(const S: String; out res: QWord): Boolean;
+begin
+  Result:=TryStrToQWord(S,NativeLargeUInt(res));
+end;
+
 function StrToQWordDef(const S: String; ADefault: NativeLargeUInt
   ): NativeLargeUInt;
 
@@ -4533,7 +4546,6 @@ begin
   if Not TryStrToQword(S,Result) then
     Result:=ADefault;
 end;
-
 
 function StrToUInt64(const S: String): NativeLargeUInt;
 
@@ -4555,6 +4567,11 @@ begin
   Result:=TryStrToInt(S,R) and (R>=0);
   If Result then
     Res:=R;
+end;
+
+function TryStrToUInt64(const S: String; out res: UInt64): Boolean;
+begin
+  Result:=TryStrToUInt64(S,NativeLargeUInt(res));
 end;
 
 function StrToUInt64Def(const S: String; ADefault: NativeLargeUInt

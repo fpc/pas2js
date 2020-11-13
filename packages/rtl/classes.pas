@@ -692,6 +692,7 @@ type
     function ReadData(var Buffer: NativeLargeInt; Count: NativeInt): NativeInt; overload;
     function ReadData(var Buffer: NativeLargeUInt): NativeInt; overload;
     function ReadData(var Buffer: NativeLargeUInt; Count: NativeInt): NativeInt; overload;
+    // Note: a ReadData with Int64 would be Delphi/FPC incompatible
     function ReadData(var Buffer: Double): NativeInt; overload;
     function ReadData(var Buffer: Double; Count: NativeInt): NativeInt; overload;
     procedure ReadBuffer(var Buffer: TBytes; Count: NativeInt); overload;

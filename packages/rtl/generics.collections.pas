@@ -326,7 +326,7 @@ type
     function Pop: T;
     function Peek: T;
     function Extract: T;
-    procedure TrimExcess;
+    procedure TrimExcess; override;
     property Count: SizeInt read GetCount;
   end;
 

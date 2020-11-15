@@ -627,7 +627,7 @@ Var
   S : String;
 begin
   Result:=true;
-  S:=aEvent.currentTarget.ID;
+  S:=aEvent.currentTargetElement.ID;
   aEvent.preventDefault;
   if Copy(S,1,Length(SControl))=SControl then
     begin

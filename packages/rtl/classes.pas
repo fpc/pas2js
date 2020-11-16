@@ -3958,7 +3958,7 @@ end;
 function TCollectionItem.GetIndex: Integer;
 
 begin
-  if FCollection<>nil then
+  if Assigned(FCollection) then
     Result:=FCollection.FItems.IndexOf(Self)
   else
     Result:=-1;
@@ -3971,8 +3971,8 @@ procedure TCollectionItem.SetCollection(Value: TCollection);
 begin
   IF Value<>FCollection then
     begin
-    If FCollection<>Nil then FCollection.RemoveItem(Self);
-    if Value<>Nil then Value.InsertItem(Self);
+    if Assigned(FCollection) then FCollection.RemoveItem(Self);
+    if Assigned(Value) then Value.InsertItem(Self);
     end;
 end;
 

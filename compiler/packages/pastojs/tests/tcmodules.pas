@@ -32226,6 +32226,7 @@ begin
   '  Run;',
   '  Run(3);',
   '']);
+  CheckResolverUnexpectedHints();
   ConvertProgram;
   CheckSource('TestAsync_Proc',
     LinesToStr([ // statements
@@ -32290,6 +32291,7 @@ begin
   '    if Fly()=p then ;',
   '  end;',
   '']);
+  CheckResolverUnexpectedHints();
   ConvertProgram;
   CheckSource('TestAsync_CallResultIsPromise',
     LinesToStr([ // statements
@@ -32448,6 +32450,7 @@ begin
     LinesToStr([
     '$mod.Run(1);'
     ]));
+  SetExpectedPasResolverError('Await without promise',nAwaitWithoutPromise);
 end;
 
 procedure TTestModule.TestAWait_ExternalClassPromise;
@@ -32496,17 +32499,18 @@ begin
     '']),
     LinesToStr([
     ]));
+  CheckResolverUnexpectedHints();
 end;
 
 procedure TTestModule.TestAsync_AnonymousProc;
 begin
   StartProgram(false);
   Add([
+  '{$mode objfpc}',
   '{$modeswitch externalclass}',
   'type',
   '  TJSPromise = class external name ''Promise''',
   '  end;',
-  '{$mode objfpc}',
   'type',
   '  TFunc = reference to function(x: double): word; async;',
   'function Crawl(d: double = 1.3): word; async;',
@@ -32538,6 +32542,7 @@ begin
     '$mod.Func = async function (c) {',
     '};',
     '']));
+  CheckResolverUnexpectedHints();
 end;
 
 procedure TTestModule.TestAsync_ProcType;
@@ -32554,6 +32559,11 @@ begin
   'end;',
   'procedure Run(e:longint); async;',
   'begin',
+  'end;',
+  'procedure Fly(p: TProc); async;',
+  'begin',
+  '  await(p);',
+  '  await(p());',
   'end;',
   'var',
   '  RefFunc: TRefFunc;',
@@ -32575,6 +32585,7 @@ begin
   '  if Proc=ProcB then ;',
   '  ']);
   ConvertProgram;
+  CheckResolverUnexpectedHints();
   CheckSource('TestAsync_ProcType',
     LinesToStr([ // statements
     'this.Crawl = async function (d) {',
@@ -32582,6 +32593,10 @@ begin
     '  return Result;',
     '};',
     'this.Run = async function (e) {',
+    '};',
+    'this.Fly = async function (p) {',
+    '  await p(7);',
+    '  await p(7);',
     '};',
     'this.RefFunc = null;',
     'this.Func = null;',
@@ -32691,6 +32706,7 @@ begin
     '']),
     LinesToStr([
     '']));
+  CheckResolverUnexpectedHints();
 end;
 
 

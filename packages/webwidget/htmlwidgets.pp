@@ -627,6 +627,7 @@ Type
     procedure SetCaption(AValue: String);
     procedure SetClassNames(AValue: String);
   Protected
+    Function RenderColumn : Boolean; virtual;
     Function GetDisplayName: string; override;
     function GetCaption: String; virtual;
   Public
@@ -1543,19 +1544,20 @@ Var
 
 begin
   For I:=0 to CustomColumns.Count-1 do
-    begin
-    aCell.Reset;
-    aCell.FColumn:=CustomColumns[i];
-    aCell.SetRowColKind(-1,I,aKind);
-//    Writeln(CellKinds[aKind],' cell before : ',aCell.Tag,' data : ',aCell.Text);
-    aEnum.GetCellData(aCell);
-//    Writeln(CellKinds[aKind],' cell after : ',aCell.Tag,' data : ',aCell.Text);
-    if aCell.Tag='' then
-      ACell.Tag:=CellTags[aKind];
-    if Assigned(FOnGetCellData) then
-      FOnGetCellData(Self,aEnum,aCell);
-    aParent.appendChild(RenderCell(aCell));
-    end;
+    if CustomColumns[i].RenderColumn then
+      begin
+      aCell.Reset;
+      aCell.FColumn:=CustomColumns[i];
+      aCell.SetRowColKind(-1,I,aKind);
+  //    Writeln(CellKinds[aKind],' cell before : ',aCell.Tag,' data : ',aCell.Text);
+      aEnum.GetCellData(aCell);
+  //    Writeln(CellKinds[aKind],' cell after : ',aCell.Tag,' data : ',aCell.Text);
+      if aCell.Tag='' then
+        ACell.Tag:=CellTags[aKind];
+      if Assigned(FOnGetCellData) then
+        FOnGetCellData(Self,aEnum,aCell);
+      aParent.appendChild(RenderCell(aCell));
+      end;
 end;
 
 procedure TCustomTableWidget.RenderRows(aParent: TJSHTMLElement; aKind: TRowKind; aCell: TTableWidgetCellData);
@@ -1758,6 +1760,11 @@ procedure TCustomTableColumn.SetClassNames(AValue: String);
 begin
   if FClassNames=AValue then Exit;
   FClassNames:=AValue;
+end;
+
+function TCustomTableColumn.RenderColumn: Boolean;
+begin
+  Result:=True;
 end;
 
 function TCustomTableColumn.GetDisplayName: string;

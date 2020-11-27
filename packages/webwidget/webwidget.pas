@@ -448,6 +448,8 @@ Type
     // Property attrs
     Property StoredAttrs : TJSObject Read FAttrs;
   Public
+    Class var CreateDataTags : Boolean;
+  Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     // Does this element allow childern ?
@@ -475,7 +477,7 @@ Type
     Procedure Refresh;
     // Unrender
     Procedure Unrender; overload;
-    // Focus
+    // Focus widget. Will render if it was not yet rendered.
     Procedure Focus;
     // These work on the classes property, and on the current element if rendered. Returns the new value of classes.
     Function AddRemoveClasses(const aAddClasses, aRemoveClasses : String; Normalize : Boolean = false) : String;
@@ -2819,13 +2821,13 @@ Var
   Procedure MaybeSet(El : TJSHTMLElement; AName : String);
 
   begin
-    if Assigned(el) then
+    if Assigned(el) and CreateDataTags then
       el.Dataset[aName]:=AID;
   end;
 
 begin
   AID:=ElementID;
-  if assigned(Element) then
+  if assigned(Element) and Not CreateDataTags then
     Element.dataset[SElementClass]:=ClassName;
   MaybeSet(Element,SElementData);
   MaybeSet(TopElement,STopElementData);

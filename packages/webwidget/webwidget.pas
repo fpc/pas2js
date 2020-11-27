@@ -448,15 +448,23 @@ Type
     // Property attrs
     Property StoredAttrs : TJSObject Read FAttrs;
   Public
+    Class var CreateDataTags : Boolean;
+  Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     // Does this element allow childern ?
     Class Function AllowChildren : Boolean; virtual;
     // Manipulate Classes
+    Class Function AddRemoveClasses(const Source, aAddClasses, aRemoveClasses : String; Normalize : Boolean = false) : String;
+    // Number of classes in search and replace must match.
+    Class Function ReplaceClasses(const Source, aSearchClasses, aReplaceClasses : String; Normalize : Boolean = false) : String;
     Class Function RemoveClasses(const Source, aClasses : String; Normalize : Boolean = false) : String;
     Class Function RemoveClasses(el : TJSHTMLElement; const aClasses : String; Normalize : Boolean = false) : String;
     Class Function AddClasses(const Source, aClasses : String; Normalize : Boolean = false) : String;
     Class Function AddClasses(el : TJSHTMLElement; const aClasses : String; Normalize : Boolean = false) : String;
+    Class Function AddRemoveClasses(el : TJSHTMLElement; const aAddClasses, aRemoveClasses : String; Normalize : Boolean = false) : String;
+    // Number of classes in search and replace must match.
+    Class Function ReplaceClasses(el : TJSHTMLElement; const aSearchClasses, aReplaceClasses : String; Normalize : Boolean = false) : String;
     // Manipulate styles
     function EnsureStyle(const aName: String): TStyleItem;
     function AddStyle(const aName,aValue: String): TStyleItem;
@@ -469,7 +477,11 @@ Type
     Procedure Refresh;
     // Unrender
     Procedure Unrender; overload;
+    // Focus widget. Will render if it was not yet rendered.
+    Procedure Focus;
     // These work on the classes property, and on the current element if rendered. Returns the new value of classes.
+    Function AddRemoveClasses(const aAddClasses, aRemoveClasses : String; Normalize : Boolean = false) : String;
+    Function ReplaceClasses(const aSearchClasses, aReplaceClasses : String; Normalize : Boolean = false) : String;
     Function RemoveClasses(const aClasses : String; Normalize : Boolean = false) : String;
     Function AddClasses(const aClasses : String; Normalize : Boolean = false) : String;
     // Finding widgets
@@ -2755,6 +2767,14 @@ begin
     UnRender(P);
 end;
 
+procedure TCustomWebWidget.Focus;
+begin
+  if not IsRendered then
+    ReFresh;
+  Element.Focus;
+end;
+
+
 procedure TCustomWebWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 
 // Normally, this should be called BEFORE FElement is set.
@@ -2801,13 +2821,13 @@ Var
   Procedure MaybeSet(El : TJSHTMLElement; AName : String);
 
   begin
-    if Assigned(el) then
+    if Assigned(el) and CreateDataTags then
       el.Dataset[aName]:=AID;
   end;
 
 begin
   AID:=ElementID;
-  if assigned(Element) then
+  if assigned(Element) and Not CreateDataTags then
     Element.dataset[SElementClass]:=ClassName;
   MaybeSet(Element,SElementData);
   MaybeSet(TopElement,STopElementData);
@@ -2950,8 +2970,8 @@ begin
   Result:=True;
 end;
 
-class function TCustomWebWidget.RemoveClasses(const Source, aClasses: String; Normalize : Boolean = false): String;
-
+class function TCustomWebWidget.AddRemoveClasses(const Source, aAddClasses,
+  aRemoveClasses: String; Normalize: Boolean): String;
 var
   T : TJSStringDynArray;
   i : integer;
@@ -2961,14 +2981,61 @@ begin
   if Normalize then
     Result:=TJSString(Result).replace(TJSRegexp.New('\s\s+','g'),' ');
   T:=TJSString(Result).split(' ');
-  For S in TJSString(aClasses).split(' ') do
+  For S in TJSString(aRemoveClasses).split(' ') do
     if (S<>'') then
       begin
       I:=TJSArray(T).indexOf(S);
       if (I<>-1) then
         TJSArray(T).splice(i,1);
       end;
+  For S in TJSString(aAddClasses).split(' ') do
+    if (S<>'') then
+      begin
+      I:=TJSArray(T).indexOf(S);
+      if (I=-1) then
+        TJSArray(T).Push(S);
+      end;
   Result:=TJSArray(T).join(' ');
+end;
+
+class function TCustomWebWidget.ReplaceClasses(const Source, aSearchClasses, aReplaceClasses : String; Normalize: Boolean): String;
+var
+  Dest,Srch,Repl : TJSStringDynArray;
+  sIdx,I : integer;
+  S : String;
+
+begin
+  Srch:=TJSString(aSearchClasses).split(' ');
+  Repl:=TJSString(aReplaceClasses).split(' ');
+  Result:=Source;
+  if Normalize then
+    Result:=TJSString(Result).replace(TJSRegexp.New('\s\s+','g'),' ');
+  Dest:=TJSString(Result).split(' ');
+  For sIdx:=0 to length(Srch)-1 do
+    begin
+    S:=Srch[sIdx];
+    if (S<>'') then
+      begin
+      I:=TJSArray(Dest).indexOf(S);
+      if (I<>-1) then
+        begin
+        TJSArray(Dest).splice(i,1);
+        if sIdx<Length(Repl) then
+          begin
+          I:=TJSArray(Dest).indexOf(Repl[sIdx]);
+          if I=-1 then
+            TJSArray(Dest).Push(Repl[sIdx]);
+          end;
+        end;
+      end;
+    end;
+  Result:=TJSArray(Dest).join(' ');
+end;
+
+class function TCustomWebWidget.RemoveClasses(const Source, aClasses: String; Normalize : Boolean = false): String;
+
+begin
+  Result:=AddRemoveClasses(Source,'',aClasses,Normalize);
 end;
 
 class function TCustomWebWidget.RemoveClasses(el: TJSHTMLElement; const aClasses: String; Normalize : Boolean = false): String;
@@ -2980,23 +3047,8 @@ end;
 
 class function TCustomWebWidget.AddClasses(const Source, aClasses: String; Normalize : Boolean = false): String;
 
-var
-  T : TJSStringDynArray;
-  S : String;
-
 begin
-  Result:=Source;
-  if Normalize then
-    Result:=TJSString(Result).replace(TJSRegexp.New('\s\s+','g'),' ');
-  if AClasses='' then exit;
-  T:=TJSString(Result).split(' ');
-  For S in TJSString(aClasses).split(' ') do
-    if (S<>'') then
-      begin
-      if (TJSArray(T).indexOf(S)=-1) then
-        TJSArray(T).Push(S);
-      end;
-  Result:=TJSArray(T).Join(' ');
+  Result:=AddRemoveClasses(Source,aClasses,'',Normalize);
 end;
 
 class function TCustomWebWidget.AddClasses(el: TJSHTMLElement; const aClasses: String; Normalize : Boolean = false): String;
@@ -3004,6 +3056,38 @@ class function TCustomWebWidget.AddClasses(el: TJSHTMLElement; const aClasses: S
 begin
   Result:=AddClasses(el.ClassName,aClasses,Normalize);
   el.ClassName:=Trim(Result);
+end;
+
+class function TCustomWebWidget.AddRemoveClasses(el: TJSHTMLElement;
+  const aAddClasses, aRemoveClasses: String; Normalize: Boolean): String;
+begin
+  Result:=AddRemoveClasses(el.ClassName,aAddClasses,aRemoveClasses,Normalize);
+  el.ClassName:=Trim(Result);
+end;
+
+class function TCustomWebWidget.ReplaceClasses(el: TJSHTMLElement;
+  const aSearchClasses, aReplaceClasses: String; Normalize: Boolean): String;
+begin
+  Result:=ReplaceClasses(el.ClassName,aSearchClasses, aReplaceClasses,Normalize);
+  el.ClassName:=Trim(Result);
+end;
+
+function TCustomWebWidget.AddRemoveClasses(const aAddClasses,
+  aRemoveClasses: String; Normalize: Boolean): String;
+begin
+  FClasses:=AddRemoveClasses(FClasses,aAddClasses,aRemoveClasses,Normalize);
+  Result:=FClasses;
+  if IsRendered then
+    Result:=AddRemoveClasses(FElement,aAddClasses,aRemoveClasses,Normalize)
+end;
+
+function TCustomWebWidget.ReplaceClasses(const aSearchClasses,
+  aReplaceClasses: String; Normalize: Boolean): String;
+begin
+  FClasses:=ReplaceClasses(FClasses,aSearchClasses,aReplaceClasses,Normalize);
+  Result:=FClasses;
+  if IsRendered then
+    Result:=ReplaceClasses(FElement,aSearchClasses,aReplaceClasses,Normalize)
 end;
 
 function TCustomWebWidget.RemoveClasses(const aClasses: String; Normalize : Boolean = false): String;

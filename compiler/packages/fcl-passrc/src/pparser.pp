@@ -1998,7 +1998,10 @@ begin
   finally
     if not ok then
       if Result<>nil then
+        begin
         Result.Release{$IFDEF CheckPasTreeRefCount}('CreateElement'){$ENDIF};
+        Result:=nil;
+        end;
   end;
 end;
 

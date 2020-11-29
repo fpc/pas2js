@@ -16991,7 +16991,6 @@ begin
   '  end;',
   'begin',
   '  JSwiper.new;',
-  //'  if typeinfo(JSwiper)=nil then ;',
   '']);
   ConvertProgram;
   CheckSource('TestExternalClass_SameNamePublishedProperty',

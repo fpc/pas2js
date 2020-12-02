@@ -5222,6 +5222,7 @@ begin
 
   El:=SpecializedItem.SpecializedEl;
   if (El is TPasGenericType)
+      and IsFullySpecialized(TPasGenericType(El))
       and (SpecializeParamsNeedDelay(SpecializedItem)<>nil) then
     TPas2JSResolverHub(Hub).AddJSDelaySpecialize(TPasGenericType(El));
 
@@ -17577,6 +17578,8 @@ var
   aResolver: TPas2JSResolver;
 begin
   if not IsElementUsed(El) then exit;
+  if not AContext.Resolver.IsFullySpecialized(El) then
+    RaiseNotSupported(El,AContext,20201202145045,'not fully specialized, probably a bug in the analyzer');
   if not SpecializeNeedsDelay(El,AContext) then exit;
   C:=El.ClassType;
   if (C=TPasRecordType)

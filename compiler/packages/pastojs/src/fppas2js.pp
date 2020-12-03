@@ -1557,6 +1557,8 @@ type
       override;
     procedure SpecializeGenericImpl(SpecializedItem: TPRSpecializedItem);
       override;
+    procedure SpecializeProcedure(GenEl, SpecEl: TPasProcedure;
+      SpecializedItem: TPRSpecializedItem); override;
     function SpecializeParamsNeedDelay(SpecializedItem: TPRSpecializedItem): TPasElement; virtual;
     function IsSpecializedNonStaticMethod(ProcType: TPasProcedureType): boolean;
   protected
@@ -5258,6 +5260,22 @@ begin
       end;
       end;
     end;
+end;
+
+procedure TPas2JSResolver.SpecializeProcedure(GenEl, SpecEl: TPasProcedure;
+  SpecializedItem: TPRSpecializedItem);
+var
+  GenProcScope, SpecProcScope: TPas2JSProcedureScope;
+begin
+  GenProcScope:=GenEl.CustomData as TPas2JSProcedureScope;
+  SpecProcScope:=SpecEl.CustomData as TPas2JSProcedureScope;
+  if SpecializedItem=nil then
+    begin
+    SpecProcScope.OverloadName:=GenProcScope.OverloadName;
+    SpecProcScope.JSName:=GenProcScope.JSName;
+    // SpecProcScope.ResultVarName is set on demand
+    end;
+  inherited SpecializeProcedure(GenEl, SpecEl, SpecializedItem);
 end;
 
 function TPas2JSResolver.SpecializeParamsNeedDelay(

@@ -46,7 +46,7 @@ const
   VersionMajor = 2;
   VersionMinor = 0;
   VersionRelease = 0;
-  VersionExtra = 'RC4';
+  VersionExtra = 'RC5';
   DefaultConfigFile = 'pas2js.cfg';
 
 //------------------------------------------------------------------------------

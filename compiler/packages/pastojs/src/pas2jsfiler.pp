@@ -4569,10 +4569,9 @@ begin
     RaiseMsg(20180219135933,Scope.Element);
   AddReferenceToObj(Obj,'ImplProc',Scope.ImplProc);
   AddReferenceToObj(Obj,'Overridden',Scope.OverriddenProc);
-  // ClassOrRecordScope: TPasClassScope; auto derived
-  if Scope.SelfArg<>nil then
-    RaiseMsg(20180211180457,Scope.Element); // SelfArg only valid for method implementation
-  // Mode: TModeSwitch: auto derived
+  // ClassOrRecordScope is auto derived
+  // SelfArg is auto derived
+  // Mode is auto derived
   WriteProcScopeFlags(Obj,'SFlags',Scope.Flags,[]);
   WriteBoolSwitches(Obj,'BoolSwitches',Scope.BoolSwitches,aContext.BoolSwitches);
   WriteModeSwitches(Obj,'ModeSwitches',Scope.ModeSwitches,aContext.ModeSwitches);
@@ -9457,11 +9456,14 @@ begin
     Scope.ClassRecScope:=Proc.Parent.CustomData as TPasClassOrRecordScope // no AddRef
   else
     ; // set via Set_ProcedureScope_ImplProc
-  // Scope.SelfArg only valid for method implementation
 
   Scope.Flags:=ReadProcScopeFlags(Obj,Proc,'SFlags',[]);
   Scope.BoolSwitches:=ReadBoolSwitches(Obj,Proc,'BoolSwitches',aContext.BoolSwitches);
   Scope.ModeSwitches:=ReadModeSwitches(Obj,Proc,'ModeSwitches',aContext.ModeSwitches);
+
+  // Scope.SelfArg
+  if (Scope.ClassRecScope<>nil) and (Scope.DeclarationProc=nil) then
+    Resolver.CreateProcSelfArg(Proc);
 
   //ReadIdentifierScope(Obj,Scope,aContext);
 end;
@@ -9624,6 +9626,7 @@ begin
       end;
     DefProcMods:=GetDefaultProcModifiers(El);
     El.Modifiers:=ReadProcedureModifiers(Obj,El,'PMods',DefProcMods);
+
     // read ProcType after El.Modifiers
     El.ProcType:=TPasProcedureType(ReadElementProperty(
                                  Obj,El,'ProcType',TPasProcedureType,aContext));

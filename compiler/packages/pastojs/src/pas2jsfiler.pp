@@ -267,7 +267,8 @@ const
   PCUDefaultTargetPlatform = PlatformBrowser;
   PCUTargetPlatformNames: array[TPasToJsPlatform] of string = (
     'Browser',
-    'NodeJS'
+    'NodeJS',
+    'Electron'
     );
 
   PCUDefaultTargetProcessor = ProcessorECMAScript5;
@@ -3989,6 +3990,7 @@ var
   Templ: TPasGenericTemplateType;
   TemplObj: TJSONObject;
 begin
+  if Parent=nil then ;
   if (GenericTemplateTypes=nil) or (GenericTemplateTypes.Count=0) then exit;
   Arr:=TJSONArray.Create;
   Obj.Add('GenericTemplateTypes',Arr);

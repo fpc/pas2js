@@ -119,7 +119,7 @@ type
                         ccMS_ABI_Default,ccMS_ABI_CDecl,
                         ccVectorCall);
   TProcTypeModifier = (ptmOfObject,ptmIsNested,ptmStatic,ptmVarargs,
-                       ptmReferenceTo,ptmAsync);
+                       ptmReferenceTo,ptmAsync,ptmFar);
   TProcTypeModifiers = set of TProcTypeModifier;
   TPackMode = (pmNone,pmPacked,pmBitPacked);
 
@@ -1767,7 +1767,7 @@ const
                         'MS_ABI_Default','MS_ABI_CDecl',
                         'VectorCall');
   ProcTypeModifiers : Array[TProcTypeModifier] of string =
-      ('of Object', 'is nested','static','varargs','reference to','async');
+      ('of Object', 'is nested','static','varargs','reference to','async','far');
 
   ModifierNames : Array[TProcedureModifier] of string
                 = ('virtual', 'dynamic','abstract', 'override',

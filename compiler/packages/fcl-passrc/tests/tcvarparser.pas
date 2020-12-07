@@ -26,6 +26,7 @@ Type
     Procedure TearDown; override;
   Published
     Procedure TestSimpleVar;
+    Procedure TestSimpleVarAbsoluteName;
     Procedure TestSimpleVarHelperName;
     procedure TestSimpleVarHelperType;
     Procedure TestSimpleVarDeprecated;
@@ -34,6 +35,7 @@ Type
     procedure TestSimpleVarInitializedDeprecated;
     procedure TestSimpleVarInitializedPlatform;
     Procedure TestSimpleVarAbsolute;
+    Procedure TestSimpleVarAbsoluteAddress;
     Procedure TestSimpleVarAbsoluteDot;
     Procedure TestSimpleVarAbsolute2Dots;
     Procedure TestVarProcedure;
@@ -51,6 +53,7 @@ Type
     Procedure TestVarExternalLib;
     Procedure TestVarExternalLibName;
     procedure TestVarExternalNoSemiColon;
+    procedure TestVarExternalLibNoName;
     Procedure TestVarCVar;
     Procedure TestVarCVarExternal;
     Procedure TestVarPublic;
@@ -129,6 +132,21 @@ begin
   AssertVariableType('b');
 end;
 
+procedure TTestVarParser.TestSimpleVarAbsoluteName;
+Var
+  R : TPasVariable;
+
+begin
+  Add('Var');
+  Add('  Absolute : integer;');
+//  Writeln(source.text);
+  ParseDeclarations;
+  AssertEquals('One variable definition',1,Declarations.Variables.Count);
+  AssertEquals('First declaration is type definition.',TPasVariable,TObject(Declarations.Variables[0]).ClassType);
+  R:=TPasVariable(Declarations.Variables[0]);
+  AssertEquals('First declaration has correct name.','Absolute',R.Name);
+end;
+
 procedure TTestVarParser.TestSimpleVarHelperName;
 
 Var
@@ -192,6 +210,13 @@ begin
   ParseVar('q absolute v','');
   AssertVariableType('q');
   AssertExpression('correct absolute location',TheVar.AbsoluteExpr,pekIdent,'v');
+end;
+
+procedure TTestVarParser.TestSimpleVarAbsoluteAddress;
+begin
+  ParseVar('q absolute $123','');
+  AssertVariableType('q');
+  AssertExpression('correct absolute location',TheVar.AbsoluteExpr,pekNumber,'$123');
 end;
 
 procedure TTestVarParser.TestSimpleVarAbsoluteDot;
@@ -338,6 +363,17 @@ begin
   AssertNull('Library name',TheVar.LibraryName);
   AssertNotNull('Library symbol',TheVar.ExportName);
 end;
+
+
+procedure TTestVarParser.TestVarExternalLibNoName;
+begin
+  // Found in e.g.apache headers
+  ParseVar('integer; external ''mylib''','');
+  AssertEquals('Variable modifiers',[vmexternal],TheVar.VarModifiers);
+  AssertNotNull('Library name',TheVar.LibraryName);
+
+end;
+
 
 procedure TTestVarParser.TestVarExternalLibName;
 begin

@@ -44,9 +44,9 @@ uses
 
 const
   VersionMajor = 2;
-  VersionMinor = 0;
-  VersionRelease = 0;
-  VersionExtra = 'RC5';
+  VersionMinor = 1;
+  VersionRelease = 1;
+  VersionExtra = '';
   DefaultConfigFile = 'pas2js.cfg';
 
 //------------------------------------------------------------------------------

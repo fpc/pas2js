@@ -1643,6 +1643,7 @@ begin
   '$':
     begin
     FToken:=tkNumber;
+    inc(FTokenEnd);
     {$ifdef UsePChar}
     while FTokenEnd^ in HexDigits do inc(FTokenEnd);
     {$else}
@@ -3010,8 +3011,6 @@ Procedure TPascalScanner.PopStackItem;
 
 var
   IncludeStackItem: TIncludeStackItem;
-  aFileName : String;
-
 begin
   IncludeStackItem :=
     TIncludeStackItem(FIncludeStack[FIncludeStack.Count - 1]);
@@ -3798,8 +3797,8 @@ begin
     SetMode(msMac,MacModeSwitches,false,bsMacPasMode);
   'ISO':
     SetMode(msIso,ISOModeSwitches,false,[],[],false);
-  'EXTENDED':
-    SetMode(msExtpas,ExtPasModeSwitches,false,[],[],false);
+  'EXTENDEDPASCAL':
+    SetMode(msExtpas,ExtPasModeSwitches,false);
   'GPC':
     SetMode(msGPC,GPCModeSwitches,false);
   else

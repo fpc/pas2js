@@ -233,7 +233,7 @@ type
   Published
     Procedure TestReservedWords;
 
-    // program/units
+    // program, units, includes
     Procedure TestEmptyProgram;
     Procedure TestEmptyProgramUseStrict;
     Procedure TestEmptyUnit;
@@ -294,7 +294,7 @@ type
     Procedure TestBaseType_RawByteStringFail;
     Procedure TestTypeShortstring_Fail;
     Procedure TestCharSet_Custom;
-    Procedure TestWideChar_VarArg;
+    Procedure TestWideChar;
     Procedure TestForCharDo;
     Procedure TestForCharInDo;
 
@@ -7927,7 +7927,7 @@ begin
     '']));
 end;
 
-procedure TTestModule.TestWideChar_VarArg;
+procedure TTestModule.TestWideChar;
 begin
   StartProgram(false);
   Add([
@@ -7940,9 +7940,12 @@ begin
   'var',
   '  c: char;',
   '  wc: widechar;',
+  '  w: word;',
   'begin',
   '  Fly(wc);',
   '  Run(c);',
+  '  wc:=WideChar(w);',
+  '  w:=ord(wc);',
   '']);
   ConvertProgram;
   CheckSource('TestWideChar_VarArg',
@@ -7953,6 +7956,7 @@ begin
     '};',
     'this.c = "";',
     'this.wc = "";',
+    'this.w = 0;',
     '']),
     LinesToStr([ // this.$main
     '$mod.Fly({',
@@ -7973,6 +7977,8 @@ begin
     '      this.p.c = v;',
     '    }',
     '});',
+    '$mod.wc = String.fromCharCode($mod.w);',
+    '$mod.w = $mod.wc.charCodeAt();',
     '',
     '']));
 end;

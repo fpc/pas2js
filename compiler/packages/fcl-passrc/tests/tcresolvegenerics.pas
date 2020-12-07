@@ -1949,7 +1949,7 @@ begin
   '  PRec = ^specialize TRec<word>;',
   'begin',
   '']);
-  CheckParserException('Expected "Identifier" at token "specialize" in file afile.pp at line 4 column 11',nParserExpectTokenError);
+  CheckParserException('Expected "Identifier or file"',nParserExpectTokenError);
 end;
 
 procedure TTestResolveGenerics.TestGen_HelperForArray;

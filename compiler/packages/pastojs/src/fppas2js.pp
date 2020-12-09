@@ -19502,6 +19502,7 @@ begin
     aJSWriter.Options:=DefaultJSWriterOptions;
     aJSWriter.IndentSize:=2;
     aJSWriter.SkipCurlyBrackets:=true;
+    aJSWriter.Writer.LineBreak:=#10;
     aJSWriter.WriteJS(El);
     Result:=aWriter.AsString;
   finally

@@ -8185,7 +8185,8 @@ begin
           RemoveFromSourceElements(Src,ImplVarSt);
           // remove unneeded $mod.$implcode = function(){}
           RemoveFromSourceElements(Src,AssignSt);
-          HasImplUsesClause:=length(El.ImplementationSection.UsesClause)>0;
+          HasImplUsesClause:=(El.ImplementationSection<>nil)
+                         and (length(El.ImplementationSection.UsesClause)>0);
           end
         else
           begin
@@ -15235,6 +15236,7 @@ Var
     SectionScope: TPas2JSSectionScope;
     SectionCtx: TSectionContext;
     Src: TJSSourceElements;
+    ImplSect: TImplementationSection;
   begin
     SectionScope:=Section.CustomData as TPas2JSSectionScope;
     AContext.ScannerBoolSwitches:=SectionScope.BoolSwitches;
@@ -15253,8 +15255,9 @@ Var
       InitForwards(Section.Declarations,TSectionContext(AContext));
       if Section is TInterfaceSection then
         begin
-        InitForwards(TPasModule(Section.Parent).ImplementationSection.Declarations,
-                     TSectionContext(AContext));
+        ImplSect:=TPasModule(Section.Parent).ImplementationSection;
+        if ImplSect<>nil then
+          InitForwards(ImplSect.Declarations,TSectionContext(AContext));
         end;
       end;
   end;
@@ -17558,9 +17561,12 @@ begin
       end;
 
     // create implementation declarations
-    ImplDecl:=ConvertDeclarations(El.ImplementationSection,ImplContext);
-    if ImplDecl<>nil then
-      RaiseInconsistency(20170910175032,El); // elements should have been added directly
+    if El.ImplementationSection<>nil then
+      begin
+      ImplDecl:=ConvertDeclarations(El.ImplementationSection,ImplContext);
+      if ImplDecl<>nil then
+        RaiseInconsistency(20170910175032,El); // elements should have been added directly
+      end;
     IntfContext.ImplHeaderIndex:=ImplContext.HeaderIndex;
     Result:=FunDecl;
   finally

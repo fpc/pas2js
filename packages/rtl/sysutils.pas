@@ -58,7 +58,7 @@ type
   { TFormatSettings }
   TFormatSettings = record
     strict private
-      class function GetBrowserLocale: string; assembler; static;
+      class function GetJSLocale: string; assembler; static;
       class function GetLocaleShortDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
       class function GetLocaleDecimalSeparator(const ALocale: string): string; static;
       class function GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; static;
@@ -86,9 +86,9 @@ type
       TimeSeparator: Char;
       TwoDigitYearCenturyWindow: Word;
     public
-//      Type
-//         TLocaleInitCallback = Procedure(aLocale : String; aInstance : TFormatSettings);
-//      class var InitLocaleHandler : TLocaleInitCallback;
+      Type
+         TLocaleInitCallback = Procedure(aLocale : String; aInstance : TFormatSettings);
+      class var InitLocaleHandler : TLocaleInitCallback;
       class function Create: TFormatSettings; overload; static;
       class function Create(const ALocale: string): TFormatSettings; overload; static;
     end;
@@ -4901,7 +4901,7 @@ end;
 
 class function TFormatSettings.Create: TFormatSettings;
 begin
-  Result := Create(GetBrowserLocale);
+  Result := Create(GetJSLocale);
 end;
 
 
@@ -4928,14 +4928,13 @@ begin
   Result.NegCurrFormat:=0;
   Result.CurrencyDecimals:=2;
   Result.CurrencyString:='$';
-
-//  If Assigned(TFormatSettings.InitLocaleHandler) then
-//    TFormatSettings.InitLocaleHandler(UpperCase(aLocale),Result);
+  If Assigned(TFormatSettings.InitLocaleHandler) then
+    TFormatSettings.InitLocaleHandler(UpperCase(aLocale),Result);
 end;
 
-class function TFormatSettings.GetBrowserLocale: string; assembler;
+class function TFormatSettings.GetJSLocale: string; assembler;
 asm
-  return navigator.language;
+  return Intl.DateTimeFormat().resolvedOptions().locale
 end;
 
 class function TFormatSettings.GetLocaleDecimalSeparator(const ALocale: string): string; assembler;

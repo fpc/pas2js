@@ -81,6 +81,7 @@ Resourcestring
   SParserInvalidProperty          = 'Invalid property';
   SRangeError                     = 'Range error';
 
+  SParamIsNegative                = 'Parameter "%s" cannot be negative.';
 implementation
 
 end.

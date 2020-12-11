@@ -87,7 +87,7 @@ type
       TwoDigitYearCenturyWindow: Word;
     public
       Type
-         TLocaleInitCallback = Procedure(aLocale : String; aInstance : TFormatSettings);
+         TLocaleInitCallback = Procedure(const aLocale : String; aInstance : TFormatSettings);
       class var InitLocaleHandler : TLocaleInitCallback;
       class function Create: TFormatSettings; overload; static;
       class function Create(const ALocale: string): TFormatSettings; overload; static;

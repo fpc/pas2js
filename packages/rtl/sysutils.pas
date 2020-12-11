@@ -1120,7 +1120,6 @@ Type
     Procedure SetLength(AValue: Integer);
   protected
     FData: String;
-    FLength: Integer;
     FMaxCapacity: Integer;
     // Raise error on range check.
     Procedure CheckRange(Idx,Count,MaxLen : Integer);inline;
@@ -8098,7 +8097,6 @@ constructor TStringBuilder.Create(aCapacity, aMaxCapacity: Integer);
 begin
   FMaxCapacity:=aMaxCapacity;
   Capacity:=aCapacity;
-  FLength:=0;
 end;
 
 constructor TStringBuilder.Create(aCapacity: Integer);
@@ -8116,7 +8114,7 @@ end;
 
 function TStringBuilder.GetLength: Integer;
 begin
-  Result:=FLength;
+  Result:=System.Length(FData);
 end;
 
 function TStringBuilder.GetCapacity: Integer;
@@ -8143,9 +8141,7 @@ procedure TStringBuilder.SetLength(AValue: Integer);
 begin
   CheckNegative(AValue,'AValue');
   CheckRange(AValue,0,MaxCapacity);
-  While AValue>Capacity do
-    Grow;
-  Flength:=AValue;
+  SetLength(FData,aValue);
 end;
 
 { Check functions }
@@ -8582,9 +8578,7 @@ begin
   CheckRange(StartIndex,0,Length);
   MoveIndex:=StartIndex+RemLength;
   CheckRange(MoveIndex,0,Length);
-  if (Length-Moveindex)>0 then
-    Delete(FData,MoveIndex+1,RemLength);
-  Length:=Length-RemLength;
+  Delete(FData,StartIndex+1,RemLength);
   Shrink;
   Result:=Self;
 end;
@@ -8623,7 +8617,7 @@ begin
     Raise ERangeError.CreateFmt(SListCapacityError,[AValue]);
   if (AValue<Length) then
     Raise ERangeError.CreateFmt(SListCapacityError,[AValue]);
-  System.SetLength(FData,AValue);
+  // No-op
 end;
 
 
@@ -8638,6 +8632,7 @@ begin
   CheckNegative(aStartIndex,'aStartIndex');
   CheckNegative(aLength,'aLength');
   CheckRange(aStartIndex,aLength,Length);
+  Writeln('FData : ',FData);
   Result:=Copy(FData,1+aStartIndex,aStartIndex+aLength);
 end;
 

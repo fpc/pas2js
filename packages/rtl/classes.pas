@@ -1293,6 +1293,7 @@ type
     procedure HandleString;
     procedure HandleMinus;
     procedure HandleUnknown;
+    procedure GotoToNextChar;
   public
     // Input stream is expected to be UTF16 !
     constructor Create(Stream: TStream);
@@ -9909,7 +9910,6 @@ begin
   FPos := 0;
   FBufLen := CharsRead;
   FEofReached:=CharsRead = 0;
-  FBuf[CharsRead] := #0;
 end;
 
 procedure TParser.CheckLoadBuffer; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
@@ -9921,8 +9921,8 @@ end;
 procedure TParser.ProcessChar; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
 begin
   fLastTokenStr:=fLastTokenStr+fBuf[fPos];
-  inc(fPos);
-  CheckLoadBuffer;
+
+  GotoToNextChar;
 end;
 
 function TParser.IsNumber: boolean; {$ifdef CLASSESINLINE} inline; {$endif CLASSESINLINE}
@@ -9962,23 +9962,19 @@ begin
   while IsAlphaNum do
   begin
     Result:=Result+fBuf[fPos];
-    inc(fPos);
-    CheckLoadBuffer;
+
+    GotoToNextChar;
   end;
 end;
 
 procedure TParser.HandleNewLine;
 begin
   if fBuf[fPos]=#13 then //CR
-  begin
-    inc(fPos);
-    CheckLoadBuffer;
-  end;
-  if fBuf[fPos]=#10 then
-  begin
-    inc(fPos); //CR LF or LF
-    CheckLoadBuffer;
-  end;
+    GotoToNextChar;
+
+  if fBuf[fPos]=#10 then //LF
+    GotoToNextChar;
+
   inc(fSourceLine);
   fDeltaPos:=-(fPos-1);
 end;
@@ -9991,15 +9987,12 @@ end;
 
 procedure TParser.SkipSpaces;
 begin
-  while fBuf[fPos] in [' ',#9] do begin
-    inc(fPos);
-    CheckLoadBuffer;
-  end;
+  while not FEofReached and (fBuf[fPos] in [' ',#9]) do GotoToNextChar;
 end;
 
 procedure TParser.SkipWhitespace;
 begin
-  while true do
+  while not FEofReached do
   begin
     case fBuf[fPos] of
       ' ',#9  : SkipSpaces;
@@ -10056,8 +10049,9 @@ begin
   if (fBuf[fPos] in ['s','S','d','D','c','C']) then //single, date, currency
   begin
     fFloatType:=fBuf[fPos];
-    inc(fPos);
-    CheckLoadBuffer;
+
+    GotoToNextChar;
+
     fToken:=toFloat;
   end
   else fFloatType:=#0;
@@ -10067,8 +10061,7 @@ procedure TParser.HandleHexNumber;
 var valid : boolean;
 begin
   fLastTokenStr:='$';
-  inc(fPos);
-  CheckLoadBuffer;
+  GotoToNextChar;
   valid:=false;
   while IsHexNum do
   begin
@@ -10083,22 +10076,20 @@ end;
 function TParser.HandleQuotedString: string;
 begin
   Result:='';
-  inc(fPos);
-  CheckLoadBuffer;
+  GotoToNextChar;
+
   while true do
   begin
     case fBuf[fPos] of
       #0     : ErrorStr(SParserUnterminatedString);
       #13,#10 : ErrorStr(SParserUnterminatedString);
       ''''   : begin
-                 inc(fPos);
-                 CheckLoadBuffer;
+                 GotoToNextChar;
                  if fBuf[fPos]<>'''' then exit;
                end;
     end;
     Result:=Result+fBuf[fPos];
-    inc(fPos);
-    CheckLoadBuffer;
+    GotoToNextChar;
   end;
 end;
 
@@ -10108,15 +10099,13 @@ var
    i : integer;
 
 begin
-  inc(fPos);
-  CheckLoadBuffer;
+  GotoToNextChar;
   // read a word number
   i:=0;
   while IsNumber and (i<high(word)) do
     begin
     i:=i*10+Ord(fBuf[fPos])-ord('0');
-    inc(fPos);
-    CheckLoadBuffer;
+    GotoToNextChar;
     end;
   if i>high(word) then i:=0;
   Result:=Char(i);
@@ -10149,8 +10138,7 @@ end;
 
 procedure TParser.HandleMinus;
 begin
-  inc(fPos);
-  CheckLoadBuffer;
+  GotoToNextChar;
   if IsNumber then
   begin
     HandleNumber;
@@ -10167,14 +10155,13 @@ procedure TParser.HandleUnknown;
 begin
   fToken:=toUnknown;
   fLastTokenStr:=fBuf[fPos];
-  inc(fPos);
-  CheckLoadBuffer;
+  GotoToNextChar;
 end;
 
 constructor TParser.Create(Stream: TStream);
 begin
   fStream:=Stream;
-  SetLength(fBuf,Succ(ParseBufSize));
+  SetLength(fBuf,ParseBufSize);
   fBufLen:=0;
   fPos:=0;
   fDeltaPos:=1;
@@ -10186,6 +10173,13 @@ begin
   LoadBuffer;
   SkipBom;
   NextToken;
+end;
+
+procedure TParser.GotoToNextChar;
+begin
+  Inc(FPos);
+
+  CheckLoadBuffer;
 end;
 
 destructor TParser.Destroy;
@@ -10240,13 +10234,11 @@ begin
   while IsHexNum do
   begin
     b:=(GetHexValue(fBuf[fPos]) shl 4);
-    inc(fPos);
-    CheckLoadBuffer;
+    GotoToNextChar;
     if not IsHexNum then
       Error(SParserUnterminatedBinValue);
     b:=b or GetHexValue(fBuf[fPos]);
-    inc(fPos);
-    CheckLoadBuffer;
+    GotoToNextChar;
     outbuf[i]:=b;
     inc(i);
     if i>=ParseBufSize then
@@ -10266,7 +10258,7 @@ function TParser.NextToken: TParserToken;
   Procedure SetToken(aToken : TParserToken);
   begin
     FToken:=aToken;
-    Inc(fPos);
+    GotoToNextChar;
   end;
 
 begin

@@ -1991,7 +1991,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   { TJSWindow }
   TJSDOMHighResTimeStamp = Double;
-  TFrameRequestCallback = procedure (aTime: TJSDOMHighResTimeStamp);
+  TFrameRequestCallback = reference to procedure (aTime: TJSDOMHighResTimeStamp);
 
   TJSPostMessageOptions = class external name 'Object' (TJSObject)
     targetOrigin : string;

@@ -23,7 +23,7 @@ unit libopentok;
 interface
 
 uses
-  JS, web;
+  JS, web, types;
 
 Type
   TJSMediaStreamTrack = class external name 'MediaStreamTrack' (TJSObject);

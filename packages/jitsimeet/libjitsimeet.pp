@@ -22,7 +22,7 @@ unit libjitsimeet;
 interface
 
 uses
-  JS, web;
+  JS, web, types;
 
 Const
   // Event names

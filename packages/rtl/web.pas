@@ -490,6 +490,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property previousElementSibling : TJSElement read FpreviousElementSibling;
   end;
 
+
   TJSProcessingInstruction = class external name 'ProcessingInstruction' (TJSCharacterData);
 
   { TJSRange }
@@ -3715,8 +3716,22 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   TJSHTMLAudioElement = Class external name 'HTMLAudioElement' (TJSHTMLMediaElement)
 
   end;
+
   TJSHTMLVideoElement = Class external name 'HTMLVideoElement' (TJSHTMLMediaElement)
   end;
+
+  { TJSHTMLStyleElement }
+
+  TJSHTMLStyleElement = class external name 'HTMLStyleElement' (TJSHTMLElement)
+  private
+    FSheet: TJSStyleSheet; external name 'sheet';
+  public
+    media : string;
+    type_ : string; external name 'style';
+    disabled : boolean;
+    property sheet : TJSStyleSheet read FSheet;
+  end;
+
 
   TJSFormDataEntryValue = String;
   TJSFormDataEntryValueArray = Array of TJSFormDataEntryValue;

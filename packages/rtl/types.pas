@@ -20,6 +20,7 @@ type
   TDirection = (FromBeginning, FromEnd);
 
   TBooleanDynArray = array of Boolean;
+  TWordDynArray = array of Word;
   TIntegerDynArray = array of Integer;
   TNativeIntDynArray = array of NativeInt;
   TStringDynArray = array of String;

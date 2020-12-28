@@ -34,6 +34,7 @@ type
     function GetIsEmpty: boolean;
     function GetTypeKind: TTypeKind;
   public
+    generic class function From<T>(const Value: T): TValue; static;
     class function FromJSValue(v: JSValue): TValue; static;
 
     property Kind: TTypeKind read GetTypeKind;
@@ -500,6 +501,11 @@ begin
     Result:=tkUnknown
   else
     Result:=FTypeInfo.Kind;
+end;
+
+generic class function TValue.From<T>(const Value: T): TValue;
+begin
+  Result := FromJSValue(Value);
 end;
 
 class function TValue.FromJSValue(v: JSValue): TValue;

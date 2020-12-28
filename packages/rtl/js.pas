@@ -216,7 +216,9 @@ type
     function toISOString: string; // ISO 8601 Extended Format
     function toJSON: string;
     function toGMTString: string; // in GMT timezone
-    function toLocaleDateString: string; // date in locale timezone, no time
+    function toLocaleDateString: string; overload; // date in locale timezone, no time
+    function toLocaleDateString(const aLocale : string) : string; overload; // date in locale timezone, no time
+    function toLocaleDateString(const aLocale : string; aOptions : TJSObject) : string; overload; // date in locale timezone, no time
     function toLocaleString: string; reintroduce; // date and time in locale timezone
     function toLocaleTimeString: string; // time in locale timezone, no date
     function toTimeString: string; // time human readable, no date

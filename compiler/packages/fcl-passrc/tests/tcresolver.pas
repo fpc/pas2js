@@ -3542,7 +3542,8 @@ begin
   '  s[9+1]:=''b'';',
   '  s[10]:='''''''';',
   '  s[11]:=^g;',
-  '  s[12]:=^H;']);
+  '  s[12]:=^H;',
+  '']);
   ParseProgram;
 end;
 
@@ -3620,6 +3621,7 @@ begin
   '  m=low(char)+high(char);',
   '  n = string(''A'');',
   '  o = UnicodeString(''A'');',
+  //'  p = ^C''bird'';',
   'begin']);
   ParseProgram;
   CheckResolverUnexpectedHints;

@@ -248,7 +248,7 @@ type
     FMethods: TRttiMethodArray;
     FProperties: TRttiPropertyArray;
   protected
-    function GetAncestor: TRttiStructuredType; virtual; abstract;
+    function GetAncestor: TRttiStructuredType; virtual;
     function GetStructTypeInfo: TTypeInfoStruct;
   public
     constructor Create(ATypeInfo: PTypeInfo);
@@ -274,9 +274,10 @@ type
     function GetMetaClassType: TClass;
   protected
     function GetAncestor: TRttiStructuredType; override;
+    function GetIsInstance: boolean; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
-    function GetIsInstance: boolean; override;
+
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
   end;
@@ -294,6 +295,19 @@ type
 
     property GUID: TGUID read GetGUID;
     property InterfaceTypeInfo: TTypeInfoInterface read GetInterfaceTypeInfo;
+  end;
+
+  { TRttiRecordType }
+
+  TRttiRecordType = class(TRttiStructuredType)
+  private
+    function GetRecordTypeInfo: TTypeInfoRecord;
+  protected
+    function GetIsRecord: Boolean; override;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property RecordTypeInfo: TTypeInfoRecord read GetRecordTypeInfo;
   end;
 
   { TRttiOrdinalType }
@@ -838,6 +852,11 @@ begin
   Result := FProperties;
 end;
 
+function TRttiStructuredType.GetAncestor: TRttiStructuredType;
+begin
+  Result := nil;
+end;
+
 function TRttiStructuredType.GetStructTypeInfo: TTypeInfoStruct;
 begin
   Result:=TTypeInfoStruct(FTypeInfo);
@@ -944,6 +963,25 @@ begin
   Result := GRttiContext.GetType(InterfaceTypeInfo.Ancestor) as TRttiStructuredType;
 end;
 
+{ TRttiRecordType }
+
+function TRttiRecordType.GetRecordTypeInfo: TTypeInfoRecord;
+begin
+  Result := TTypeInfoRecord(FTypeInfo);
+end;
+
+function TRttiRecordType.GetIsRecord: Boolean;
+begin
+  Result := True;
+end;
+
+constructor TRttiRecordType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
+    raise EInvalidCast.Create('');
+  inherited Create(ATypeInfo);
+end;
+
 { TRTTIContext }
 
 class constructor TRTTIContext.Init;
@@ -984,7 +1022,7 @@ var
     nil, // tkMethod
     TRttiType, // tkArray
     TRttiDynamicArrayType, // tkDynArray
-    TRttiType, // tkRecord
+    TRttiRecordType, // tkRecord
     TRttiInstanceType, // tkClass
     TRttiType, // tkClassRef
     TRttiType, // tkPointer

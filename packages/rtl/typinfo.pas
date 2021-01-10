@@ -278,7 +278,7 @@ type
 
   TTypeInfoRecord = class external name 'rtl.tTypeInfoRecord'(TTypeInfoStruct)
   public
-    RecordType: TJSObject external name 'record';
+    RecordType: TJSObject external name '$record';  // only records with class vars, else jsundefined
   end;
 
   { TTypeInfoClass - Kind = tkClass }

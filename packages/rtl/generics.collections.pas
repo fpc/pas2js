@@ -1409,7 +1409,7 @@ end;
 
 function TDictionary<TKey, TValue>.TPairEnumerator.GetCurrent: TMyPair;
 begin
-  Result:=DoGetCurrent;
+  Result:=DoGetCurrent();
 end;
 
 function TDictionary<TKey, TValue>.TPairEnumerator.DoGetCurrent: TMyPair;
@@ -1442,7 +1442,7 @@ end;
 
 function TDictionary<TKey, TValue>.TKeyEnumerator.GetCurrent: TKey;
 begin
-  Result:=DoGetCurrent;
+  Result:=DoGetCurrent();
 end;
 
 function TDictionary<TKey, TValue>.TKeyEnumerator.DoGetCurrent: TKey;
@@ -1475,7 +1475,7 @@ end;
 
 function TDictionary<TKey, TValue>.TValueEnumerator.GetCurrent: TValue;
 begin
-  Result:=DoGetCurrent;
+  Result:=DoGetCurrent();
 end;
 
 function TDictionary<TKey, TValue>.TValueEnumerator.DoGetCurrent: TValue;
@@ -1966,7 +1966,7 @@ end;
 
 function TCustomInvertedListEnumerator<T>.GetCurrent: T;
 begin
-  Result:=DoGetCurrent;
+  Result:=DoGetCurrent();
 end;
 
 constructor TCustomInvertedListEnumerator<T>.Create(AList: TCustomList<T>);

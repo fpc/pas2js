@@ -26396,13 +26396,7 @@ begin
            or (C=TPasClassDestructor) then
           AddGlobalClassMethod(FuncContext,TPasProcedure(P))
         else
-          begin
           Methods.Add(P);
-          if (C=TPasConstructor)
-              or ((aResolver<>nil) and aResolver.IsClassMethod(P)
-                and not aResolver.MethodIsStatic(TPasProcedure(P))) then
-            ; //IsComplex:=true; // needs $record
-          end;
         end
       else if C=TPasAttributes then
       else

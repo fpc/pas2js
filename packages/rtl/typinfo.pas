@@ -106,7 +106,6 @@ type
 
   TTypeInfoDynArray = class external name 'rtl.tTypeInfoDynArray'(TTypeInfo)
   public
-    DimCount: NativeInt external name 'dimcount';
     ElType: TTypeInfo external name 'eltype';
   end;
 

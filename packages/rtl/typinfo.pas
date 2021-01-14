@@ -98,7 +98,7 @@ type
 
   TTypeInfoStaticArray = class external name 'rtl.tTypeInfoStaticArray'(TTypeInfo)
   public
-    Dims: TIntegerDynArray;
+    Dims: TIntegerDynArray external name 'dims';
     ElType: TTypeInfo external name 'eltype';
   end;
 

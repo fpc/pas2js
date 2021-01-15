@@ -60,10 +60,13 @@ type
     function ToString: String;
     function GetArrayLength: SizeInt;
     function GetArrayElement(aIndex: SizeInt): TValue;
-    //ToDo: procedure SetArrayElement(aIndex: SizeInt; constref AValue: TValue);
+    procedure SetArrayElement(aIndex: SizeInt; const AValue: TValue);
+    procedure SetArrayLength(const Size: SizeInt);
     function IsType(ATypeInfo: PTypeInfo): boolean;
     function AsJSValue: JSValue;
     class function Empty: TValue; static;
+    class function Make(TypeInfo: TTypeInfo; const Value: JSValue): TValue; static;
+    class function Make(const Value: TValue): TValue; static;
   end;
 
   TRttiType = class;
@@ -178,7 +181,6 @@ type
   public
     constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
     function GetValue(Instance: TObject): TValue;
-
 
     procedure SetValue(Instance: TObject; const AValue: JSValue); overload;
     procedure SetValue(Instance: TObject; const AValue: TValue); overload;
@@ -519,44 +521,58 @@ end;
 
 generic class function TValue.From<T>(const Value: T): TValue;
 begin
-  Result := FromJSValue(Value);
+  Result := Make(System.TypeInfo(T), Value);
+end;
+
+class function TValue.Make(TypeInfo: TTypeInfo; const Value: JSValue): TValue;
+begin
+  Result.FData := Value;
+  Result.FTypeInfo := TypeInfo;
+end;
+
+class function TValue.Make(const Value: TValue): TValue;
+begin
+  Result := TValue.Make(Value.TypeInfo, Value.AsJSValue);
 end;
 
 class function TValue.FromJSValue(v: JSValue): TValue;
 var
   i: NativeInt;
+  TypeOfValue: TTypeInfo;
+
 begin
-  Result.FData:=v;
   case jsTypeOf(v) of
   'number':
     if JS.isInteger(v) then
       begin
       i:=NativeInt(v);
       if (i>=low(integer)) and (i<=high(integer)) then
-        Result.FTypeInfo:=system.TypeInfo(Integer)
+        TypeOfValue:=system.TypeInfo(Integer)
       else
-        Result.FTypeInfo:=system.TypeInfo(NativeInt);
+        TypeOfValue:=system.TypeInfo(NativeInt);
       end
     else
-      Result.FTypeInfo:=system.TypeInfo(Double);
-  'string':  Result.FTypeInfo:=system.TypeInfo(String);
-  'boolean': Result.FTypeInfo:=system.TypeInfo(Boolean);
+      TypeOfValue:=system.TypeInfo(Double);
+  'string':  TypeOfValue:=system.TypeInfo(String);
+  'boolean': TypeOfValue:=system.TypeInfo(Boolean);
   'object':
     begin
     if v=nil then
-      Result.FTypeInfo:=system.TypeInfo(Pointer)
+      TypeOfValue:=system.TypeInfo(Pointer)
     else if JS.isClass(v) and JS.isExt(v,TObject) then
-      Result.FTypeInfo:=system.TypeInfo(TClass(v))
+      TypeOfValue:=system.TypeInfo(TClass(v))
     else if JS.isObject(v) and JS.isExt(v,TObject) then
-      Result.FTypeInfo:=system.TypeInfo(TObject(v))
+      TypeOfValue:=system.TypeInfo(TObject(v))
     else
-      Result.FTypeInfo:=system.TypeInfo(Pointer);
-    if (Result.FTypeInfo=JS.Undefined) or (Result.FTypeInfo=nil) then
-      Result.FTypeInfo:=system.TypeInfo(Pointer);
+      TypeOfValue:=system.TypeInfo(Pointer);
+    if (TypeOfValue=JS.Undefined) or (TypeOfValue=nil) then
+      TypeOfValue:=system.TypeInfo(Pointer);
     end
   else
-    Result.FTypeInfo:=system.TypeInfo(JSValue);
+    TypeOfValue:=system.TypeInfo(JSValue);
   end;
+
+  Result := Make(TypeOfValue, v);
 end;
 
 function TValue.IsObject: boolean;
@@ -579,7 +595,11 @@ end;
 
 function TValue.IsArray: boolean;
 begin
-  Result := Kind in [tkArray, tkDynArray];
+  case Kind of
+    tkDynArray: Exit(True);
+    tkArray: Exit(Length(TTypeInfoStaticArray(FTypeInfo).Dims) = 1);
+    else Result := False;
+  end;
 end;
 
 function TValue.IsClass: boolean;
@@ -687,35 +707,48 @@ end;
 
 function TValue.GetArrayLength: SizeInt;
 begin
-  if not IsArray then
-    raise EInvalidCast.Create(SErrInvalidTypecast);
-  Result:=length(TJSValueDynArray(FData));
+  if IsArray then
+    Exit(Length(TJSValueDynArray(FData)));
+
+  raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
 
 function TValue.GetArrayElement(aIndex: SizeInt): TValue;
-var
-  StaticTI: TTypeInfoStaticArray;
-  DynIT: TTypeInfoDynArray;
 begin
-  case Kind of
-  tkDynArray:
-    begin
-    DynIT:=TTypeInfoDynArray(FTypeInfo);
-    Result.FTypeInfo:=DynIT.ElType;
-    if DynIT.DimCount<>1 then
-      raise EInvalidCast.Create(SErrInvalidTypecast);
+  if IsArray then
+  begin
+    case Kind of
+      tkArray: Result.FTypeInfo:=TTypeInfoStaticArray(FTypeInfo).ElType;
+      tkDynArray: Result.FTypeInfo:=TTypeInfoDynArray(FTypeInfo).ElType;
     end;
-  tkArray:
-    begin
-    StaticTI:=TTypeInfoStaticArray(FTypeInfo);
-    if length(StaticTI.Dims)<>1 then
-      raise EInvalidCast.Create(SErrInvalidTypecast);
-    Result.FTypeInfo:=StaticTI.ElType;
-    end;
+
+    Result.FData:=TJSValueDynArray(FData)[aIndex];
+  end
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
-  end;
-  Result.FData:=TJSValueDynArray(FData)[aIndex];
+end;
+
+procedure TValue.SetArrayLength(const Size: SizeInt);
+var
+  NewArray: TJSValueDynArray;
+
+begin
+  NewArray := TJSValueDynArray(FData);
+
+  SetLength(NewArray, Size);
+
+  FData := NewArray;
+end;
+
+procedure TValue.SetArrayElement(aIndex: SizeInt; const AValue: TValue);
+var
+  ValueTypeInfo: TTypeInfo;
+
+begin
+  if IsArray then
+    TJSValueDynArray(FData)[aIndex] := AValue.AsJSValue
+  else
+    raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
 
 function TValue.IsType(ATypeInfo: PTypeInfo): boolean;
@@ -1173,14 +1206,13 @@ end;
 
 function TRttiProperty.GetValue(Instance: TObject): TValue;
 begin
-  Result := TValue.FromJSValue(GetJSValueProp(Instance, PropertyTypeInfo));
+  Result := TValue.Make(PropertyType.Handle, GetJSValueProp(Instance, PropertyTypeInfo));
 end;
 
 procedure TRttiProperty.SetValue(Instance: TObject; const AValue: TValue);
 begin
-  SetJSValueProp(Instance, PropertyTypeInfo, AValue);
+  SetJSValueProp(Instance, PropertyTypeInfo, AValue.AsJSValue);
 end;
-
 
 procedure TRttiProperty.SetValue(Instance: TObject; const AValue: JSValue);
 begin

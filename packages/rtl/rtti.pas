@@ -70,6 +70,7 @@ type
   end;
 
   TRttiType = class;
+  TRttiInstanceType = class;
 
   { TRTTIContext }
 
@@ -201,11 +202,11 @@ type
     FAttributes: TCustomAttributeArray;
     FTypeInfo: TTypeInfo;
     //FMethods: specialize TArray<TRttiMethod>;
-    //function GetAsInstance: TRttiInstanceType;
+    function GetAsInstance: TRttiInstanceType;
   protected
     function GetName: string; override;
     //function GetHandle: Pointer; override;
-    function GetIsInstance: boolean; virtual;
+    function GetIsInstance: boolean;
     //function GetIsManaged: boolean; virtual;
     function GetIsOrdinal: boolean; virtual;
     function GetIsRecord: boolean; virtual;
@@ -236,7 +237,7 @@ type
     property IsRecord: boolean read GetIsRecord;
     property IsSet: boolean read GetIsSet;
     //property BaseType: TRttiType read GetBaseType;
-    //property AsInstance: TRttiInstanceType read GetAsInstance;
+    property AsInstance: TRttiInstanceType read GetAsInstance;
     property TypeKind: TTypeKind read GetTypeKind;
     //property TypeSize: integer read GetTypeSize;
   end;
@@ -276,7 +277,6 @@ type
     function GetMetaClassType: TClass;
   protected
     function GetAncestor: TRttiStructuredType; override;
-    function GetIsInstance: boolean; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
 
@@ -962,11 +962,6 @@ begin
   inherited Create(ATypeInfo);
 end;
 
-function TRttiInstanceType.GetIsInstance: boolean;
-begin
-  Result:=True;
-end;
-
 { TRttiInterfaceType }
 
 constructor TRttiInterfaceType.Create(ATypeInfo: PTypeInfo);
@@ -1250,7 +1245,7 @@ end;
 
 function TRttiType.GetIsInstance: boolean;
 begin
-  Result:=false;
+  Result:=Self is TRttiInstanceType;
 end;
 
 function TRttiType.GetIsOrdinal: boolean;
@@ -1271,6 +1266,11 @@ end;
 function TRttiType.GetTypeKind: TTypeKind;
 begin
   Result:=FTypeInfo.Kind;
+end;
+
+function TRttiType.GetAsInstance: TRttiInstanceType;
+begin
+  Result := Self as TRttiInstanceType;
 end;
 
 constructor TRttiType.Create(ATypeInfo: PTypeInfo);

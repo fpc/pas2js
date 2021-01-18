@@ -15,12 +15,12 @@ Type
   TVSEndOfLine = (EndOfLine_unknown,LF,CRLF);
   TVSViewColumn = (ViewColumn_unknown,Active,Beside,One,Two,Three,Four,Five,Six,Seven,Eight,Nine);
   TVSDocumentHighlightKind = (Text,Read,Write);
-  TVSSymbolKind = (File,Module,Namespace,Package,Class,Method,Property,Field,Constructor,Enum,Interface,Function,Variable,Constant,String,NativeInt,Boolean,Array,Object,Key,Null,EnumMember,Struct,Event,Operator,TypeParameter);
+  TVSSymbolKind = (File_,Module,Namespace,Package,Class_,Method,Property_,Field,Constructor_,Enum,Interface_,Function_,Variable,Constant,String_,NativeInt,Boolean,Array_,Object_,Key,Null,EnumMember,Struct,Event,Operator_,TypeParameter);
   TVSSymbolTag = (SymbolTag_unknown,Deprecated);
   // init : 1
   TVSSignatureHelpTriggerKind = (SignatureHelpTriggerKind_unknown,Invoke,TriggerCharacter,ContentChange);
   // init : 0
-  TVSCompletionItemKind = (Text,Method,Function_,Constructor_,Field,Variable,Class_,Interface_,Module,Property_,Unit_,Value,Enum,Keyword,Snippet,Color,Reference,File,Folder,EnumMember,Constant,Struct,Event,Operator,TypeParameter,User,Issue);
+  TVSCompletionItemKind = (Text,Method,Function_,Constructor_,Field,Variable,Class_,Interface_,Module,Property_,Unit_,Value,Enum,Keyword,Snippet,Color,Reference,&File,Folder,EnumMember,Constant,Struct,Event,&Operator,TypeParameter,User,Issue);
   // init : 1
   TVSTextEditorCursorStyle = (TextEditorCursorStyle_unknown,Line,Block,Underline,LineThin,BlockOutline,UnderlineThin);
   // init : 0
@@ -76,9 +76,9 @@ Type
   // init : 1
   TVSTextDocumentSaveReason = (TextDocumentSaveReason_unknown,Manual,AfterDelay,FocusOut);
   // init : parentSession: TVSDebugSession;
-  TVSDebugConsoleMode = (DebugConsoleMode_unknown,,,,);
+  TVSDebugConsoleMode = (DebugConsoleMode_unknown);
   // init : export let activeDebugSession: TVSDebugSession ;
-  TVSDebugConfigurationProviderTriggerKind = (DebugConfigurationProviderTriggerKind_unknown,,,,,,,,,,,,,,,,);
+  TVSDebugConfigurationProviderTriggerKind = (DebugConfigurationProviderTriggerKind_unknown);
   // init : 0
   TVSCommentThreadCollapsibleState = (Collapsed,Expanded);
   // init : 0
@@ -424,7 +424,7 @@ Type
   TVSWorkspaceFoldersChangeEventHandler = reference to function(aEvent : TVSWorkspaceFoldersChangeEvent) : JSValue;
 
 
-  TVSCommand  = class external name 'Command' (TJSObject)
+  TVSCommand  = class external name 'vscode.Command' (TJSObject)
   Public
     title: string;
     TVSCommand: string;
@@ -432,7 +432,7 @@ Type
     arguments: TJSValueDynArray;
   end;
 
-  TVSTextLine  = class external name 'TextLine' (TJSObject)
+  TVSTextLine  = class external name 'vscode.TextLine' (TJSObject)
   Private
     FlineNumber : NativeInt; external name 'lineNumber';
     Ftext : string; external name 'text';
@@ -449,7 +449,7 @@ Type
     Property isEmptyOrWhitespace : boolean read FisEmptyOrWhitespace;
   end;
 
-  TVSTextDocument  = class external name 'TextDocument' (TJSObject)
+  TVSTextDocument  = class external name 'vscode.TextDocument' (TJSObject)
   Private
     Furi : TVSUri; external name 'uri';
     FfileName : string; external name 'fileName';
@@ -493,7 +493,7 @@ Type
     character: NativeInt;
   end;
 
-  TVSPosition  = class external name 'Position' (TJSObject)
+  TVSPosition  = class external name 'vscode.Position' (TJSObject)
     Fline : NativeInt; external name 'line';
     Fcharacter : NativeInt; external name 'character';
   Public
@@ -521,7 +521,7 @@ Type
     end_: TVSPosition; external name 'end';
   end;
 
-  TVSRange  = class external name 'Range' (TJSObject)
+  TVSRange  = class external name 'vscode.Range' (TJSObject)
   Private
     Fstart : TVSPosition; external name 'start';
     Fend : TVSPosition; external name 'end';
@@ -544,7 +544,7 @@ Type
   end;
 
 
-  TVSSelection = class external name 'Selection' (TVSRange)
+  TVSSelection = class external name 'vscode.Selection' (TVSRange)
   Public
     anchor: TVSPosition;
     active: TVSPosition;
@@ -557,7 +557,7 @@ Type
   TVSTextEditorSelectionChangeKind = (TextEditorSelectionChangeKind_0,Keyboard,Mouse,Command);
 
 
-  TVSTextEditorSelectionChangeEvent  = class external name 'TextEditorSelectionChangeEvent' (TJSObject)
+  TVSTextEditorSelectionChangeEvent  = class external name 'vscode.TextEditorSelectionChangeEvent' (TJSObject)
   Private
     FtextEditor : TVSTextEditor; external name 'textEditor';
     Fselections : TVSSelectionDynArray; external name 'selections';
@@ -569,7 +569,7 @@ Type
   end;
 
 
-  TVSTextEditorVisibleRangesChangeEvent  = class external name 'TextEditorVisibleRangesChangeEvent' (TJSObject)
+  TVSTextEditorVisibleRangesChangeEvent  = class external name 'vscode.TextEditorVisibleRangesChangeEvent' (TJSObject)
   Private
     FtextEditor : TVSTextEditor; external name 'textEditor';
     FvisibleRanges : TVSRangeDynArray; external name 'visibleRanges';
@@ -579,7 +579,7 @@ Type
   end;
 
 
-  TVSTextEditorOptionsChangeEvent  = class external name 'TextEditorOptionsChangeEvent' (TJSObject)
+  TVSTextEditorOptionsChangeEvent  = class external name 'vscode.TextEditorOptionsChangeEvent' (TJSObject)
   Private
     FtextEditor : TVSTextEditor; external name 'textEditor';
     Foptions : TVSTextEditorOptions; external name 'options';
@@ -589,7 +589,7 @@ Type
   end;
 
 
-  TVSTextEditorViewColumnChangeEvent  = class external name 'TextEditorViewColumnChangeEvent' (TJSObject)
+  TVSTextEditorViewColumnChangeEvent  = class external name 'vscode.TextEditorViewColumnChangeEvent' (TJSObject)
   Private
     FtextEditor : TVSTextEditor; external name 'textEditor';
     FviewColumn : TVSViewColumn; external name 'viewColumn';
@@ -600,7 +600,7 @@ Type
 
 
 
-  TVSTextEditorOptions  = class external name 'TextEditorOptions' (TJSObject)
+  TVSTextEditorOptions  = class external name 'vscode.TextEditorOptions' (TJSObject)
   Public
     tabSize: NativeInt;
     tabSizeStr : string; external name 'tabSize';
@@ -611,7 +611,7 @@ Type
   end;
 
 
-  TVSTextEditorDecorationType  = class external name 'TextEditorDecorationType' (TJSObject)
+  TVSTextEditorDecorationType  = class external name 'vscode.TextEditorDecorationType' (TJSObject)
   Private
     Fkey : string; external name 'key';
   Public
@@ -620,7 +620,7 @@ Type
   end;
 
 
-  TVSTextDocumentShowOptions  = class external name 'TextDocumentShowOptions' (TJSObject)
+  TVSTextDocumentShowOptions  = class external name 'vscode.TextDocumentShowOptions' (TJSObject)
   Public
     viewColumn: TVSViewColumn;
     preserveFocus: boolean;
@@ -629,13 +629,13 @@ Type
   end;
 
 
-  TVSThemeColor  = class external name 'ThemeColor' (TJSObject)
+  TVSThemeColor  = class external name 'vscode.ThemeColor' (TJSObject)
   Public
     constructor New(id: string);
   end;
 
 
-  TVSThemeIcon  = class external name 'ThemeIcon' (TJSObject)
+  TVSThemeIcon  = class external name 'vscode.ThemeIcon' (TJSObject)
   Private
     Fid : string; external name 'id';
     Fcolor : TVSThemeColor; external name 'color';
@@ -648,7 +648,7 @@ Type
   end;
 
 
-  TVSThemableDecorationRenderOptions  = class external name 'ThemableDecorationRenderOptions' (TJSObject)
+  TVSThemableDecorationRenderOptions  = class external name 'vscode.ThemableDecorationRenderOptions' (TJSObject)
   Public
     backgroundColor: string;
     backgroundColorObj : TVSThemeColor; external name 'backgroundColor';
@@ -682,7 +682,7 @@ Type
   end;
 
 
-  TVSThemableDecorationAttachmentRenderOptions  = class external name 'ThemableDecorationAttachmentRenderOptions' (TJSObject)
+  TVSThemableDecorationAttachmentRenderOptions  = class external name 'vscode.ThemableDecorationAttachmentRenderOptions' (TJSObject)
   Public
     contentText: string;
     contentIconPath : string;
@@ -703,7 +703,7 @@ Type
   end;
 
 
-  TVSDecorationRenderOptions = class external name 'DecorationRenderOptions' (TVSThemableDecorationRenderOptions)
+  TVSDecorationRenderOptions = class external name 'vscode.DecorationRenderOptions' (TVSThemableDecorationRenderOptions)
   Public
     isWholeLine: boolean;
     rangeBehavior: TVSDecorationRangeBehavior;
@@ -713,7 +713,7 @@ Type
   end;
 
 
-  TVSDecorationOptions  = class external name 'DecorationOptions' (TJSObject)
+  TVSDecorationOptions  = class external name 'vscode.DecorationOptions' (TJSObject)
   Public
     range: TVSRange;
     hoverMessage : String;
@@ -723,14 +723,14 @@ Type
   end;
   TVSDecorationOptionsDynArray = Array of TVSDecorationOptions;
 
-  TVSThemableDecorationInstanceRenderOptions  = class external name 'ThemableDecorationInstanceRenderOptions' (TJSObject)
+  TVSThemableDecorationInstanceRenderOptions  = class external name 'vscode.ThemableDecorationInstanceRenderOptions' (TJSObject)
   Public
     before: TVSThemableDecorationAttachmentRenderOptions;
     after: TVSThemableDecorationAttachmentRenderOptions;
   end;
 
 
-  TVSDecorationInstanceRenderOptions  = class external name 'DecorationInstanceRenderOptions' (TVSThemableDecorationInstanceRenderOptions)
+  TVSDecorationInstanceRenderOptions  = class external name 'vscode.DecorationInstanceRenderOptions' (TVSThemableDecorationInstanceRenderOptions)
   Public
     light: TVSThemableDecorationInstanceRenderOptions;
     dark: TVSThemableDecorationInstanceRenderOptions;
@@ -743,7 +743,7 @@ Type
    undoStopAfter: boolean;
   end;
 
-  TVSTextEditor  = class external name 'TextEditor' (TJSObject)
+  TVSTextEditor  = class external name 'vscode.TextEditor' (TJSObject)
   Private
     Fdocument : TVSTextDocument; external name 'document';
     FvisibleRanges : TVSRangeDynArray; external name 'visibleRanges';
@@ -777,7 +777,7 @@ Type
   end;
 
 
-  TVSTextEditorEdit  = class external name 'TextEditorEdit' (TJSObject)
+  TVSTextEditorEdit  = class external name 'vscode.TextEditorEdit' (TJSObject)
   Public
     procedure replace(location: TVSSelection; value: string) ;overload;
     procedure replace(location: TVSRange; value: string) ;overload;
@@ -796,7 +796,7 @@ Type
     fragment: string;
   end;
 
-  TVSUri  = class external name 'Uri' (TJSObject)
+  TVSUri  = class external name 'vscode.Uri' (TJSObject)
   Private
     Fscheme : string; external name 'scheme';
     Fauthority : string; external name 'authority';
@@ -823,7 +823,7 @@ Type
   end;
 
 
-  TVSCancellationToken  = class external name 'CancellationToken' (TJSObject)
+  TVSCancellationToken  = class external name 'vscode.CancellationToken' (TJSObject)
   Public
     isCancellationRequested: boolean;
     function onCancellationRequested(aHandler : TVSanyHandler) : TVSDisposable; overload;
@@ -832,7 +832,7 @@ Type
   end;
 
 
-  TVSCancellationTokenSource  = class external name 'CancellationTokenSource' (TJSObject)
+  TVSCancellationTokenSource  = class external name 'vscode.CancellationTokenSource' (TJSObject)
   Public
     token: TVSCancellationToken;
     procedure cancel() ;
@@ -840,7 +840,7 @@ Type
   end;
 
 
-  TVSDisposable  = class external name 'TVSDisposable' (TJSObject)
+  TVSDisposable  = class external name 'vscode.TVSDisposable' (TJSObject)
   Public
     function from(): TVSDisposable; varargs of TJSObject;
     constructor New(callOnDispose: TVSVoidHandler);
@@ -849,7 +849,7 @@ Type
 
 
 (*
-  TVSEventEmitter<T>  = class external name 'EventEmitter<T>' (TJSObject)
+  TVSEventEmitter<T>  = class external name 'vscode.EventEmitter<T>' (TJSObject)
   Public
     function event(aHandler : TVSTHandler) : TVSDisposable; overload;
     function event(aHandler : TVSTHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -859,7 +859,7 @@ Type
   end;
 *)
 
-  TVSFileSystemWatcher = class external name 'TVSFileSystemWatcher' (TVSDisposable)
+  TVSFileSystemWatcher = class external name 'vscode.TVSFileSystemWatcher' (TVSDisposable)
   Public
     ignoreCreateEvents: boolean;
     ignoreChangeEvents: boolean;
@@ -876,7 +876,7 @@ Type
   end;
 
 
-  TVSTextDocumentContentProvider  = class external name 'TextDocumentContentProvider' (TJSObject)
+  TVSTextDocumentContentProvider  = class external name 'vscode.TextDocumentContentProvider' (TJSObject)
   Public
     function onDidChange(aHandler : TVSUriHandler) : TVSDisposable; overload;
     function onDidChange(aHandler : TVSUriHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -885,7 +885,7 @@ Type
   end;
 
 
-  TVSQuickPickItem  = class external name 'QuickPickItem' (TJSObject)
+  TVSQuickPickItem  = class external name 'vscode.QuickPickItem' (TJSObject)
   Public
     label_: string; external name 'label';
     description: string;
@@ -895,7 +895,7 @@ Type
   end;
 
 
-  TVSQuickPickOptions  = class external name 'TVSQuickPickOptions' (TJSObject)
+  TVSQuickPickOptions  = class external name 'vscode.TVSQuickPickOptions' (TJSObject)
   Public
     matchOnDescription: boolean;
     matchOnDetail: boolean;
@@ -907,14 +907,14 @@ Type
   end;
 
 
-  TVSWorkspaceFolderPickOptions  = class external name 'WorkspaceFolderPickOptions' (TJSObject)
+  TVSWorkspaceFolderPickOptions  = class external name 'vscode.WorkspaceFolderPickOptions' (TJSObject)
   Public
     placeHolder: string;
     ignoreFocusOut: boolean;
   end;
 
 
-  TVSOpenDialogOptions  = class external name 'OpenDialogOptions' (TJSObject)
+  TVSOpenDialogOptions  = class external name 'vscode.OpenDialogOptions' (TJSObject)
   Public
     defaultUri: TVSUri;
     openLabel: string;
@@ -926,7 +926,7 @@ Type
   end;
 
 
-  TVSSaveDialogOptions  = class external name 'SaveDialogOptions' (TJSObject)
+  TVSSaveDialogOptions  = class external name 'vscode.SaveDialogOptions' (TJSObject)
   Public
     defaultUri: TVSUri;
     saveLabel: string;
@@ -935,20 +935,20 @@ Type
   end;
 
 
-  TVSMessageItem  = class external name 'MessageItem' (TJSObject)
+  TVSMessageItem  = class external name 'vscode.MessageItem' (TJSObject)
   Public
     title: string;
     isCloseAffordance: boolean;
   end;
 
 
-  TVSMessageOptions  = class external name 'TVSMessageOptions' (TJSObject)
+  TVSMessageOptions  = class external name 'vscode.TVSMessageOptions' (TJSObject)
   Public
     modal: boolean;
   end;
 
   TVSInputBoxOptionsValidateHandler = function(S : String) : JSValue;
-  TVSInputBoxOptions  = class external name 'InputBoxOptions' (TJSObject)
+  TVSInputBoxOptions  = class external name 'vscode.InputBoxOptions' (TJSObject)
   Public
     value: string;
     valueSelection: TNativeIntDynArray;
@@ -960,7 +960,7 @@ Type
   end;
 
 
-  TVSRelativePattern  = class external name 'RelativePattern' (TJSObject)
+  TVSRelativePattern  = class external name 'vscode.RelativePattern' (TJSObject)
   Public
     base: string;
     pattern: string;
@@ -970,7 +970,7 @@ Type
   end;
 
 
-  TVSDocumentFilter  = class external name 'DocumentFilter' (TJSObject)
+  TVSDocumentFilter  = class external name 'vscode.DocumentFilter' (TJSObject)
   Private
     Flanguage : string; external name 'language';
     Fscheme : string; external name 'scheme';
@@ -986,7 +986,7 @@ Type
 
   // export type DocumentSelector = DocumentFilter | string | TDocumentFilter | stringDynArray;
   // export type TJSObject<T> = T | undefined | null | TVSThenable; // T | undefined | null
-  TVSCodeActionKind  = class external name 'CodeActionKind' (TJSObject)
+  TVSCodeActionKind  = class external name 'vscode.CodeActionKind' (TJSObject)
   Private
     Fvalue : string; external name 'value';
   Public
@@ -1007,7 +1007,7 @@ Type
   end;
 
 
-  TVSCodeActionContext  = class external name 'CodeActionContext' (TJSObject)
+  TVSCodeActionContext  = class external name 'vscode.CodeActionContext' (TJSObject)
   Private
     Fdiagnostics : TVSDiagnosticDynArray; external name 'diagnostics';
     Fonly : TVSCodeActionKind; external name 'only';
@@ -1023,7 +1023,7 @@ Type
     Property reason : string read Freason;
   end;
 
-  TVSCodeAction  = class external name 'CodeAction' (TJSObject)
+  TVSCodeAction  = class external name 'vscode.CodeAction' (TJSObject)
   Public
     title: string;
     edit: TVSWorkspaceEdit;
@@ -1037,7 +1037,7 @@ Type
   end;
 
 
-  TVSCodeActionProvider = class external name 'TVSCodeActionProvider' (TJSObject)
+  TVSCodeActionProvider = class external name 'vscode.TVSCodeActionProvider' (TJSObject)
   Public
     function provideCodeActions(document: TVSTextDocument; range: TVSRange; context: TVSCodeActionContext; token: TVSCancellationToken) : JSValue;
     function provideCodeActions(document: TVSTextDocument; range: TVSSelection; context: TVSCodeActionContext; token: TVSCancellationToken) : JSValue;
@@ -1050,7 +1050,7 @@ Type
   end;
   TVSCodeActionProviderMetadataDocumentationArray = Array of TVSCodeActionProviderMetadataDocumentationItem;
 
-  TVSCodeActionProviderMetadata  = class external name 'TVSCodeActionProviderMetadata' (TJSObject)
+  TVSCodeActionProviderMetadata  = class external name 'vscode.TVSCodeActionProviderMetadata' (TJSObject)
   Private
     FprovidedCodeActionKinds : TVSCodeActionKindDynArray; external name 'providedCodeActionKinds';
     fdocumentation : TVSCodeActionProviderMetadataDocumentationArray; external name 'documentation';
@@ -1060,7 +1060,7 @@ Type
   end;
 
 
-  TVSCodeLens  = class external name 'CodeLens' (TJSObject)
+  TVSCodeLens  = class external name 'vscode.CodeLens' (TJSObject)
   Private
     FisResolved : boolean; external name 'isResolved';
   Public
@@ -1072,7 +1072,7 @@ Type
   end;
 
 
-  TVSCodeLensProvider = class external name 'TVSCodeLensProvider' (TJSObject)
+  TVSCodeLensProvider = class external name 'vscode.TVSCodeLensProvider' (TJSObject)
   Public
     function onDidChangeCodeLenses(aHandler : TVSvoidHandler) : TVSDisposable; overload;
     function onDidChangeCodeLenses(aHandler : TVSvoidHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -1082,31 +1082,31 @@ Type
   end;
 
 
-  TVSDefinitionProvider  = class external name 'DefinitionProvider' (TJSObject)
+  TVSDefinitionProvider  = class external name 'vscode.DefinitionProvider' (TJSObject)
   Public
     function provideDefinition(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSImplementationProvider  = class external name 'ImplementationProvider' (TJSObject)
+  TVSImplementationProvider  = class external name 'vscode.ImplementationProvider' (TJSObject)
   Public
     function provideImplementation(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSTypeDefinitionProvider  = class external name 'TypeDefinitionProvider' (TJSObject)
+  TVSTypeDefinitionProvider  = class external name 'vscode.TypeDefinitionProvider' (TJSObject)
   Public
     function provideTypeDefinition(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSDeclarationProvider  = class external name 'DeclarationProvider' (TJSObject)
+  TVSDeclarationProvider  = class external name 'vscode.DeclarationProvider' (TJSObject)
   Public
     function provideDeclaration(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSMarkdownString  = class external name 'MarkdownString' (TJSObject)
+  TVSMarkdownString  = class external name 'vscode.MarkdownString' (TJSObject)
   Private
     FsupportThemeIcons : boolean; external name 'supportThemeIcons';
   Public
@@ -1124,7 +1124,7 @@ Type
 
 
 
-  TVSHover  = class external name 'Hover' (TJSObject)
+  TVSHover  = class external name 'vscode.Hover' (TJSObject)
   Public
     contents: TVSMarkdownStringDynArray;
     range: TVSRange;
@@ -1135,13 +1135,13 @@ Type
   end;
 
 
-  TVSHoverProvider  = class external name 'HoverProvider' (TJSObject)
+  TVSHoverProvider  = class external name 'vscode.HoverProvider' (TJSObject)
   Public
     function provideHover(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSEvaluatableExpression  = class external name 'EvaluatableExpression' (TJSObject)
+  TVSEvaluatableExpression  = class external name 'vscode.EvaluatableExpression' (TJSObject)
   Private
     Frange : TVSRange; external name 'range';
     Fexpression : string; external name 'expression';
@@ -1153,7 +1153,7 @@ Type
   end;
 
 
-  TVSEvaluatableExpressionProvider  = class external name 'EvaluatableExpressionProvider' (TJSObject)
+  TVSEvaluatableExpressionProvider  = class external name 'vscode.EvaluatableExpressionProvider' (TJSObject)
   Public
     function provideEvaluatableExpression(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
@@ -1161,7 +1161,7 @@ Type
 
 
 
-  TVSDocumentHighlight  = class external name 'DocumentHighlight' (TJSObject)
+  TVSDocumentHighlight  = class external name 'vscode.DocumentHighlight' (TJSObject)
   Public
     range: TVSRange;
     kind: TVSDocumentHighlightKind;
@@ -1170,7 +1170,7 @@ Type
   end;
 
 
-  TVSDocumentHighlightProvider  = class external name 'DocumentHighlightProvider' (TJSObject)
+  TVSDocumentHighlightProvider  = class external name 'vscode.DocumentHighlightProvider' (TJSObject)
   Public
     function provideDocumentHighlights(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
@@ -1178,7 +1178,7 @@ Type
 
 
 
-  TVSSymbolInformation  = class external name 'SymbolInformation' (TJSObject)
+  TVSSymbolInformation  = class external name 'vscode.SymbolInformation' (TJSObject)
   Public
     name: string;
     containerName: string;
@@ -1192,7 +1192,7 @@ Type
   end;
 
 
-  TVSDocumentSymbol  = class external name 'DocumentSymbol' (TJSObject)
+  TVSDocumentSymbol  = class external name 'vscode.DocumentSymbol' (TJSObject)
   Public
     name: string;
     detail: string;
@@ -1205,38 +1205,38 @@ Type
   end;
 
 
-  TVSDocumentSymbolProvider  = class external name 'DocumentSymbolProvider' (TJSObject)
+  TVSDocumentSymbolProvider  = class external name 'vscode.DocumentSymbolProvider' (TJSObject)
   Public
     function provideDocumentSymbols(document: TVSTextDocument; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSDocumentSymbolProviderMetadata  = class external name 'DocumentSymbolProviderMetadata' (TJSObject)
+  TVSDocumentSymbolProviderMetadata  = class external name 'vscode.DocumentSymbolProviderMetadata' (TJSObject)
   Public
     label_: string; external name 'label';
   end;
 
 
-  TVSWorkspaceSymbolProvider  = class external name 'WorkspaceSymbolProvider' (TJSObject)
+  TVSWorkspaceSymbolProvider  = class external name 'vscode.WorkspaceSymbolProvider' (TJSObject)
   Public
     function provideWorkspaceSymbols(query: string; token: TVSCancellationToken) : TJSObjectDynArray;
     function resolveWorkspaceSymbol(symbol: TJSObject; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSReferenceContext  = class external name 'ReferenceContext' (TJSObject)
+  TVSReferenceContext  = class external name 'vscode.ReferenceContext' (TJSObject)
   Public
     includeDeclaration: boolean;
   end;
 
 
-  TVSReferenceProvider  = class external name 'ReferenceProvider' (TJSObject)
+  TVSReferenceProvider  = class external name 'vscode.ReferenceProvider' (TJSObject)
   Public
     function provideReferences(document: TVSTextDocument; position: TVSPosition; context: TVSReferenceContext; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSTextEdit  = class external name 'TextEdit' (TJSObject)
+  TVSTextEdit  = class external name 'vscode.TextEdit' (TJSObject)
   Public
     range: TVSRange;
     newText: string;
@@ -1253,7 +1253,7 @@ Type
     dark: TVSUri;
   end;
 
-  TVSWorkspaceEditEntryMetadata  = class external name 'WorkspaceEditEntryMetadata' (TJSObject)
+  TVSWorkspaceEditEntryMetadata  = class external name 'vscode.WorkspaceEditEntryMetadata' (TJSObject)
   Public
     needsConfirmation: boolean;
     label_: string; external name 'label';
@@ -1273,7 +1273,7 @@ Type
     ignoreIfNotExists: boolean;
   end;
 
-  TVSWorkspaceEdit  = class external name 'WorkspaceEdit' (TJSObject)
+  TVSWorkspaceEdit  = class external name 'vscode.WorkspaceEdit' (TJSObject)
   Public
     Fsize : NativeInt; external name 'size';
     Property size : NativeInt read Fsize;
@@ -1300,7 +1300,7 @@ Type
 
   TVSSnippetStringappendPlaceholderHandler = function (snippet : TVSSnippetString) : JSValue;
 
-  TVSSnippetString  = class external name 'SnippetString' (TJSObject)
+  TVSSnippetString  = class external name 'vscode.SnippetString' (TJSObject)
   Public
     value: string;
     constructor New(); overload;
@@ -1319,14 +1319,14 @@ Type
   end;
 
 
-  TVSRenameProvider  = class external name 'RenameProvider' (TJSObject)
+  TVSRenameProvider  = class external name 'vscode.RenameProvider' (TJSObject)
   Public
     function provideRenameEdits(document: TVSTextDocument; position: TVSPosition; newName: string; token: TVSCancellationToken) : JSValue;
     function prepareRename (document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSSemanticTokensLegend  = class external name 'SemanticTokensLegend' (TJSObject)
+  TVSSemanticTokensLegend  = class external name 'vscode.SemanticTokensLegend' (TJSObject)
   Private
     FtokenTypes : TstringDynArray; external name 'tokenTypes';
     FtokenModifiers : TstringDynArray; external name 'tokenModifiers';
@@ -1338,7 +1338,7 @@ Type
   end;
 
 
-  TVSSemanticTokensBuilder  = class external name 'SemanticTokensBuilder' (TJSObject)
+  TVSSemanticTokensBuilder  = class external name 'vscode.SemanticTokensBuilder' (TJSObject)
   Public
     constructor New(); overload;
     constructor New(legend: TVSSemanticTokensLegend); overload;
@@ -1351,7 +1351,7 @@ Type
   end;
 
 
-  TVSSemanticTokens  = class external name 'SemanticTokens' (TJSObject)
+  TVSSemanticTokens  = class external name 'vscode.SemanticTokens' (TJSObject)
   Private
     FresultId : string; external name 'resultId';
     Fdata : TUint32DynArray; external name 'data';
@@ -1363,7 +1363,7 @@ Type
   end;
 
 
-  TVSSemanticTokensEdits  = class external name 'SemanticTokensEdits' (TJSObject)
+  TVSSemanticTokensEdits  = class external name 'vscode.SemanticTokensEdits' (TJSObject)
   Private
     FresultId : string; external name 'resultId';
     Fedits : TVSSemanticTokensEditDynArray; external name 'edits';
@@ -1375,7 +1375,7 @@ Type
   end;
 
 
-  TVSSemanticTokensEdit  = class external name 'SemanticTokensEdit' (TJSObject)
+  TVSSemanticTokensEdit  = class external name 'vscode.SemanticTokensEdit' (TJSObject)
   Private
     Fstart : NativeInt; external name 'start';
     FdeleteCount : NativeInt; external name 'deleteCount';
@@ -1388,7 +1388,7 @@ Type
   end;
 
 
-  TVSDocumentSemanticTokensProvider  = class external name 'DocumentSemanticTokensProvider' (TJSObject)
+  TVSDocumentSemanticTokensProvider  = class external name 'vscode.DocumentSemanticTokensProvider' (TJSObject)
   Public
     function onDidChangeSemanticTokens(aHandler : TVSvoidHandler) : TVSDisposable; overload;
     function onDidChangeSemanticTokens(aHandler : TVSvoidHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -1398,38 +1398,38 @@ Type
   end;
 
 
-  TVSDocumentRangeSemanticTokensProvider  = class external name 'DocumentRangeSemanticTokensProvider' (TJSObject)
+  TVSDocumentRangeSemanticTokensProvider  = class external name 'vscode.DocumentRangeSemanticTokensProvider' (TJSObject)
   Public
     function provideDocumentRangeSemanticTokens(document: TVSTextDocument; range: TVSRange; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSFormattingOptions  = class external name 'FormattingOptions' (TJSObject)
+  TVSFormattingOptions  = class external name 'vscode.FormattingOptions' (TJSObject)
   Public
     tabSize: NativeInt;
     insertSpaces: boolean;
   end;
 
 
-  TVSDocumentFormattingEditProvider  = class external name 'DocumentFormattingEditProvider' (TJSObject)
+  TVSDocumentFormattingEditProvider  = class external name 'vscode.DocumentFormattingEditProvider' (TJSObject)
   Public
     function provideDocumentFormattingEdits(document: TVSTextDocument; options: TVSFormattingOptions; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSDocumentRangeFormattingEditProvider  = class external name 'DocumentRangeFormattingEditProvider' (TJSObject)
+  TVSDocumentRangeFormattingEditProvider  = class external name 'vscode.DocumentRangeFormattingEditProvider' (TJSObject)
   Public
     function provideDocumentRangeFormattingEdits(document: TVSTextDocument; range: TVSRange; options: TVSFormattingOptions; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSOnTypeFormattingEditProvider  = class external name 'OnTypeFormattingEditProvider' (TJSObject)
+  TVSOnTypeFormattingEditProvider  = class external name 'vscode.OnTypeFormattingEditProvider' (TJSObject)
   Public
     function provideOnTypeFormattingEdits(document: TVSTextDocument; position: TVSPosition; ch: string; options: TVSFormattingOptions; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSParameterInformation  = class external name 'ParameterInformation' (TJSObject)
+  TVSParameterInformation  = class external name 'vscode.ParameterInformation' (TJSObject)
   Public
     label_: string; external name 'label';
     labelArr : TNativeIntDynArray;
@@ -1444,7 +1444,7 @@ Type
   end;
 
 
-  TVSSignatureInformation  = class external name 'SignatureInformation' (TJSObject)
+  TVSSignatureInformation  = class external name 'vscode.SignatureInformation' (TJSObject)
   Public
     label_: string; external name 'label';
     documentation: string;
@@ -1457,7 +1457,7 @@ Type
   end;
 
 
-  TVSSignatureHelp  = class external name 'SignatureHelp' (TJSObject)
+  TVSSignatureHelp  = class external name 'vscode.SignatureHelp' (TJSObject)
   Public
     signatures: TVSSignatureInformationDynArray;
     activeSignature: NativeInt;
@@ -1467,7 +1467,7 @@ Type
 
 
 
-  TVSSignatureHelpContext  = class external name 'SignatureHelpContext' (TJSObject)
+  TVSSignatureHelpContext  = class external name 'vscode.SignatureHelpContext' (TJSObject)
   Private
     FtriggerKind : TVSSignatureHelpTriggerKind; external name 'triggerKind';
     FtriggerCharacter : string; external name 'triggerCharacter';
@@ -1481,13 +1481,13 @@ Type
   end;
 
 
-  TVSSignatureHelpProvider  = class external name 'SignatureHelpProvider' (TJSObject)
+  TVSSignatureHelpProvider  = class external name 'vscode.SignatureHelpProvider' (TJSObject)
   Public
     function provideSignatureHelp(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken; context: TVSSignatureHelpContext) : JSValue;
   end;
 
 
-  TVSSignatureHelpProviderMetadata  = class external name 'SignatureHelpProviderMetadata' (TJSObject)
+  TVSSignatureHelpProviderMetadata  = class external name 'vscode.SignatureHelpProviderMetadata' (TJSObject)
   Private
     FtriggerCharacters : TStringDynArray; external name 'triggerCharacters';
     FretriggerCharacters : TStringDynArray; external name 'retriggerCharacters';
@@ -1502,7 +1502,7 @@ Type
     replacing: TVSRange;
   end;
 
-  TVSCompletionItem  = class external name 'CompletionItem' (TJSObject)
+  TVSCompletionItem  = class external name 'vscode.CompletionItem' (TJSObject)
   Public
     label_: string; external name 'label';
     kind: TVSCompletionItemKind;
@@ -1527,7 +1527,7 @@ Type
   end;
 
 
-  TVSCompletionList  = class external name 'CompletionList' (TJSObject)
+  TVSCompletionList  = class external name 'vscode.CompletionList' (TJSObject)
   Public
     isIncomplete: boolean;
     items: TVSCompletionItemDynArray;
@@ -1539,7 +1539,7 @@ Type
 
 
 
-  TVSCompletionContext  = class external name 'CompletionContext' (TJSObject)
+  TVSCompletionContext  = class external name 'vscode.CompletionContext' (TJSObject)
   Private
     FtriggerKind : TVSCompletionTriggerKind; external name 'triggerKind';
     FtriggerCharacter : string; external name 'triggerCharacter';
@@ -1549,14 +1549,14 @@ Type
   end;
 
 
-  TVSCompletionItemProvider  = class external name 'CompletionItemProvider' (TJSObject)
+  TVSCompletionItemProvider  = class external name 'vscode.CompletionItemProvider' (TJSObject)
   Public
     function provideCompletionItems(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken; context: TVSCompletionContext) : JSValue;
     function resolveCompletionItem(item: TVSCompletionItem; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSDocumentLink  = class external name 'DocumentLink' (TJSObject)
+  TVSDocumentLink  = class external name 'vscode.DocumentLink' (TJSObject)
   Public
     range: TVSRange;
     target: TVSUri;
@@ -1566,14 +1566,14 @@ Type
   end;
 
 
-  TVSDocumentLinkProvider  = class external name 'DocumentLinkProvider' (TJSObject)
+  TVSDocumentLinkProvider  = class external name 'vscode.DocumentLinkProvider' (TJSObject)
   Public
     function provideDocumentLinks(document: TVSTextDocument; token: TVSCancellationToken) : JSValue;
     function resolveDocumentLink(link: TVSDocumentLink; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSColor  = class external name 'Color' (TJSObject)
+  TVSColor  = class external name 'vscode.Color' (TJSObject)
   Private
     Fred : NativeInt; external name 'red';
     Fgreen : NativeInt; external name 'green';
@@ -1588,7 +1588,7 @@ Type
   end;
 
 
-  TVSColorInformation  = class external name 'ColorInformation' (TJSObject)
+  TVSColorInformation  = class external name 'vscode.ColorInformation' (TJSObject)
   Public
     range: TVSRange;
     color: TVSColor;
@@ -1596,7 +1596,7 @@ Type
   end;
 
 
-  TVSColorPresentation  = class external name 'ColorPresentation' (TJSObject)
+  TVSColorPresentation  = class external name 'vscode.ColorPresentation' (TJSObject)
   Public
     label_: string; external name 'label';
     textEdit: TVSTextEdit;
@@ -1609,14 +1609,14 @@ Type
     range: TVSRange;
   end;
 
-  TVSDocumentColorProvider  = class external name 'DocumentColorProvider' (TJSObject)
+  TVSDocumentColorProvider  = class external name 'vscode.DocumentColorProvider' (TJSObject)
   Public
     function provideDocumentColors(document: TVSTextDocument; token: TVSCancellationToken) : JSValue;
     function provideColorPresentations(color: TVSColor; context: TVSDocumentColorProviderContext; token: TVSCancellationToken): JSValue;
   end;
 
 
-  TVSFoldingRange  = class external name 'FoldingRange' (TJSObject)
+  TVSFoldingRange  = class external name 'vscode.FoldingRange' (TJSObject)
   Public
     start: NativeInt;
     end_: NativeInt; external name 'end';
@@ -1628,12 +1628,12 @@ Type
 
 
 
-  TVSFoldingContext  = class external name 'FoldingContext' (TJSObject)
+  TVSFoldingContext  = class external name 'vscode.FoldingContext' (TJSObject)
   Public
   end;
 
 
-  TVSFoldingRangeProvider  = class external name 'FoldingRangeProvider' (TJSObject)
+  TVSFoldingRangeProvider  = class external name 'vscode.FoldingRangeProvider' (TJSObject)
   Public
     function onDidChangeFoldingRanges(aHandler : TVSvoidHandler) : TVSDisposable; overload;
     function onDidChangeFoldingRanges(aHandler : TVSvoidHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -1642,7 +1642,7 @@ Type
   end;
 
 
-  TVSSelectionRange  = class external name 'SelectionRange' (TJSObject)
+  TVSSelectionRange  = class external name 'vscode.SelectionRange' (TJSObject)
   Public
     range: TVSRange;
     parent: TVSSelectionRange;
@@ -1651,13 +1651,13 @@ Type
   end;
 
 
-  TVSSelectionRangeProvider  = class external name 'SelectionRangeProvider' (TJSObject)
+  TVSSelectionRangeProvider  = class external name 'vscode.SelectionRangeProvider' (TJSObject)
   Public
     function provideSelectionRanges(document: TVSTextDocument; positions: TVSPositionDynArray; token: TVSCancellationToken) :  JSValue;
   end;
 
 
-  TVSCallHierarchyItem  = class external name 'CallHierarchyItem' (TJSObject)
+  TVSCallHierarchyItem  = class external name 'vscode.CallHierarchyItem' (TJSObject)
   Public
     name: string;
     kind: TVSSymbolKind;
@@ -1670,7 +1670,7 @@ Type
   end;
 
 
-  TVSCallHierarchyIncomingCall  = class external name 'CallHierarchyIncomingCall' (TJSObject)
+  TVSCallHierarchyIncomingCall  = class external name 'vscode.CallHierarchyIncomingCall' (TJSObject)
   Public
     from: TVSCallHierarchyItem;
     fromRanges: TVSRangeDynArray;
@@ -1678,7 +1678,7 @@ Type
   end;
 
 
-  TVSCallHierarchyOutgoingCall  = class external name 'CallHierarchyOutgoingCall' (TJSObject)
+  TVSCallHierarchyOutgoingCall  = class external name 'vscode.CallHierarchyOutgoingCall' (TJSObject)
   Public
     to_: TVSCallHierarchyItem; external name 'to';
     fromRanges: TVSRangeDynArray;
@@ -1686,7 +1686,7 @@ Type
   end;
 
 
-  TVSCallHierarchyProvider  = class external name 'CallHierarchyProvider' (TJSObject)
+  TVSCallHierarchyProvider  = class external name 'vscode.CallHierarchyProvider' (TJSObject)
   Public
     function prepareCallHierarchy(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
     function provideCallHierarchyIncomingCalls(item: TVSCallHierarchyItem; token: TVSCancellationToken) : JSValue;
@@ -1694,7 +1694,7 @@ Type
   end;
 
 
-  TVSLinkedEditingRanges  = class external name 'LinkedEditingRanges' (TJSObject)
+  TVSLinkedEditingRanges  = class external name 'vscode.LinkedEditingRanges' (TJSObject)
   Private
     Franges : TVSRangeDynArray; external name 'ranges';
     FwordPattern : TJSRegExp; external name 'wordPattern';
@@ -1706,21 +1706,21 @@ Type
   end;
 
 
-  TVSLinkedEditingRangeProvider  = class external name 'LinkedEditingRangeProvider' (TJSObject)
+  TVSLinkedEditingRangeProvider  = class external name 'vscode.LinkedEditingRangeProvider' (TJSObject)
   Public
     function provideLinkedEditingRanges(document: TVSTextDocument; position: TVSPosition; token: TVSCancellationToken) : JSValue;
   end;
 
 
   TVSCharacterPair = TStringDynArray;
-  TVSCommentRule  = class external name 'CommentRule' (TJSObject)
+  TVSCommentRule  = class external name 'vscode.CommentRule' (TJSObject)
   Public
     lineComment: string;
     blockComment: TVSCharacterPair;
   end;
 
 
-  TVSIndentationRule  = class external name 'IndentationRule' (TJSObject)
+  TVSIndentationRule  = class external name 'vscode.IndentationRule' (TJSObject)
   Public
     decreaseIndentPattern: TJSRegexp;
     increaseIndentPattern: TJSRegexp;
@@ -1731,7 +1731,7 @@ Type
 
 
 
-  TVSEnterAction  = class external name 'EnterAction' (TJSObject)
+  TVSEnterAction  = class external name 'vscode.EnterAction' (TJSObject)
   Public
     indentAction: TVSIndentAction;
     appendText: string;
@@ -1739,36 +1739,36 @@ Type
   end;
 
 
-  TVSOnEnterRule  = class external name 'OnEnterRule' (TJSObject)
+  TVSOnEnterRule  = class external name 'vscode.OnEnterRule' (TJSObject)
   Public
     beforeText: TJSRegexp;
     afterText: TJSRegexp;
     action: TVSEnterAction;
   end;
 
-  TVSLanguageConfigurationCharSupportComment = Class external name 'Object' (TJSObject)
+  TVSLanguageConfigurationCharSupportComment = class external name 'Object' (TJSObject)
     scope: string;
     open: string;
     lineStart: string;
     close: string;
   end;
 
-  TVSLanguageConfigurationCharSupport = Class external name 'Object' (TJSObject)
+  TVSLanguageConfigurationCharSupport = class external name 'Object' (TJSObject)
     brackets: JSValue;
     docComment: TVSLanguageConfigurationCharSupportComment;
   end;
 
-  TVSLanguageConfigurationCharPairSupportAutoClosingPairs =Class external name 'Object' (TJSObject)
+  TVSLanguageConfigurationCharPairSupportAutoClosingPairs =class external name 'Object' (TJSObject)
     open: string;
     close: string;
     notIn: TstringDynArray;
   end;
 
-  TVSLanguageConfigurationCharPairSupport = Class external name 'Object' (TJSObject)
+  TVSLanguageConfigurationCharPairSupport = class external name 'Object' (TJSObject)
     autoClosingPairs :TVSLanguageConfigurationCharPairSupportAutoClosingPairs;
   end;
 
-  TVSLanguageConfiguration  = class external name 'LanguageConfiguration' (TJSObject)
+  TVSLanguageConfiguration  = class external name 'vscode.LanguageConfiguration' (TJSObject)
   Public
     comments: TVSCommentRule;
     brackets: TVSCharacterPairDynArray;
@@ -1794,7 +1794,7 @@ Type
     languageIds: TstringDynArray;
   end;
 
-  TVSWorkspaceConfiguration  = class external name 'TVSWorkspaceConfiguration' (TJSObject)
+  TVSWorkspaceConfiguration  = class external name 'vscode.TVSWorkspaceConfiguration' (TJSObject)
   Public
     function get(section: string) : JSValue; overload;
     function get(section: string; defaultValue: JSvalue) : JSValue;overload;
@@ -1808,7 +1808,7 @@ Type
   end;
 
 
-  TVSLocation  = class external name 'Location' (TJSObject)
+  TVSLocation  = class external name 'vscode.Location' (TJSObject)
   Public
     uri: TVSUri;
     range: TVSRange;
@@ -1817,7 +1817,7 @@ Type
   end;
 
 
-  TVSLocationLink  = class external name 'LocationLink' (TJSObject)
+  TVSLocationLink  = class external name 'vscode.LocationLink' (TJSObject)
   Public
     originSelectionRange: TVSRange;
     targetUri: TVSUri;
@@ -1826,7 +1826,7 @@ Type
   end;
 
 
-  TVSDiagnosticChangeEvent  = class external name 'DiagnosticChangeEvent' (TJSObject)
+  TVSDiagnosticChangeEvent  = class external name 'vscode.DiagnosticChangeEvent' (TJSObject)
   Private
     Furis : TVSUriDynArray; external name 'uris';
   Public
@@ -1836,7 +1836,7 @@ Type
 
 
 
-  TVSDiagnosticRelatedInformation  = class external name 'DiagnosticRelatedInformation' (TJSObject)
+  TVSDiagnosticRelatedInformation  = class external name 'vscode.DiagnosticRelatedInformation' (TJSObject)
   Public
     location: TVSLocation;
     message: string;
@@ -1851,7 +1851,7 @@ Type
     target: TVSUri;
   end;
 
-  TVSDiagnostic  = class external name 'Diagnostic' (TJSObject)
+  TVSDiagnostic  = class external name 'vscode.Diagnostic' (TJSObject)
   Public
     range: TVSRange;
     message: string;
@@ -1868,7 +1868,7 @@ Type
 
   TVSDiagnosticCollectionCallback = reference to function (uri: TVSUri; diagnostics: TVSDiagnosticDynArray; collection: TVSDiagnosticCollection) : JSValue;
 
-  TVSDiagnosticCollection  = class external name 'DiagnosticCollection' (TJSObject)
+  TVSDiagnosticCollection  = class external name 'vscode.DiagnosticCollection' (TJSObject)
   Private
     Fname : string; external name 'name';
   Public
@@ -1886,7 +1886,7 @@ Type
 
 
 
-  TVSOutputChannel  = class external name 'OutputChannel' (TJSObject)
+  TVSOutputChannel  = class external name 'vscode.OutputChannel' (TJSObject)
   Private
     Fname : string; external name 'name';
   Public
@@ -1902,7 +1902,7 @@ Type
   end;
 
 
-  TVSAccessibilityInformation  = class external name 'AccessibilityInformation' (TJSObject)
+  TVSAccessibilityInformation  = class external name 'vscode.AccessibilityInformation' (TJSObject)
   Public
     label_: string; external name 'label';
     role: string;
@@ -1911,7 +1911,7 @@ Type
 
 
 
-  TVSStatusBarItem  = class external name 'TVSStatusBarItem' (TJSObject)
+  TVSStatusBarItem  = class external name 'vscode.TVSStatusBarItem' (TJSObject)
   Private
     Falignment : TVSStatusBarAlignment; external name 'alignment';
     Fpriority : NativeInt; external name 'priority';
@@ -1932,13 +1932,13 @@ Type
   end;
 
 
-  TVSProgress  = class external name 'Progress' (TJSObject)
+  TVSProgress  = class external name 'vscode.Progress' (TJSObject)
   Public
     procedure report(value: JSValue) ;
   end;
 
 
-  TVSTerminal  = class external name 'TVSTerminal' (TJSObject)
+  TVSTerminal  = class external name 'vscode.TVSTerminal' (TJSObject)
   Private
     Fname : string; external name 'name';
     FprocessId : TJSPromise; external name 'processId'; // NativeInt | undefined
@@ -1960,21 +1960,21 @@ Type
   end;
 
 
-  TVSTerminalLinkContext  = class external name 'TerminalLinkContext' (TJSObject)
+  TVSTerminalLinkContext  = class external name 'vscode.TerminalLinkContext' (TJSObject)
   Public
     line: string;
     terminal: TVSTerminal;
   end;
 
 
-  TVSTerminalLinkProvider  = class external name 'TerminalLinkProvider' (TJSObject)
+  TVSTerminalLinkProvider  = class external name 'vscode.TerminalLinkProvider' (TJSObject)
   Public
     function provideTerminalLinks(context: TVSTerminalLinkContext; token: TVSCancellationToken) : JSValue;
     function handleTerminalLink(link: TVSTerminalLink) : JSValue;
   end;
 
 
-  TVSTerminalLink  = class external name 'TerminalLink' (TJSObject)
+  TVSTerminalLink  = class external name 'vscode.TerminalLink' (TJSObject)
   Public
     startIndex: NativeInt;
     length: NativeInt;
@@ -1982,7 +1982,7 @@ Type
   end;
 
 
-  TVSFileDecoration  = class external name 'FileDecoration' (TJSObject)
+  TVSFileDecoration  = class external name 'vscode.FileDecoration' (TJSObject)
   Public
     badge: string;
     tooltip: string;
@@ -1996,7 +1996,7 @@ Type
 
   TVSUriDynArrayHandler = Reference to function(aEvent :TVSUriDynArray) : JSValue;
 
-  TVSFileDecorationProvider  = class external name 'FileDecorationProvider' (TJSObject)
+  TVSFileDecorationProvider  = class external name 'vscode.FileDecorationProvider' (TJSObject)
   Public
     Function onDidChangeFileDecorations (aHandler : TVSUriHandler) : TVSDisposable;
     Function onDidChangeFileDecorations (aHandler : TVSUriDynArrayHandler) : TVSDisposable;
@@ -2005,7 +2005,7 @@ Type
 
 
 
-  TVSExtension = class external name 'Extension' (TJSObject)
+  TVSExtension = class external name 'vscode.Extension' (TJSObject)
   Private
     Fid : string; external name 'id';
     FextensionUri : TVSUri; external name 'extensionUri';
@@ -2027,7 +2027,7 @@ Type
 
 
 
-  TVSExtensionContext  = class external name 'ExtensionContext' (TJSObject)
+  TVSExtensionContext  = class external name 'vscode.ExtensionContext' (TJSObject)
   Public
     FworkspaceState : TVSMemento; external name 'workspaceState';
   Private
@@ -2059,7 +2059,7 @@ Type
   end;
 
 
-  TVSMemento  = class external name 'Memento' (TJSObject)
+  TVSMemento  = class external name 'vscode.Memento' (TJSObject)
   Public
     function get(key: string) : JSValue; overload;
     function get(key: string; defaultValue: JSValue) : JSValue; overload;
@@ -2069,7 +2069,7 @@ Type
 
 
 
-  TVSColorTheme  = class external name 'ColorTheme' (TJSObject)
+  TVSColorTheme  = class external name 'vscode.ColorTheme' (TJSObject)
   Private
     Fkind : TVSColorThemeKind; external name 'kind';
   Public
@@ -2078,7 +2078,7 @@ Type
 
 
 
-  TVSTaskPresentationOptions  = class external name 'TaskPresentationOptions' (TJSObject)
+  TVSTaskPresentationOptions  = class external name 'vscode.TaskPresentationOptions' (TJSObject)
   Public
     reveal: TVSTaskRevealKind;
     echo: boolean;
@@ -2089,7 +2089,7 @@ Type
   end;
 
 
-  TVSTaskGroup  = class external name 'TaskGroup' (TJSObject)
+  TVSTaskGroup  = class external name 'vscode.TaskGroup' (TJSObject)
   Public
     class var Clean: TVSTaskGroup;
     class var Build: TVSTaskGroup;
@@ -2099,7 +2099,7 @@ Type
   end;
 
 
-  TVSTaskDefinition  = class external name 'TaskDefinition' (TJSObject)
+  TVSTaskDefinition  = class external name 'vscode.TaskDefinition' (TJSObject)
   Private
     Ftype : string; external name 'type';
   Public
@@ -2107,14 +2107,14 @@ Type
   end;
 
 
-  TVSProcessExecutionOptions  = class external name 'ProcessExecutionOptions' (TJSObject)
+  TVSProcessExecutionOptions  = class external name 'vscode.ProcessExecutionOptions' (TJSObject)
   Public
     cwd: string;
     env: TJSObject;
   end;
 
 
-  TVSProcessExecution  = class external name 'ProcessExecution' (TJSObject)
+  TVSProcessExecution  = class external name 'vscode.ProcessExecution' (TJSObject)
   Public
     process: string;
     args: TStringDynArray;
@@ -2130,7 +2130,7 @@ Type
     charsToEscape: string;
   end;
 
-  TVSShellQuotingOptions  = class external name 'ShellQuotingOptions' (TJSObject)
+  TVSShellQuotingOptions  = class external name 'vscode.ShellQuotingOptions' (TJSObject)
   Public
     escape: string;
     escapeObj : TVSShellQuotingOptionsEscape;
@@ -2139,7 +2139,7 @@ Type
   end;
 
 
-  TVSShellExecutionOptions  = class external name 'ShellExecutionOptions' (TJSObject)
+  TVSShellExecutionOptions  = class external name 'vscode.ShellExecutionOptions' (TJSObject)
   Public
     executable: string;
     shellArgs: TstringDynArray;
@@ -2151,14 +2151,14 @@ Type
 
 
 
-  TVSShellQuotedString  = class external name 'ShellQuotedString' (TJSObject)
+  TVSShellQuotedString  = class external name 'vscode.ShellQuotedString' (TJSObject)
   Public
     value: string;
     quoting: TVSShellQuoting;
   end;
 
 
-  TVSShellExecution  = class external name 'ShellExecution' (TJSObject)
+  TVSShellExecution  = class external name 'vscode.ShellExecution' (TJSObject)
   Public
     constructor New(commandLine: string); overload;
     constructor New(commandLine: string; options: TVSShellExecutionOptions); overload;
@@ -2181,20 +2181,20 @@ Type
 
   TVSCustomExecutionCallback = reference to function (resolvedDefinition: TVSTaskDefinition) : TVSThenable; // TVSPseudoterminal
 
-  TVSCustomExecution  = class external name 'CustomExecution' (TJSObject)
+  TVSCustomExecution  = class external name 'vscode.CustomExecution' (TJSObject)
   Public
     constructor New(callback: TVSCustomExecutionCallback);
   end;
 
 
 
-  TVSRunOptions  = class external name 'RunOptions' (TJSObject)
+  TVSRunOptions  = class external name 'vscode.RunOptions' (TJSObject)
   Public
     reevaluateOnRerun: boolean;
   end;
 
 
-  TVSTask  = class external name 'TVSTask' (TJSObject)
+  TVSTask  = class external name 'vscode.TVSTask' (TJSObject)
   Private
     Fscope : TVSTaskScope; external name 'scope';
   Public
@@ -2229,14 +2229,14 @@ Type
   end;
 
 
-  TVSTaskProvider = class external name 'TVSTaskProvider' (TJSObject)
+  TVSTaskProvider = class external name 'vscode.TVSTaskProvider' (TJSObject)
   Public
     function provideTasks(token: TVSCancellationToken) : JSValue;
     function resolveTask(task: TVSTask; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSTaskExecution  = class external name 'TVSTaskExecution' (TJSObject)
+  TVSTaskExecution  = class external name 'vscode.TVSTaskExecution' (TJSObject)
   Public
     task: TVSTask;
     procedure terminate() ;
@@ -2259,7 +2259,7 @@ Type
   end;
 
 
-  TVSTaskProcessStartEvent  = class external name 'TaskProcessStartEvent' (TJSObject)
+  TVSTaskProcessStartEvent  = class external name 'vscode.TaskProcessStartEvent' (TJSObject)
   Private
     Fexecution : TVSTaskExecution; external name 'execution';
     FprocessId : NativeInt; external name 'processId';
@@ -2269,7 +2269,7 @@ Type
   end;
 
 
-  TVSTaskProcessEndEvent  = class external name 'TaskProcessEndEvent' (TJSObject)
+  TVSTaskProcessEndEvent  = class external name 'vscode.TaskProcessEndEvent' (TJSObject)
   Private
     Fexecution : TVSTaskExecution; external name 'execution';
     FexitCode : NativeInt ;external name 'exitCode';
@@ -2279,7 +2279,7 @@ Type
   end;
 
 
-  TVSTaskFilter  = class external name 'TaskFilter' (TJSObject)
+  TVSTaskFilter  = class external name 'vscode.TaskFilter' (TJSObject)
   Public
     version: string;
     type_: string; external name 'type';
@@ -2307,7 +2307,7 @@ Type
     function onDidEndTaskProcess(aHandler : TVSTaskProcessEndEventHandler; aThis : JSvalue; aDisposables : TVSDisposableArray): TVSDisposable; overload;
   end;
 
-  TVSFileStat = class external name 'FileStat' (TJSObject)
+  TVSFileStat = class external name 'vscode.FileStat' (TJSObject)
   Public
     type_: TVSFileType; external name 'type';
     ctime: NativeInt;
@@ -2316,7 +2316,7 @@ Type
   end;
 
 
-  TVSFileSystemError  = class external name 'TVSFileSystemError' (TJSError)
+  TVSFileSystemError  = class external name 'vscode.TVSFileSystemError' (TJSError)
   Private
     Fcode : string; external name 'code';
   Public
@@ -2346,7 +2346,7 @@ Type
 
 
 
-  TVSFileChangeEvent  = class external name 'FileChangeEvent' (TJSObject)
+  TVSFileChangeEvent  = class external name 'vscode.FileChangeEvent' (TJSObject)
   Private
     Ftype : TVSFileChangeType; external name 'type';
     Furi : TVSUri; external name 'uri';
@@ -2376,7 +2376,7 @@ Type
     overwrite: boolean;
   end;
 
-  TVSFileSystemProvider  = class external name 'TVSFileSystemProvider' (TJSObject)
+  TVSFileSystemProvider  = class external name 'vscode.TVSFileSystemProvider' (TJSObject)
   Public
     Function onDidChangeFile (aCallback : TVSFileChangeEventDynArrayHandler) : TVSDisposable;
     function watch(uri: TVSUri; options: TVSFileSystemWatchOptions): TVSDisposable;
@@ -2391,7 +2391,7 @@ Type
   end;
 
 
-  TVSFileSystem  = class external name 'FileSystem' (TJSObject)
+  TVSFileSystem  = class external name 'vscode.FileSystem' (TJSObject)
   Public
     function stat(uri: TVSUri) : TVSThenable; // FileStat
     function readDirectory(uri: TVSUri) : TVSThenable; // [string; FileType]DynArray
@@ -2408,7 +2408,7 @@ Type
   end;
 
 
-  TVSWebviewPortMapping  = class external name 'WebviewPortMapping' (TJSObject)
+  TVSWebviewPortMapping  = class external name 'vscode.WebviewPortMapping' (TJSObject)
   Private
     FwebviewPort : NativeInt; external name 'webviewPort';
     FextensionHostPort : NativeInt; external name 'extensionHostPort';
@@ -2418,7 +2418,7 @@ Type
   end;
 
 
-  TVSWebviewOptions  = class external name 'WebviewOptions' (TJSObject)
+  TVSWebviewOptions  = class external name 'vscode.WebviewOptions' (TJSObject)
   Private
     FenableScripts : boolean; external name 'enableScripts';
     FenableCommandUris : boolean; external name 'enableCommandUris';
@@ -2432,7 +2432,7 @@ Type
   end;
 
 
-  TVSWebview  = class external name 'Webview' (TJSObject)
+  TVSWebview  = class external name 'vscode.Webview' (TJSObject)
   Private
     FcspSource : string; external name 'cspSource';
   Public
@@ -2447,7 +2447,7 @@ Type
   end;
 
 
-  TVSWebviewPanelOptions  = class external name 'WebviewPanelOptions' (TJSObject)
+  TVSWebviewPanelOptions  = class external name 'vscode.WebviewPanelOptions' (TJSObject)
   Private
     FenableFindWidget : boolean; external name 'enableFindWidget';
     FretainContextWhenHidden : boolean; external name 'retainContextWhenHidden';
@@ -2488,7 +2488,7 @@ Type
   end;
 
 
-  TVSWebviewPanelOnDidChangeViewStateEvent  = class external name 'WebviewPanelOnDidChangeViewStateEvent' (TJSObject)
+  TVSWebviewPanelOnDidChangeViewStateEvent  = class external name 'vscode.WebviewPanelOnDidChangeViewStateEvent' (TJSObject)
   Private
     FwebviewPanel : TVSWebviewPanel; external name 'webviewPanel';
   Public
@@ -2502,7 +2502,7 @@ Type
   end;
 
 
-  TVSWebviewView  = class external name 'WebviewView' (TJSObject)
+  TVSWebviewView  = class external name 'vscode.WebviewView' (TJSObject)
   Private
     FviewType : string; external name 'viewType';
     Fwebview : TVSWebview; external name 'webview';
@@ -2532,13 +2532,13 @@ Type
   end;
 
 
-  TVSWebviewViewProvider  = class external name 'WebviewViewProvider' (TJSObject)
+  TVSWebviewViewProvider  = class external name 'vscode.WebviewViewProvider' (TJSObject)
   Public
     function resolveWebviewView(webviewView: TVSWebviewView; context: TVSWebviewViewResolveContext; token: TVSCancellationToken) : TVSThenable; // void
   end;
 
 
-  TVSCustomTextEditorProvider  = class external name 'CustomTextEditorProvider' (TJSObject)
+  TVSCustomTextEditorProvider  = class external name 'vscode.CustomTextEditorProvider' (TJSObject)
   Public
     function resolveCustomTextEditor(document: TVSTextDocument; webviewPanel: TVSWebviewPanel; token: TVSCancellationToken) : TVSThenable; // void
   end;
@@ -2598,7 +2598,7 @@ Type
   end;
 
 
-  TVSCustomReadonlyEditorProvider  = class external name 'CustomReadonlyEditorProvider' (TJSObject)
+  TVSCustomReadonlyEditorProvider  = class external name 'vscode.CustomReadonlyEditorProvider' (TJSObject)
   Public
     function openCustomDocument(uri: TVSUri; openContext: TVSCustomDocumentOpenContext; token: TVSCancellationToken) : TVSThenable; // TVSCustomDocument;
     function resolveCustomEditor(document: TVSCustomDocument; webviewPanel: TVSWebviewPanel; token: TVSCancellationToken) : TVSThenable; // TVSCustomDocument
@@ -2606,7 +2606,7 @@ Type
 
   TVSCustomDocumentEditEventHandler = reference to function (event : TVSCustomDocumentEditEvent): JSValue;
 
-  TVSCustomEditorProvider  = class external name 'CustomEditorProvider' (TVSCustomReadonlyEditorProvider)
+  TVSCustomEditorProvider  = class external name 'vscode.CustomEditorProvider' (TVSCustomReadonlyEditorProvider)
   Public
     function onDidChangeCustomDocument(aHandler : TVSCustomDocumentEditEventHandler) : TVSDisposable; overload;
     function onDidChangeCustomDocument(aHandler : TVSCustomDocumentEditEventHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -2618,7 +2618,7 @@ Type
   end;
 
 
-  TVSClipboard  = class external name 'Clipboard' (TJSObject)
+  TVSClipboard  = class external name 'vscode.Clipboard' (TJSObject)
   Public
     function readText() : TVSThenable; // string
     function writeText(value: string) : TVSThenable; // void
@@ -2666,7 +2666,7 @@ Type
   end;
 
 
-  TVSWindowState  = class external name 'WindowState' (TJSObject)
+  TVSWindowState  = class external name 'vscode.WindowState' (TJSObject)
   Private
     Ffocused : boolean; external name 'focused';
   Public
@@ -2674,7 +2674,7 @@ Type
   end;
 
 
-  TVSUriHandler  = class external name 'UriHandler' (TJSObject)
+  TVSUriHandler  = class external name 'vscode.UriHandler' (TJSObject)
   Public
     function handleUri(uri: TVSUri) : JSValue;
   end;
@@ -2830,7 +2830,7 @@ Type
   end;
 
 
-  TVSTreeViewOptions  = class external name 'TreeViewOptions' (TJSObject)
+  TVSTreeViewOptions  = class external name 'vscode.TreeViewOptions' (TJSObject)
   Public
     treeDataProvider: TVSTreeDataProvider;
     showCollapseAll: boolean;
@@ -2838,7 +2838,7 @@ Type
   end;
 
 
-  TVSTreeViewExpansionEvent  = class external name 'TreeViewExpansionEvent' (TJSObject)
+  TVSTreeViewExpansionEvent  = class external name 'vscode.TreeViewExpansionEvent' (TJSObject)
   Private
     Felement : JSValue; external name 'element';
   Public
@@ -2846,7 +2846,7 @@ Type
   end;
 
 
-  TVSTreeViewSelectionChangeEvent  = class external name 'TreeViewSelectionChangeEvent' (TJSObject)
+  TVSTreeViewSelectionChangeEvent  = class external name 'vscode.TreeViewSelectionChangeEvent' (TJSObject)
   Private
     Fselection : TJSValueDynArray; external name 'selection';
   Public
@@ -2854,7 +2854,7 @@ Type
   end;
 
 
-  TVSTreeViewVisibilityChangeEvent  = class external name 'TreeViewVisibilityChangeEvent' (TJSObject)
+  TVSTreeViewVisibilityChangeEvent  = class external name 'vscode.TreeViewVisibilityChangeEvent' (TJSObject)
   Private
     Fvisible : boolean; external name 'visible';
   Public
@@ -2869,7 +2869,7 @@ Type
     expandInt : NativeInt; external name 'expand';
   end;
 
-  TVSTreeView = class external name 'TreeView' (TVSDisposable)
+  TVSTreeView = class external name 'vscode.TreeView' (TVSDisposable)
   private
     Fselection : TJSValueDynArray; external name 'selection';
     Fvisible : boolean; external name 'visible';
@@ -2897,7 +2897,7 @@ Type
   end;
 
 
-  TVSTreeDataProvider  = class external name 'TreeDataProvider' (TJSObject)
+  TVSTreeDataProvider  = class external name 'vscode.TreeDataProvider' (TJSObject)
   Public
     function onDidChangeTreeData(aHandler : TVSAnyHandler) : TVSDisposable; overload;
     function onDidChangeTreeData(aHandler : TVSAnyHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -2910,7 +2910,7 @@ Type
   end;
 
 
-  TVSTreeItem  = class external name 'TreeItem' (TJSObject)
+  TVSTreeItem  = class external name 'vscode.TreeItem' (TJSObject)
   Public
     label_: string; external name 'label';
     labelObj : TVSTreeItemLabel; external name 'label';
@@ -2938,14 +2938,14 @@ Type
 
 
 
-  TVSTreeItemLabel  = class external name 'TreeItemLabel' (TJSObject)
+  TVSTreeItemLabel  = class external name 'vscode.TreeItemLabel' (TJSObject)
   Public
     label_: string; external name 'label';
     highlights: TJSValueDynArray;
   end;
 
 
-  TVSTerminalOptions  = class external name 'TerminalOptions' (TJSObject)
+  TVSTerminalOptions  = class external name 'vscode.TerminalOptions' (TJSObject)
   Public
     name: string;
     shellPath: string;
@@ -2959,7 +2959,7 @@ Type
   end;
 
 
-  TVSExtensionTerminalOptions  = class external name 'ExtensionTerminalOptions' (TJSObject)
+  TVSExtensionTerminalOptions  = class external name 'vscode.ExtensionTerminalOptions' (TJSObject)
   Public
     name: string;
     pty: TVSPseudoterminal;
@@ -2985,7 +2985,7 @@ Type
   end;
 
 
-  TVSTerminalDimensions  = class external name 'TVSTerminalDimensions' (TJSObject)
+  TVSTerminalDimensions  = class external name 'vscode.TVSTerminalDimensions' (TJSObject)
   Private
     Fcolumns : NativeInt; external name 'columns';
     Frows : NativeInt; external name 'rows';
@@ -2995,7 +2995,7 @@ Type
   end;
 
 
-  TVSTerminalExitStatus  = class external name 'TerminalExitStatus' (TJSObject)
+  TVSTerminalExitStatus  = class external name 'vscode.TerminalExitStatus' (TJSObject)
   Private
     Fcode : NativeInt ;external name 'code';
   Public
@@ -3005,7 +3005,7 @@ Type
 
 
 
-  TVSEnvironmentVariableMutator  = class external name 'TVSEnvironmentVariableMutator' (TJSObject)
+  TVSEnvironmentVariableMutator  = class external name 'vscode.TVSEnvironmentVariableMutator' (TJSObject)
   Private
     Ftype : TVSEnvironmentVariableMutatorType; external name 'type';
     Fvalue : string; external name 'value';
@@ -3016,7 +3016,7 @@ Type
 
 
   TVSEnvironmentVariableCallback = reference to function (variable: string; mutator: TVSEnvironmentVariableMutator; collection: TVSEnvironmentVariableCollection) : JSValue;
-  TVSEnvironmentVariableCollection  = class external name 'EnvironmentVariableCollection' (TJSObject)
+  TVSEnvironmentVariableCollection  = class external name 'vscode.EnvironmentVariableCollection' (TJSObject)
   Public
     persistent: boolean;
     procedure replace(variable: string; value: string) ;
@@ -3034,7 +3034,7 @@ Type
     viewId: string;
   end;
 
-  TVSProgressOptions  = class external name 'ProgressOptions' (TJSObject)
+  TVSProgressOptions  = class external name 'vscode.ProgressOptions' (TJSObject)
   Public
     location: TVSProgressLocation;
     locationObj :  TVSProgressOptionsLocationOption; external name 'location';
@@ -3043,7 +3043,7 @@ Type
   end;
 
 
-  TVSQuickInput  = class external name 'QuickInput' (TJSObject)
+  TVSQuickInput  = class external name 'vscode.QuickInput' (TJSObject)
   Public
     title: string ;
     step: NativeInt ;
@@ -3062,7 +3062,7 @@ Type
 
   // TVSQuickPickItem
   TVSQuickPickItemEventHandler = reference to function(aEvent : TVSQuickPickItemDynArray) : JSValue;
-  TVSQuickPick = class external name 'QuickPick'  (TVSQuickInput)
+  TVSQuickPick = class external name 'vscode.QuickPick'  (TVSQuickInput)
   Public
     items: TVSQuickPickItemDynArray;
     canSelectMany: boolean;
@@ -3098,7 +3098,7 @@ Type
   end;
 
   // TVSQuickInput
-  TVSInputBox  = class external name 'InputBox' (TVSQuickInput)
+  TVSInputBox  = class external name 'vscode.InputBox' (TVSQuickInput)
   Public
     value: string;
     placeholder: string ;
@@ -3121,7 +3121,7 @@ Type
   end;
 
 
-  TVSQuickInputButton  = class external name 'QuickInputButton' (TJSObject)
+  TVSQuickInputButton  = class external name 'vscode.QuickInputButton' (TJSObject)
   Public
     iconPath: TVSUri;
     iconPathObj : TVSIconPathObject; external name 'iconPath';
@@ -3130,13 +3130,13 @@ Type
   end;
 
 
-  TVSQuickInputButtons  = class external name 'QuickInputButtons' (TJSObject)
+  TVSQuickInputButtons  = class external name 'vscode.QuickInputButtons' (TJSObject)
   Public
     class var Back: TVSQuickInputButton;
   end;
 
 
-  TVSTextDocumentContentChangeEvent  = class external name 'TextDocumentContentChangeEvent' (TJSObject)
+  TVSTextDocumentContentChangeEvent  = class external name 'vscode.TextDocumentContentChangeEvent' (TJSObject)
   Private
     Frange : TVSRange; external name 'range';
     FrangeOffset : NativeInt; external name 'rangeOffset';
@@ -3150,7 +3150,7 @@ Type
   end;
 
 
-  TVSTextDocumentChangeEvent  = class external name 'TextDocumentChangeEvent' (TJSObject)
+  TVSTextDocumentChangeEvent  = class external name 'vscode.TextDocumentChangeEvent' (TJSObject)
   Private
     Fdocument : TVSTextDocument; external name 'document';
     FcontentChanges : TVSTextDocumentContentChangeEventDynArray; external name 'contentChanges';
@@ -3161,7 +3161,7 @@ Type
 
 
 
-  TVSTextDocumentWillSaveEvent  = class external name 'TextDocumentWillSaveEvent' (TJSObject)
+  TVSTextDocumentWillSaveEvent  = class external name 'vscode.TextDocumentWillSaveEvent' (TJSObject)
   Private
     Fdocument : TVSTextDocument; external name 'document';
     Freason : TVSTextDocumentSaveReason; external name 'reason';
@@ -3172,7 +3172,7 @@ Type
   end;
 
 
-  TVSFileWillCreateEvent  = class external name 'FileWillCreateEvent' (TJSObject)
+  TVSFileWillCreateEvent  = class external name 'vscode.FileWillCreateEvent' (TJSObject)
   Private
     Ffiles : TVSUriDynArray; external name 'files';
   Public
@@ -3181,7 +3181,7 @@ Type
   end;
 
 
-  TVSFileCreateEvent  = class external name 'FileCreateEvent' (TJSObject)
+  TVSFileCreateEvent  = class external name 'vscode.FileCreateEvent' (TJSObject)
   Private
     Ffiles : TVSUriDynArray; external name 'files';
   Public
@@ -3189,7 +3189,7 @@ Type
   end;
 
 
-  TVSFileWillDeleteEvent  = class external name 'FileWillDeleteEvent' (TJSObject)
+  TVSFileWillDeleteEvent  = class external name 'vscode.FileWillDeleteEvent' (TJSObject)
   Private
     Ffiles : TVSUriDynArray; external name 'files';
   Public
@@ -3198,7 +3198,7 @@ Type
   end;
 
 
-  TVSFileDeleteEvent  = class external name 'FileDeleteEvent' (TJSObject)
+  TVSFileDeleteEvent  = class external name 'vscode.FileDeleteEvent' (TJSObject)
   Private
     Ffiles : TVSUriDynArray; external name 'files';
   Public
@@ -3211,7 +3211,7 @@ Type
   end;
   TVSFileWillRenameObjDynArray = Array of TVSFileWillRenameObj;
 
-  TVSFileWillRenameEvent  = class external name 'FileWillRenameEvent' (TJSObject)
+  TVSFileWillRenameEvent  = class external name 'vscode.FileWillRenameEvent' (TJSObject)
   private
     ffiles : TVSFileWillRenameObjDynArray; external name 'files';
   Public
@@ -3220,14 +3220,14 @@ Type
   end;
 
 
-  TVSFileRenameEvent  = class external name 'FileRenameEvent' (TJSObject)
+  TVSFileRenameEvent  = class external name 'vscode.FileRenameEvent' (TJSObject)
   private
     ffiles : TVSFileWillRenameObjDynArray; external name 'files';
   Public
     Property files: TVSFileWillRenameObjDynArray read ffiles;
   end;
 
-  TVSWorkspaceFoldersChangeEvent  = class external name 'WorkspaceFoldersChangeEvent' (TJSObject)
+  TVSWorkspaceFoldersChangeEvent  = class external name 'vscode.WorkspaceFoldersChangeEvent' (TJSObject)
   Private
     Fadded : TVSWorkspaceFolderDynArray; external name 'added';
     Fremoved : TVSWorkspaceFolderDynArray; external name 'removed';
@@ -3237,7 +3237,7 @@ Type
   end;
 
 
-  TVSWorkspaceFolder  = class external name 'WorkspaceFolder' (TJSObject)
+  TVSWorkspaceFolder  = class external name 'vscode.WorkspaceFolder' (TJSObject)
   Private
     Furi : TVSUri; external name 'uri';
     Fname : string; external name 'name';
@@ -3370,7 +3370,7 @@ Type
     languageId: string;
   end;
 
-  TVSConfigurationChangeEvent  = class external name 'ConfigurationChangeEvent' (TJSObject)
+  TVSConfigurationChangeEvent  = class external name 'vscode.ConfigurationChangeEvent' (TJSObject)
   Public
     function affectsConfiguration(section: string) : boolean; overload;
     function affectsConfiguration(section: string; scope: TVSConfigurationScope) : boolean; overload;
@@ -3509,7 +3509,7 @@ Type
   end;
 
 
-  TVSSourceControlInputBox  = class external name 'TVSSourceControlInputBox' (TJSObject)
+  TVSSourceControlInputBox  = class external name 'vscode.TVSSourceControlInputBox' (TJSObject)
   Public
     value: string;
     placeholder: string;
@@ -3523,7 +3523,7 @@ Type
   end;
 
 
-  TVSSourceControlResourceThemableDecorations  = class external name 'SourceControlResourceThemableDecorations' (TJSObject)
+  TVSSourceControlResourceThemableDecorations  = class external name 'vscode.SourceControlResourceThemableDecorations' (TJSObject)
   Private
     FiconPath  : string;
     FiconPathObj: TVSUri; external name 'iconPath';
@@ -3533,7 +3533,7 @@ Type
   end;
 
 
-  TVSSourceControlResourceDecorations   = class external name 'SourceControlResourceDecorations' (TVSSourceControlResourceThemableDecorations)
+  TVSSourceControlResourceDecorations   = class external name 'vscode.SourceControlResourceDecorations' (TVSSourceControlResourceThemableDecorations)
   Private
     FstrikeThrough : boolean; external name 'strikeThrough';
     Ffaded : boolean; external name 'faded';
@@ -3549,7 +3549,7 @@ Type
   end;
 
 
-  TVSSourceControlResourceState  = class external name 'SourceControlResourceState' (TJSObject)
+  TVSSourceControlResourceState  = class external name 'vscode.SourceControlResourceState' (TJSObject)
   Private
     FresourceUri : TVSUri; external name 'resourceUri';
     Fcommand : TVSCommand; external name 'command';
@@ -3563,7 +3563,7 @@ Type
   end;
 
 
-  TVSSourceControlResourceGroup  = class external name 'SourceControlResourceGroup' (TJSObject)
+  TVSSourceControlResourceGroup  = class external name 'vscode.SourceControlResourceGroup' (TJSObject)
   Private
     Fid : string; external name 'id';
   Public
@@ -3575,7 +3575,7 @@ Type
   end;
 
 
-  TVSSourceControl  = class external name 'SourceControl' (TJSObject)
+  TVSSourceControl  = class external name 'vscode.SourceControl' (TJSObject)
   Private
     Fid : string; external name 'id';
     Flabel : string; external name 'label';
@@ -3605,25 +3605,25 @@ Type
   end;
 
 
-  TVSDebugProtocolMessage  = class external name 'DebugProtocolMessage' (TJSObject)
+  TVSDebugProtocolMessage  = class external name 'vscode.DebugProtocolMessage' (TJSObject)
   Public
     // Properties: see details [here](https://microsoft.github.io/debug-adapter-protocol/specification#Base_Protocol_ProtocolMessage).
   end;
 
 
-  TVSDebugProtocolSource  = class external name 'DebugProtocolSource' (TJSObject)
+  TVSDebugProtocolSource  = class external name 'vscode.DebugProtocolSource' (TJSObject)
   Public
     // Properties: see details [here](https://microsoft.github.io/debug-adapter-protocol/specification#Types_Source).
   end;
 
 
-  TVSDebugProtocolBreakpoint  = class external name 'DebugProtocolBreakpoint' (TJSObject)
+  TVSDebugProtocolBreakpoint  = class external name 'vscode.DebugProtocolBreakpoint' (TJSObject)
   Public
     // Properties: see details [here](https://microsoft.github.io/debug-adapter-protocol/specification#Types_Breakpoint).
   end;
 
 
-  TVSDebugConfiguration  = class external name 'TVSDebugConfiguration' (TJSObject)
+  TVSDebugConfiguration  = class external name 'vscode.TVSDebugConfiguration' (TJSObject)
   Public
     type_: string; external name 'type';
     name: string;
@@ -3631,7 +3631,7 @@ Type
   end;
 
 
-  TVSDebugSession  = class external name 'TVSDebugSession' (TJSObject)
+  TVSDebugSession  = class external name 'vscode.TVSDebugSession' (TJSObject)
   Private
     Fid : string; external name 'id';
     Ftype : string; external name 'type';
@@ -3649,7 +3649,7 @@ Type
   end;
 
 
-  TVSDebugSessionCustomEvent  = class external name 'DebugSessionCustomEvent' (TJSObject)
+  TVSDebugSessionCustomEvent  = class external name 'vscode.DebugSessionCustomEvent' (TJSObject)
   Private
     Fsession : TVSDebugSession; external name 'session';
     Fevent : string; external name 'event';
@@ -3661,7 +3661,7 @@ Type
   end;
 
 
-  TVSDebugConfigurationProvider  = class external name 'DebugConfigurationProvider' (TJSObject)
+  TVSDebugConfigurationProvider  = class external name 'vscode.DebugConfigurationProvider' (TJSObject)
   Public
     function provideDebugConfigurations() : JSValue; overload;
     function provideDebugConfigurations(folder: TVSWorkspaceFolder) : JSValue  overload;
@@ -3673,7 +3673,7 @@ Type
   end;
 
 
-  TVSDebugAdapterExecutable  = class external name 'DebugAdapterExecutable' (TJSObject)
+  TVSDebugAdapterExecutable  = class external name 'vscode.DebugAdapterExecutable' (TJSObject)
   Private
     Fcommand : string; external name 'command';
     Fargs : TstringDynArray; external name 'args';
@@ -3688,14 +3688,14 @@ Type
   end;
 
 
-  TVSDebugAdapterExecutableOptions  = class external name 'DebugAdapterExecutableOptions' (TJSObject)
+  TVSDebugAdapterExecutableOptions  = class external name 'vscode.DebugAdapterExecutableOptions' (TJSObject)
   Public
     env: TJSObject;
     cwd: string;
   end;
 
 
-  TVSDebugAdapterServer  = class external name 'DebugAdapterServer' (TJSObject)
+  TVSDebugAdapterServer  = class external name 'vscode.DebugAdapterServer' (TJSObject)
   Private
     Fport : NativeInt; external name 'port';
     Fhost : string; external name 'host';
@@ -3707,7 +3707,7 @@ Type
   end;
 
 
-  TVSDebugAdapterNamedPipeServer  = class external name 'DebugAdapterNamedPipeServer' (TJSObject)
+  TVSDebugAdapterNamedPipeServer  = class external name 'vscode.DebugAdapterNamedPipeServer' (TJSObject)
   Private
     Fpath : string; external name 'path';
   Public
@@ -3716,7 +3716,7 @@ Type
   end;
 
 
-  TVSDebugAdapter  = class external name 'DebugAdapter' (TVSDisposable)
+  TVSDebugAdapter  = class external name 'vscode.DebugAdapter' (TVSDisposable)
   Public
     function onDidSendMessage(aHandler : TVSDebugProtocolMessageHandler) : TVSDisposable; overload;
     function onDidSendMessage(aHandler : TVSDebugProtocolMessageHandler; aThis : JSvalue): TVSDisposable; overload;
@@ -3725,7 +3725,7 @@ Type
   end;
 
 
-  TVSDebugAdapterInlineImplementation  = class external name 'DebugAdapterInlineImplementation' (TJSObject)
+  TVSDebugAdapterInlineImplementation  = class external name 'vscode.DebugAdapterInlineImplementation' (TJSObject)
   Public
     constructor New(aimplementation: TVSDebugAdapter);
   end;
@@ -3733,13 +3733,13 @@ Type
 
   // export type DebugAdapterDescriptor = DebugAdapterExecutable | DebugAdapterServer | DebugAdapterNamedPipeServer | DebugAdapterInlineImplementation;
   TVSDebugAdapterDescriptor = TJSObject;
-  TVSDebugAdapterDescriptorFactory  = class external name 'DebugAdapterDescriptorFactory' (TJSObject)
+  TVSDebugAdapterDescriptorFactory  = class external name 'vscode.DebugAdapterDescriptorFactory' (TJSObject)
   Public
     function createDebugAdapterDescriptor(session: TVSDebugSession; executable: TVSDebugAdapterExecutable) : JSValue;
   end;
 
 
-  TVSDebugAdapterTracker  = class external name 'DebugAdapterTracker' (TJSObject)
+  TVSDebugAdapterTracker  = class external name 'vscode.DebugAdapterTracker' (TJSObject)
   Public
     procedure onWillStartSession() ;
     procedure onWillReceiveMessage(message: JSValue) ;
@@ -3751,20 +3751,20 @@ Type
   end;
 
 
-  TVSDebugAdapterTrackerFactory  = class external name 'DebugAdapterTrackerFactory' (TJSObject)
+  TVSDebugAdapterTrackerFactory  = class external name 'vscode.DebugAdapterTrackerFactory' (TJSObject)
   Public
     function createDebugAdapterTracker(session: TVSDebugSession) : JSValue;
   end;
 
 
-  TVSDebugConsole  = class external name 'DebugConsole' (TJSObject)
+  TVSDebugConsole  = class external name 'vscode.DebugConsole' (TJSObject)
   Public
     procedure append(value: string) ;
     procedure appendLine(value: string) ;
   end;
 
 
-  TVSBreakpointsChangeEvent  = class external name 'BreakpointsChangeEvent' (TJSObject)
+  TVSBreakpointsChangeEvent  = class external name 'vscode.BreakpointsChangeEvent' (TJSObject)
   Private
     Fadded : TVSBreakpointDynArray; external name 'added';
     Fremoved : TVSBreakpointDynArray; external name 'removed';
@@ -3776,7 +3776,7 @@ Type
   end;
 
 
-  TVSBreakpoint  = class external name 'Breakpoint' (TJSObject)
+  TVSBreakpoint  = class external name 'vscode.Breakpoint' (TJSObject)
   Private
     Fid : string; external name 'id';
     Fenabled : boolean; external name 'enabled';
@@ -3797,7 +3797,7 @@ Type
   end;
 
 
-  TVSSourceBreakpoint = class external name 'SourceBreakpoint' (TVSBreakpoint)
+  TVSSourceBreakpoint = class external name 'vscode.SourceBreakpoint' (TVSBreakpoint)
   Private
     Flocation : TVSLocation; external name 'location';
   Public
@@ -3810,7 +3810,7 @@ Type
   end;
 
 
-  TVSFunctionBreakpoint  = class external name 'FunctionBreakpoint' (TVSBreakpoint)
+  TVSFunctionBreakpoint  = class external name 'vscode.FunctionBreakpoint' (TVSBreakpoint)
   Private
    FfunctionName : string; external name 'functionName';
   Public
@@ -3837,7 +3837,7 @@ Type
     property all: TVSExtensionDynArray read FAll;
   end;
 
-  TVSCommentThread  = class external name 'CommentThread' (TJSObject)
+  TVSCommentThread  = class external name 'vscode.CommentThread' (TJSObject)
   Private
     Furi : TVSUri; external name 'uri';
   Public
@@ -3852,14 +3852,14 @@ Type
   end;
 
 
-  TVSCommentAuthorInformation  = class external name 'CommentAuthorInformation' (TJSObject)
+  TVSCommentAuthorInformation  = class external name 'vscode.CommentAuthorInformation' (TJSObject)
   Public
     name: string;
     iconPath: TVSUri;
   end;
 
 
-  TVSCommentReaction  = class external name 'CommentReaction' (TJSObject)
+  TVSCommentReaction  = class external name 'vscode.CommentReaction' (TJSObject)
   Private
     Flabel : string; external name 'label';
     FiconPath  : string; external name 'iconPath';
@@ -3875,7 +3875,7 @@ Type
   end;
 
 
-  TVSComment  = class external name 'Comment' (TJSObject)
+  TVSComment  = class external name 'vscode.Comment' (TJSObject)
   Public
     body: string;
     bodyObj : TVSMarkdownString; external name 'body';
@@ -3887,20 +3887,20 @@ Type
   end;
 
 
-  TVSCommentReply  = class external name 'CommentReply' (TJSObject)
+  TVSCommentReply  = class external name 'vscode.CommentReply' (TJSObject)
   Public
     thread: TVSCommentThread;
     text: string;
   end;
 
 
-  TVSCommentingRangeProvider  = class external name 'CommentingRangeProvider' (TJSObject)
+  TVSCommentingRangeProvider  = class external name 'vscode.CommentingRangeProvider' (TJSObject)
   Public
     function provideCommentingRanges(document: TVSTextDocument; token: TVSCancellationToken) : JSValue;
   end;
 
 
-  TVSCommentOptions  = class external name 'CommentOptions' (TJSObject)
+  TVSCommentOptions  = class external name 'vscode.CommentOptions' (TJSObject)
   Public
     prompt: string;
     placeHolder: string;
@@ -3908,7 +3908,7 @@ Type
 
   TVSCommentReactionHandler = reference to function  (comment: TVSComment; reaction: TVSCommentReaction) : TJSPromise;
 
-  TVSCommentController  = class external name 'CommentController' (TJSObject)
+  TVSCommentController  = class external name 'vscode.CommentController' (TJSObject)
   Private
     Fid : string; external name 'id';
     Flabel : string; external name 'label';
@@ -3929,7 +3929,7 @@ Type
   end;
 
 
-  TVSAuthenticationSession  = class external name 'AuthenticationSession' (TJSObject)
+  TVSAuthenticationSession  = class external name 'vscode.AuthenticationSession' (TJSObject)
   Private
     Fid : string; external name 'id';
     FaccessToken : string; external name 'accessToken';
@@ -3943,7 +3943,7 @@ Type
   end;
 
 
-  TVSAuthenticationSessionAccountInformation  = class external name 'AuthenticationSessionAccountInformation' (TJSObject)
+  TVSAuthenticationSessionAccountInformation  = class external name 'vscode.AuthenticationSessionAccountInformation' (TJSObject)
   Private
     Fid : string; external name 'id';
     Flabel : string; external name 'label';
@@ -3953,14 +3953,14 @@ Type
   end;
 
 
-  TVSAuthenticationGetSessionOptions  = class external name 'AuthenticationGetSessionOptions' (TJSObject)
+  TVSAuthenticationGetSessionOptions  = class external name 'vscode.AuthenticationGetSessionOptions' (TJSObject)
   Public
     createIfNone: boolean;
     clearSessionPreference: boolean;
   end;
 
 
-  TVSAuthenticationProviderInformation  = class external name 'AuthenticationProviderInformation' (TJSObject)
+  TVSAuthenticationProviderInformation  = class external name 'vscode.AuthenticationProviderInformation' (TJSObject)
   Private
     Fid : string; external name 'id';
     Flabel : string; external name 'label';
@@ -3970,7 +3970,7 @@ Type
   end;
 
 
-  TVSAuthenticationSessionsChangeEvent  = class external name 'AuthenticationSessionsChangeEvent' (TJSObject)
+  TVSAuthenticationSessionsChangeEvent  = class external name 'vscode.AuthenticationSessionsChangeEvent' (TJSObject)
   private
     Fprovider : TVSAuthenticationProviderInformation; external name 'provider';
   Public
@@ -3988,7 +3988,7 @@ Type
   end;
 
 
-  TVSCode = Class external name 'Object' (TJSObject)
+  TVSCode = class external name 'Object' (TJSObject)
   Private
     FVersion : string; external name 'version';
     Ftasks : TVSNStasks; external name 'tasks';

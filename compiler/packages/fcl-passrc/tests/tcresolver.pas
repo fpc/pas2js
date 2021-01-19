@@ -342,6 +342,7 @@ type
     Procedure TestTryStatement;
     Procedure TestTryExceptOnNonTypeFail;
     Procedure TestTryExceptOnNonClassFail;
+    Procedure TestTryStatementMissingOnFail;
     Procedure TestRaiseNonVarFail;
     Procedure TestRaiseNonClassFail;
     Procedure TestRaiseDescendant;
@@ -1738,6 +1739,8 @@ begin
         end;
       ok:=true;
       end;
+    on E: Exception do
+      Fail('Expected EPasResolve but got '+E.ClassName);
   end;
   AssertEquals('Missing resolver error {'+Msg+'} ('+IntToStr(MsgNumber)+')',true,ok);
 end;
@@ -1758,6 +1761,8 @@ begin
         MsgNumber,Parser.LastMsgNumber);
       ok:=true;
       end;
+    on E: Exception do
+      Fail('Expected EParserError but got '+E.ClassName);
   end;
   AssertEquals('Missing parser error '+Msg+' ('+IntToStr(MsgNumber)+')',true,ok);
 end;
@@ -5403,6 +5408,23 @@ begin
   Add('    on longint do ;');
   Add('  end;');
   CheckResolverException('class expected, but Longint found',nXExpectedButYFound);
+end;
+
+procedure TTestResolver.TestTryStatementMissingOnFail;
+begin
+  StartProgram(true,[supTObject]);
+  Add([
+  'procedure Run;',
+  'begin',
+  '  try',
+  '  except',
+  '    on TObject do ;',
+  '    Run;',
+  '  end;',
+  'end;',
+  'begin',
+  '']);
+  CheckParserException('Expected "end" or "on"',nParserExpectToken2Error);
 end;
 
 procedure TTestResolver.TestRaiseNonVarFail;

@@ -7135,7 +7135,9 @@ begin
   'begin',
   '  i:=i2;',
   '  i:=default(TMyInt);',
-  '  if i=i2 then ;']);
+  '  if i=i2 then ;',
+  '  i:=ord(i2);',
+  '']);
   ConvertProgram;
   CheckSource('TestIntegerRange',
     LinesToStr([
@@ -7156,6 +7158,7 @@ begin
     '$mod.i = $mod.i2;',
     '$mod.i = -1;',
     'if ($mod.i === $mod.i2) ;',
+    '$mod.i = $mod.i2;',
     '']));
 end;
 
@@ -7270,6 +7273,7 @@ begin
   '  i:=system.high(i);',
   '  i:=system.pred(i);',
   '  i:=system.succ(i);',
+  '  i:=system.ord(i);',
   '']);
   ConvertProgram;
   CheckResolverUnexpectedHints;
@@ -7286,6 +7290,7 @@ begin
     '$mod.i = 255;',
     '$mod.i = $mod.i - 1;',
     '$mod.i = $mod.i + 1;',
+    '$mod.i = $mod.i;',
     '']));
 end;
 

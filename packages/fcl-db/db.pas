@@ -23,7 +23,6 @@ interface
 uses Classes, SysUtils, JS, Types, DateUtils;
 
 const
-
   dsMaxBufferCount = MAXINT div 8;
   dsMaxStringSize = 8192;
 
@@ -34,7 +33,6 @@ const
   SQLDelimiterCharacters = [';',',',' ','(',')',#13,#10,#9];
 
 type
-
 { Misc Dataset types }
 
   TDataSetState = (dsInactive, dsBrowse, dsEdit, dsInsert, dsSetKey,
@@ -729,6 +727,16 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
+  TDataSetField = class(TField)
+  private
+    FNestedDataSet: TDataSet;
+    procedure AssignNestedDataSet(Value: TDataSet);
+  protected
+    procedure Bind(Binding: Boolean); override;
+  public
+    constructor Create(AOwner: TComponent); override;
+  end;
+
 { TIndexDef }
 
   TIndexDefs = class;
@@ -1054,6 +1062,8 @@ type
   TOnRecordResolveEvent = Procedure (Sender : TDataset; info : TResolveInfo) of object;
   TApplyUpdatesEvent = Procedure (Sender : TDataset; info : TResolveResults) of object;
 
+  TNestedDataSetsList = TFPList;
+
 {------------------------------------------------------------------------------}
 
   TDataSet = class(TComponent)
@@ -1127,6 +1137,9 @@ type
     FInApplyupdates : Boolean;
     FLoadCount : Integer;
     FMinLoadID : Integer;
+    FDataSetField: TDataSetField;
+    FNestedDataSets: TNestedDataSetsList;
+    FNestedDataSetClass: TDataSetClass;
     Procedure DoInsertAppend(DoAppend : Boolean);
     Procedure DoInternalOpen;
     Function  GetBuffer (Index : longint) : TDataRecord;
@@ -1146,6 +1159,7 @@ type
     // Callback for Tdataproxy.DoGetData;
     function ResolveRecordUpdate(anUpdate: TRecordUpdateDescriptor): Boolean;
     procedure HandleRequestResponse(ARequest: TDataRequest);
+    function GetNestedDataSets: TNestedDataSetsList;
   protected
     // Proxy methods
     // Override this to integrate package in local data
@@ -1283,6 +1297,7 @@ type
     procedure SetBookmarkData(Var Buffer{%H-}: TDataRecord; Data{%H-}: TBookmark); virtual;
     procedure SetUniDirectional(const Value: Boolean);
     procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure SetDataSetField(const Value: TDataSetField); virtual;
     // These use the active buffer
     function GetFieldData(Field: TField): JSValue;  virtual; overload;
     procedure SetFieldData(Field: TField; AValue : JSValue);  virtual; overload;
@@ -1290,6 +1305,7 @@ type
     procedure SetFieldData(Field: TField; var Buffer: TDatarecord; AValue : JSValue);  virtual; overload;
     class function FieldDefsClass : TFieldDefsClass; virtual;
     class function FieldsClass : TFieldsClass; virtual;
+    property NestedDataSets: TNestedDataSetsList read GetNestedDataSets;
   protected { abstract methods }
     function GetRecord(var Buffer: TDataRecord; GetMode: TGetMode; DoCheck: Boolean): TGetResult; virtual; abstract;
     procedure InternalClose; virtual; abstract;
@@ -1360,6 +1376,7 @@ type
     procedure UpdateCursorPos;
     procedure UpdateRecord;
     Function GetPendingUpdates : TResolveInfoArray;
+    property DataSetField: TDataSetField read FDataSetField write SetDataSetField;
     Property Loading : Boolean Read GetIsLoading;
     property BlockReadSize: Integer read FBlockReadSize write SetBlockReadSize;
     property BOF: Boolean read FBOF;
@@ -2343,9 +2360,8 @@ begin
   FIsUniDirectional := False;
   FAutoCalcFields := True;
   FDataRequestID:=0;
+  FNestedDataSetClass := TDataSetClass(Self.ClassType);
 end;
-
-
 
 destructor TDataSet.Destroy;
 
@@ -2356,6 +2372,7 @@ begin
   Active:=False;
   FFieldDefs.Free;
   FFieldList.Free;
+  FNestedDataSets.Free;
   With FDataSources do
     begin
     While Count>0 do
@@ -2544,9 +2561,23 @@ procedure TDataSet.DataEvent(Event: TDataEvent; Info: JSValue);
   end;
   
   procedure HandleScrollOrChange;
+  var
+    A: Integer;
+
+    NestedDataSet: TDataSet;
+
   begin
     if State <> dsInsert then
       UpdateCursorPos;
+
+    if Assigned(FNestedDataSets) then
+      for A := 0 to Pred(NestedDataSets.Count) do
+      begin
+        NestedDataSet := TDataSet(NestedDataSets[A]);
+
+        if NestedDataSet.Active then
+          NestedDataSet.DataEvent(deParentScroll, 0);
+      end;
   end;
 
 var
@@ -3157,6 +3188,35 @@ begin
   // empty stub
 end;
 
+procedure TDataSet.SetDataSetField(const Value: TDataSetField);
+begin
+  if Value = FDataSetField then
+    exit;
+  if (Value <> nil) and ((Value.DataSet = Self) or
+     ((Value.DataSet.GetDataSource <> nil) and
+      (Value.DataSet.GetDataSource.DataSet = Self))) then
+    DatabaseError(SCircularDataLink, Self);
+  if Assigned(Value) and not InheritsFrom(Value.DataSet.FNestedDataSetClass) then
+    DatabaseErrorFmt(SNestedDataSetClass, [Value.DataSet.FNestedDataSetClass.ClassName], Self);
+  if Active then
+    Close;
+  if Assigned(FDataSetField) then
+    FDataSetField.AssignNestedDataSet(nil);
+  FDataSetField := Value;
+  if Assigned(Value) then
+    begin
+    Value.AssignNestedDataSet(Self);
+    if Value.DataSet.Active then
+      Open;
+    end;
+end;
+
+function TDataSet.GetNestedDataSets: TNestedDataSetsList;
+begin
+  if not Assigned(FNestedDataSets) then
+    FNestedDataSets := TNestedDataSetsList.Create;
+  Result := FNestedDataSets;
+end;
 
 function TDataSet.GetFieldData(Field: TField; Buffer: TDatarecord): JSValue;
 
@@ -9001,6 +9061,45 @@ begin
     end;
 end;
 
-initialization
+{ TDataSetField }
+
+constructor TDataSetField.Create(AOwner: TComponent);
+begin
+  inherited;
+
+  SetDataType(ftDataSet);
+end;
+
+procedure TDataSetField.Bind(Binding: Boolean);
+begin
+  inherited;
+  if Assigned(FNestedDataSet) then
+    if Binding then
+    begin
+      if FNestedDataSet.State = dsInActive then
+        FNestedDataSet.Open;
+    end
+    else
+      FNestedDataSet.Close;
+end;
+
+procedure TDataSetField.AssignNestedDataSet(Value: TDataSet);
+begin
+  if Assigned(FNestedDataSet) then
+  begin
+    FNestedDataSet.Close;
+    FNestedDataSet.FDataSetField := nil;
+    if Assigned(DataSet) then
+      DataSet.NestedDataSets.Remove(FNestedDataSet);
+  end;
+  if Assigned(Value) then
+  begin
+    DataSet.NestedDataSets.Add(Value);
+    FFields := Value.Fields;
+  end
+  else
+    FFields := nil;
+  FNestedDataSet := Value;
+end;
 
 end.

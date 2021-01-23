@@ -82,6 +82,7 @@ type
     class function Create: TRTTIContext; static;
     procedure Free;
 
+    function FindType(const AQualifiedName: String): TRttiType;
     function GetType(aTypeInfo: PTypeInfo): TRTTIType; overload;
     function GetType(aClass: TClass): TRTTIType; overload;
   end;
@@ -387,6 +388,7 @@ implementation
 
 var
   GRttiContext: TRTTIContext;
+  pas: TJSObject; external name 'pas';
 
 procedure CreateVirtualCorbaInterface(InterfaceTypeInfo: Pointer;
   const MethodImplementation: TVirtualInterfaceInvokeEvent; out IntfVar); assembler;
@@ -1081,6 +1083,32 @@ function TRTTIContext.GetType(aClass: TClass): TRTTIType;
 begin
   if aClass=nil then exit(nil);
   Result:=GetType(TypeInfo(aClass));
+end;
+
+function TRTTIContext.FindType(const AQualifiedName: String): TRttiType;
+var
+  ModuleName, TypeName: String;
+
+  Module: TTypeInfoModule;
+
+  TypeFound: PTypeInfo;
+
+begin
+  Result := nil;
+
+  for ModuleName in TJSObject.Keys(pas) do
+    if AQualifiedName.StartsWith(ModuleName + '.') then
+    begin
+      Module := TTypeInfoModule(pas[ModuleName]);
+      TypeName := Copy(AQualifiedName, Length(ModuleName) + 2, Length(AQualifiedName));
+
+      if Module.RTTI.HasOwnProperty(TypeName) then
+      begin
+        TypeFound := PTypeInfo(Module.RTTI[TypeName]);
+
+        Exit(GetType(TypeFound));
+      end;
+    end;
 end;
 
 { TRttiObject }

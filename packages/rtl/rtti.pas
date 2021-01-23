@@ -140,12 +140,28 @@ type
     //procedure SetValue(Instance: Pointer; const AValue: TValue);
     //function ToString: string; override;
   end;
-  TRttiFieldArray = array of TRttiField;
+  TRttiFieldArray = specialize TArray<TRttiField>;
+
+  TRttiParameter = class(TRttiNamedObject)
+  private
+    FParamType: TRttiType;
+    FFlags: TParamFlags;
+    FName: String;
+  protected
+    function GetName: string; override;
+  public
+    property Flags: TParamFlags read FFlags;
+    property ParamType: TRttiType read FParamType;
+  end;
+
+  TRttiParameterArray = specialize TArray<TRttiParameter>;
 
   { TRttiMethod }
 
   TRttiMethod = class(TRttiMember)
   private
+    FParameters: TRttiParameterArray;
+
     function GetMethodTypeInfo: TTypeMemberMethod;
     function GetIsClassMethod: boolean;
     function GetIsConstructor: boolean;
@@ -155,7 +171,10 @@ type
     function GetIsVarArgs: boolean;
     function GetMethodKind: TMethodKind;
     function GetReturnType: TRttiType;
+
+    procedure LoadParameters;
   public
+    function GetParameters: TRttiParameterArray;
     property MethodTypeInfo: TTypeMemberMethod read GetMethodTypeInfo;
     property ReturnType: TRttiType read GetReturnType;
     property MethodKind: TMethodKind read GetMethodKind;
@@ -165,7 +184,6 @@ type
     property IsExternal: boolean read GetIsExternal;
     property IsStatic: boolean read GetIsStatic;// true = has Self argument
     property IsVarArgs: boolean read GetIsVarArgs;
-    //function GetParameters:
   end;
 
   TRttiMethodArray = specialize TArray<TRttiMethod>;
@@ -1165,6 +1183,13 @@ begin
   Result := GRttiContext.GetType(FTypeInfo);
 end;
 
+{ TRttiParameter }
+
+function TRttiParameter.GetName: String;
+begin
+  Result := FName;
+end;
+
 { TRttiMethod }
 
 function TRttiMethod.GetMethodTypeInfo: TTypeMemberMethod;
@@ -1210,6 +1235,43 @@ end;
 function TRttiMethod.GetReturnType: TRttiType;
 begin
   Result := GRttiContext.GetType(MethodTypeInfo.ProcSig.ResultType);
+end;
+
+procedure TRttiMethod.LoadParameters;
+const
+  FLAGS_CONVERSION: array[TParamFlag] of Integer = (1, 2, 4, 8, 16, 32);
+
+var
+  A, Flag: Integer;
+
+  Param: TProcedureParam;
+
+  RttiParam: TRttiParameter;
+
+begin
+  SetLength(FParameters, Length(MethodTypeInfo.ProcSig.Params));
+
+  for A := Low(FParameters) to High(FParameters) do
+  begin
+    Param := MethodTypeInfo.ProcSig.Params[A];
+    RttiParam := TRttiParameter.Create;
+    RttiParam.FName := Param.Name;
+    RttiParam.FParamType := GRttiContext.GetType(Param.TypeInfo);
+
+    for Flag in FLAGS_CONVERSION do
+      if Flag and Param.Flags > 0 then
+        RttiParam.FFlags := RttiParam.FFlags + [TParamFlag(A)];
+
+    FParameters[A] := RttiParam;
+  end;
+end;
+
+function TRttiMethod.GetParameters: TRttiParameterArray;
+begin
+  if not Assigned(FParameters) then
+    LoadParameters;
+
+  Result := FParameters;
 end;
 
 { TRttiProperty }

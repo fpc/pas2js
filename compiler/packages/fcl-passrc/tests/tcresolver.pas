@@ -3351,7 +3351,8 @@ begin
   'begin',
   '  i:=i2;',
   '  if i=i2 then ;',
-  '  i:=ord(i);']);
+  '  i:=ord(i);',
+  '']);
   ParseProgram;
   CheckResolverUnexpectedHints;
 end;
@@ -4223,7 +4224,9 @@ begin
   '  s:= {#s3_set}[3..4];',
   '  s:= {#s4_set}[Three];',
   '  if 3 in a then ;',
-  '  s:=c;']);
+  '  s:=c;',
+  '  Include(s,3);',
+  '']);
   ParseProgram;
   CheckParamsExpr_pkSet_Markers;
   CheckResolverUnexpectedHints;

@@ -4058,7 +4058,7 @@ begin
   else
     begin
     S:='';
-    For I:=0 to Length(AValue) do
+    For I:=0 to Length(AValue)-1 do
       TJSString(S).Concat(IntToHex(aValue[i],2));
     Result:=S;
     end;

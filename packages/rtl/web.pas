@@ -345,6 +345,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property origin : string read FOrigin;
   end;
   
+  TJSCSSStyleDeclaration = class; // forward
+
   TJSStyleSheet = class external name 'StyleSheet' (TJSEventTarget)
   Private
     FHRef : String; external name 'href';
@@ -361,7 +363,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property _type : String read FType;
   end;
 
-
   TJSCSSRule = class external name 'CSSRule'  (TJSObject)
   Private
     FCSSText : String; external name 'cssText';
@@ -371,6 +372,14 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property cssText : String Read FCSSText;
     property parentRule : TJSCSSRule read FparentRule;
     property parentStyleSheet : TJSCSSStyleSheet Read FParentStyleSheet;
+  end;
+
+  TJSCSSStyleRule = class external name 'CSSStyleRule' (TJSCSSRule)
+  private
+    FStyle: TJSCSSStyleDeclaration; external name 'style';
+  public
+    selectorText: String;
+    property style: TJSCSSStyleDeclaration read FStyle;
   end;
   
   TJSCSSRuleList = Class external name 'CSSRuleList'  (TJSObject)
@@ -1899,8 +1908,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property Origin : String Read FOrigin;
     property SearchParams : TJSURLSearchParams read FSearchParams;
   end;
-
-  TJSCSSStyleDeclaration = class; // forward
 
   TJSTimerCallBack = reference to procedure; safecall;
   Theader = Array [0..1] of String;

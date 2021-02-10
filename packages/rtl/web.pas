@@ -267,6 +267,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function matches(aSelectorString : String) : Boolean;
     function querySelector(aSelectors : String) : TJSElement;
     function querySelectorAll(aSelectors : String) : TJSNodeList;
+    procedure remove;
     procedure releasePointerCapture(evID : JSValue);
     procedure removeAttribute(aName: string);
     procedure removeAttributeNS(aNameSpace,aName: string);

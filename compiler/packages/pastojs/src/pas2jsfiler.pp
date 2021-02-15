@@ -607,6 +607,7 @@ type
   public
     Owner: TObject;
   end;
+  EPas2JsFilerErrorClass = class of EPas2JsFilerError;
   EPas2JsWriteError = class(EPas2JsFilerError);
   EPas2JsReadError = class(EPas2JsFilerError);
 
@@ -663,6 +664,7 @@ type
 
   TPCUFiler = class
   private
+    FErrorClass: EPas2JsFilerErrorClass;
     FFileVersion: longint;
     FGUID: TGUID;
     FInitialFlags: TPCUInitialFlags;
@@ -674,7 +676,7 @@ type
     function GetSourceFiles(Index: integer): TPCUSourceFile;
   protected
     FElementRefs: TAVLTree; // tree of TPCUFilerElementRef sorted for Element
-    procedure RaiseMsg(Id: int64; const Msg: string = ''); virtual; abstract; overload;
+    procedure RaiseMsg(Id: int64; const Msg: string = ''); virtual; overload;
     procedure RaiseMsg(Id: int64; El: TPasElement; const Msg: string = ''); overload;
     function GetDefaultMemberVisibility(El: TPasElement): TPasMemberVisibility; virtual;
     function GetDefaultPasScopeVisibilityContext(Scope: TPasScope): TPasElement; virtual;
@@ -701,6 +703,7 @@ type
     property SourceFiles[Index: integer]: TPCUSourceFile read GetSourceFiles;
     property ElementRefs: TAVLTree read FElementRefs;
     property GUID: TGUID read FGUID write FGUID;
+    property ErrorClass: EPas2JsFilerErrorClass read FErrorClass write FErrorClass;
   end;
 
   { TPCUCustomWriter }
@@ -709,6 +712,7 @@ type
   private
     FOnIsElementUsed: TPas2JSIsElementUsedEvent;
   public
+    constructor Create; override;
     procedure WritePCU(aResolver: TPas2JSResolver; aConverter: TPasToJSConverter;
       InitFlags: TPCUInitialFlags; aStream: TStream; Compressed: boolean); virtual; abstract;
     property OnIsElementUsed: TPas2JSIsElementUsedEvent read FOnIsElementUsed write FOnIsElementUsed;
@@ -719,12 +723,15 @@ type
 
   TPCUCustomReader = class(TPCUFiler)
   private
+    FPCUFilename: string;
     FSourceFilename: string;
   public
+    constructor Create; override;
     procedure ReadPCU(aResolver: TPas2JSResolver; aStream: TStream); virtual; abstract;
     function ReadContinue: boolean; virtual; abstract;  // true=finished
     function ReadCanContinue: boolean; virtual; // true=not finished and no pending used interface
     property SourceFilename: string read FSourceFilename write FSourceFilename; // default value for TPasElement.SourceFilename
+    property PCUFilename: string read FPCUFilename write FPCUFilename; // for nicer error messages
   end;
   TPCUReaderClass = class of TPCUCustomReader;
 
@@ -766,7 +773,6 @@ type
     FBuiltInSymbolsArr: TJSONArray;
   protected
     FFirstNewExt, FLastNewExt: TPCUFilerElementRef; // not yet stored external references
-    procedure RaiseMsg(Id: int64; const Msg: string = ''); override; overload;
     procedure ResolvePendingElRefs(Ref: TPCUFilerElementRef);
     function CheckElScope(El: TPasElement; NotNilId: int64; ScopeClass: TPasScopeClass): TPasScope; virtual;
     procedure AddArrayFlag(Obj: TJSONObject; var Arr: TJSONArray;
@@ -1237,6 +1243,7 @@ type
     procedure ReadPCU(aResolver: TPas2JSResolver; aStream: TStream); override; // sets property JSON, reads header and returns
     procedure ReadJSONHeader(aResolver: TPas2JSResolver; Obj: TJSONObject); virtual;
     function ReadContinue: boolean; override; // true=finished
+    function GetPCUExt: string; virtual; // without dot
     property FileVersion: longint read FFileVersion;
     property JSON: TJSONObject read FJSON;
   end;
@@ -1854,6 +1861,14 @@ begin
     AddLine(Line);
 end;
 
+{ TPCUCustomWriter }
+
+constructor TPCUCustomWriter.Create;
+begin
+  inherited Create;
+  FErrorClass:=EPas2JsWriteError;
+end;
+
 { TPCUReaderPendingSpecialized }
 
 destructor TPCUReaderPendingSpecialized.Destroy;
@@ -1873,6 +1888,12 @@ begin
 end;
 
 { TPCUCustomReader }
+
+constructor TPCUCustomReader.Create;
+begin
+  inherited Create;
+  FErrorClass:=EPas2JsReadError;
+end;
 
 function TPCUCustomReader.ReadCanContinue: boolean;
 var
@@ -1925,6 +1946,18 @@ end;
 function TPCUFiler.GetSourceFiles(Index: integer): TPCUSourceFile;
 begin
   Result:=TPCUSourceFile(FSourceFiles[Index]);
+end;
+
+procedure TPCUFiler.RaiseMsg(Id: int64; const Msg: string);
+var
+  E: EPas2JsFilerError;
+begin
+  E:=ErrorClass.Create('['+IntToStr(Id)+'] '+Msg);
+  E.Owner:=Self;
+  {$IFDEF VerbosePCUFiler}
+  writeln(ClassName+'/TPCUFiler.RaiseMsg ',E.Message);
+  {$ENDIF}
+  raise E;
 end;
 
 procedure TPCUFiler.RaiseMsg(Id: int64; El: TPasElement; const Msg: string);
@@ -2210,18 +2243,6 @@ begin
     RefItem.Next:=nil;
     RefItem.Free;
     end;
-end;
-
-procedure TPCUWriter.RaiseMsg(Id: int64; const Msg: string);
-var
-  E: EPas2JsWriteError;
-begin
-  E:=EPas2JsWriteError.Create('['+IntToStr(Id)+'] '+Msg);
-  E.Owner:=Self;
-  {$IFDEF VerbosePCUFiler}
-  writeln('TPCUWriter.RaiseMsg ',E.Message);
-  {$ENDIF}
-  raise E;
 end;
 
 function TPCUWriter.CheckElScope(El: TPasElement; NotNilId: int64;
@@ -5777,12 +5798,16 @@ end;
 
 procedure TPCUReader.RaiseMsg(Id: int64; const Msg: string);
 var
-  E: EPas2JsReadError;
+  E: EPas2JsFilerError;
+  s: String;
 begin
-  E:=EPas2JsReadError.Create('['+IntToStr(Id)+'] '+Msg);
+  s:='['+IntToStr(Id)+'] '+Msg;
+  if PCUFilename<>'' then
+    s:=s+' file: '+PCUFilename;
+  E:=ErrorClass.Create(s);
   E.Owner:=Self;
   {$IFDEF VerbosePCUFiler}
-  writeln('TPCUReader.RaiseMsg ',E.Message);
+  writeln(ClassName+'/TPCUReader.RaiseMsg ',E.Message);
   {$ENDIF}
   raise E;
 end;
@@ -6313,9 +6338,9 @@ begin
   writeln('TPCUReader.ReadHeaderVersion ',FFileVersion);
   {$ENDIF}
   if FFileVersion<1 then
-    RaiseMsg(20180130201801,'invalid PCU file version');
+    RaiseMsg(20180130201801,'invalid file version');
   if FFileVersion>PCUVersion then
-    RaiseMsg(20180130201822,'pcu file was created by a newer compiler.');
+    RaiseMsg(20180130201822,'file was created by a newer compiler.');
 end;
 
 procedure TPCUReader.ReadGUID(Obj: TJSONObject);
@@ -10128,6 +10153,15 @@ begin
   {$IF defined(VerbosePCUFiler) or defined(VerboseUnitQueue)}
   writeln('TPCUReader.ReadContinue END');
   {$ENDIF}
+end;
+
+function TPCUReader.GetPCUExt: string;
+begin
+  Result:=ExtractFileExt(PCUFilename);
+  if Result='' then
+    Result:='pcu'
+  else
+    System.Delete(Result,1,1); // remove leading dot
 end;
 
 { TPas2JSPrecompileFormats }

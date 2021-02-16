@@ -1300,6 +1300,7 @@ end;
 function TDictionary<TKey, TValue>.ExtractPair(const Key: TKey): TMyPair;
 
 begin
+  Result:=Default(TMyPair);
   if FMap.Has(Key) then
     begin
     Result.Create(Key,TValue(FMap.get(key)));
@@ -1419,6 +1420,7 @@ Var
 
 begin
   A:=TJSValueDynArray(FVal.Value);
+  Result:=Default(TMyPair);
   Result.Create(TKey(A[0]),TValue(A[1]));
 end;
 

@@ -272,7 +272,10 @@ type
     procedure SetLineBreak(const S : String);
     Function GetSkipLastLineBreak : Boolean;
     procedure SetSkipLastLineBreak(const AValue : Boolean);
+    procedure ReadData(Reader: TReader);
+    procedure WriteData(Writer: TWriter);
   protected
+    procedure DefineProperties(Filer: TFiler); override;
     procedure Error(const Msg: string; Data: Integer);
     function Get(Index: Integer): string; virtual; abstract;
     function GetCapacity: Integer; virtual;
@@ -2686,6 +2689,44 @@ begin
   FSkipLastLineBreak:=AValue;
 end;
 
+procedure TStrings.ReadData(Reader: TReader);
+begin
+  Reader.ReadListBegin;
+  BeginUpdate;
+  try
+    Clear;
+    while not Reader.EndOfList do
+      Add(Reader.ReadString);
+  finally
+    EndUpdate;
+  end;
+  Reader.ReadListEnd;
+end;
+
+procedure TStrings.WriteData(Writer: TWriter);
+var
+  i: Integer;
+begin
+  Writer.WriteListBegin;
+  for i := 0 to Count - 1 do
+    Writer.WriteString(Strings[i]);
+  Writer.WriteListEnd;
+end;
+
+procedure TStrings.DefineProperties(Filer: TFiler);
+var
+  HasData: Boolean;
+begin
+  if Assigned(Filer.Ancestor) then
+    // Only serialize if string list is different from ancestor
+    if Filer.Ancestor.InheritsFrom(TStrings) then
+      HasData := not Equals(TStrings(Filer.Ancestor))
+    else
+      HasData := True
+  else
+    HasData := Count > 0;
+  Filer.DefineProperty('Strings', @ReadData, @WriteData, HasData);
+end;
 
 function TStrings.GetLBS: TTextLineBreakStyle;
 begin

@@ -1322,7 +1322,7 @@ end;
 
 function TRttiProperty.GetVisibility: TMemberVisibility;
 begin
-  // At this moment only pulished rtti-property-info is supported by pas2js
+  // At this moment only published rtti-property-info is supported by pas2js
   Result := mvPublished;
 end;
 

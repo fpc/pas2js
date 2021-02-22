@@ -267,7 +267,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function matches(aSelectorString : String) : Boolean;
     function querySelector(aSelectors : String) : TJSElement;
     function querySelectorAll(aSelectors : String) : TJSNodeList;
-    procedure remove;
+    procedure remove; overload;
     procedure releasePointerCapture(evID : JSValue);
     procedure removeAttribute(aName: string);
     procedure removeAttributeNS(aNameSpace,aName: string);
@@ -2743,7 +2743,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Procedure add(anItem, before : TJSHTMLOptionElement); overload;
     function item(aIndex : NativeInt): TJSHTMLOptionElement;
     function namedItem(aName : String): TJSHTMLOptionElement;
-    procedure remove(aIndex : NativeInt);
+    procedure remove(aIndex : NativeInt); overload;
     procedure checkValidity;
     procedure setCustomValidity(aMessage : String);
   Public

@@ -1263,6 +1263,7 @@ end;
 constructor TDictionary<TKey, TValue>.Create(ACapacity: Integer = 0);
 begin
   FMap:=TJSMap.New;
+  if ACapacity>0 then ; // ToDo
 end;
 
 constructor TDictionary<TKey, TValue>.Create(const Collection: TEnumerable<TMyPair>);
@@ -1653,14 +1654,14 @@ end;
 procedure TThreadList<T>.Remove(const Item: T);
 
 begin
-  RemoveItem(T,TDirection.FromBeginning);
+  RemoveItem(Item,TDirection.FromBeginning);
 end;
 
 procedure TThreadList<T>.RemoveItem(const Item: T; Direction: TDirection);
 begin
   LockList;
   try
-    FList.RemoveItem(T,Direction);
+    FList.RemoveItem(Item,Direction);
   finally
     UnlockList;
   end;
@@ -1704,7 +1705,8 @@ end;
 
 constructor TObjectDictionary<TKey, TValue>.Create(aOwnerships: TDictionaryOwnerships; ACapacity: Integer);
 begin
-  Create(aOwnerShips);
+  FOwnerShips:=aOwnerships;
+  inherited Create(ACapacity);
 end;
 
 constructor TObjectDictionary<TKey, TValue>.Create(aOwnerships: TDictionaryOwnerships);

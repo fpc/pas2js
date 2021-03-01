@@ -172,7 +172,7 @@ type
       ImplementationSrc: string): TTestEnginePasResolver;
     procedure AddSystemUnit(Parts: TSystemUnitParts = []);
     procedure StartProgram(NeedSystemUnit: boolean; SystemUnitParts: TSystemUnitParts = []);
-    procedure StartUnit(NeedSystemUnit: boolean);
+    procedure StartUnit(NeedSystemUnit: boolean; SystemUnitParts: TSystemUnitParts = []);
     property Modules[Index: integer]: TTestEnginePasResolver read GetModules;
     property ModuleCount: integer read GetModuleCount;
     property Hub: TPasResolverHub read FHub;
@@ -2336,10 +2336,11 @@ begin
   Add('program '+ExtractFileUnitName(MainFilename)+';');
 end;
 
-procedure TCustomTestResolver.StartUnit(NeedSystemUnit: boolean);
+procedure TCustomTestResolver.StartUnit(NeedSystemUnit: boolean;
+  SystemUnitParts: TSystemUnitParts);
 begin
   if NeedSystemUnit then
-    AddSystemUnit
+    AddSystemUnit(SystemUnitParts)
   else
     Parser.ImplicitUses.Clear;
   Add('unit '+ExtractFileUnitName(MainFilename)+';');

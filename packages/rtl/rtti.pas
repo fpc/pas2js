@@ -342,6 +342,20 @@ type
     property RecordTypeInfo: TTypeInfoRecord read GetRecordTypeInfo;
   end;
 
+  { TRttiClassRefType }
+  TRttiClassRefType = class(TRttiType)
+  private
+    function GetClassRefTypeInfo: TTypeInfoClassRef;
+    function GetInstanceType: TRttiInstanceType;
+    function GetMetaclassType: TClass;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property ClassRefTypeInfo: TTypeInfoClassRef read GetClassRefTypeInfo;
+    property InstanceType: TRttiInstanceType read GetInstanceType;
+    property MetaclassType: TClass read GetMetaclassType;
+  end;
+
   { TRttiOrdinalType }
 
   TRttiOrdinalType = class(TRttiType)
@@ -1089,6 +1103,31 @@ begin
   inherited Create(ATypeInfo);
 end;
 
+{ TRttiClassRefType }
+
+constructor TRttiClassRefType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoClassRef) then
+    raise EInvalidCast.Create('');
+
+  inherited Create(ATypeInfo);
+end;
+
+function TRttiClassRefType.GetClassRefTypeInfo: TTypeInfoClassRef;
+begin
+  Result := TTypeInfoClassRef(FTypeInfo);
+end;
+
+function TRttiClassRefType.GetInstanceType: TRttiInstanceType;
+begin
+  Result := GRttiContext.GetType(ClassRefTypeInfo.InstanceType) as TRttiInstanceType;
+end;
+
+function TRttiClassRefType.GetMetaclassType: TClass;
+begin
+  Result := InstanceType.MetaClassType;
+end;
+
 { TRTTIContext }
 
 class constructor TRTTIContext.Init;
@@ -1131,7 +1170,7 @@ var
     TRttiDynamicArrayType, // tkDynArray
     TRttiRecordType, // tkRecord
     TRttiInstanceType, // tkClass
-    TRttiType, // tkClassRef
+    TRttiClassRefType, // tkClassRef
     TRttiType, // tkPointer
     TRttiType, // tkJSValue
     TRttiType, // tkRefToProcVar

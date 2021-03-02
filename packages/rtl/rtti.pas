@@ -201,9 +201,10 @@ type
     function GetVisibility: TMemberVisibility; override;
   public
     constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
-    function GetValue(Instance: TObject): TValue;
+    function GetValue(Instance: JSValue): TValue;
 
-    procedure SetValue(Instance: TObject; const AValue: JSValue); overload;
+    procedure SetValue(Instance: JSValue; const AValue: JSValue); overload;
+    procedure SetValue(Instance: JSValue; const AValue: TValue); overload;
     procedure SetValue(Instance: TObject; const AValue: TValue); overload;
 
     property PropertyTypeInfo: TTypeMemberProperty read GetPropertyTypeInfo;
@@ -376,7 +377,6 @@ type
     property DynArrayTypeInfo: TTypeInfoDynArray read GetDynArrayTypeInfo;
     property ElementType: TRttiType read GetElementType;
   end;
-
 
   EInvoke = EJS;
 
@@ -1295,23 +1295,36 @@ begin
   Result := TTypeMemberProperty(FTypeInfo);
 end;
 
-function TRttiProperty.GetValue(Instance: TObject): TValue;
+function TRttiProperty.GetValue(Instance: JSValue): TValue;
+var
+  JSObject: TJSObject absolute Instance;
+
 begin
-  Result := TValue.Make(PropertyType.Handle, GetJSValueProp(Instance, PropertyTypeInfo));
+  Result := TValue.Make(PropertyType.Handle, GetJSValueProp(JSObject, PropertyTypeInfo));
+end;
+
+procedure TRttiProperty.SetValue(Instance: JSValue; const AValue: TValue);
+var
+  JSObject: TJSObject absolute Instance;
+
+begin
+  SetJSValueProp(JSObject, PropertyTypeInfo, AValue.AsJSValue);
+end;
+
+procedure TRttiProperty.SetValue(Instance: JSValue; const AValue: JSValue);
+var
+  JSObject: TJSObject absolute Instance;
+
+begin
+  SetJSValueProp(JSObject, PropertyTypeInfo, AValue);
 end;
 
 procedure TRttiProperty.SetValue(Instance: TObject; const AValue: TValue);
 begin
-  SetJSValueProp(Instance, PropertyTypeInfo, AValue.AsJSValue);
-end;
-
-procedure TRttiProperty.SetValue(Instance: TObject; const AValue: JSValue);
-begin
-  SetJSValueProp(Instance, PropertyTypeInfo, AValue);
+  SetValue(JSValue(Instance), AValue);
 end;
 
 function TRttiProperty.GetPropertyType: TRttiType;
-
 begin
   Result := GRttiContext.GetType(PropertyTypeInfo.TypeInfo);
 end;

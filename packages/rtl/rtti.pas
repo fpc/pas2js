@@ -135,12 +135,15 @@ type
   TRttiField = class(TRttiMember)
   private
     function GetFieldType: TRttiType;
+    function GetFieldTypeInfo: TTypeMemberField;
   public
+    constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
+    function GetValue(Instance: JSValue): TValue;
+    procedure SetValue(Instance: JSValue; const AValue: TValue);
     property FieldType: TRttiType read GetFieldType;
-    //function GetValue(Instance: Pointer): TValue;
-    //procedure SetValue(Instance: Pointer; const AValue: TValue);
-    //function ToString: string; override;
+    property FieldTypeInfo: TTypeMemberField read GetFieldTypeInfo;
   end;
+
   TRttiFieldArray = specialize TArray<TRttiField>;
 
   TRttiParameter = class(TRttiNamedObject)
@@ -240,6 +243,7 @@ type
     destructor Destroy; override;
     function GetAttributes: TCustomAttributeArray; override;
     function GetField(const AName: string): TRttiField; virtual;
+    function GetFields: TRttiFieldArray; virtual;
     function GetMethods: TRttiMethodArray; virtual;
     function GetMethods(const aName: String): TRttiMethodArray; virtual;
     function GetMethod(const aName: String): TRttiMethod; virtual;
@@ -294,12 +298,17 @@ type
 
   TRttiInstanceType = class(TRttiStructuredType)
   private
+    FFields: TRttiFieldArray;
+
     function GetClassTypeInfo: TTypeInfoClass;
     function GetMetaClassType: TClass;
   protected
     function GetAncestor: TRttiStructuredType; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
+
+    function GetFields: TRttiFieldArray; override;
+    function GetDeclaredFields: TRttiFieldArray; override;
 
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
@@ -988,6 +997,50 @@ begin
   inherited Create(ATypeInfo);
 end;
 
+function TRttiInstanceType.GetDeclaredFields: TRttiFieldArray;
+var
+  A, FieldCount: Integer;
+
+begin
+  if not Assigned(FFields) then
+  begin
+    FieldCount := StructTypeInfo.FieldCount;
+
+    SetLength(FFields, FieldCount);
+
+    for A := 0 to Pred(FieldCount) do
+      FFields[A] := TRttiField.Create(Self, StructTypeInfo.GetField(A));
+  end;
+
+  Result := FFields;
+end;
+
+function TRttiInstanceType.GetFields: TRttiFieldArray;
+var
+  A, Start: Integer;
+
+  BaseClass: TRttiStructuredType;
+
+  Declared: TRttiFieldArray;
+
+begin
+  BaseClass := Self;
+  Result := nil;
+
+  while Assigned(BaseClass) do
+  begin
+    Declared := BaseClass.GetDeclaredFields;
+    Start := Length(Result);
+
+    SetLength(Result, Start + Length(Declared));
+
+    for A := Low(Declared) to High(Declared) do
+      Result[Start + A] := Declared[A];
+
+    BaseClass := BaseClass.GetAncestor;
+  end;
+end;
+
 { TRttiInterfaceType }
 
 constructor TRttiInterfaceType.Create(ATypeInfo: PTypeInfo);
@@ -1184,9 +1237,38 @@ end;
 
 { TRttiField }
 
+constructor TRttiField.Create(AParent: TRttiType; ATypeInfo: TTypeMember);
+begin
+  if not (ATypeInfo is TTypeMemberField) then
+    raise EInvalidCast.Create('');
+
+  inherited;
+end;
+
 function TRttiField.GetFieldType: TRttiType;
 begin
   Result := GRttiContext.GetType(FTypeInfo);
+end;
+
+function TRttiField.GetFieldTypeInfo: TTypeMemberField;
+begin
+  Result := TTypeMemberField(FTypeInfo);
+end;
+
+function TRttiField.GetValue(Instance: JSValue): TValue;
+var
+  JSInstance: TJSObject absolute Instance;
+
+begin
+  Result := TValue.FromJSValue(JSInstance[Name]);
+end;
+
+procedure TRttiField.SetValue(Instance: JSValue; const AValue: TValue);
+var
+  JSInstance: TJSObject absolute Instance;
+
+begin
+  JSInstance[Name] := AValue.AsJSValue;
 end;
 
 { TRttiParameter }
@@ -1442,9 +1524,19 @@ begin
 end;
 
 function TRttiType.GetField(const AName: string): TRttiField;
+var
+  AField: TRttiField;
+
 begin
   Result:=nil;
-  if AName='' then ;
+  for AField in GetFields do
+    if AField.Name = AName then
+      Exit(AField);
+end;
+
+function TRttiType.GetFields: TRttiFieldArray;
+begin
+  Result := nil;
 end;
 
 { TVirtualInterface }

@@ -41,6 +41,7 @@ type
     property TypeInfo: TTypeInfo read FTypeInfo;
 
     property IsEmpty: boolean read GetIsEmpty; // check if nil or undefined
+    generic function AsType<T>: T;
     function IsObject: boolean;
     function AsObject: TObject;
     function IsObjectInstance: boolean;
@@ -537,6 +538,11 @@ begin
     Result:=tkUnknown
   else
     Result:=FTypeInfo.Kind;
+end;
+
+generic function TValue.AsType<T>: T;
+begin
+  Result := T(AsJSValue)
 end;
 
 generic class function TValue.From<T>(const Value: T): TValue;

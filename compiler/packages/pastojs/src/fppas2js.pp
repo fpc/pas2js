@@ -27013,8 +27013,8 @@ begin
   for i:=0 to ElRefList.Count-1 do
     begin
     El:=TPasElement(ElRefList[i]);
-    if ElNeedsGlobalAlias(El) then
-      CreateGlobalElPath(El,SectionContext);
+    // Note: they are all needed by precompiled code, do not check ElNeedsGlobalAlias
+    CreateGlobalElPath(El,SectionContext);
     end;
 end;
 

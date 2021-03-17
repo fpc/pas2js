@@ -15533,6 +15533,7 @@ begin
   else if El.IsExternal then
     exit(ConvertExtClassType(El,AContext));
 
+  IsTObject:=false;
   if El.CustomData is TPas2JSClassScope then
     begin
     Scope:=TPas2JSClassScope(El.CustomData);

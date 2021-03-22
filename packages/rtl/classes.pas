@@ -1424,6 +1424,7 @@ Function FindNestedComponent(Root : TComponent; APath : String; CStyle : Boolean
 procedure RedirectFixupReferences(Root: TComponent; const OldRootName, NewRootName: string);
 procedure RemoveFixupReferences(Root: TComponent; const RootName: string);
 procedure RegisterIntegerConsts(IntegerType: Pointer; IdentToIntFn: TIdentToInt;  IntToIdentFn: TIntToIdent);
+function ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: String; Strings: TStrings; AddEmptyStrings : Boolean = False): Integer;
 function IdentToInt(const Ident: string; out Int: Longint; const Map: array of TIdentMapEntry): Boolean;
 function IntToIdent(Int: Longint; var Ident: string; const Map: array of TIdentMapEntry): Boolean;
 function FindIntToIdent(AIntegerType: Pointer): TIntToIdent;
@@ -1586,6 +1587,73 @@ begin
     IntConstList:=TFPList.Create;
   IntConstList.Add(TIntConst.Create(IntegerType, IdentToIntFn, IntToIdentFn));
 end;
+
+function ExtractStrings(Separators, WhiteSpace: TSysCharSet; Content: String; Strings: TStrings; AddEmptyStrings : Boolean = False): Integer;
+var
+  b,c : integer;
+
+  procedure SkipWhitespace;
+    begin
+      while (Content[c] in Whitespace) do
+        inc (C);
+    end;
+
+  procedure AddString;
+    var
+      l : integer;
+
+    begin
+      l := c-b;
+      if (l > 0) or AddEmptyStrings then
+        begin
+          if assigned(Strings) then
+            begin
+            if l>0 then
+              Strings.Add (Copy(Content,B,L))
+            else
+              Strings.Add('');
+            end;
+          inc (result);
+        end;
+    end;
+
+var
+  cc,quoted : char;
+  i,aLen : Integer;
+begin
+  result := 0;
+  c := 1;
+  Quoted := #0;
+  Separators := Separators + [#13, #10] - ['''','"'];
+  SkipWhitespace;
+  b := c;
+  aLen:=Length(Content);
+  while C<=aLen do
+    begin
+      CC:=Content[c];
+      if (CC = Quoted) then
+        begin
+          if (C<aLen) and (Content[C+1] = Quoted) then
+            inc (c)
+          else
+            Quoted := #0
+        end
+      else if (Quoted = #0) and (CC in ['''','"']) then
+        Quoted := CC;
+      if (Quoted = #0) and (CC in Separators) then
+        begin
+          AddString;
+          inc (c);
+          SkipWhitespace;
+          b := c;
+        end
+      else
+        inc (c);
+    end;
+  if (c <> b) then
+    AddString;
+end;
+
 
 function FindIntToIdent(AIntegerType: Pointer): TIntToIdent;
 

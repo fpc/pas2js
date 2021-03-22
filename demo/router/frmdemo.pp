@@ -34,7 +34,7 @@ end;
 
 function TDemoForm.ButtonClick(Event: TJSMouseEvent): boolean;
 begin
-  Router.Push(Event.target['data']);
+  Router.Push(String(TJSHTMLElement(Event.target).Dataset['link']));
 end;
 
 constructor TDemoForm.Create(aFormNo: Integer; UseSlash: Boolean);
@@ -85,7 +85,7 @@ begin
       Button:=TJSHTMLElement(document.createElement('button'));
       Button['class']:='btn btn-default';
       Button.InnerHTML:='Go to form '+IntToStr(i);
-      Button['data']:=MakeLink(i,false);
+      Button.Dataset['link']:=MakeLink(i,false);
       Button.onclick:=@ButtonClick;
       PanelContent.appendChild(Button);
       end;
@@ -95,7 +95,7 @@ end;
 
 function TDemoForm.DoLinkClick(aEvent: TJSMouseEvent): boolean;
 begin
-  Router.Push(aEvent.target['href']);
+  Router.Push(String(aEvent.target['href']));
 end;
 
 end.

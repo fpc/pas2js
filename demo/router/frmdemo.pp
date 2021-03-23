@@ -105,6 +105,7 @@ begin
   URL:=Copy(URL,P+1,Length(URL)-P);
   Writeln('URL :',URL);
   Router.Push(URL);
+  aEvent.preventDefault;
 end;
 
 end.

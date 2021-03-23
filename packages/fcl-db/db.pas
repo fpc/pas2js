@@ -334,6 +334,7 @@ type
     procedure SetText(const AValue: string); virtual;
     procedure SetVarValue(const AValue{%H-}: JSValue); virtual;
     procedure SetAsBytes(const AValue{%H-}: TBytes); virtual;
+    procedure DefineProperties(Filer: TFiler); 
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -663,15 +664,15 @@ type
 
 { TBlobField }
   TBlobStreamMode = (bmRead, bmWrite, bmReadWrite);
-//  TBlobType = ftBlob..ftMemo;
+  TBlobType = ftBlob..ftMemo;
 
   TBlobField = class(TBinaryField)
   private
     FModified : Boolean;
     // Wrapper that retrieves FDataType as a TBlobType
-    //   function GetBlobType: TBlobType;
+    function GetBlobType: TBlobType;
     // Wrapper that calls SetFieldType
-    //   procedure SetBlobType(AValue: TBlobType);
+    procedure SetBlobType(AValue: TBlobType);
   protected
     class procedure CheckTypeSize(AValue: Longint); override;
     function GetBlobSize: Longint; virtual;
@@ -686,7 +687,7 @@ type
     property Modified: Boolean read FModified write FModified;
     property Value: string read GetAsString write SetAsString;
   published
-   // property BlobType: TBlobType read GetBlobType write SetBlobType; // default ftBlob;
+    property BlobType: TBlobType read GetBlobType write SetBlobType; // default ftBlob;
     property Size default 0;
   end;
 
@@ -5394,6 +5395,27 @@ begin
   Result:=EDatabaseError.CreateFmt(SinvalidTypeConversion,[TypeName,FFieldName]);
 end;
 
+procedure TField.DefineProperties(Filer: TFiler); 
+  procedure IgnoreReadString(Reader: TReader);
+  begin
+    Reader.ReadString;
+  end;
+  
+  procedure IgnoreReadBoolean(Reader: TReader);
+  begin
+    Reader.ReadBoolean;
+  end;
+
+  procedure IgnoreWrite(Writer: TWriter);
+  begin
+  end;
+
+begin
+  Filer.DefineProperty('AttributeSet', @IgnoreReadString, @IgnoreWrite, False);
+  Filer.DefineProperty('Calculated', @IgnoreReadBoolean, @IgnoreWrite, False);
+  Filer.DefineProperty('Lookup', @IgnoreReadBoolean, @IgnoreWrite, False);
+end;
+
 procedure TField.Assign(Source: TPersistent);
 
 begin
@@ -7189,6 +7211,15 @@ end;
 *)
 
 
+function TBlobField.GetBlobType: TBlobType;
+begin
+  Result:=ftBlob;
+end;
+
+procedure TBlobField.SetBlobType(AValue: TBlobType);
+begin
+
+end;
 
 class procedure TBlobField.CheckTypeSize(AValue: Longint);
 begin

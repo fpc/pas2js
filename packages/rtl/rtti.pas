@@ -790,8 +790,6 @@ begin
 end;
 
 procedure TValue.SetArrayElement(aIndex: SizeInt; const AValue: TValue);
-var
-  ValueTypeInfo: TTypeInfo;
 
 begin
   if IsArray then
@@ -971,8 +969,6 @@ end;
 function TRttiStructuredType.GetDeclaredMethods: TRttiMethodArray;
 var
   A, MethodCount: Integer;
-
-  BaseClass: TRttiStructuredType;
 
 begin
   if not Assigned(FMethods) then

@@ -824,6 +824,7 @@ type
     Procedure TestRTTI_Class_PropertyParams;
     Procedure TestRTTI_Class_OtherUnit_TypeAlias;
     Procedure TestRTTI_Class_OmitRTTI;
+    Procedure TestRTTI_Class_Field_AnonymousArrayOfSelfClass;
     Procedure TestRTTI_IndexModifier;
     Procedure TestRTTI_StoredModifier;
     Procedure TestRTTI_DefaultValue;
@@ -10486,13 +10487,13 @@ begin
     'this.ArrArrInt = [];',
     '']),
     LinesToStr([ // $mod.$main
-    '$mod.ArrInt.splice(2, 0, 1);',
-    '$mod.ArrInt.splice(4, 0, $mod.ArrInt[3]);',
-    '$mod.ArrRec.splice(6, 0, $mod.ArrRec[5]);',
-    '$mod.ArrSet.splice(7, 0, $mod.ArrSet[7]);',
-    '$mod.ArrJSValue.splice(9, 0, $mod.ArrJSValue[8]);',
-    '$mod.ArrJSValue.splice(11, 0, 10);',
-    '$mod.ArrArrInt.splice(22, 0, [23]);',
+    '$mod.ArrInt = rtl.arrayInsert(1, $mod.ArrInt, 2);',
+    '$mod.ArrInt = rtl.arrayInsert($mod.ArrInt[3], $mod.ArrInt, 4);',
+    '$mod.ArrRec = rtl.arrayInsert($mod.ArrRec[5], $mod.ArrRec, 6);',
+    '$mod.ArrSet = rtl.arrayInsert($mod.ArrSet[7], $mod.ArrSet, 7);',
+    '$mod.ArrJSValue = rtl.arrayInsert($mod.ArrJSValue[8], $mod.ArrJSValue, 9);',
+    '$mod.ArrJSValue = rtl.arrayInsert(10, $mod.ArrJSValue, 11);',
+    '$mod.ArrArrInt = rtl.arrayInsert([23], $mod.ArrArrInt, 22);',
     '$mod.ArrInt.splice(12, 13);',
     '$mod.ArrRec.splice(14, 15);',
     '$mod.ArrSet.splice(17, 18);',
@@ -29632,9 +29633,6 @@ begin
   CheckSource('TestRTTI_Class_Field',
     LinesToStr([ // statements
     'rtl.createClass(this, "TObject", null, function () {',
-    '  $mod.$rtti.$DynArray("TObject.ArrB$a", {',
-    '    eltype: rtl.byte',
-    '  });',
     '  this.$init = function () {',
     '    this.FPropA = "";',
     '    this.VarLI = 0;',
@@ -29666,6 +29664,9 @@ begin
     '  $r.addField("VarShI", rtl.shortint);',
     '  $r.addField("VarBy", rtl.byte);',
     '  $r.addField("VarExt", rtl.longint);',
+    '  $mod.$rtti.$DynArray("TObject.ArrB$a", {',
+    '    eltype: rtl.byte',
+    '  });',
     '  $r.addField("ArrA", $mod.$rtti["TObject.ArrB$a"]);',
     '  $r.addField("ArrB", $mod.$rtti["TObject.ArrB$a"]);',
     '});',
@@ -29929,6 +29930,43 @@ begin
     '  };',
     '  this.$final = function () {',
     '  };',
+    '});',
+    '']),
+    LinesToStr([ // $mod.$main
+    '']));
+end;
+
+procedure TTestModule.TestRTTI_Class_Field_AnonymousArrayOfSelfClass;
+begin
+  WithTypeInfo:=true;
+  StartUnit(true,[supTObject]);
+  Add([
+  'interface',
+  'type',
+  '  {$M+1}',
+  '  TBird = class',
+  '  published',
+  '    Swarm: array of TBird;',
+  '  end;',
+  'implementation',
+  '']);
+  ConvertUnit;
+  CheckSource('TestRTTI_Class_Field_AnonymousArrayOfSelfClass',
+    LinesToStr([ // statements
+    'rtl.createClass(this, "TBird", pas.system.TObject, function () {',
+    '  this.$init = function () {',
+    '    pas.system.TObject.$init.call(this);',
+    '    this.Swarm = [];',
+    '  };',
+    '  this.$final = function () {',
+    '    this.Swarm = undefined;',
+    '    pas.system.TObject.$final.call(this);',
+    '  };',
+    '  var $r = this.$rtti;',
+    '  $mod.$rtti.$DynArray("TBird.Swarm$a", {',
+    '    eltype: $r',
+    '  });',
+    '  $r.addField("Swarm", $mod.$rtti["TBird.Swarm$a"]);',
     '});',
     '']),
     LinesToStr([ // $mod.$main
@@ -30700,9 +30738,6 @@ begin
   CheckSource('TestRTTI_Record',
     LinesToStr([ // statements
     'rtl.recNewT(this, "TFloatRec", function () {',
-    '  $mod.$rtti.$DynArray("TFloatRec.d$a", {',
-    '    eltype: rtl.char',
-    '  });',
     '  this.$new = function () {',
     '    var r = Object.create(this);',
     '    r.c = [];',
@@ -30718,6 +30753,9 @@ begin
     '    return this;',
     '  };',
     '  var $r = $mod.$rtti.$Record("TFloatRec", {});',
+    '  $mod.$rtti.$DynArray("TFloatRec.d$a", {',
+    '    eltype: rtl.char',
+    '  });',
     '  $r.addField("c", $mod.$rtti["TFloatRec.d$a"]);',
     '  $r.addField("d", $mod.$rtti["TFloatRec.d$a"]);',
     '});',

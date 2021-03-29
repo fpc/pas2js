@@ -20521,6 +20521,8 @@ begin
       mtRecord:
         // a published record publishes all non private members
         if P.Visibility in [visPrivate,visStrictPrivate] then
+          continue
+        else if P.ClassType=TPasConst then
           continue;
       end;
       if not IsElementUsed(P) then continue;

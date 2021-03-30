@@ -34,6 +34,8 @@ Const
   FloatRecDigits = 19;
 
 type
+  TSysCharSet = Set of Char;
+
   { TFloatRec }
   TFloatRec = Record
     Exponent: Integer;

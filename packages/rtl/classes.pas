@@ -9998,7 +9998,13 @@ end;
 
 procedure TObjectStreamConverter.Execute;
 
+var
+  Signature: LongInt;
+
 begin
+  FInput.ReadBufferData(Signature);
+  if Signature <> FilerSignatureInt then
+    raise EReadError.Create(SInvalidImage);
   if FIndent = '' then FInDent:='  ';
   If Not Assigned(Input) then
     raise EReadError.Create('Missing input stream');

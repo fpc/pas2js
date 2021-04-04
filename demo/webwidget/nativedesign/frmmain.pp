@@ -5,16 +5,14 @@ unit frmmain;
 interface
 
 uses
-  Classes, SysUtils, webideintf, Forms, Controls, Graphics, Dialogs, EditBtn, ExtCtrls, ComCtrls, StdCtrls, ActnList,
-  {$IFDEF LINUX}
-   WebBrowserCtrls, WebBrowserIntf,
-  {$ELSE}
+  Classes, SysUtils, webideintf, Forms, Controls, Graphics, Dialogs, EditBtn,
+  ExtCtrls, ComCtrls, StdCtrls, ActnList, GlobalCefApplication,
+  {$IFDEF DARWIN}  uCEFLazarusCocoa,  {$ENDIF}
   {$IFDEF WINDOWS}
-  Windows, Messages, uCEFChromium, uCEFWindowParent, uCEFChromiumWindow, uCEFTypes, uCEFInterfaces, uCEFWinControl, uCEFApplication,
-  {$ELSE}
-  {$ERROR Unsupported platform}
+  Windows, Messages,
   {$ENDIF}
-  {$ENDIF} fpJSON;
+  uCEFChromium, uCEFWindowParent, uCEFChromiumWindow, uCEFTypes, uCEFInterfaces,
+  uCEFWinControl, uCEFApplication, uCEFWorkScheduler, uCEFBrowserWindow, fpJSON, uCEFChromiumEvents;
 
 type
 
@@ -24,6 +22,7 @@ type
     AGoExternal: TAction;
     AGo: TAction;
     ALWidgets: TActionList;
+    BrowserWindow1: TBrowserWindow;
     FEProject: TFileNameEdit;
     ILWidgets: TImageList;
     MLog: TMemo;
@@ -31,7 +30,6 @@ type
     Project: TLabel;
     PBottom: TPanel;
     TBExternalGo: TToolButton;
-    tmrShowChromium: TTimer;
     TSInspector: TTabSheet;
     TSBrowser: TTabSheet;
     TSLog: TTabSheet;
@@ -41,47 +39,8 @@ type
     procedure AGoExecute(Sender: TObject);
     procedure AGoExternalExecute(Sender: TObject);
     procedure AGoUpdate(Sender: TObject);
-    procedure DEProjectEditingDone(Sender: TObject);
-    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
-    procedure FormCreate(Sender: TObject);
-    procedure FormShow(Sender: TObject);
-    procedure tmrShowChromiumTimer(Sender: TObject);
-  private
-    FClientID : Int64; // Just one for now
-    FDesignCaption : String;
-    FWebIDEIntf : TIDEServer;
-    FWidgetCount : Integer;
-    FWidgets : Array of String;
-    FURL : String;
-    FURLCount : Integer;
-    FCanClose : Boolean;
-    FAllowGo: Boolean;
-{$IFDEF LINUX}
-    FWBDesign : TWebBrowser;
-    FWIDesign : TWebInspector;
-    FLastEmbeddedURI : String;
-    procedure wbDesignConsoleMessage(Sender: TObject; const Message, Source: string; Line: Integer);
-    procedure wbDesignError(Sender: TObject; const Uri: string; ErrorCode: LongWord; const ErrorMessage: string;   var Handled: Boolean);
-    procedure wbDesignFavicon(Sender: TObject);
-    procedure wbDesignHitTest(Sender: TObject; X, Y: Integer; HitTest: TWebHitTest; const Link, Media: string);
-    procedure wbDesignLoadStatusChange(Sender: TObject);
-    procedure wbDesignLocationChange(Sender: TObject);
-    procedure wbDesignNavigate(Sender: TObject; const Uri: string; var aAction: TWebNavigateAction);
-    procedure wbDesignProgress(Sender: TObject; Progress: Integer);
-    procedure wbDesignRequest(Sender: TObject; var Uri: string);
-    procedure wbDesignScriptDialog(Sender: TObject; Dialog: TWebScriptDialog; const Message: string; var Input: string;  var Accepted: Boolean; var Handled: Boolean);
-{$ENDIF}
-{$IFDEF WINDOWS}
-    FClosing : Boolean;
-    cwDesign : TChromiumWindow;
-    procedure WMMove(var aMessage : TWMMove); message WM_MOVE;
-    procedure WMMoving(var aMessage : TMessage); message WM_MOVING;
-    // You also have to handle these two messages to set GlobalCEFApp.OsmodalLoop
-    procedure WMEnterMenuLoop(var aMessage: TMessage); message WM_ENTERMENULOOP;
-    procedure WMExitMenuLoop(var aMessage: TMessage); message WM_EXITMENULOOP;
-    procedure cwBeforeClose(Sender: TObject);
-    procedure cwClose(Sender: TObject);
-    procedure cwAfterCreated(Sender: TObject);
+    procedure BrowserWindow1BrowserClosed(Sender: TObject);
+    procedure BrowserWindow1BrowserCreated(Sender: TObject);
     procedure cwOnBeforePopup(Sender: TObject;
       const browser: ICefBrowser; const frame: ICefFrame; const targetUrl,
       targetFrameName: ustring; targetDisposition: TCefWindowOpenDisposition;
@@ -91,6 +50,21 @@ type
       var extra_info: ICefDictionaryValue;
       var noJavascriptAccess: Boolean;
       var Result: Boolean);
+    procedure DEProjectEditingDone(Sender: TObject);
+    procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
+    procedure FormCreate(Sender: TObject);
+  private
+    FClientID : Int64; // Just one for now
+    FDesignCaption : String;
+    FWebIDEIntf : TIDEServer;
+    FWidgetCount : Integer;
+    FWidgets : Array of String;
+    FURL : String;
+    FURLCount : Integer;
+    FAllowGo: Boolean;
+{$IFDEF WINDOWS}
+    procedure WMEnterMenuLoop(var aMessage: TMessage); message WM_ENTERMENULOOP;
+    procedure WMExitMenuLoop(var aMessage: TMessage); message WM_EXITMENULOOP;
 {$ENDIF}
     function GetProjectURL: String;
     procedure DoAddWidget(Sender: TObject);
@@ -102,7 +76,6 @@ type
     procedure LogRequest;
     Procedure RegisterWidgets;
     Procedure RegisterWidget(aWidget: String; aImageIndex : Integer);
-    procedure SetUpEmbeddedBrowser;
   public
     Procedure Log(Msg : String);
     Procedure Log(Fmt : String; Args : Array of const);
@@ -127,15 +100,9 @@ end;
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
   FWebIDEIntf.Active:=False;
-  CanClose:=FCanClose;
-{$IFDEF WINDOWS}
-  if not(FClosing) then
-    begin
-    FClosing := True;
-    Visible  := False;
-    cwDesign.CloseBrowser(True);
-    end;
-{$ENDIF}
+  BrowserWindow1.CloseBrowser(True);
+  CanClose:=BrowserWindow1.IsClosed;
+  Visible  := False;
 end;
 
 Function TMainForm.GetProjectURL : String;
@@ -145,19 +112,13 @@ begin
 end;
 
 procedure TMainForm.AGoExecute(Sender: TObject);
-
 Var
   URL : String;
 
 begin
   URL:=GetProjectURL;
   Log('Going to URL: %s',[URL]);
-{$IFDEF LINUX}
-  FWBDesign.Location:=URL;
-{$ENDIF}
-{$IFDEF WINDOWS}
-  cwDesign.LoadURL(URL);
-{$ENDIF}
+  BrowserWindow1.LoadURL(URL);
 end;
 
 procedure TMainForm.AGoExternalExecute(Sender: TObject);
@@ -175,20 +136,23 @@ begin
   (Sender as Taction).Enabled:=FAllowGo;
 end;
 
+procedure TMainForm.BrowserWindow1BrowserClosed(Sender: TObject);
+begin
+  Close;
+end;
+
+procedure TMainForm.BrowserWindow1BrowserCreated(Sender: TObject);
+begin
+  // Now the browser is fully initialized we can load the initial web page.
+  FAllowGo:=True;
+end;
+
 procedure TMainForm.FormCreate(Sender: TObject);
-
-
-
 begin
   FAllowGo:=False;
   FDesignCaption:=Caption;
-{$IFDEF Linux}
-  MimeTypes.LoadFromFile('/etc/mime.types');
-{$ENDIF}
-{$IFDEF WINDOWS}
-  MimeTypes.LoadFromFile(ExtractFilePath(Paramstr(0))+'mime.types');
-{$ENDIF}
-  FEProject.FileName:=ExtractFilePath(Paramstr(0))+'designdemo'+PathDelim+'designdemo.html';
+  MimeTypes.LoadKnownTypes;
+  FEProject.FileName:=ExtractFilePath(ExtractFilePath(Paramstr(0)))+'designdemo'+PathDelim+'designdemo.html';
   FWebIDEIntf:=TIDEServer.Create(Self);
   FWebIDEIntf.ProjectDir:=ExtractFilePath(FEProject.FileName);
   FWebIDEIntf.OnClientAdded:=@DoClientCame;
@@ -196,65 +160,11 @@ begin
   FWebIDEIntf.OnRequest:=@DoLogRequest;
   FWebIDEIntf.OnAction:=@DoAction;
   FWebIDEIntf.Active:=True;
-  RegisterWidgets;
-  SetUpEmbeddedBrowser;
-end;
-
-procedure TMainForm.FormShow(Sender: TObject);
-begin
-{$IFDEF WINDOWS}
-  with cwDesign do
-    begin
-    ChromiumBrowser.OnBeforePopup := @cwOnBeforePopup;
-    if not CreateBrowser then
-       tmrShowChromium.Enabled := True;
-    end;
-{$ENDIF}
-end;
-
-procedure TMainForm.tmrShowChromiumTimer(Sender: TObject);
-begin
-  tmrShowChromium.Enabled := False;
-{$IFDEF WINDOWS}
-  With cwDesign do
-    if not (CreateBrowser or Initialized) then
-      tmrShowChromium.Enabled := True;
-{$ENDIF}
-end;
-
-{$IFDEF WINDOWS}
-procedure TMainForm.SetUpEmbeddedBrowser;
-
-begin
-  FCanClose:=False;
-  cwDesign:=TChromiumWindow.Create(Self);
-  With cwDesign do
-    begin
-    Parent:=TSBrowser;
-    Align:=alClient;
-    OnClose:=@cwClose;
-    OnBeforeClose:=@cwBeforeClose;
-    OnAfterCreated:=@cwAfterCreated;
-    end;
   TSInspector.TabVisible:=False;
+  RegisterWidgets;
 end;
 
-procedure TMainForm.WMMove(var aMessage : TWMMove);
-
-begin
-  inherited;
-  if (cwDesign <> nil) then
-    cwDesign.NotifyMoveOrResizeStarted;
-end;
-
-procedure TMainForm.WMMoving(var aMessage : TMessage);
-
-begin
-  inherited;
-  if (cwDesign <> nil) then
-    cwDesign.NotifyMoveOrResizeStarted;
-end;
-
+{$IFDEF WINDOWS}
 procedure TMainForm.WMEnterMenuLoop(var aMessage: TMessage);
 
 begin
@@ -270,23 +180,7 @@ begin
   if (aMessage.wParam = 0) and (GlobalCEFApp <> nil) then
     GlobalCEFApp.OsmodalLoop := False;
 end;
-
-procedure TMainForm.cwBeforeClose(Sender: TObject);
-begin
-  FCanClose := True;
-  PostMessage(Handle, WM_CLOSE, 0, 0);
-end;
-
-
-procedure TMainForm.cwClose(Sender: TObject);
-begin
-  // DestroyChildWindow will destroy the child window created by CEF at the top of the Z order.
-  if not(cwDesign.DestroyChildWindow) then
-    begin
-      FCanClose := True;
-      Close;
-    end;
-end;
+{$ENDIF}
 
 procedure TMainForm.cwOnBeforePopup(Sender: TObject;
   const browser: ICefBrowser; const frame: ICefFrame; const targetUrl,
@@ -302,112 +196,6 @@ begin
   Result := (targetDisposition in [WOD_NEW_FOREGROUND_TAB, WOD_NEW_BACKGROUND_TAB, WOD_NEW_POPUP, WOD_NEW_WINDOW]);
 end;
 
-procedure TMainForm.cwAfterCreated(Sender: TObject);
-begin
-  // Now the browser is fully initialized we can load the initial web page.
-  FAllowGo:=True;
-end;
-
-{$ENDIF}
-
-{$IFDEF LINUX}
-procedure TMainForm.SetUpEmbeddedBrowser;
-
-begin
-  FAllowGo:=True;
-  FCanClose:=True;
-  FWBDesign:=TWebBrowser.Create(Self);
-  With FWBDesign do
-    begin
-    Parent:=TSBrowser;
-    Align:=alClient;
-    DesignMode := False;
-    SourceView := False;
-    ZoomContent := False;
-    ZoomFactor := 1;
-    { lots of logging }
-    OnConsoleMessage:=@wbDesignConsoleMessage;
-    OnScriptDialog:=@wbDesignScriptDialog;
-    OnError:=@wbDesignError;
-    OnFavicon:=@wbDesignFavicon;
-    OnHitTest:=@wbDesignHitTest;
-    OnLoadStatusChange:=@wbDesignLoadStatusChange;
-    OnLocationChange:=@wbDesignLocationChange;
-    OnNavigate:=@wbDesignNavigate;
-    OnProgress:=@wbDesignProgress;
-    OnRequest:=@wbDesignRequest;
-    end;
-  FWIDesign:=TWebInspector.Create(Self);
-  With FWIDesign do
-    begin
-    Parent:=TSInspector;
-    Align:=alClient;
-    Active:=True;
-    WebBrowser:=FWBDesign;
-    end;
-  TSInspector.TabVisible:=true;
-  PCDesigner.ActivePage:=TSBrowser;
-end;
-
-procedure TMainForm.wbDesignConsoleMessage(Sender: TObject; const Message, Source: string; Line: Integer);
-begin
-  Log('Console message: %s  (%s: %d)',[Message,Source,Line]);
-end;
-
-
-procedure TMainForm.wbDesignError(Sender: TObject; const Uri: string; ErrorCode: LongWord; const ErrorMessage: string;
-  var Handled: Boolean);
-begin
-  Log('Error: %s, code: %d, Message: %s',[URI,ErrorCode,ErrorMessage]);
-  Handled:=True;
-end;
-
-procedure TMainForm.wbDesignFavicon(Sender: TObject);
-begin
-  Log('Favicon available/missed');
-end;
-
-procedure TMainForm.wbDesignHitTest(Sender: TObject; X, Y: Integer; HitTest: TWebHitTest; const Link, Media: string);
-begin
-//  Log('Hit test (%d,%d) link: %s, media: %s',[x,y,link,media]);
-end;
-
-procedure TMainForm.wbDesignLoadStatusChange(Sender: TObject);
-begin
-  Log('Load status change');
-end;
-
-procedure TMainForm.wbDesignLocationChange(Sender: TObject);
-begin
-  Log('Location change');
-end;
-
-procedure TMainForm.wbDesignNavigate(Sender: TObject; const Uri: string; var aAction: TWebNavigateAction);
-begin
-  Log('Navigation: %s',[URI]);
-  aAction:=naAllow;
-end;
-
-procedure TMainForm.wbDesignProgress(Sender: TObject; Progress: Integer);
-begin
-  Log('Progress: %d',[Progress])
-end;
-
-procedure TMainForm.wbDesignRequest(Sender: TObject; var Uri: string);
-begin
-  if Uri<>FLastEmbeddedURI then
-    Log('Embedded browser doing request : %s',[URI]);
-  FLastEmbeddedURI:=URI;
-end;
-
-procedure TMainForm.wbDesignScriptDialog(Sender: TObject; Dialog: TWebScriptDialog; const Message: string; var Input: string;
-  var Accepted: Boolean; var Handled: Boolean);
-begin
-  Log('Script dialog Message: %s; Input : %s',[message,Input]);
-  Accepted:=true;
-  Handled:=true;
-end;
-{$ENDIF}
 
 procedure TMainForm.DoAction(Sender: TObject; aExchange: TIDEExchange);
 
@@ -537,7 +325,7 @@ begin
   B.Height:=32;
   B.Action:=A;
   inc(FWidgetCount);
-//  TBWidgets.AddControl;;
+//  TBWidgets.AddControl;
 
 end;
 
@@ -551,6 +339,26 @@ begin
   Log(Format(Fmt,Args));
 end;
 
+
+initialization
+  {$IFDEF DARWIN}
+  AddCrDelegate;
+  {$ENDIF}
+  if GlobalCEFApp = nil then begin
+    CreateGlobalCEFApp;
+    if not GlobalCEFApp.StartMainProcess then begin
+      DestroyGlobalCEFApp;
+      DestroyGlobalCEFWorkScheduler;
+      halt(0); // exit the subprocess
+    end;
+  end;
+
+finalization
+  (* Destroy from this unit, which is used after "Interfaces". So this happens before the Application object is destroyed *)
+  if GlobalCEFWorkScheduler <> nil then
+    GlobalCEFWorkScheduler.StopScheduler;
+  DestroyGlobalCEFApp;
+  DestroyGlobalCEFWorkScheduler;
 
 end.
 

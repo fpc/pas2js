@@ -27,18 +27,17 @@
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="0"/>
     </RunParams>
-    <RequiredPackages Count="3">
-      <Item1>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="CEF4Delphi_Lazarus"/>
+      </Item>
+      <Item>
         <PackageName Value="weblaz"/>
-      </Item1>
-      <Item2>
-        <PackageName Value="WebBrowser"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <PackageName Value="LCL"/>
-      </Item3>
+      </Item>
     </RequiredPackages>
     <Units>
       <Unit>
@@ -56,7 +55,20 @@
         <Filename Value="webideintf.pp"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="globalcefapplication.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="GlobalCefApplication"/>
+      </Unit>
+      <Unit>
+        <Filename Value="initsubprocess.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="InitSubProcess"/>
+      </Unit>
     </Units>
+    <Debugger>
+      <Backend Value="{989A9BD5-DAAD-47D7-9EAF-B5A5EA0B17B7}"/>
+    </Debugger>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
@@ -68,24 +80,28 @@
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <Linking>
-      <Options>
-        <Win32>
-          <GraphicApplication Value="True"/>
-        </Win32>
-      </Options>
+      <Debugging>
+        <DebugInfoType Value="dsDwarf3"/>
+      </Debugging>
     </Linking>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="3">
-      <Item1>
+    <Exceptions>
+      <Item>
         <Name Value="EAbort"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <Name Value="ECodetoolError"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <Name Value="EFOpenError"/>
-      </Item3>
+      </Item>
+      <Item>
+        <Name Value="EHTTPClient"/>
+      </Item>
+      <Item>
+        <Name Value="ESocketError"/>
+      </Item>
     </Exceptions>
   </Debugging>
 </CONFIG>

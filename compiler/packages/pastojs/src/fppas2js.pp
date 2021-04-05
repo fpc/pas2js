@@ -9699,7 +9699,7 @@ begin
       B:=ConvertExpression(SubBin.right,AContext);
       if aResolver<>nil then
         begin
-        aResolver.ComputeElement(El.right,RightResolved,Flags);
+        aResolver.ComputeElement(SubBin.right,RightResolved,Flags);
         Result:=ConvertBinaryExpressionRes(SubBin,AContext,LeftResolved,RightResolved,A,B);
         if (Result<>nil) then
           begin
@@ -9712,7 +9712,7 @@ begin
       if Result=nil then
         begin
         // +
-        R:=TJSBinary(CreateElement(TJSAdditiveExpressionPlus,El));
+        R:=TJSBinary(CreateElement(TJSAdditiveExpressionPlus,SubBin));
         R.A:=A; A:=nil;
         R.B:=B; B:=nil;
         Result:=R;

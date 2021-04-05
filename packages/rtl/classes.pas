@@ -10002,16 +10002,14 @@ var
   Signature: LongInt;
 
 begin
-  FInput.ReadBufferData(Signature);
-  if Signature <> FilerSignatureInt then
-    raise EReadError.Create(SInvalidImage);
   if FIndent = '' then FInDent:='  ';
   If Not Assigned(Input) then
     raise EReadError.Create('Missing input stream');
   If Not Assigned(Output) then
     raise EReadError.Create('Missing output stream');
-  if Input.ReadDWord <> FilerSignatureInt then
-    raise EReadError.Create('Illegal stream image');
+  FInput.ReadBufferData(Signature);
+  if Signature <> FilerSignatureInt then
+    raise EReadError.Create(SInvalidImage);
   ReadObject('');
 end;
 

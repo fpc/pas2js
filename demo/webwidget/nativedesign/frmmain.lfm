@@ -95,6 +95,7 @@ object MainForm: TMainForm
         Width = 688
         Align = alClient
         TabOrder = 0
+        Chromium.OnConsoleMessage = ChromiumConsoleMessage
         Chromium.OnBeforePopup = cwOnBeforePopup
         OnBrowserCreated = BrowserWindow1BrowserCreated
         OnBrowserClosed = BrowserWindow1BrowserClosed
@@ -106,14 +107,27 @@ object MainForm: TMainForm
       ClientWidth = 688
       object MLog: TMemo
         Left = 0
-        Height = 430
+        Height = 433
         Top = 0
-        Width = 688
+        Width = 690
         Align = alClient
         Lines.Strings = (
           'MLog'
         )
         ScrollBars = ssAutoBoth
+        TabOrder = 0
+      end
+    end
+    object BrowserLog: TTabSheet
+      Caption = 'BrowserLog'
+      ClientHeight = 433
+      ClientWidth = 690
+      object BLog: TMemo
+        Left = 0
+        Height = 433
+        Top = 0
+        Width = 690
+        Align = alClient
         TabOrder = 0
       end
     end

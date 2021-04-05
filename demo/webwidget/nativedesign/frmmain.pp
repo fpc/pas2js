@@ -25,10 +25,12 @@ type
     BrowserWindow1: TBrowserWindow;
     FEProject: TFileNameEdit;
     ILWidgets: TImageList;
+    BLog: TMemo;
     MLog: TMemo;
     PCDesigner: TPageControl;
     Project: TLabel;
     PBottom: TPanel;
+    BrowserLog: TTabSheet;
     TBExternalGo: TToolButton;
     TSInspector: TTabSheet;
     TSBrowser: TTabSheet;
@@ -41,6 +43,9 @@ type
     procedure AGoUpdate(Sender: TObject);
     procedure BrowserWindow1BrowserClosed(Sender: TObject);
     procedure BrowserWindow1BrowserCreated(Sender: TObject);
+    procedure ChromiumConsoleMessage(Sender: TObject;
+      const browser: ICefBrowser; level: TCefLogSeverity; const message,
+      source: ustring; line: Integer; out Result: Boolean);
     procedure cwOnBeforePopup(Sender: TObject;
       const browser: ICefBrowser; const frame: ICefFrame; const targetUrl,
       targetFrameName: ustring; targetDisposition: TCefWindowOpenDisposition;
@@ -54,6 +59,7 @@ type
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
   private
+    FChromiumLogMsg: String;
     FClientID : Int64; // Just one for now
     FDesignCaption : String;
     FWebIDEIntf : TIDEServer;
@@ -66,6 +72,7 @@ type
     procedure WMEnterMenuLoop(var aMessage: TMessage); message WM_ENTERMENULOOP;
     procedure WMExitMenuLoop(var aMessage: TMessage); message WM_EXITMENULOOP;
 {$ENDIF}
+    procedure DoChromiumLogMessage;
     function GetProjectURL: String;
     procedure DoAddWidget(Sender: TObject);
     procedure DoAction(Sender: TObject; aExchange: TIDEExchange);
@@ -145,6 +152,19 @@ procedure TMainForm.BrowserWindow1BrowserCreated(Sender: TObject);
 begin
   // Now the browser is fully initialized we can load the initial web page.
   FAllowGo:=True;
+end;
+
+procedure TMainForm.DoChromiumLogMessage;
+begin
+  BLog.Append(FChromiumLogMsg);
+end;
+
+procedure TMainForm.ChromiumConsoleMessage(Sender: TObject;
+  const browser: ICefBrowser; level: TCefLogSeverity; const message,
+  source: ustring; line: Integer; out Result: Boolean);
+begin
+  FChromiumLogMsg := Format('%s [%s %d]', [message, source, line]);
+  TThread.Synchronize(nil, @DoChromiumLogMessage);
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);

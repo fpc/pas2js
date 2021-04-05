@@ -27,10 +27,15 @@ type
     ILWidgets: TImageList;
     BLog: TMemo;
     MLog: TMemo;
+    Panel1: TPanel;
+    PnlLog: TPanel;
+    PnlBLog: TPanel;
     PCDesigner: TPageControl;
     Project: TLabel;
     PBottom: TPanel;
     BrowserLog: TTabSheet;
+    Splitter1: TSplitter;
+    Splitter2: TSplitter;
     TBExternalGo: TToolButton;
     TSInspector: TTabSheet;
     TSBrowser: TTabSheet;
@@ -58,6 +63,7 @@ type
     procedure DEProjectEditingDone(Sender: TObject);
     procedure FormCloseQuery(Sender: TObject; var CanClose: boolean);
     procedure FormCreate(Sender: TObject);
+    procedure Panel1Resize(Sender: TObject);
   private
     FChromiumLogMsg: String;
     FClientID : Int64; // Just one for now
@@ -190,6 +196,32 @@ begin
   FWebIDEIntf.Active:=True;
   TSInspector.TabVisible:=False;
   RegisterWidgets;
+end;
+
+procedure TMainForm.Panel1Resize(Sender: TObject);
+begin
+  //if not Visible then
+  //  exit;
+  if Width = 0 then begin
+    if MLog.Parent = PnlLog then begin
+      MLog.Parent := TSLog;
+      TSLog.TabVisible := True;
+    end;
+    if BLog.Parent = PnlBLog then begin
+      BLog.Parent := BrowserLog;
+      BrowserLog.TabVisible := True;
+    end;
+  end
+  else begin
+    if MLog.Parent = TSLog then begin
+      MLog.Parent := PnlLog;
+      TSLog.TabVisible := False;
+    end;
+    if BLog.Parent = BrowserLog then begin
+      BLog.Parent := PnlBLog;
+      BrowserLog.TabVisible := False;
+    end;
+  end;
 end;
 
 {$IFDEF WINDOWS}

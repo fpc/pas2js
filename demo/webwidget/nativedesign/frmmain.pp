@@ -19,6 +19,7 @@ type
   { TMainForm }
 
   TMainForm = class(TForm)
+    AOpenDev: TAction;
     AGoExternal: TAction;
     AGo: TAction;
     ALWidgets: TActionList;
@@ -37,6 +38,7 @@ type
     Splitter1: TSplitter;
     Splitter2: TSplitter;
     TBExternalGo: TToolButton;
+    TBExternalGo1: TToolButton;
     TSInspector: TTabSheet;
     TSBrowser: TTabSheet;
     TSLog: TTabSheet;
@@ -46,6 +48,7 @@ type
     procedure AGoExecute(Sender: TObject);
     procedure AGoExternalExecute(Sender: TObject);
     procedure AGoUpdate(Sender: TObject);
+    procedure AOpenDevExecute(Sender: TObject);
     procedure BrowserWindow1BrowserClosed(Sender: TObject);
     procedure BrowserWindow1BrowserCreated(Sender: TObject);
     procedure ChromiumConsoleMessage(Sender: TObject;
@@ -147,6 +150,15 @@ end;
 procedure TMainForm.AGoUpdate(Sender: TObject);
 begin
   (Sender as Taction).Enabled:=FAllowGo;
+end;
+
+procedure TMainForm.AOpenDevExecute(Sender: TObject);
+var
+  p: TPoint;
+begin
+  p.X := 0;
+  p.Y := 0;
+  BrowserWindow1.Chromium.ShowDevTools(p,nil);
 end;
 
 procedure TMainForm.BrowserWindow1BrowserClosed(Sender: TObject);

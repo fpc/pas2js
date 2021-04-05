@@ -6,7 +6,7 @@ interface
 
 uses
   Classes, SysUtils, webideintf, Forms, Controls, Graphics, Dialogs, EditBtn,
-  ExtCtrls, ComCtrls, StdCtrls, ActnList, GlobalCefApplication,
+  ExtCtrls, ComCtrls, StdCtrls, ActnList, LazFileUtils, GlobalCefApplication,
   {$IFDEF DARWIN}  uCEFLazarusCocoa,  {$ENDIF}
   {$IFDEF WINDOWS}
   Windows, Messages,
@@ -168,11 +168,19 @@ begin
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
+var
+  s: String;
 begin
   FAllowGo:=False;
   FDesignCaption:=Caption;
   MimeTypes.LoadKnownTypes;
-  FEProject.FileName:=ExtractFilePath(ExtractFilePath(Paramstr(0)))+'designdemo'+PathDelim+'designdemo.html';
+  s := ExtractFilePath(Paramstr(0));
+  if pos('nativedesign', s) > 0 then
+    s := StringReplace(s, 'nativedesign', 'designdemo', [rfReplaceAll, rfIgnoreCase])
+  else
+    s := s+'designdemo';
+  s := AppendPathDelim(s)+'designdemo.html';
+  FEProject.FileName:=s;
   FWebIDEIntf:=TIDEServer.Create(Self);
   FWebIDEIntf.ProjectDir:=ExtractFilePath(FEProject.FileName);
   FWebIDEIntf.OnClientAdded:=@DoClientCame;

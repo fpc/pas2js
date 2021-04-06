@@ -1619,7 +1619,7 @@ var
 
 var
   cc,quoted : char;
-  i,aLen : Integer;
+  aLen : Integer;
 begin
   result := 0;
   c := 1;

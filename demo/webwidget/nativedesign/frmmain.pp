@@ -359,9 +359,9 @@ begin
   SetLength(FWidgets,9);
   FWidgetCount:=0;
   RegisterWidget('Button',2);
-  RegisterWidget('Checkbox',3);
-  RegisterWidget('Radio',4);
-  RegisterWidget('Edit',5);
+  RegisterWidget('CheckBoxInput',3);
+  RegisterWidget('RadioInput',4);
+  RegisterWidget('TextInput',5);
   RegisterWidget('Image',6);
   RegisterWidget('TextArea',7);
   RegisterWidget('Select',8);

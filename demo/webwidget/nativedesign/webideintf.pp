@@ -394,14 +394,14 @@ begin
         C:=TJSONObject.Create;
         Cmd.ToJSON(C);
         A.Add(C);
-        L2.Add(C);
+        L2.Add(CMD);
         end;
       end;
     SendJSONResponse(J,aResponse);
     // Remove sent from list
     for I:=0 to L2.Count-1 do
       begin
-      Cmd:=TIDECommand(L[i]);
+      Cmd:=TIDECommand(L2[i]);
       if Cmd.NeedsConfirmation then
         Cmd.Sent:=True
       else

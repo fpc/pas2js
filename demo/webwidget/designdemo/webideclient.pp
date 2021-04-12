@@ -78,13 +78,12 @@ Var
   aActionPayload : TJSObject;
 
 begin
-  if (aCode div 100)=2 then
+  if ((aCode div 100)=2) and Assigned(aPayload) and Assigned(OnActionResponse) then
     begin
     aID:=NativeInt(aPayLoad['id']);
     aName:=String(aPayLoad['name']);
     aActionPayLoad:=TJSObject(aPayLoad['payload']);
-    If Assigned(OnActionResponse) then
-      OnActionResponse(Self,aID,aName,aActionPayload);
+    OnActionResponse(Self,aID,aName,aActionPayload);
     end;
 end;
 

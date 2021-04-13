@@ -334,7 +334,7 @@ type
     procedure SetText(const AValue: string); virtual;
     procedure SetVarValue(const AValue{%H-}: JSValue); virtual;
     procedure SetAsBytes(const AValue{%H-}: TBytes); virtual;
-    procedure DefineProperties(Filer: TFiler); 
+    procedure DefineProperties(Filer: TFiler);  override;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;

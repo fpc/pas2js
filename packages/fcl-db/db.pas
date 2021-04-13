@@ -736,6 +736,8 @@ type
     procedure Bind(Binding: Boolean); override;
   public
     constructor Create(AOwner: TComponent); override;
+
+    destructor Destroy; override;
   end;
 
 { TIndexDef }
@@ -2371,6 +2373,9 @@ var
 
 begin
   Active:=False;
+
+  SetDataSetField(nil);
+
   FFieldDefs.Free;
   FFieldList.Free;
   FNestedDataSets.Free;
@@ -9120,14 +9125,18 @@ begin
     if Assigned(DataSet) then
       DataSet.NestedDataSets.Remove(FNestedDataSet);
   end;
+
   if Assigned(Value) then
-  begin
     DataSet.NestedDataSets.Add(Value);
-    FFields := Value.Fields;
-  end
-  else
-    FFields := nil;
+
   FNestedDataSet := Value;
+end;
+
+destructor TDataSetField.Destroy;
+begin
+  AssignNestedDataSet(nil);
+
+  inherited;
 end;
 
 end.

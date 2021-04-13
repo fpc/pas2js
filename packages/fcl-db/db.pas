@@ -663,16 +663,19 @@ type
 
 
 { TBlobField }
+  TBlobDisplayValue = (dvClass, dvFull, dvClip, dvFit);
   TBlobStreamMode = (bmRead, bmWrite, bmReadWrite);
   TBlobType = ftBlob..ftMemo;
 
   TBlobField = class(TBinaryField)
   private
+    FDisplayValue: TBlobDisplayValue;
     FModified : Boolean;
     // Wrapper that retrieves FDataType as a TBlobType
     function GetBlobType: TBlobType;
     // Wrapper that calls SetFieldType
     procedure SetBlobType(AValue: TBlobType);
+    procedure SetDisplayValue(AValue: TBlobDisplayValue);
   protected
     class procedure CheckTypeSize(AValue: Longint); override;
     function GetBlobSize: Longint; virtual;
@@ -687,6 +690,7 @@ type
     property Modified: Boolean read FModified write FModified;
     property Value: string read GetAsString write SetAsString;
   published
+    property DisplayValue: TBlobDisplayValue read FDisplayValue write SetDisplayValue default dvClass;
     property BlobType: TBlobType read GetBlobType write SetBlobType; // default ftBlob;
     property Size default 0;
   end;
@@ -4065,7 +4069,7 @@ begin
     begin
     S:='';
     For I:=0 to Length(AValue)-1 do
-      TJSString(S).Concat(IntToHex(aValue[i],2));
+      S:=TJSString(S).Concat(IntToHex(aValue[i],2));
     Result:=S;
     end;
 end;
@@ -7223,7 +7227,14 @@ end;
 
 procedure TBlobField.SetBlobType(AValue: TBlobType);
 begin
+  SetFieldType(aValue);
+end;
 
+procedure TBlobField.SetDisplayValue(AValue: TBlobDisplayValue);
+begin
+  if FDisplayValue=AValue then Exit;
+  FDisplayValue:=AValue;
+  PropertyChanged(False);
 end;
 
 class procedure TBlobField.CheckTypeSize(AValue: Longint);
@@ -7253,8 +7264,26 @@ begin
 end;
 
 procedure TBlobField.GetText(var AText: string; ADisplayText: Boolean);
+
 begin
-  AText := inherited GetAsString;
+  Case FDisplayValue of
+  dvClass:
+    aText:=GetClassDesc;
+  dvFull:
+    aText:=GetAsString;
+  dvClip:
+    begin
+    aText:=GetAsString;
+    if aDisplayText and (Length(aText)>DisplayWidth) then
+      aText:=Copy(Text,1,DisplayWidth) + '...';
+    end;
+  dvFit:
+    begin
+    aText:=GetAsString;
+    if aDisplayText and (Length(aText)>DisplayWidth) then
+      aText:=GetClassDesc;
+    end;
+  end;
 end;
 
 class function TBlobField.IsBlob: Boolean;

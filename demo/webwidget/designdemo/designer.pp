@@ -70,7 +70,7 @@ Type
 
   { TJumboWidget }
 
-  TJumboWidget = class(TCustomTemplateWidget)
+  TJumboWidget = class(TSimpleTemplateWidget)
   Public
     Constructor Create(aOwner:  TComponent); override;
   end;
@@ -91,7 +91,7 @@ type
 constructor TJumboWidget.Create(aOwner: TComponent);
 begin
   inherited Create(aOwner);
-  Template.Text:='<div class="jumbotron">'+sLineBreak+
+  Template:='<div class="jumbotron">'+sLineBreak+
   '<h1 class="display-4">Hello, world!</h1>'+sLineBreak+
   '<p class="lead">This is a simple hero unit, a simple jumbotron-style component for calling extra attention to featured content or information.</p>'+sLineBreak+
   '<hr class="my-4">'+sLineBreak+
@@ -145,6 +145,7 @@ begin
     S.Free;
   end;
 end;
+
 function TDesignDemo.DoActive(Event: TEventListenerEvent): boolean;
 
 Const
@@ -164,7 +165,10 @@ begin
   JQuery('.designerToolbar').remove();
   aNewActive:=TJSHTMLElement(event.target);
   aParent:=FPage.FindWidgetByID(String(aNewActive.dataset[STopElementData]));
-  if (FAddWidget<>Nil) and (aParent<>Nil) then
+  if aParent=Nil then
+    aParent:=FPage;
+
+  if (FAddWidget<>Nil) then
     begin
     aNewWidget:=FAddWidget;
     FAddWidget:=Nil;

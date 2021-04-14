@@ -90,7 +90,7 @@ type
     property OriginalException : Exception read FOriginalException;
     property PreviousError : Integer read FPreviousError;
   end;
-  
+
 
 { TFieldDef }
 
@@ -116,7 +116,7 @@ type
   protected
     function GetDisplayName: string; override;
     procedure SetDisplayName(const Value: string); override;
-  Public  
+  Public
     property DisplayName : string read GetDisplayName write SetDisplayName;
   published
     property Name : string read FName write SetDisplayName;
@@ -999,7 +999,7 @@ type
   end;
 
 { TDataSet }
-  
+
   TBookmarkFlag = (bfCurrent, bfBOF, bfEOF, bfInserted);
   TBookmark = record
     Data : JSValue;
@@ -1774,7 +1774,7 @@ Function ExtractFieldName(Const Fields: String; var Pos: Integer): String;
 // function SkipComments(var p: PChar; EscapeSlash, EscapeRepeat : Boolean) : boolean;
 
 // operator Enumerator(ADataSet: TDataSet): TDataSetEnumerator;
- 
+
 implementation
 
 uses DBConst,TypInfo;
@@ -1954,7 +1954,7 @@ end;
 { EUpdateError }
 constructor EUpdateError.Create(NativeError, Context : String;
                                 ErrCode, PrevError : integer; E: Exception);
-                                
+
 begin
   Inherited CreateFmt(NativeError,[Context]);
   FContext := Context;
@@ -2456,7 +2456,7 @@ var
   i: Integer;
   OldState: TDatasetState;
 begin
-  FCalcBuffer := Buffer; 
+  FCalcBuffer := Buffer;
   if FState <> dsInternalCalc then
   begin
     OldState := FState;
@@ -2548,7 +2548,7 @@ procedure TDataSet.DataEvent(Event: TDataEvent; Info: JSValue);
   begin
     if aField.FieldKind in [fkData, fkInternalCalc] then
       SetModified(True);
-      
+
     if State <> dsSetKey then begin
       if aField.FieldKind = fkData then begin
         if FInternalCalcFields then
@@ -2559,7 +2559,7 @@ procedure TDataSet.DataEvent(Event: TDataEvent; Info: JSValue);
       aField.Change;
     end;
   end;
-  
+
   procedure HandleScrollOrChange;
   var
     A: Integer;
@@ -2587,7 +2587,7 @@ begin
     deFieldChange   : HandleFieldChange(TField(Info));
     deDataSetChange,
     deDataSetScroll : HandleScrollOrChange;
-    deLayoutChange  : FEnableControlsEvent:=deLayoutChange;    
+    deLayoutChange  : FEnableControlsEvent:=deLayoutChange;
   end;
 
   if not ControlsDisabled and (FState <> dsBlockRead) then begin
@@ -3248,10 +3248,10 @@ end;
 
 function TDataSet.GetIndexDefs(IndexDefs: TIndexDefs; IndexTypes: TIndexOptions
   ): TIndexDefs;
-  
+
 var i,f : integer;
     IndexFields : TStrings;
-    
+
 begin
   IndexDefs.Update;
   Result := TIndexDefs.Create(Self);
@@ -3399,15 +3399,15 @@ begin
   FBlockReadSize := AValue;
   if AValue > 0 then
   begin
-    CheckActive; 
+    CheckActive;
     SetState(dsBlockRead);
-  end	
+  end
   else
   begin
-    //update state only when in dsBlockRead 
+    //update state only when in dsBlockRead
     if FState = dsBlockRead then
       SetState(dsBrowse);
-  end;	
+  end;
 end;
 
 procedure TDataSet.SetFieldDefs(AFieldDefs: TFieldDefs);
@@ -5750,7 +5750,7 @@ begin
   if not Assigned(FLookupDataSet) or (Length(FLookupKeyfields) = 0)
   or (Length(FLookupresultField) = 0) or (Length(FKeyFields) = 0) then
     Exit;
-    
+
   tmpActive := FLookupDataSet.Active;
   try
     FLookupDataSet.Active := True;
@@ -6661,7 +6661,7 @@ begin
     Fmt:=FDisplayFormat
   else
     Fmt:=FEditFormat;
-    
+
   Digits := 0;
   if not FCurrency then
     ff := ffGeneral
@@ -6705,7 +6705,7 @@ var f : Double;
 begin
   If (AValue='') then
     Clear
-  else  
+  else
     begin
     If not TryStrToFloat(AValue,F) then
       DatabaseErrorFmt(SNotAFloat, [AValue]);
@@ -7494,7 +7494,7 @@ procedure TFields.Clear;
 var
   AField: TField;
 begin
-  while FFieldList.Count > 0 do 
+  while FFieldList.Count > 0 do
     begin
     AField := TField(FFieldList.Last);
     AField.FDataSet := Nil;
@@ -7609,12 +7609,8 @@ Var
   B : Boolean;
 
 begin
-  B:=Assigned(DataSource) and Not (DataSource.State in [dsInactive,dsOpening]);
-  If B<>FActive then
-    begin
-    FActive:=B;
-    ActiveChanged;
-    end;
+  B:=Assigned(DataSource) and not (DataSource.State in [dsInactive, dsOpening]);
+  SetActive(B);
   B:=Assigned(DataSource) and (DataSource.State in dsEditModes) and Not FReadOnly;
   If B<>FEditing Then
     begin
@@ -7637,7 +7633,7 @@ begin
   else if DataSource.DataSet.FActiveRecord < FFirstRecord + Index then
     Result := DataSource.DataSet.FActiveRecord - (FFirstRecord + Index)
   else Result := 0;
-  
+
   Inc(FFirstRecord, Index + Result);
 end;
 
@@ -7663,30 +7659,31 @@ end;
 
 
 Procedure TDataLink.DataEvent(Event: TDataEvent; Info: JSValue);
-
-
 begin
-  Case Event of
-    deFieldChange, deRecordChange:
-      If Not FUpdatingRecord then
-        RecordChanged(TField(Info));
-    deDataSetChange: begin
-      SetActive(DataSource.DataSet.Active);
-      CalcRange;
-      CalcFirstRecord(Integer(Info));
-      DatasetChanged;
+  if Event = deUpdateState then
+    CheckActiveAndEditing
+  else if Active then
+    case Event of
+      deFieldChange, deRecordChange:
+        if not FUpdatingRecord then
+          RecordChanged(TField(Info));
+      deDataSetChange:
+      begin
+        SetActive(DataSource.DataSet.Active);
+        CalcRange;
+        CalcFirstRecord(Integer(Info));
+        DatasetChanged;
+      end;
+      deDataSetScroll: DatasetScrolled(CalcFirstRecord(Integer(Info)));
+      deLayoutChange:
+      begin
+        CalcFirstRecord(Integer(Info));
+        LayoutChanged;
+      end;
+      deUpdateRecord: UpdateRecord;
+      deCheckBrowseMode: CheckBrowseMode;
+      deFocusControl: FocusControl(Info);
     end;
-    deDataSetScroll: DatasetScrolled(CalcFirstRecord(Integer(Info)));
-    deLayoutChange: begin
-      CalcFirstRecord(Integer(Info));
-      LayoutChanged;
-    end;
-    deUpdateRecord: UpdateRecord;
-    deUpdateState: CheckActiveAndEditing;
-    deCheckBrowseMode: CheckBrowseMode;
-    deFocusControl:
-      FocusControl(Info);
-  end;
 end;
 
 
@@ -7728,7 +7725,7 @@ begin
   If Assigned(Datasource) then
     Result:=DataSource.DataSet
   else
-    Result:=Nil;  
+    Result:=Nil;
 end;
 
 
@@ -7923,7 +7920,7 @@ begin
     if Active and (FFields.Count > 0) then
       DoMasterChange
     else
-      DoMasterDisable;  
+      DoMasterDisable;
 end;
 
 
@@ -7954,7 +7951,7 @@ begin
   if (DataSource.State <> dsSetKey) and FDetailDataSet.Active and
      (FFields.Count > 0) and ((Field = nil) or
      (FFields.IndexOf(Field) >= 0)) then
-    DoMasterChange;  
+    DoMasterChange;
 end;
 
 procedure TMasterDatalink.SetFieldNames(const Value: string);
@@ -7967,14 +7964,14 @@ begin
     end;
 end;
 
-Procedure TMasterDataLink.DoMasterDisable; 
+Procedure TMasterDataLink.DoMasterDisable;
 
 begin
-  if Assigned(FOnMasterDisable) then 
+  if Assigned(FOnMasterDisable) then
     FOnMasterDisable(Self);
 end;
 
-Procedure TMasterDataLink.DoMasterChange; 
+Procedure TMasterDataLink.DoMasterChange;
 
 begin
   If Assigned(FOnMasterChange) then
@@ -7997,7 +7994,7 @@ begin
     P:=TParams(GetObjectProp(ADataset,'Params',TParams));
     if (P<>Nil) then
       Params:=P;
-    end;  
+    end;
 end;
 
 
@@ -8009,7 +8006,7 @@ begin
     RefreshParamNames;
 end;
 
-Procedure TMasterParamsDataLink.RefreshParamNames; 
+Procedure TMasterParamsDataLink.RefreshParamNames;
 
 Var
   FN : String;
@@ -8041,7 +8038,7 @@ begin
         end;
       end;
     end;
-  FieldNames:=FN;  
+  FieldNames:=FN;
 end;
 
 Procedure TMasterParamsDataLink.CopyParamsFromMaster(CopyBound : Boolean);
@@ -8051,7 +8048,7 @@ begin
     FParams.CopyParamValuesFromDataset(Dataset,CopyBound);
 end;
 
-Procedure TMasterParamsDataLink.DoMasterDisable; 
+Procedure TMasterParamsDataLink.DoMasterDisable;
 
 begin
   Inherited;
@@ -8059,7 +8056,7 @@ begin
   // If master dataset is reopened, relationship will be reestablished
 end;
 
-Procedure TMasterParamsDataLink.DoMasterChange; 
+Procedure TMasterParamsDataLink.DoMasterChange;
 
 begin
   Inherited;

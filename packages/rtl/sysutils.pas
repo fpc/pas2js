@@ -15,7 +15,8 @@ unit SysUtils;
 {$mode objfpc}
 {$modeswitch typehelpers}
 {$modeswitch advancedrecords}
-{$WARN 5078 off : }
+{$WARN 5078 off}
+
 interface
 
 uses
@@ -51,6 +52,46 @@ type
   TWeekNameArray = array [1..7] of string;
   TMonthNames = TMonthNameArray;
   TDayNames = array[0..6] of string;
+
+type
+
+  { TFormatSettings }
+  TFormatSettings = record
+    strict private
+      class function GetBrowserLocale: string; assembler; static;
+      class function GetLocaleShortDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
+      class function GetLocaleDecimalSeparator(const ALocale: string): string; static;
+      class function GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; static;
+      class function GetLocaleLongDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
+      class function GetLocaleShortMonthName(const AMonth: Integer; const ALocale: string): string; static;
+    public
+      CurrencyDecimals: Byte;
+      CurrencyFormat: Byte;
+      CurrencyString: string;
+      DateSeparator: Char;
+      DateTimeToStrFormat: array[Boolean] of string;
+      DecimalSeparator: string;
+      LongDateFormat: string;
+      LongDayNames: TDayNames;
+      LongMonthNames: TMonthNames;
+      LongTimeFormat: string;
+      NegCurrFormat: Byte;
+      ShortDateFormat: string;
+      ShortDayNames: TDayNames;
+      ShortMonthNames: TMonthNames;
+      ShortTimeFormat: string;
+      ThousandSeparator: string;
+      TimeAMString: string;
+      TimePMString: string;
+      TimeSeparator: Char;
+      TwoDigitYearCenturyWindow: Word;
+    public
+      Type
+         TLocaleInitCallback = Procedure(aLocale : String; aInstance : TFormatSettings);
+      class var InitLocaleHandler : TLocaleInitCallback;
+      class function Create: TFormatSettings; overload; static;
+      class function Create(const ALocale: string): TFormatSettings; overload; static;
+    end;
 
 
 {*****************************************************************************
@@ -208,6 +249,7 @@ function AnsiCompareStr(const s1, s2: String): Integer;
 procedure AppendStr(var Dest: String; const S: string);
 
 function Format(const Fmt: String; const Args: array of JSValue): String;
+function Format(const Fmt: String; const Args: array of JSValue; const aSettings : TFormatSettings): String;
 
 function BytesOf(const AVal: string): TBytes;
 function StringOf(const ABytes: TBytes): string;
@@ -239,9 +281,12 @@ function WrapText(const Line: string; MaxCol: Integer): string;
   Integer conversions
   *****************************************************************************}
 
+Function SwapEndian(W : Word) : Word;
+Function SwapEndian(C : Cardinal) : Cardinal;
 function IntToStr(const Value: Integer): string;
 Function TryStrToInt(const S : String; Out res : Integer) : Boolean;
 Function TryStrToInt(const S : String; Out res : NativeInt) : Boolean;
+function TryStrToInt(const S: String; out res: NativeInt; Const aSettings : TFormatSettings): Boolean;
 Function StrToIntDef(const S : String; Const aDef : Integer) : Integer;
 Function StrToIntDef(const S : String; Const aDef : NativeInt) : NativeInt;
 Function StrToInt(const S : String) : Integer;
@@ -281,15 +326,21 @@ Type
   TFloatFormat = (ffFixed,ffGeneral,ffExponent,ffNumber,ffCurrency);
 
 Function FloatToDecimal(Value : double; Precision, Decimals : integer) :  TFloatRec;
-Function FloatToStr(Value: Double): String;
-Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String;
+Function FloatToStr(Value: Double): String; overload;
+Function FloatToStr(Value: Double; const aSettings : TFormatSettings): String; overload;
+Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer): String; overload;
+Function FloatToStrF(const Value : double; format: TFloatFormat; Precision, Digits: Integer;const aSettings : TFormatSettings): String; overload;
 Function TryStrToFloat(const S : String; Out res : Extended) : Boolean; overload;
+Function TryStrToFloat(const S : String; Out res : Extended; const aSettings : TFormatSettings) : Boolean; overload;
 Function TryStrToFloat(const S : String; Out res : Double) : Boolean; overload;
+Function TryStrToFloat(const S : String; Out res : Double; const aSettings : TFormatSettings) : Boolean; overload;
 Function StrToFloatDef(const S : String; Const aDef : Double) : Double;
-Function StrToFloat(const S : String) : Double;
-Function FormatFloat (Fmt : String; aValue : Double) : String;
-Function SwapEndian(W : Word) : Word;
-Function SwapEndian(C : Cardinal) : Cardinal;
+function StrToFloatDef(const S: String; const aDef: Double; const aSettings : TFormatSettings): Double;
+Function StrToFloat(const S : String) : Double; overload;
+Function StrToFloat(const S : String; const aSettings : TFormatSettings) : Double; overload;
+Function FormatFloat (Fmt : String; aValue : Double) : String; overload;
+Function FormatFloat (Fmt : String; aValue : Double; aSettings : TFormatSettings) : String; overload;
+
 
 { *****************************************************************************
   Boolean conversions
@@ -368,16 +419,17 @@ Type
 
 
 Var
-  TimeSeparator : char = ':';
-  DateSeparator : char = '-';
-  ShortDateFormat : string = 'yyyy-mm-dd';
-  LongDateFormat : string = 'ddd, yyyy-mm-dd';
-  ShortTimeFormat : string = 'hh:nn';
-  LongTimeFormat : string = 'hh:nn:ss';
-  DecimalSeparator : string = '.';
-  ThousandSeparator : string;
-  TimeAMString : string = 'AM';
-  TimePMString : string = 'PM';
+  TimeSeparator : char deprecated;
+  DateSeparator : char deprecated;
+  ShortDateFormat : string deprecated;
+  LongDateFormat : string deprecated;
+  ShortTimeFormat : string deprecated;
+  LongTimeFormat : string deprecated;
+  DecimalSeparator : string deprecated;
+  ThousandSeparator : string deprecated;
+  TimeAMString : string deprecated;
+  TimePMString : string deprecated;
+
 
 const
 
@@ -403,115 +455,13 @@ Var
   MonthDays : array [Boolean] of TDayTable =
     ((31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31),
      (31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31));
-  ShortMonthNames : TMonthNames = (
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec');
-  LongMonthNames : TMonthNames = (
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December');
-  ShortDayNames : TDayNames = (
-    'Sun',
-    'Mon',
-    'Tue',
-    'Wed',
-    'Thu',
-    'Fri',
-    'Sat');
 
-  LongDayNames : TDayNames = (
-    'Sunday',
-    'Monday',
-    'Tuesday',
-    'Wednesday',
-    'Thursday',
-    'Friday',
-    'Saturday');
+Var
+  ShortMonthNames : TMonthNames deprecated;
+  LongMonthNames : TMonthNames deprecated;
+  ShortDayNames : TDayNames deprecated;
+  LongDayNames : TDayNames deprecated;
 
-type
-  // Stub, for easier porting of FPC/Delphi code.
-  // Reading/Writing the properties will actually set the global variables
-
-  { TFormatSettings }
-
-  TFormatSettings = class(TObject)
-  private
-    function GetCurrencyDecimals: Byte;
-    function GetCurrencyFormat: Byte;
-    function GetCurrencyString: String;
-    function GetDateSeparator: char;
-    function GetDecimalSeparator: string;
-    function GetLongDateFormat: string;
-    function GetLongDayNames: TDayNames;
-    function GetLongMonthNames: TMonthNames;
-    function GetLongTimeFormat: string;
-    function GetNegCurrFormat: Byte;
-    function GetShortDateFormat: string;
-    function GetShortDayNames: TDayNames;
-    function GetShortMonthNames: TMonthNames;
-    function GetShortTimeFormat: string;
-    function GetThousandSeparator: string;
-    function GetTimeAMString: string;
-    function GetTimePMString: string;
-    function GetTimeSeparator: char;
-    procedure SetCurrencyFormat(AValue: Byte);
-    procedure SetCurrencyString(AValue: String);
-    procedure SetDateSeparator(const Value: char);
-    procedure SetDecimalSeparator(const Value: string);
-    procedure SetLongDateFormat(const Value: string);
-    procedure SetLongDayNames(AValue: TDayNames);
-    procedure SetLongMonthNames(AValue: TMonthNames);
-    procedure SetLongTimeFormat(const Value: string);
-    procedure SetNegCurrFormat(AValue: Byte);
-    procedure SetShortDateFormat(const Value: string);
-    procedure SetShortDayNames(AValue: TDayNames);
-    procedure SetShortMonthNames(AValue: TMonthNames);
-    procedure SetShortTimeFormat(const Value: string);
-    procedure SetCurrencyDecimals(AValue: Byte);
-    procedure SetThousandSeparator(const Value: string);
-    procedure SetTimeAMString(const Value: string);
-    procedure SetTimePMString(const Value: string);
-    procedure SetTimeSeparator(const Value: char);
-  public
-    class constructor Init;
-    Property ShortMonthNames : TMonthNames Read GetShortMonthNames Write SetShortMonthNames;
-    Property LongMonthNames : TMonthNames Read GetLongMonthNames Write SetLongMonthNames;
-    Property ShortDayNames : TDayNames Read GetShortDayNames Write SetShortDayNames;
-    Property LongDayNames : TDayNames Read GetLongDayNames Write SetLongDayNames;
-    property TimeSeparator : char read GetTimeSeparator write SetTimeSeparator;
-    property DateSeparator : char read GetDateSeparator write SetDateSeparator;
-    property ShortDateFormat : string read GetShortDateFormat write SetShortDateFormat;
-    property LongDateFormat : string read GetLongDateFormat write SetLongDateFormat;
-    property ShortTimeFormat : string read GetShortTimeFormat write SetShortTimeFormat;
-    property LongTimeFormat : string read GetLongTimeFormat write SetLongTimeFormat;
-    property DecimalSeparator : string read GetDecimalSeparator write SetDecimalSeparator;
-    property ThousandSeparator : string read GetThousandSeparator write SetThousandSeparator;
-    property TimeAMString : string read GetTimeAMString write SetTimeAMString;
-    property TimePMString : string read GetTimePMString write SetTimePMString;
-    Property CurrencyFormat : Byte read GetCurrencyFormat Write SetCurrencyFormat;
-    Property NegCurrFormat : Byte read GetNegCurrFormat Write SetNegCurrFormat;
-    Property CurrencyDecimals : Byte Read GetCurrencyDecimals Write SetCurrencyDecimals;
-    Property CurrencyString : String Read GetCurrencyString Write SetCurrencyString;
-  end;
 
 Var
   FormatSettings: TFormatSettings;
@@ -519,86 +469,103 @@ Var
                              { Threshold to be subtracted from year before age-detection.}
 
 
+// Various conversions
+
 function DateTimeToJSDate(aDateTime : TDateTime) : TJSDate;
 function JSDateToDateTime(aDate : TJSDate) : TDateTime;
-
 function DateTimeToTimeStamp(DateTime: TDateTime): TTimeStamp;
 function TimeStampToDateTime(const TimeStamp: TTimeStamp): TDateTime;
 function MSecsToTimeStamp(MSecs: NativeInt): TTimeStamp;
 function TimeStampToMSecs(const TimeStamp: TTimeStamp): NativeInt;
-function TryEncodeDate(Year, Month, Day: Word; out Date: TDateTime): Boolean;
+procedure DateTimeToSystemTime(DateTime: TDateTime; out SystemTime: TSystemTime);
+function SystemTimeToDateTime(const SystemTime: TSystemTime): TDateTime;
+Function FloatToDateTime (Const Value : Extended) : TDateTime;
+
+// Encode/Decode
+function TryEncodeDate(Year, Month, Day: Word; out Date: TDateTime): Boolean; overload;
 function TryEncodeTime(Hour, Min, Sec, MSec: Word; out Time: TDateTime): Boolean;
 function EncodeDate(Year, Month, Day :word): TDateTime;
 function EncodeTime(Hour, Minute, Second, MilliSecond:word): TDateTime;
-function ComposeDateTime(Date,Time : TDateTime) : TDateTime;
 procedure DecodeDate(Date: TDateTime; out Year, Month, Day: word);
-function DecodeDateFully(const DateTime: TDateTime; out Year, Month, Day, DOW: Word): Boolean;
 procedure DecodeTime(Time: TDateTime; out Hour, Minute, Second, MilliSecond: word);
-procedure DateTimeToSystemTime(DateTime: TDateTime; out SystemTime: TSystemTime);
-function SystemTimeToDateTime(const SystemTime: TSystemTime): TDateTime;
-function DayOfWeek(DateTime: TDateTime): integer;
+function DecodeDateFully(const DateTime: TDateTime; out Year, Month, Day, DOW: Word): Boolean;
+function ComposeDateTime(Date,Time : TDateTime) : TDateTime;
+procedure ReplaceTime(var dati: TDateTime; NewTime : TDateTime);
+procedure ReplaceDate(var DateTime: TDateTime; const NewDate: TDateTime);
+
 function Date: TDateTime;
 function Time: TDateTime;
 function Now: TDateTime;
+function DayOfWeek(DateTime: TDateTime): integer;
 function IncMonth(const DateTime: TDateTime; NumberOfMonths: integer = 1 ): TDateTime;
 procedure IncAMonth(var Year, Month, Day: Word; NumberOfMonths: Integer = 1);
 function IsLeapYear(Year: Word): boolean;
-function DateToStr(Date: TDateTime): string;
-// function DateToStr(Date: TDateTime; const FormatSettings: TFormatSettings): string;
-function TimeToStr(Time: TDateTime): string;
-// function TimeToStr(Time: TDateTime; const FormatSettings: TFormatSettings): string;
-function DateTimeToStr(DateTime: TDateTime; ForceTimeIfZero : Boolean = False): string;
-// function DateTimeToStr(DateTime: TDateTime; const FormatSettings: TFormatSettings; ForceTimeIfZero : Boolean = False): string;
-function StrToDate(const S: String): TDateTime;
-function StrToDate(const S: String; separator : char): TDateTime;
-function StrToDate(const S: String; const useformat : string; separator : char): TDateTime;
-//function StrToDate(const S: string; FormatSettings : TFormatSettings): TDateTime;
-function StrToTime(const S: String): TDateTime;
-function StrToTime(const S: String; separator : char): TDateTime;
-// function StrToTime(const S: string; FormatSettings : TFormatSettings): TDateTime;
-function StrToDateTime(const S: String): TDateTime;
-//function StrToDateTime(const s: ShortString; const FormatSettings : TFormatSettings): TDateTime;
-function FormatDateTime(const FormatStr: string; const DateTime: TDateTime): string;
-// function FormatDateTime(const FormatStr: string; DateTime: TDateTime; const FormatSettings: TFormatSettings; Options : TFormatDateTimeOptions = []): string;
-function TryStrToDate(const S: String; out Value: TDateTime): Boolean;
-function TryStrToDate(const S: String; out Value: TDateTime; separator : char): Boolean;
-function TryStrToDate(const S: String; out Value: TDateTime; const useformat : string; separator : char): Boolean;
-// function TryStrToDate(const S: string; out Value: TDateTime; const FormatSettings: TFormatSettings): Boolean;
-function TryStrToTime(const S: String; out Value: TDateTime): Boolean;
-function TryStrToTime(const S: String; out Value: TDateTime; separator : char): Boolean;
-function TryStrToDateTime(const S: String; out Value: TDateTime): Boolean;
-// function TryStrToTime(const S: string; out Value: TDateTime; const FormatSettings: TFormatSettings): Boolean;
-// function TryStrToDateTime(const S: string; out Value: TDateTime; const FormatSettings: TFormatSettings): Boolean;
-function StrToDateDef(const S: String; const Defvalue : TDateTime): TDateTime;
-function StrToDateDef(const S: String; const Defvalue : TDateTime; separator : char): TDateTime;
-function StrToTimeDef(const S: String; const Defvalue : TDateTime): TDateTime;
-function StrToTimeDef(const S: String; const Defvalue : TDateTime; separator : char): TDateTime;
-function StrToDateTimeDef(const S: String; const Defvalue : TDateTime): TDateTime;
 function CurrentYear:Word;
-procedure ReplaceTime(var dati: TDateTime; NewTime : TDateTime);
-procedure ReplaceDate(var DateTime: TDateTime; const NewDate: TDateTime);
-Function FloatToDateTime (Const Value : Extended) : TDateTime;
+
+// Date <-> String conversion
+
+function DateToStr(Date: TDateTime): string; overload;
+function DateToStr(Date: TDateTime; const aSettings: TFormatSettings): string; overload;
+function StrToDate(const S: String): TDateTime; overload;
+function StrToDate(const S: String; separator : char): TDateTime; overload;
+function StrToDate(const S: String; const useformat : string; separator : char): TDateTime; overload;
+function StrToDate(const S: string; const aSettings : TFormatSettings): TDateTime; overload;
+function TryStrToDate(const S: String; out Value: TDateTime): Boolean; overload;
+function TryStrToDate(const S: String; out Value: TDateTime; const aSettings : TFormatSettings): Boolean; overload;
+function TryStrToDate(const S: String; out Value: TDateTime; separator : char): Boolean; overload;
+function TryStrToDate(const S: String; out Value: TDateTime; const useformat : string; separator : char): Boolean; overload;
+function StrToDateDef(const S: String; const Defvalue : TDateTime): TDateTime; overload;
+function StrToDateDef(const S: String; const Defvalue : TDateTime; separator : char): TDateTime; overload;
+
+// Time <-> String conversion
+
+function TimeToStr(Time: TDateTime): string;overload;
+function TimeToStr(Time: TDateTime; const aSettings: TFormatSettings): string;overload;
+function StrToTime(const S: String): TDateTime;overload;
+function StrToTime(const S: String; separator : char): TDateTime;overload;
+function StrToTime(const S: string; const aSettings : TFormatSettings): TDateTime;overload;
+function TryStrToTime(const S: String; out Value: TDateTime): Boolean;overload;
+function TryStrToTime(const S: String; out Value: TDateTime; aSettings : TFormatSettings): Boolean;overload;
+function TryStrToTime(const S: String; out Value: TDateTime; separator : char): Boolean; overload;
+function StrToTimeDef(const S: String; const Defvalue : TDateTime): TDateTime;overload;
+function StrToTimeDef(const S: String; const Defvalue : TDateTime; separator : char): TDateTime;overload;
+function StrToTimeDef(const AString: string; const ADefault: TDateTime; const aSettings: TFormatSettings): TDateTime;
+
+// DateTime <-> String conversion
+
+function DateTimeToStr(DateTime: TDateTime; ForceTimeIfZero : Boolean = False): string;overload;
+function DateTimeToStr(DateTime: TDateTime; const aSettings: TFormatSettings; ForceTimeIfZero : Boolean = False): string;overload;
+function StrToDateTime(const S: String): TDateTime;overload;
+function StrToDateTime(const s: String; const aSettings : TFormatSettings): TDateTime;overload;
+function TryStrToDateTime(const S: String; out Value: TDateTime): Boolean; overload;
+function TryStrToDateTime(const S: string; out Value: TDateTime; const aSettings: TFormatSettings): Boolean; overload;
+function StrToDateTimeDef(const S: String; const Defvalue : TDateTime): TDateTime; overload;
+function StrToDateTimeDef(const S: String; const Defvalue : TDateTime; aSettings : TFormatSettings): TDateTime; overload;
+function FormatDateTime(const FormatStr: string; const DateTime: TDateTime): string; overload;
+function FormatDateTime(const FormatStr: string; const DateTime: TDateTime; const aSettings: TFormatSettings): string; overload;
+
 
 { *****************************************************************************
   Currency support
   *****************************************************************************}
 
+
 Var
-  CurrencyFormat : Byte = 0;
-  NegCurrFormat : Byte = 0;
-  CurrencyDecimals : Byte = 2;
-  CurrencyString : String = '$';
+  CurrencyFormat : Byte deprecated;
+  NegCurrFormat : Byte deprecated;
+  CurrencyDecimals : Byte deprecated;
+  CurrencyString : String deprecated;
 
 Function FloattoCurr (Const Value : Extended) : Currency;
 function TryFloatToCurr(const Value: Extended; var AResult: Currency): Boolean;
 Function CurrToStr(Value: Currency): string;
-//Function CurrToStr(Value: Currency; Const FormatSettings: TFormatSettings): string;
+Function CurrToStr(Value: Currency; Const aSettings: TFormatSettings): string;
 function StrToCurr(const S: string): Currency;
-//function StrToCurr(const S: string; Const FormatSettings: TFormatSettings): Currency;
+function StrToCurr(const S: string; Const aSettings: TFormatSettings): Currency;
 function TryStrToCurr(const S: string;Out Value : Currency): Boolean;
-//function TryStrToCurr(const S: string;Out Value : Currency; Const FormatSettings: TFormatSettings): Boolean;
+function TryStrToCurr(const S: string;Out Value : Currency; Const aSettings: TFormatSettings): Boolean;
 function StrToCurrDef(const S: string; Default : Currency): Currency;
-//function StrToCurrDef(const S: string; Default : Currency; Const FormatSettings: TFormatSettings): Currency;
+function StrToCurrDef(const S: string; Default : Currency; Const aSettings: TFormatSettings): Currency;
 
 {*****************************************************************************
                                File Paths
@@ -1141,6 +1108,52 @@ Type
 
 implementation
 
+Const
+  DefaultShortMonthNames : TMonthNames = (
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec');
+  DefaultLongMonthNames : TMonthNames = (
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December');
+  DefaultShortDayNames : TDayNames = (
+    'Sun',
+    'Mon',
+    'Tue',
+    'Wed',
+    'Thu',
+    'Fri',
+    'Sat');
+
+  DefaultLongDayNames : TDayNames = (
+    'Sunday',
+    'Monday',
+    'Tuesday',
+    'Wednesday',
+    'Thursday',
+    'Friday',
+    'Saturday');
+
+
 { ---------------------------------------------------------------------
   Exception handling
   ---------------------------------------------------------------------}
@@ -1450,10 +1463,15 @@ begin
     end;
 end;
 
+Function FloatToStr(Value: Double; const aSettings : TFormatSettings): String; overload;
+
+begin
+  Result:=FloatToStrF(Value,ffGeneral,15,0,aSettings);
+end;
 
 function FloatToStr(Value: Double): String;
 begin
-  Result:=FloatToStrF(Value,ffGeneral,15,0);
+  Result:=FloatToStr(Value,FormatSettings);
 end;
 
 function TryStrToFloat(const S: String; out res: Extended): Boolean;
@@ -1463,6 +1481,18 @@ end;
 
 function TryStrToFloat(const S: String; out res: Double): Boolean;
 
+begin
+  Result:=TryStrToFloat(S,Res,FormatSettings);
+end;
+
+function TryStrToFloat(const S: String; out res: Extended; const aSettings : TFormatSettings): Boolean;
+
+begin
+  Result:=TryStrToFloat(S,double(res),aSettings);
+end;
+
+function TryStrToFloat(const S: String; out res: Double; const aSettings : TFormatSettings): Boolean;
+
 Var
   J : JSValue;
   N : String;
@@ -1470,29 +1500,45 @@ Var
 begin
   N:=S;
   // Delocalize
-  if (ThousandSeparator <>'') then
-    N:=StringReplace(N,ThousandSeparator,'',[rfReplaceAll]);
-  if (DecimalSeparator<>'.') then
-    N:=StringReplace(N,DecimalSeparator,'.',[]);
+  if (aSettings.ThousandSeparator <>'') then
+    N:=StringReplace(N,aSettings.ThousandSeparator,'',[rfReplaceAll]);
+  if (aSettings.DecimalSeparator<>'.') then
+    N:=StringReplace(N,aSettings.DecimalSeparator,'.',[]);
   J:=parseFloat(N);
   Result:=Not jsIsNaN(J);
   if Result then
     Res:=Double(J);
 end;
 
+function StrToFloatDef(const S: String; const aDef: Double; const aSettings : TFormatSettings): Double;
+begin
+  if not TryStrToFloat(S,Result,aSettings) then
+    Result:=aDef;
+end;
+
 function StrToFloatDef(const S: String; const aDef: Double): Double;
 begin
-  if not TryStrToFloat(S,Result) then
+  if not TryStrToFloat(S,Result,FormatSettings) then
     Result:=aDef;
 end;
 
 function StrToFloat(const S: String): Double;
 begin
-  if not TryStrToFloat(S,Result) then
+  Result:=StrToFloat(S,FormatSettings);
+end;
+
+function StrToFloat(const S: String; const aSettings : TFormatSettings): Double;
+begin
+  if not TryStrToFloat(S,Result,aSettings) then
     Raise EConvertError.CreateFmt(SErrInvalidFloat,[S]);
 end;
 
-function FormatFloat(Fmt: String; aValue: Double): String;
+Function FormatFloat (Fmt : String; aValue : Double) : String;
+begin
+  Result:=FormatFloat(Fmt,aValue,FormatSettings);
+end;
+
+function FormatFloat(Fmt: String; aValue: Double; aSettings : TFormatSettings): String;
 
 Type
   TPosArray = Array of Integer;
@@ -1558,7 +1604,7 @@ var
     // -1 -> we've arrived behind the decimal
     if (DistToDecimal=-1) then
       begin
-      AddToResult(DecimalSeparator);
+      AddToResult(aSettings.DecimalSeparator);
       ToResult(ADigit);
       end
     else
@@ -1566,7 +1612,7 @@ var
       // We're still before the decimal.
       ToResult(ADigit);
       if ThousandSep and ((DistToDecimal mod 3)=0) and (DistToDecimal>1) then
-        AddToResult(ThousandSeparator);
+        AddToResult(aSettings.ThousandSeparator);
       end;
   end;
 
@@ -1699,7 +1745,7 @@ var
           if (DecimalPos=0) then
             DecimalPos:=RequestedDigits+1;
         ',':
-            ThousandSep:=ThousandSeparator<>#0;
+            ThousandSep:=aSettings.ThousandSeparator<>#0;
         'e', 'E':
             begin
             Inc(I);
@@ -2178,12 +2224,13 @@ Begin
   Result:=ReplaceDecimalSep(Result,DS)
 end;
 
+
 function FormatExponentFloat(Value : double; Precision,Digits : Integer;DS : String) : string;
 
 Var
   P: Integer;
 Begin
-  DS:=DecimalSeparator;
+  DS:=FormatSettings.DecimalSeparator;
   If (Precision = -1) Or (Precision > maxdigits) Then
     Precision := maxdigits;
   Str(Value:Precision+7, Result);
@@ -2257,7 +2304,7 @@ Begin
       End;
 End;
 
-function RemoveLeadingNegativeSign(var AValue: String; DS : String): Boolean;
+function RemoveLeadingNegativeSign(var AValue: String; DS : String; aThousandSeparator : String): Boolean;
 
 // removes negative sign in case when result is zero eg. -0.00
 
@@ -2269,7 +2316,7 @@ var
 begin
   Result:=False;
   StartPos := 2;
-  TS := ThousandSeparator;
+  TS := aThousandSeparator;
   for i :=StartPos to length(AValue) do
     begin
     Result := (AValue[i] in ['0', DS, 'E', '+']) or (aValue[i]=TS);
@@ -2280,16 +2327,20 @@ begin
     Delete(AValue, 1, 1);
 end;
 
-Function FormatNumberCurrency(const Value : Currency; Digits : Integer; DS,TS : String) : string;
+Function FormatNumberCurrency(const Value : Currency; Digits : Integer; const aSettings: TFormatSettings) : string;
 
 Var
   Negative: Boolean;
   P : Integer;
+  CS,DS,TS : String;
 
 Begin
+   DS:=aSettings.DecimalSeparator;
+   TS:=aSettings.ThousandSeparator;
+   CS:=aSettings.CurrencyString;
   //  Writeln('Value ',D);
    If Digits = -1 Then
-     Digits := CurrencyDecimals
+     Digits := aSettings.CurrencyDecimals
    Else If Digits > 18 Then
      Digits := 18;
    Str(Value:0:Digits, Result);
@@ -2308,51 +2359,59 @@ Begin
      Dec(P, 3);
      While (P > 1) Do
      Begin
-         Insert(TS, Result, P);
+         Insert(DS, Result, P);
      Dec(P, 3);
      End;
      end;
    // Writeln('3. Result ',Result,' currencystring : ',CurrencyString);
    if Negative then
-     RemoveLeadingNegativeSign(Result,DS);
+     RemoveLeadingNegativeSign(Result,DS,TS);
    // Writeln('4. Result ',Result,' currencystring : ',CurrencyString);
    // Writeln('CurrencyFormat:  ',CurrencyFormat,'NegcurrencyFormat: ',NegCurrFormat);
    If Not Negative Then
-     Case CurrencyFormat Of
-       0: Result := CurrencyString + Result;
-       1: Result := Result + CurrencyString;
-       2: Result := CurrencyString + ' ' + Result;
-       3: Result := Result + ' ' + CurrencyString;
+     Case aSettings.CurrencyFormat Of
+       0: Result := CS + Result;
+       1: Result := Result + CS;
+       2: Result := CS + ' ' + Result;
+       3: Result := Result + ' ' + CS;
      end
    else
-     Case NegCurrFormat Of
-       0: Result := '(' + CurrencyString + Result + ')';
-       1: Result := '-' + CurrencyString + Result;
-       2: Result := CurrencyString + '-' + Result;
-       3: Result := CurrencyString + Result + '-';
-       4: Result := '(' + Result + CurrencyString + ')';
-       5: Result := '-' + Result + CurrencyString;
-       6: Result := Result + '-' + CurrencyString;
-       7: Result := Result + CurrencyString + '-';
-       8: Result := '-' + Result + ' ' + CurrencyString;
-       9: Result := '-' + CurrencyString + ' ' + Result;
-       10: Result := Result + ' ' + CurrencyString + '-';
-       11: Result := CurrencyString + ' ' + Result + '-';
-       12: Result := CurrencyString + ' ' + '-' + Result;
-       13: Result := Result + '-' + ' ' + CurrencyString;
-       14: Result := '(' + CurrencyString + ' ' + Result + ')';
-       15: Result := '(' + Result + ' ' + CurrencyString + ')';
+     Case aSettings.NegCurrFormat Of
+       0: Result := '(' + CS + Result + ')';
+       1: Result := '-' + CS + Result;
+       2: Result := CS + '-' + Result;
+       3: Result := CS + Result + '-';
+       4: Result := '(' + Result + CS + ')';
+       5: Result := '-' + Result + CS;
+       6: Result := Result + '-' + CS;
+       7: Result := Result + CS + '-';
+       8: Result := '-' + Result + ' ' + CS;
+       9: Result := '-' + CS + ' ' + Result;
+       10: Result := Result + ' ' + CS + '-';
+       11: Result := CS + ' ' + Result + '-';
+       12: Result := CS + ' ' + '-' + Result;
+       13: Result := Result + '-' + ' ' + CS;
+       14: Result := '(' + CS + ' ' + Result + ')';
+       15: Result := '(' + Result + ' ' + CS + ')';
      end;
 end;
 
+
 function FloatToStrF(const Value: double; format: TFloatFormat; Precision,
   Digits: Integer): String;
+begin
+  Result:=FloatToStrF(Value,Format,Precision,Digits,Formatsettings);
+end;
+
+function FloatToStrF(const Value: double; format: TFloatFormat; Precision,
+  Digits: Integer ;const aSettings : TFormatSettings): String;
 
 Var
-  DS: string;
+  TS,DS: string;
 
 Begin
-  DS:=DecimalSeparator;
+  DS:=aSettings.DecimalSeparator;
+  TS:=aSettings.ThousandSeparator;
   Case format Of
     ffGeneral:
       Result:=FormatGeneralFloat(Value,Precision,DS);
@@ -2361,15 +2420,21 @@ Begin
     ffFixed:
       Result:=FormatFixedFloat(Value,Digits,DS);
     ffNumber:
-      Result:=FormatNumberFloat(Value,Digits,DS,ThousandSeparator);
+      Result:=FormatNumberFloat(Value,Digits,DS,TS);
     ffCurrency:
-     Result:=FormatNumberCurrency(Value,Digits,DS,ThousandSeparator);
+     Result:=FormatNumberCurrency(Value,Digits,aSettings);
   end;
   if (Format<>ffCurrency) and (length(Result)>1) and (Result[1]='-') then
-    RemoveLeadingNegativeSign(Result,DS);
+    RemoveLeadingNegativeSign(Result,DS,TS);
 end;
 
 function Format(const Fmt: String; const Args: array of JSValue): String;
+
+begin
+  Result:=Format(Fmt,Args,FormatSettings)
+end;
+
+function Format(const Fmt: String; const Args: array of JSValue  ; const aSettings : TFormatSettings): String;
 
 Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
     Hs,ToAdd : String;
@@ -2573,23 +2638,23 @@ begin
               end;
         'E' : begin
               if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffFixed,9999,Prec);
+                ToAdd:=FloatToStrF(Double(Args[doarg]),ffFixed,9999,Prec,aSettings);
               end;
         'F' : begin
               if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffFixed,9999,Prec);
+                ToAdd:=FloatToStrF(Double(Args[doarg]),ffFixed,9999,Prec,aSettings);
               end;
         'G' : begin
               if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffGeneral,Prec,3);
+                ToAdd:=FloatToStrF(Double(Args[doarg]),ffGeneral,Prec,3,aSettings);
               end;
         'N' : begin
               if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffNumber,9999,Prec);
+                ToAdd:=FloatToStrF(Double(Args[doarg]),ffNumber,9999,Prec,aSettings);
               end;
         'M' : begin
               if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffCurrency,9999,Prec);
+                ToAdd:=FloatToStrF(Double(Args[doarg]),ffCurrency,9999,Prec,aSettings);
               end;
         'S' : begin
               CheckArg(jvtString,true);
@@ -3012,6 +3077,7 @@ begin
     Result := trunc(Date) + Abs(frac(Time));
 end;
 
+
 function TryEncodeDate(Year, Month, Day: Word; out Date: TDateTime): Boolean;
 
 var
@@ -3265,24 +3331,44 @@ end;
 
 function DateToStr(Date: TDateTime): string;
 begin
-  Result:=FormatDateTime('ddddd', Date);
+  Result:=DateToStr(Date,FormatSettings);
+end;
+
+function DateToStr(Date: TDateTime; const aSettings : TFormatSettings): string;
+begin
+  Result:=FormatDateTime('ddddd', Date, aSettings);
 end ;
 
 {  TimeToStr returns a string representation of Time using LongTimeFormat   }
 
 function TimeToStr(Time: TDateTime): string;
 begin
-  Result:=FormatDateTime('tt',Time);
+  Result:=TimeToStr(Time,FormatSettings);
+end;
+
+function TimeToStr(Time: TDateTime; const aSettings : TFormatSettings): string;
+begin
+  Result:=FormatDateTime('tt',Time,aSettings);
 end ;
+
 
 {   DateTimeToStr returns a string representation of DateTime using LongDateTimeFormat   }
 
 Var
   DateTimeToStrFormat : Array[Boolean] of string = ('c','f');
 
+
 function DateTimeToStr(DateTime: TDateTime; ForceTimeIfZero : Boolean = False): string;
+
 begin
-  Result:=FormatDateTime(DateTimeToStrFormat[ForceTimeIfZero], DateTime)
+  Result:=DateTimeToStr(DateTime,FormatSettings,ForceTimeIfZero);
+end;
+
+function DateTimeToStr(DateTime: TDateTime; Const aSettings : TFormatSettings; ForceTimeIfZero : Boolean = False): string;
+
+
+begin
+  Result:=FormatDateTime(DateTimeToStrFormat[ForceTimeIfZero], DateTime,aSettings)
 end ;
 
 
@@ -3326,8 +3412,8 @@ begin
     end;
   YearMoreThenTwoDigits := False;
   if separator = #0 then
-    if (DateSeparator<>#0) then
-      separator := DateSeparator
+    if (FormatSettings.DateSeparator<>#0) then
+      separator := FormatSettings.DateSeparator
     else
       separator:='-';
   // Writeln('Separator: ',Separator);
@@ -3457,22 +3543,29 @@ begin
     Raise EConvertError.Create(Msg);
 end;
 
-function StrToDate(const S: String; separator : char): TDateTime;
+function StrToDate(const S: String; const aSettings : TFormatSettings): TDateTime;
+
 begin
-    result := StrToDate(S,ShortDateFormat,separator)
+  Result:=StrToDate(S,aSettings.ShortDateFormat,aSettings.DateSeparator);
 end;
 
 function StrToDate(const S: String): TDateTime;
 begin
-  result := StrToDate(S,ShortDateFormat,#0);
+  result:=StrToDate(S,FormatSettings);
 end;
+
+function StrToDate(const S: String; separator : char): TDateTime;
+begin
+  result := StrToDate(S,FormatSettings.ShortDateFormat,separator)
+end;
+
 
 {   StrToTime converts the string S to a TDateTime value
     if S does not represent a valid time value an
     EConvertError will be raised   }
 
 
-function IntStrToTime(Out ErrorMsg : String; const S: String; Len : integer; separator : char): TDateTime;
+function IntStrToTime(Out ErrorMsg : String; const S: String; Len : integer; Const aSettings : TFormatSettings): TDateTime;
 
 const
   AMPM_None = 0;
@@ -3516,7 +3609,7 @@ var
      While (Cur < Len) and (S[Cur] =#32) do Inc(Cur);
      Offset := Cur;
      //First non-blank cannot be Separator or DecimalSeparator
-     if (Cur > Len - 1) or (S[Cur] = Separator) or (S[Cur] = Decimalseparator) then
+     if (Cur > Len - 1) or (S[Cur] = aSettings.TimeSeparator) or (S[Cur] = aSettings.Decimalseparator) then
        begin
        // Writeln('Error in sep S[Cur]',S[Cur],' ',separator,' ',GetDecimalSeparator);
        Exit;
@@ -3572,7 +3665,7 @@ var
          //writeln('#32');
          //just skip, but we must adress this, or it will be parsed by either AM/PM or Separator
        end
-       else if (CurChar = Separator) then
+       else if (CurChar = aSettings.TimeSeparator) then
        begin
          // writeln('Separator ',Separator);
          if DigitPending or (TimeIndex > tiSec) then
@@ -3583,7 +3676,7 @@ var
          DigitPending := True;
          MSecPending := False;
        end
-       else if (CurChar = DecimalSeparator) then
+       else if (CurChar = aSettings.DecimalSeparator) then
        begin
          //writeln('DecimalSeparator');
          if DigitPending or MSecPending or (TimeIndex <> tiMSec) then
@@ -3605,9 +3698,9 @@ var
            Exit;
            end;
          OffSet := Cur;
-         allowedchars:=DecimalSeparator+' ';
-         if Separator<>#0 then
-           allowedchars:=allowedchars+Separator;
+         allowedchars:=aSettings.DecimalSeparator+' ';
+         if aSettings.TimeSeparator<>#0 then
+           allowedchars:=allowedchars+aSettings.TimeSeparator;
          while (Cur < Len) and (Pos(S[Cur + 1],AllowedChars)=0)
            and (Pos(S[Cur + 1],Digits)=0) do Inc(Cur);
          ElemLen := 1 + Cur - OffSet;
@@ -3618,8 +3711,8 @@ var
          // writeln('AmPmStr = ',ampmstr,' (',length(ampmstr),')');
          //We must compare to TimeAMString before hardcoded 'AM' for delphi compatibility
          //Also it is perfectly legal, though insane to have TimeAMString = 'PM' and vice versa
-         if (CompareText(AmPmStr, TimeAMString) = 0) then AmPm := AMPM_AM
-         else if (CompareText(AmPmStr, TimePMString) = 0) then AmPm := AMPM_PM
+         if (CompareText(AmPmStr, aSettings.TimeAMString) = 0) then AmPm := AMPM_AM
+         else if (CompareText(AmPmStr, aSettings.TimePMString) = 0) then AmPm := AMPM_PM
          else if (CompareText(AmPmStr, 'AM') = 0) then AmPm := AMPM_AM
          else if (CompareText(AmPmStr, 'PM') = 0) then AmPm := AMPM_PM
          else
@@ -3652,11 +3745,6 @@ var
 
 begin
   setlength(timevalues,4);
-  if separator = #0 then
-     if (TimeSeparator<>#0) then
-       separator := TimeSeparator
-      else
-       separator:=':';
   AmPm := AMPM_None;
   if not SplitElements(TimeValues, AmPm) then
   begin
@@ -3671,27 +3759,40 @@ begin
     ErrorMsg:=Format(SErrInvalidTimeFormat,[S]);
 end ;
 
-function StrToTime(const S: String; separator: char): TDateTime;
+function StrToTime(const S: String; const aSettings : TFormatSettings): TDateTime;
 
 Var
   Msg : String;
 
 begin
-  Result:=IntStrToTime(Msg,S,Length(S),Separator);
+  Result:=IntStrToTime(Msg,S,Length(S),aSettings);
   If (Msg<>'') then
     Raise EConvertError.Create(Msg);
 end;
 
 function StrToTime(const S: String): TDateTime;
 begin
-   result:= StrToTime(s, TimeSeparator);
+   result:=StrToTime(S, FormatSettings);
 end;
+
+
+function StrToTime(const S: String; separator: char): TDateTime;
+
+Var
+  aSettings : TFormatSettings;
+
+begin
+  aSettings:=TFormatSettings.Create;
+  aSettings.TimeSeparator:=Separator;
+  Result:=StrToTime(S,aSettings);
+end;
+
 
 {   StrToDateTime converts the string S to a TDateTime value
     if S does not represent a valid date and/or time value
     an EConvertError will be raised   }
 
-function SplitDateTimeStr(DateTimeStr: String; out DateStr, TimeStr: String): Integer;
+function SplitDateTimeStr(DateTimeStr: String; out DateStr, TimeStr: String; Const aSettings : TFormatSettings): Integer;
 
 { Helper function for StrToDateTime
   Pre-condition
@@ -3717,7 +3818,7 @@ begin
   TimeStr := '';
   DateTimeStr := Trim(DateTimeStr);
   if Length(DateTimeStr) = 0 then exit;
-  if (DateSeparator = #32) and (TimeSeparator = #32) and (Pos(#32, DateTimeStr) > 0) then
+  if (aSettings.DateSeparator = #32) and (aSettings.TimeSeparator = #32) and (Pos(#32, DateTimeStr) > 0) then
     begin
     DateStr:=DateTimeStr;
     {
@@ -3729,14 +3830,14 @@ begin
     end;
   p:=1;
   //find separator
-  if (DateSeparator<>#32) then
+  if (aSettings.DateSeparator<>#32) then
     begin
     while (p<Length(DateTimeStr)) and (not (Pos(DateTimeStr[p+1],WhiteSpace)>0)) do
       Inc(p);
     end
   else
     begin
-    p:=Pos(TimeSeparator, DateTimeStr);
+    p:=Pos(aSettings.TimeSeparator, DateTimeStr);
     if (p<>0) then
       repeat
         Dec(p);
@@ -3755,8 +3856,8 @@ begin
     // 2 cases when DateTimeStr only contains a time:
     // Date/time separator differ, and string contains a timeseparator
     // Date/time separators are equal, but transformation to date fails.
-    if ((DateSeparator<>TimeSeparator) and (Pos(TimeSeparator,DateStr) > 0))
-       or ((DateSeparator=TimeSeparator) and (not TryStrToDate(DateStr, DummyDT)))  then
+    if ((aSettings.DateSeparator<>aSettings.TimeSeparator) and (Pos(aSettings.TimeSeparator,DateStr) > 0))
+       or ((aSettings.DateSeparator=aSettings.TimeSeparator) and (not TryStrToDate(DateStr, DummyDT)))  then
       begin
       TimeStr := DateStr;
       DateStr := '';
@@ -3766,24 +3867,35 @@ end;
 
 function StrToDateTime(const S: String): TDateTime;
 
+begin
+  Result:=StrToDateTime(S,FormatSettings);
+end;
+
+function StrToDateTime(const S: String; Const aSettings : TFormatSettings): TDateTime;
+
 var
   TimeStr, DateStr: String;
   PartsFound: Integer;
 begin
-  PartsFound := SplitDateTimeStr(S, DateStr, TimeStr);
+  PartsFound := SplitDateTimeStr(S, DateStr, TimeStr,aSettings);
   case PartsFound of
     0: Result:=StrToDate('');
     1: if (Length(DateStr) > 0) then
-         Result := StrToDate(DateStr,ShortDateFormat,DateSeparator)
+         Result := StrToDate(DateStr,aSettings.ShortDateFormat,aSettings.DateSeparator)
        else
          Result := StrToTime(TimeStr);
-    2: Result := ComposeDateTime(StrTodate(DateStr,ShortDateFormat,DateSeparator),
+    2: Result := ComposeDateTime(StrTodate(DateStr,aSettings.ShortDateFormat,aSettings.DateSeparator),
                                   StrToTime(TimeStr));
   end;
 end;
 
-function FormatDateTime(const FormatStr: string; const DateTime: TDateTime
-  ): string;
+function FormatDateTime(const FormatStr: string; const DateTime: TDateTime): string;
+
+begin
+  Result:=FormatDateTime(FormatStr,DateTime,FormatSettings);
+end;
+
+function FormatDateTime(const FormatStr: string; const DateTime: TDateTime; const aSettings : TFormatSettings): string;
 
   procedure StoreStr(APos,Len: Integer);
   begin
@@ -3876,9 +3988,9 @@ var
           begin
             Count := 4;
             if Hour < 12 then
-              StoreString(TimeAMString)
+              StoreString(aSettings.TimeAMString)
             else
-              StoreString(TimePMString);
+              StoreString(aSettings.TimePMString);
           end
           else if CompareText(Copy(FormatStr,FormatCurrent,5), 'AM/PM') = 0 then
           begin
@@ -3898,9 +4010,9 @@ var
         '/':
           begin
            //  Writeln('Detected date separator');
-          StoreString(DateSeparator);
+          StoreString(aSettings.DateSeparator);
           end;
-        ':': StoreString(TimeSeparator);
+        ':': StoreString(aSettings.TimeSeparator);
         ' ', 'C', 'D', 'H', 'M', 'N', 'S', 'T', 'Y', 'Z', 'F' :
         begin
           // Writeln(FormatCurrent,' Special Token: ',Token,', Count: ',Count,', P: ',P);
@@ -3932,9 +4044,9 @@ var
                 case Count of
                   1: StoreInt(Month, 0);
                   2: StoreInt(Month, 2);
-                  3: StoreString(ShortMonthNames[Month]);
+                  3: StoreString(aSettings.ShortMonthNames[Month]);
                 else
-                  StoreString(LongMonthNames[Month]);
+                  StoreString(aSettings.LongMonthNames[Month]);
                 end;
               end;
             end;
@@ -3942,11 +4054,11 @@ var
               case Count of
                 1: StoreInt(Day, 0);
                 2: StoreInt(Day, 2);
-                3: StoreString(ShortDayNames[DayOfWeek-1]);
-                4: StoreString(LongDayNames[DayOfWeek-1]);
-                5: StoreFormat(ShortDateFormat, Nesting+1, False);
+                3: StoreString(aSettings.ShortDayNames[DayOfWeek-1]);
+                4: StoreString(aSettings.LongDayNames[DayOfWeek-1]);
+                5: StoreFormat(aSettings.ShortDateFormat, Nesting+1, False);
               else
-                StoreFormat(LongDateFormat, Nesting+1, False);
+                StoreFormat(aSettings.LongDateFormat, Nesting+1, False);
               end ;
             end ;
             'H':
@@ -3987,21 +4099,21 @@ var
                  else
 		   StoreInt(MilliSecond, 3);
             'T': if Count = 1 then
-		   StoreFormat(ShortTimeFormat, Nesting+1, True)
+		   StoreFormat(aSettings.ShortTimeFormat, Nesting+1, True)
                  else
-	           StoreFormat(LongTimeFormat, Nesting+1, True);
+	           StoreFormat(aSettings.LongTimeFormat, Nesting+1, True);
             'C': begin
-                   StoreFormat(ShortDateFormat, Nesting+1, False);
+                   StoreFormat(aSettings.ShortDateFormat, Nesting+1, False);
                    if (Hour<>0) or (Minute<>0) or (Second<>0) then
                      begin
                       StoreString(' ');
-                      StoreFormat(LongTimeFormat, Nesting+1, True);
+                      StoreFormat(aSettings.LongTimeFormat, Nesting+1, True);
                      end;
                  end;
             'F': begin
-                   StoreFormat(ShortDateFormat, Nesting+1, False);
+                   StoreFormat(aSettings.ShortDateFormat, Nesting+1, False);
                    StoreString(' ');
-                   StoreFormat(LongTimeFormat, Nesting+1, True);
+                   StoreFormat(aSettings.LongTimeFormat, Nesting+1, True);
                  end;
           end;
 	  prevlasttoken := lastformattoken;
@@ -4025,7 +4137,6 @@ begin
 end ;
 
 
-
 function CurrentYear: Word;
 
 begin
@@ -4034,17 +4145,16 @@ end;
 
 function TryStrToDate(const S: String; out Value: TDateTime): Boolean;
 begin
-  Result:=TryStrToDate(S,Value,ShortDateFormat,#0);
+  Result:=TryStrToDate(S,Value,FormatSettings);
 end;
 
 function TryStrToDate(const S: String; out Value: TDateTime; separator : char): Boolean;
 
 begin
-  Result:=TryStrToDate(S,Value,ShortDateFormat,Separator);
+  Result:=TryStrToDate(S,Value,FormatSettings.ShortDateFormat,Separator);
 end;
 
-function TryStrToDate(const S: String; out Value: TDateTime;
-                    const useformat : string; separator : char): Boolean;
+function TryStrToDate(const S: String; out Value: TDateTime;  const useformat : string; separator : char): Boolean;
 
 Var
   Msg : String;
@@ -4058,34 +4168,56 @@ begin
     end;
 end;
 
+function TryStrToDate(const S: String; out Value: TDateTime; const aSettings : TFormatSettings): Boolean;
 
+begin
+  Result:=TryStrToDate(S,Value,aSettings.ShortDateFormat,aSettings.DateSeparator);
+end;
 
+function TryStrToTime(const S: String; out Value: TDateTime; aSettings : TFormatSettings): Boolean;
 
-function TryStrToTime(const S: String; out Value: TDateTime; separator : char): Boolean;
 Var
   Msg : String;
+
 begin
   Result:=Length(S)<>0;
   If Result then
     begin
-      Value:=IntStrToTime(Msg,S,Length(S),Separator);
+      Value:=IntStrToTime(Msg,S,Length(S),aSettings);
       Result:=(Msg='');
     end;
 end;
 
+function TryStrToTime(const S: String; out Value: TDateTime; separator : char): Boolean;
+
+Var
+  Fmt : TFormatSettings;
+
+begin
+  fmt:=TFormatSettings.Create;
+  fmt.TimeSeparator:=Separator;
+  Result:=TryStrToTime(S,Value,Fmt);
+end;
+
 function TryStrToTime(const S: String; out Value: TDateTime): Boolean;
 begin
-  result:=TryStrToTime(S,Value,#0);
+  result:=TryStrToTime(S,Value,FormatSettings);
 end;
 
 function TryStrToDateTime(const S: String; out Value: TDateTime): Boolean;
+
+begin
+  Result:=TryStrToDateTime(S,Value,FormatSettings);
+end;
+
+function TryStrToDateTime(const S: String; out Value: TDateTime; Const aSettings : TFormatSettings): Boolean;
 
 var
   I: integer;
   dtdate, dttime :TDateTime;
 begin
   result:=false;
-  I:=Pos(TimeSeparator,S);
+  I:=Pos(aSettings.TimeSeparator,S);
   If (I>0) then
     begin
       While (I>0) and (S[I]<>' ') do
@@ -4118,10 +4250,15 @@ begin
    result := StrToTimeDef(S,DefValue,#0);
 end;
 
+function StrToDateTimeDef(const S: String; const Defvalue : TDateTime; aSettings : TFormatSettings): TDateTime; overload;
+begin
+  if not TryStrToDateTime(s,Result,aSettings) Then
+    result:=defvalue;
+end;
+
 function StrToDateTimeDef(const S: String; const Defvalue : TDateTime): TDateTime;
 begin
-  if not TryStrToDateTime(s,Result) Then
-    result:=defvalue;
+  Result:=StrToDateTimeDef(s,DefValue,FormatSettings);
 end;
 
 function StrToDateDef(const S: String; const Defvalue : TDateTime; separator : char): TDateTime;
@@ -4134,6 +4271,13 @@ function StrToTimeDef(const S: String; const Defvalue : TDateTime; separator : c
 begin
   if not TryStrToTime(s,Result, separator) Then
     result:=defvalue;
+end;
+
+function StrToTimeDef(const AString: string; const ADefault: TDateTime;
+  const aSettings: TFormatSettings): TDateTime;
+begin
+  if not TryStrToTime(AString, Result, aSettings) Then
+    Result := ADefault;
 end;
 
 procedure ReplaceTime(var dati:TDateTime; NewTime : TDateTime);
@@ -4172,15 +4316,15 @@ end;
 
 function CurrToStr(Value: Currency): string;
 begin
-  Result:=FloatToStrF(Value,ffGeneral,-1,0);
+  Result:=FloatToStrF(Value,ffGeneral,-1,0,FormatSettings);
 end;
 
-(*
-function CurrToStr(Value: Currency; const FormatSettings: TFormatSettings): string;
+
+function CurrToStr(Value: Currency; const aSettings: TFormatSettings): string;
 begin
-
+  Result:=FloatToStrF(Value,ffGeneral,-1,0,aSettings);
 end;
-*)
+
 
 function StrToCurr(const S: string): Currency;
 
@@ -4189,12 +4333,11 @@ begin
     Raise EConvertError.createfmt(SInvalidCurrency,[S]);
 end;
 
-(*
-function StrToCurr(const S: string; const FormatSettings: TFormatSettings): Currency;
+function StrToCurr(const S: string; const aSettings: TFormatSettings): Currency;
 begin
-
+  if not TryStrToCurr(S,Result,aSettings) then
+    Raise EConvertError.createfmt(SInvalidCurrency,[S]);
 end;
-*)
 
 function TryStrToCurr(const S: string; out Value: Currency): Boolean;
 
@@ -4202,17 +4345,22 @@ Var
   D : Double;
 
 begin
-  Result:=TryStrToFloat(S,D);
+  Result:=TryStrToFloat(S,D,FormatSettings);
   if Result then
     Value:=D;
 end;
 
-(*
-function TryStrToCurr(const S: string; out Value: Currency; const FormatSettings: TFormatSettings): Boolean;
-begin
 
+function TryStrToCurr(const S: string; out Value: Currency; const aSettings: TFormatSettings): Boolean;
+Var
+  D : Double;
+
+begin
+  Result:=TryStrToFloat(S,D,aSettings);
+  if Result then
+    Value:=D;
 end;
-*)
+
 
 function StrToCurrDef(const S: string; Default: Currency): Currency;
 
@@ -4220,18 +4368,24 @@ Var
   R : Currency;
 
 begin
-  if TryStrToCurr(S,R) then
+  if TryStrToCurr(S,R,FormatSettings) then
     Result:=R
   else
     Result:=Default;
 end;
 
-(*
-function StrToCurrDef(const S: string; Default: Currency; const FormatSettings: TFormatSettings): Currency;
-begin
 
+function StrToCurrDef(const S: string; Default: Currency; const aSettings: TFormatSettings): Currency;
+Var
+  R : Currency;
+
+begin
+  if TryStrToCurr(S,R,aSettings) then
+    Result:=R
+  else
+    Result:=Default;
 end;
-*)
+
 
 { ---------------------------------------------------------------------
   Interface related
@@ -4406,7 +4560,8 @@ begin
     res:=NI;
 end;
 
-function TryStrToInt(const S: String; out res: NativeInt): Boolean;
+
+function IntTryStrToInt(const S: String; out res: NativeInt; Const aSep : string): Boolean;
 
 Var
   Radix : Integer = 10;
@@ -4416,7 +4571,7 @@ Var
 begin
   N:=S;
   // Javascript Parseint allows 1.0 or 1E0 to be an integer, so we must check for this to get the same behaviour as FPC/Delphi.
-  if (Pos(DecimalSeparator,N)<>0) or (Pos('.',N)<>0) then
+  if (Pos(aSep,N)<>0) or (Pos('.',N)<>0) then
     exit(False);
   case Copy(N,1,1) of
   '$': Radix:=16;
@@ -4432,6 +4587,18 @@ begin
   Result:=Not jsIsNan(j);
   if Result then
     res:=NativeInt(J);
+end;
+
+function TryStrToInt(const S: String; out res: NativeInt): Boolean;
+
+begin
+  Result:=IntTryStrToInt(S,res,FormatSettings.DecimalSeparator);
+end;
+
+function TryStrToInt(const S: String; out res: NativeInt; Const aSettings : TFormatSettings): Boolean;
+
+begin
+  Result:=IntTryStrToInt(S,res,aSettings.DecimalSeparator);
 end;
 
 function StrToIntDef(const S: String; const aDef: Integer): Integer;
@@ -4631,191 +4798,87 @@ end;
 
 { TFormatSettings }
 
-function TFormatSettings.GetCurrencyDecimals: Byte;
+
+{ TFormatSettings }
+
+class function TFormatSettings.Create: TFormatSettings;
 begin
-  Result:=Sysutils.CurrencyDecimals;
+  Result := Create(GetBrowserLocale);
 end;
 
-function TFormatSettings.GetCurrencyFormat: Byte;
+
+class function TFormatSettings.Create(const ALocale: string): TFormatSettings;
+
 begin
-  Result:=Sysutils.CurrencyFormat;
+
+  Result.LongDayNames:=DefaultLongDayNames;
+  Result.ShortDayNames:=DefaultShortDayNames;
+  Result.ShortMonthNames:=DefaultShortMonthNames;
+  Result.LongMonthNames:=DefaultLongMonthNames;
+  Result.DateTimeToStrFormat[False] := 'c';
+  Result.DateTimeToStrFormat[True] := 'f';
+  Result.DateSeparator := '-';
+  Result.TimeSeparator := ':';
+  Result.ShortDateFormat := 'yyyy-mm-dd';
+  Result.LongDateFormat := 'ddd, yyyy-mm-dd';
+  Result.DecimalSeparator := '.';
+  Result.ThousandSeparator := ',';
+  Result.TimeAMString := 'AM';
+  Result.TimePMString := 'PM';
+  Result.TwoDigitYearCenturyWindow := 50;
+  Result.CurrencyFormat:=0;
+  Result.NegCurrFormat:=0;
+  Result.CurrencyDecimals:=2;
+  Result.CurrencyString:='$';
+
+  If Assigned(TFormatSettings.InitLocaleHandler) then
+    TFormatSettings.InitLocaleHandler(UpperCase(aLocale),Result);
 end;
 
-function TFormatSettings.GetCurrencyString: String;
-begin
-  Result:=Sysutils.CurrencyString;
+class function TFormatSettings.GetBrowserLocale: string; assembler;
+asm
+  return navigator.language;
 end;
 
-function TFormatSettings.GetDateSeparator: char;
-begin
-  Result := SysUtils.DateSeparator;
+class function TFormatSettings.GetLocaleDecimalSeparator(const ALocale: string): string; assembler;
+asm
+  var lNumber = 1.1;
+  lNumber = lNumber.toLocaleString(ALocale).substring(1, 2);
+  return lNumber;
 end;
 
-function TFormatSettings.GetDecimalSeparator: string;
-begin
-  Result := SysUtils.DecimalSeparator;
+class function TFormatSettings.GetLocaleLongDayName(const ADayOfWeek: Integer; const ALocale: string): string; assembler;
+asm
+  var lBaseDate = new Date(2017, 0, 1); // Sunday
+  lBaseDate.setDate(lBaseDate.getDate() + ADayOfWeek - 1);
+  return lBaseDate.toLocaleDateString(ALocale, { weekday: 'long' });
 end;
 
-function TFormatSettings.GetLongDateFormat: string;
-begin
-  Result := SysUtils.LongDateFormat;
+class function TFormatSettings.GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; assembler;
+asm
+  var lBaseDate = new Date(2017, AMonth - 1, 1);
+  return lBaseDate.toLocaleDateString(ALocale, { month: 'long' });
 end;
 
-function TFormatSettings.GetLongDayNames: TDayNames;
+class function TFormatSettings.GetLocaleShortDayName(const ADayOfWeek: Integer; const ALocale: string): string;
+
+Var
+  d : TJSDate;
+
 begin
-  Result:=Sysutils.LongDayNames;
+  d:=TJSDate.New(2017, 0, 1); // Sunday
+  d.Date:=d.Date + ADayOfWeek - 1;
+  Result:=d.toLocaleDateString(aLocale, new(['weekday','short']));
 end;
 
-function TFormatSettings.GetLongMonthNames: TMonthNames;
-begin
- Result:=Sysutils.LongMonthNames;
-end;
+class function TFormatSettings.GetLocaleShortMonthName(const AMonth: Integer; const ALocale: string): string;
+Var
+  d : TJSDate;
 
-function TFormatSettings.GetLongTimeFormat: string;
 begin
-  Result := SysUtils.LongTimeFormat;
+  d:=TJSDate.New(2017, aMonth-1, 1); // Sunday
+  Result:=d.toLocaleDateString(aLocale,new(['month','short']));
 end;
-
-function TFormatSettings.GetNegCurrFormat: Byte;
-begin
-  Result:=Sysutils.NegCurrFormat;
-end;
-
-function TFormatSettings.GetShortDateFormat: string;
-begin
-  Result := SysUtils.ShortDateFormat;
-end;
-
-function TFormatSettings.GetShortDayNames: TDayNames;
-begin
- Result:=Sysutils.ShortDayNames;
-end;
-
-function TFormatSettings.GetShortMonthNames: TMonthNames;
-begin
- Result:=Sysutils.ShortMonthNames;
-end;
-
-function TFormatSettings.GetShortTimeFormat: string;
-begin
-  Result := SysUtils.ShortTimeFormat;
-end;
-
-function TFormatSettings.GetThousandSeparator: string;
-begin
-  Result := SysUtils.ThousandSeparator;
-end;
-
-function TFormatSettings.GetTimeAMString: string;
-begin
-  Result := SysUtils.TimeAMString;
-end;
-
-function TFormatSettings.GetTimePMString: string;
-begin
-  Result := SysUtils.TimePMString;
-end;
-
-function TFormatSettings.GetTimeSeparator: char;
-begin
-  Result := SysUtils.TimeSeparator;
-end;
-
-procedure TFormatSettings.SetCurrencyFormat(AValue: Byte);
-begin
-  Sysutils.CurrencyFormat:=AValue;
-end;
-
-procedure TFormatSettings.SetCurrencyString(AValue: String);
-begin
-  Sysutils.CurrencyString:=AValue;
-end;
-
-procedure TFormatSettings.SetDateSeparator(const Value: char);
-begin
-  SysUtils.DateSeparator := Value;
-end;
-
-procedure TFormatSettings.SetDecimalSeparator(const Value: string);
-begin
-  SysUtils.DecimalSeparator := Value;
-end;
-
-procedure TFormatSettings.SetLongDateFormat(const Value: string);
-begin
-  SysUtils.LongDateFormat := Value;
-end;
-
-procedure TFormatSettings.SetLongDayNames(AValue: TDayNames);
-begin
-  SysUtils.LongDayNames:=AValue;
-end;
-
-procedure TFormatSettings.SetLongMonthNames(AValue: TMonthNames);
-begin
-  SysUtils.LongMonthNames:=AValue;
-end;
-
-procedure TFormatSettings.SetLongTimeFormat(const Value: string);
-begin
-  SysUtils.LongTimeFormat := Value;
-end;
-
-procedure TFormatSettings.SetNegCurrFormat(AValue: Byte);
-begin
-  Sysutils.NegCurrFormat:=AValue;
-end;
-
-procedure TFormatSettings.SetShortDateFormat(const Value: string);
-begin
-  SysUtils.ShortDateFormat := Value;
-end;
-
-procedure TFormatSettings.SetShortDayNames(AValue: TDayNames);
-begin
-  SysUtils.ShortDayNames:=AValue;
-end;
-
-procedure TFormatSettings.SetShortMonthNames(AValue: TMonthNames);
-begin
-  SysUtils.ShortMonthNames:=AValue;
-end;
-
-procedure TFormatSettings.SetShortTimeFormat(const Value: string);
-begin
-  SysUtils.ShortTimeFormat := Value;
-end;
-
-procedure TFormatSettings.SetCurrencyDecimals(AValue: Byte);
-begin
-  Sysutils.CurrencyDecimals:=aValue;
-end;
-
-procedure TFormatSettings.SetThousandSeparator(const Value: string);
-begin
-  SysUtils.ThousandSeparator := Value;
-end;
-
-procedure TFormatSettings.SetTimeAMString(const Value: string);
-begin
-  SysUtils.TimeAMString := Value;
-end;
-
-procedure TFormatSettings.SetTimePMString(const Value: string);
-begin
-  SysUtils.TimePMString := Value;
-end;
-
-procedure TFormatSettings.SetTimeSeparator(const Value: char);
-begin
-  SysUtils.TimeSeparator := Value;
-end;
-
-class constructor TFormatSettings.Init;
-begin
-  FormatSettings := TFormatSettings.Create;
-end;
-
 
 
 { ---------------------------------------------------------------------
@@ -7910,6 +7973,29 @@ Function TLongBoolHelper.ToString(UseBoolStrs: Boolean = False): string; overloa
 begin
   Result:=BoolToStr(Self,UseBoolStrs);
 end;
+
+initialization
+  {$WARN 5043 off}
+  ShortMonthNames:=DefaultShortMonthNames;
+  LongMonthNames:=DefaultLongMonthNames;
+  ShortDayNames:=DefaultShortDayNames;
+  LongDayNames:=DefaultLongDayNames;
+  FormatSettings:=TFormatSettings.Create;
+  // So the defaults are taken from FormatSettings.
+  TimeSeparator:=FormatSettings.TimeSeparator;
+  DateSeparator:=FormatSettings.DateSeparator;
+  ShortDateFormat:=FormatSettings.ShortDateFormat;
+  LongDateFormat:=FormatSettings.LongDateFormat;
+  ShortTimeFormat:=FormatSettings.ShortTimeFormat;
+  LongTimeFormat:=FormatSettings.LongTimeFormat;
+  DecimalSeparator:=FormatSettings.DecimalSeparator;
+  ThousandSeparator:=FormatSettings.ThousandSeparator;
+  TimeAMString:=FormatSettings.TimeAMString;
+  TimePMString:=FormatSettings.TimePMString;
+  CurrencyFormat:=FormatSettings.CurrencyFormat;
+  NegCurrFormat:=FormatSettings.NegCurrFormat;
+  CurrencyDecimals:=FormatSettings.CurrencyDecimals;
+  CurrencyString:=FormatSettings.CurrencyString;
 
 end.
 

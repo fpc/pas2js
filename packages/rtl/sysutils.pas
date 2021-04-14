@@ -58,7 +58,7 @@ type
   { TFormatSettings }
   TFormatSettings = record
     strict private
-      class function GetBrowserLocale: string; assembler; static;
+      class function GetJSLocale: string; assembler; static;
       class function GetLocaleShortDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
       class function GetLocaleDecimalSeparator(const ALocale: string): string; static;
       class function GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; static;
@@ -87,7 +87,7 @@ type
       TwoDigitYearCenturyWindow: Word;
     public
       Type
-         TLocaleInitCallback = Procedure(aLocale : String; aInstance : TFormatSettings);
+         TLocaleInitCallback = Procedure(const aLocale : String; aInstance : TFormatSettings);
       class var InitLocaleHandler : TLocaleInitCallback;
       class function Create: TFormatSettings; overload; static;
       class function Create(const ALocale: string): TFormatSettings; overload; static;
@@ -1104,6 +1104,104 @@ Type
     Function ToInteger: Integer; inline;
     Function ToString(UseBoolStrs: Boolean = False): string; overload; inline;
   end;
+
+  { TStringBuilder }
+
+  TStringBuilder = class
+  private
+    const
+      DefaultCapacity = 64;
+  private
+    Function  GetCapacity: Integer;
+    Procedure SetCapacity(AValue: Integer);
+    Function  GetC(Index: Integer): Char;
+    Procedure SetC(Index: Integer; AValue: Char);
+    Function  GetLength: Integer; inline;
+    Procedure SetLength(AValue: Integer);
+  protected
+    FData: String;
+    FMaxCapacity: Integer;
+    // Raise error on range check.
+    Procedure CheckRange(Idx,Count,MaxLen : Integer);inline;
+    Procedure CheckNegative(Const AValue : Integer; Const AName: String); inline;
+    // All appends/inserts pass through here.
+
+    Procedure DoAppend(Const S : String);virtual;
+    Procedure DoAppend(const AValue: Array of char; Idx, aCount: Integer); virtual;
+    Procedure DoInsert(Index: Integer; const AValue: String); virtual;
+    Procedure DoInsert(Index: Integer; const AValue: Array of char; StartIndex, aCharCount: Integer); virtual;
+    Procedure DoReplace(Index: Integer; const Old, New: String); virtual;
+    Procedure Grow;
+    Procedure Shrink;
+  public
+    Constructor Create;
+    Constructor Create(aCapacity: Integer);
+    Constructor Create(const AValue: String);
+    Constructor Create(aCapacity: Integer; aMaxCapacity: Integer);
+    Constructor Create(const AValue: String; aCapacity: Integer);
+    Constructor Create(const AValue: String; StartIndex: Integer; aLength: Integer; aCapacity: Integer);
+
+    Function Append(const AValue: Boolean): TStringBuilder;
+    Function Append(const AValue: Byte): TStringBuilder;
+    Function Append(const AValue: Char): TStringBuilder;
+    Function Append(const AValue: Currency): TStringBuilder;
+    Function Append(const AValue: Double): TStringBuilder;
+    Function Append(const AValue: Smallint): TStringBuilder;
+    Function Append(const AValue: LongInt): TStringBuilder;
+    Function Append(const AValue: Int64): TStringBuilder;
+    Function Append(const AValue: TObject): TStringBuilder;
+    Function Append(const AValue: Shortint): TStringBuilder;
+    Function Append(const AValue: Single): TStringBuilder;
+    Function Append(const AValue: UInt64): TStringBuilder;
+    Function Append(const AValue: Array of char): TStringBuilder;
+    Function Append(const AValue: Word): TStringBuilder;
+    Function Append(const AValue: Cardinal): TStringBuilder;
+    Function Append(const AValue: String): TStringBuilder;
+    Function Append(const AValue: Char; RepeatCount: Integer): TStringBuilder;
+    Function Append(const AValue: Array of char; StartIndex: Integer; SBCharCount: Integer): TStringBuilder;
+    Function Append(const AValue: String; StartIndex: Integer; Count: Integer): TStringBuilder;
+
+    Function Append(const Fmt: String; const Args: array of const): TStringBuilder;
+    Function AppendFormat(const Fmt: String; const Args: array of const): TStringBuilder;
+    Function AppendLine: TStringBuilder;
+    Function AppendLine(const AValue: String): TStringBuilder;
+
+    Procedure Clear;
+    Procedure CopyTo(SourceIndex: Integer; Var Destination: Array of char; DestinationIndex: Integer; Count: Integer);
+    Function EnsureCapacity(aCapacity: Integer): Integer;
+    Function Equals(StringBuilder: TStringBuilder): Boolean; reintroduce;
+
+    Function Insert(Index: Integer; const AValue: Boolean): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Byte): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Char): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Currency): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Double): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Smallint): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: LongInt): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Array of char): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Int64): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: TObject): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Shortint): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Single): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: String): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Word): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Cardinal): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: UInt64): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: String; const aRepeatCount: Integer): TStringBuilder;
+    Function Insert(Index: Integer; const AValue: Array of char; startIndex: Integer; SBCharCount: Integer): TStringBuilder;
+
+    Function Remove(StartIndex: Integer; RemLength: Integer): TStringBuilder;
+
+    Function Replace(const OldValue, NewValue: String): TStringBuilder;
+    Function Replace(const OldValue, NewValue: String; StartIndex: Integer; Count: Integer): TStringBuilder;
+    Function ToString: String; override;
+    Function ToString(aStartIndex: Integer; aLength: Integer): String; reintroduce;
+    property Chars[index: Integer]: Char read GetC write SetC; default;
+    property Length: Integer read GetLength write SetLength;
+    property Capacity: Integer read GetCapacity write SetCapacity;
+    property MaxCapacity: Integer read FMaxCapacity;
+  end;
+
 
 
 implementation
@@ -4803,7 +4901,7 @@ end;
 
 class function TFormatSettings.Create: TFormatSettings;
 begin
-  Result := Create(GetBrowserLocale);
+  Result := Create(GetJSLocale);
 end;
 
 
@@ -4830,14 +4928,13 @@ begin
   Result.NegCurrFormat:=0;
   Result.CurrencyDecimals:=2;
   Result.CurrencyString:='$';
-
   If Assigned(TFormatSettings.InitLocaleHandler) then
     TFormatSettings.InitLocaleHandler(UpperCase(aLocale),Result);
 end;
 
-class function TFormatSettings.GetBrowserLocale: string; assembler;
+class function TFormatSettings.GetJSLocale: string; assembler;
 asm
-  return navigator.language;
+  return Intl.DateTimeFormat().resolvedOptions().locale
 end;
 
 class function TFormatSettings.GetLocaleDecimalSeparator(const ALocale: string): string; assembler;
@@ -7973,6 +8070,583 @@ Function TLongBoolHelper.ToString(UseBoolStrs: Boolean = False): string; overloa
 begin
   Result:=BoolToStr(Self,UseBoolStrs);
 end;
+
+{ TStringBuilder }
+
+constructor TStringBuilder.Create;
+begin
+  Create(DefaultCapacity,Maxint);
+end;
+
+constructor TStringBuilder.Create(const AValue: String; aCapacity: Integer);
+begin
+  Create(aCapacity,Maxint);
+  if (system.Length(AValue)>0) then
+    Append(AValue);
+end;
+
+
+constructor TStringBuilder.Create(const AValue: String; StartIndex, Alength,
+  aCapacity: Integer);
+begin
+  Create(Copy(AValue,StartIndex+1,Alength), aCapacity);
+end;
+
+constructor TStringBuilder.Create(aCapacity, aMaxCapacity: Integer);
+begin
+  FMaxCapacity:=aMaxCapacity;
+  Capacity:=aCapacity;
+end;
+
+constructor TStringBuilder.Create(aCapacity: Integer);
+begin
+  Create(aCapacity,MaxInt);
+end;
+
+constructor TStringBuilder.Create(const AValue: String);
+begin
+  Create(aValue,DefaultCapacity);
+end;
+
+
+{ Property getter/setter }
+
+function TStringBuilder.GetLength: Integer;
+begin
+  Result:=System.Length(FData);
+end;
+
+function TStringBuilder.GetCapacity: Integer;
+begin
+  Result:=System.Length(FData);
+end;
+
+function TStringBuilder.GetC(Index: Integer): Char;
+begin
+  CheckNegative(Index,'Index');
+  CheckRange(Index,0,Length);
+  Result:=FData[Index];
+end;
+
+procedure TStringBuilder.SetC(Index: Integer; AValue: Char);
+begin
+  CheckNegative(Index,'Index');
+  CheckRange(Index,0,Length-1);
+  FData[Index]:=AValue;
+end;
+
+procedure TStringBuilder.SetLength(AValue: Integer);
+
+begin
+  CheckNegative(AValue,'AValue');
+  CheckRange(AValue,0,MaxCapacity);
+  SetLength(FData,aValue);
+end;
+
+{ Check functions }
+
+
+
+procedure TStringBuilder.CheckRange(Idx, Count, MaxLen: Integer);
+
+begin
+  if (Idx<0) or (Idx+Count>MaxLen) then
+    Raise ERangeError.CreateFmt(SListIndexError,[Idx]);
+end;
+
+
+procedure TStringBuilder.CheckNegative(const AValue: Integer;
+  const AName: String);
+
+begin
+  if (AValue<0) then
+    Raise ERangeError.CreateFmt(SParamIsNegative,[AName])
+end;
+
+{  These do the actual Appending/Inserting }
+
+procedure TStringBuilder.DoAppend(const S: String);
+
+begin
+  FData:=FData+S;
+end;
+
+procedure TStringBuilder.DoAppend(const AValue: Array of Char; Idx, aCount: Integer
+  );
+
+Var
+  S : String;
+  I : Integer;
+
+begin
+  S:='';
+  CheckRange(Idx,aCount,System.Length(AValue));
+  for I:=Idx to Idx+aCount-1 do
+    S:=S+aValue[I];
+  DoAppend(S);
+end;
+
+procedure TStringBuilder.DoInsert(Index: Integer; const AValue: String);
+
+begin
+  CheckRange(Index,0,Length-1);
+  System.Insert(aValue,FData,Index+1);
+end;
+
+procedure TStringBuilder.DoInsert(Index: Integer; const AValue: Array of Char;
+  StartIndex, aCharCount: Integer);
+
+Var
+  I : Integer;
+  S : String;
+
+begin
+  CheckRange(Index,0,Length-1);
+  CheckNegative(StartIndex,'StartIndex');
+  CheckNegative(aCharCount,'SBCharCount');
+  CheckRange(StartIndex,aCharCount,System.Length(AValue));
+  S:='';
+  for I:=StartIndex to StartIndex+aCharCount-1 do
+    S:=S+aValue[I];
+  DoInsert(Index,S);
+end;
+
+{ Public routines for appending }
+
+function TStringBuilder.Append(const AValue: UInt64): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=self;
+end;
+
+function TStringBuilder.Append(const AValue: Array of Char): TStringBuilder;
+
+var
+  I,L: Integer;
+
+begin
+  I:=-1;
+  L:=System.Length(AValue);
+  If L=0 then
+    Exit(Self);
+  Repeat
+    Inc(I);
+  Until (I>=L) or (AValue[I]=#0);
+  DoAppend(AValue,0,I);
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Single): TStringBuilder;
+begin
+  DoAppend(FloatToStr(AValue));
+  Result:=self;
+end;
+
+function TStringBuilder.Append(const AValue: Word): TStringBuilder;
+begin
+  Append(IntToStr(AValue));
+  Result:=self;
+end;
+
+function TStringBuilder.Append(const AValue: Cardinal): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=self;
+end;
+
+function TStringBuilder.Append(const AValue: Char; RepeatCount: Integer
+  ): TStringBuilder;
+begin
+  DoAppend(StringOfChar(AValue,RepeatCount));
+  Result:=Self;
+end;
+
+
+function TStringBuilder.Append(const AValue: Shortint): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Char): TStringBuilder;
+begin
+  DoAppend(AValue);
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Currency): TStringBuilder;
+begin
+  DoAppend(CurrToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Boolean): TStringBuilder;
+begin
+  DoAppend(BoolToStr(AValue, True));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Byte): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Double): TStringBuilder;
+begin
+  DoAppend(FloatToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Int64): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: TObject): TStringBuilder;
+begin
+  DoAppend(AValue.ToString);
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: Smallint): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const AValue: LongInt): TStringBuilder;
+begin
+  DoAppend(IntToStr(AValue));
+  Result:=Self;
+end;
+
+Function TStringBuilder.Append(const AValue: Array of Char; StartIndex, SBCharCount: Integer): TStringBuilder;
+
+begin
+  DoAppend(AValue,StartIndex,SBCharCount);
+  Result:=Self;
+end;
+
+Function TStringBuilder.Append(const AValue: String; StartIndex, Count: Integer): TStringBuilder;
+
+begin
+  CheckRange(StartIndex,Count,System.Length(AValue));
+  DoAppend(Copy(AValue,StartIndex+1,Count));
+  Result:=Self;
+end;
+
+
+function TStringBuilder.Append(const AValue: String): TStringBuilder;
+begin
+  DoAppend(AValue);
+  Result:=Self;
+end;
+
+
+function TStringBuilder.AppendFormat(const Fmt: String;
+  const Args: array of const): TStringBuilder;
+begin
+  DoAppend(Format(Fmt,Args));
+  Result:=Self;
+end;
+
+function TStringBuilder.Append(const Fmt: String;
+  const Args: array of const): TStringBuilder;
+begin
+  DoAppend(Format(Fmt,Args));
+  Result:=Self;
+end;
+
+function TStringBuilder.AppendLine: TStringBuilder;
+begin
+  DoAppend(sLineBreak);
+  Result:=Self;
+end;
+
+function TStringBuilder.AppendLine(const AValue: String): TStringBuilder;
+begin
+  DoAppend(AValue);
+  Result:=AppendLine();
+end;
+
+procedure TStringBuilder.Clear;
+begin
+  Length:=0;
+  Capacity:=DefaultCapacity;
+end;
+
+
+procedure TStringBuilder.CopyTo(SourceIndex: Integer;
+  Var Destination: Array of Char; DestinationIndex: Integer; Count: Integer);
+
+Var
+  I : Integer;
+
+begin
+  CheckNegative(Count,'Count');
+  CheckNegative(DestinationIndex,'DestinationIndex');
+  CheckRange(DestinationIndex,Count,System.Length(Destination));
+  if Count>0 then
+    begin
+    CheckRange(SourceIndex,Count,Length);
+    For I:=SourceIndex+1 to SourceIndex+Count do
+      Destination[DestinationIndex]:=FData[I];
+    end;
+end;
+
+
+function TStringBuilder.EnsureCapacity(aCapacity: Integer): Integer;
+begin
+  CheckRange(aCapacity,0,MaxCapacity);
+  if Capacity<aCapacity then
+    Capacity:=aCapacity;
+  Result:=Capacity;
+end;
+
+function TStringBuilder.Equals(StringBuilder: TStringBuilder): Boolean;
+begin
+  Result:=(StringBuilder<>nil);
+  if Result then
+    Result:=(Length=StringBuilder.Length)
+             and (MaxCapacity=StringBuilder.MaxCapacity)
+             and (FData=StringBuilder.FData[0]);
+end;
+
+procedure TStringBuilder.Grow;
+
+var
+  NewCapacity: SizeInt;
+
+begin
+  NewCapacity:=Capacity*2;
+  if NewCapacity>MaxCapacity then
+    NewCapacity:=MaxCapacity;
+  Capacity:=NewCapacity;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: TObject
+  ): TStringBuilder;
+begin
+  DoInsert(Index,AValue.ToString());
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Int64
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Single
+  ): TStringBuilder;
+begin
+  DoInsert(Index,FloatToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: String
+  ): TStringBuilder;
+
+begin
+  DoInsert(Index,AValue);
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Word
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Shortint
+  ): TStringBuilder;
+begin
+  DoInsert(Index, IntToStr(AValue));
+  Result:=Self;
+end;
+
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Currency
+  ): TStringBuilder;
+begin
+  DoInsert(Index,CurrToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Char
+  ): TStringBuilder;
+begin
+  DoInsert(Index,AValue);
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Byte
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Double
+  ): TStringBuilder;
+begin
+  DoInsert(Index,FloatToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: LongInt
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Smallint
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Boolean
+  ): TStringBuilder;
+begin
+  DoInsert(Index,BoolToStr(AValue,True));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: String;
+  const aRepeatCount: Integer): TStringBuilder;
+var
+  I: Integer;
+begin
+  for I:=0 to aRepeatCount-1 do
+    DoInsert(Index,AValue);
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Array of Char
+  ): TStringBuilder;
+begin
+  DoInsert(Index,AValue,0,System.Length(AValue));
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Array of Char;
+  startIndex: Integer; SBCharCount: Integer): TStringBuilder;
+begin
+  DoInsert(Index,AValue,StartIndex,SBCharCount);
+  Result:=Self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: Cardinal
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=self;
+end;
+
+function TStringBuilder.Insert(Index: Integer; const AValue: UInt64
+  ): TStringBuilder;
+begin
+  DoInsert(Index,IntToStr(AValue));
+  Result:=self;
+end;
+
+procedure TStringBuilder.Shrink;
+
+begin
+  if (Capacity div 4)>=Length then
+    Capacity:=Capacity div 2;
+end;
+
+function TStringBuilder.Remove(StartIndex: Integer; RemLength: Integer
+  ): TStringBuilder;
+
+Var
+  MoveIndex : Integer;
+
+begin
+  if (RemLength=0) then
+    exit(Self);
+  CheckNegative(RemLength,'RemLength');
+  CheckRange(StartIndex,0,Length);
+  MoveIndex:=StartIndex+RemLength;
+  CheckRange(MoveIndex,0,Length);
+  Delete(FData,StartIndex+1,RemLength);
+  Shrink;
+  Result:=Self;
+end;
+
+Function TStringBuilder.Replace(const OldValue, NewValue: String; StartIndex, Count: Integer): TStringBuilder;
+
+var
+  I : Integer;
+  Start : String;
+
+begin
+  if Count=0 then
+    Exit(Self);
+  // Some checks.
+  CheckNegative(StartIndex,'StartIndex');
+  CheckNegative(Count,'Count');
+  CheckRange(Startindex,Count,Length);
+  // Init
+  Start:=Copy(FData,1,StartIndex+1);
+  FData:=Copy(FData,StartIndex+1);
+  For I:=1 to Count do
+    FData:=StringReplace(FData,OldValue,NewValue,[]);
+  FData:=Start+FData;
+  Result:=Self;
+end;
+
+
+Function TStringBuilder.Replace(const OldValue, NewValue: String): TStringBuilder;
+begin
+  Result:=Replace(OldValue,NewValue,0,Length);
+end;
+
+procedure TStringBuilder.SetCapacity(AValue: Integer);
+begin
+  if (AValue>FMaxCapacity) then
+    Raise ERangeError.CreateFmt(SListCapacityError,[AValue]);
+  if (AValue<Length) then
+    Raise ERangeError.CreateFmt(SListCapacityError,[AValue]);
+  // No-op
+end;
+
+
+function TStringBuilder.ToString: String;
+begin
+  Result:=ToString(0,Length);
+end;
+
+function TStringBuilder.ToString(aStartIndex: Integer; aLength: Integer
+  ): String;
+begin
+  CheckNegative(aStartIndex,'aStartIndex');
+  CheckNegative(aLength,'aLength');
+  CheckRange(aStartIndex,aLength,Length);
+  Writeln('FData : ',FData);
+  Result:=Copy(FData,1+aStartIndex,aStartIndex+aLength);
+end;
+
+procedure TStringBuilder.DoReplace(Index: Integer; const Old, New: String);
+
+var
+  OVLen : Integer;
+
+begin
+  OVLen:=System.Length(Old);
+  System.Delete(FData,Index+1,OVLen);
+  System.Insert(New,FData,Index+1);
+end;
+
+
 
 initialization
   {$WARN 5043 off}

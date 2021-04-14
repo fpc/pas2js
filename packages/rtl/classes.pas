@@ -868,6 +868,8 @@ type
     function GetDataString : String;
   public
     constructor Create(const aString: String); virtual; overload;
+    function ReadString(Count: Integer): string;
+    procedure WriteString(const AString: string);
     property DataString: String read GetDataString;
   end;
 
@@ -1435,6 +1437,10 @@ procedure ObjectBinaryToText(aInput, aOutput: TStream);
 procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
 procedure ObjectTextToBinary(aInput, aOutput: TStream);
 Function SetLoadHelperClass(aClass : TLoadHelperClass) : TLoadHelperClass;
+// Create buffer from string. aLen in bytes, not in characters
+Function StringToBuffer(aString : String; aLen : Integer) : TJSArrayBuffer;
+// Create buffer from string. aPos,aLen are in bytes, not in characters.
+Function BufferToString(aBuffer : TJSArrayBuffer; aPos,aLen : Integer) : String;
 
 Const
   // Some aliases
@@ -1471,6 +1477,31 @@ begin
     Raise EInOutError.Create('No support for loading URLS. Include Rtl.BrowserLoadHelper in your project uses clause');
 end;
 
+Function StringToBuffer(aString : String; aLen : Integer) : TJSArrayBuffer;
+
+var
+   I : Integer;
+
+begin
+  Result:=TJSArrayBuffer.new(aLen*2);// 2 bytes for each char
+  With TJSUint16Array.new(Result) do
+    for i:=0 to aLen-1 do
+      values[i] := TJSString(aString).charCodeAt(i);
+end;
+
+function BufferToString(aBuffer: TJSArrayBuffer; aPos, aLen: Integer): String;
+
+var
+  a : TJSUint16Array;
+
+begin
+  Result:=''; // Silence warning
+  a:=TJSUint16Array.New(aBuffer.slice(aPos,aLen));
+  if a<>nil then
+    Result:=String(TJSFunction(@TJSString.fromCharCode).apply(nil,TJSValueDynArray(JSValue(a))));
+end;
+
+
 type
   TIntConst = class
   Private
@@ -1499,26 +1530,45 @@ end;
 
 constructor TStringStream.Create(const aString: String);
 
-  Function StrToBuf(aLen : Integer) : TJSArrayBuffer;
-
-  var
-     I : Integer;
-
-  begin
-    Result:=TJSArrayBuffer.new(aLen*2);// 2 bytes for each char
-    With TJSUint16Array.new(Result) do
-      for i:=0 to aLen-1 do
-        values[i] := TJSString(aString).charCodeAt(i);
-  end;
-
 var
   Len : Integer;
 
 begin
   inherited Create;
   Len:=Length(aString);
-  SetPointer(StrToBuf(len),Len*2);
+  SetPointer(StringToBuffer(aString,Len),Len*2);
   FCapacity:=Len*2;
+end;
+
+function TStringStream.ReadString(Count: Integer): string;
+
+
+Var
+  B : TBytes;
+  Buf : TJSArrayBuffer;
+  BytesLeft : Integer;
+
+begin
+  // Top off
+  BytesLeft:=(Size-Position);
+  if BytesLeft<Count then
+    Count:=BytesLeft;
+  SetLength(B,Count);
+  ReadBuffer(B,0,Count);
+  Buf:=BytesToMemory(B);
+  Result:=BufferToString(Buf,0,Count);
+end;
+
+procedure TStringStream.WriteString(const AString: string);
+
+Var
+  Buf : TJSArrayBuffer;
+  B : TBytes;
+
+begin
+  Buf:=StringToBuffer(aString,Length(aString));
+  B:=MemoryToBytes(Buf);
+  WriteBuffer(B,Length(B));
 end;
 
 constructor TIntConst.Create(AIntegerType: PTypeInfo; AIdentToInt: TIdentToInt;
@@ -3174,19 +3224,34 @@ end;
 
 function TStrings.GetNextLinebreak(const Value: String; out S: String; var P: Integer): Boolean;
 
-Var
-  PP : Integer;
+var
+  PPLF,PPCR,PP,PL: Integer;
 
 begin
   S:='';
   Result:=False;
   If ((Length(Value)-P)<0) then
-    exit;
-  PP:=TJSString(Value).IndexOf(LineBreak,P-1)+1;
-  if (PP<1) then
+    Exit;
+  PPLF:=TJSString(Value).IndexOf(#10,P-1)+1;
+  PPCR:=TJSString(Value).IndexOf(#13,P-1)+1;
+  PL:=1;
+  if (PPLF>0) and (PPCR>0) then
+    begin
+    if (PPLF-PPCR)=1 then 
+      PL:=2;
+    if PPLF<PPCR then
+      PP:=PPLF
+    else
+      PP:=PPCR;
+    end
+  else if (PPLF>0) and (PPCR<1) then
+    PP:=PPLF
+  else if (PPCR > 0) and (PPLF<1) then
+    PP:=PPCR
+  else 
     PP:=Length(Value)+1;
   S:=Copy(Value,P,PP-P);
-  P:=PP+length(LineBreak);
+  P:=PP+PL;
   Result:=True;
 end;
 
@@ -6340,9 +6405,11 @@ end;
 procedure TMemoryStream.LoadFromStream(Stream: TStream);
 
 begin
+  Position:=0;
   Stream.Position:=0;
   SetSize(Stream.Size);
-  If FSize>0 then Stream.ReadBuffer(MemoryToBytes(FMemory),FSize);
+  If (Size>0) then
+    CopyFrom(Stream,0);
 end;
 
 procedure TMemoryStream.SetSize(const NewSize: NativeInt);

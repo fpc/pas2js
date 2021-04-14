@@ -362,6 +362,8 @@ type
   TDictionary<TKey,TValue> = class(TEnumerable<TPair<TKey,TValue>>)
   private
     FMap: TJSMap;
+    FComparer: IComparer<TKey>;
+    function GetEffectiveKey(Key : TKey) : TKey;
     function GetItem(const Key: TKey): TValue;
     procedure SetItem(const Key: TKey; const Value: TValue);
     procedure DoAdd(const Key: TKey; const Value: TValue);
@@ -380,6 +382,7 @@ type
 
     constructor Create(ACapacity: Integer=0); overload;
     constructor Create(const Collection: TEnumerable<TMyPair>); overload;
+    constructor Create(const AComparer: IComparer<TKey>); overload;
     destructor Destroy; override;
 
     procedure Add(const Key: TKey; const Value: TValue);
@@ -1191,13 +1194,35 @@ ResourceString
   SErrDictKeyNotFound = 'Key value not found';
   SErrDictDuplicateKey = 'Duplicate key value';
 
+function TDictionary<TKey, TValue>.GetEffectiveKey(Key: TKey): TKey;
+
+Var
+  it : TJSIterator;
+  v : TJSIteratorValue;
+  vv : JSValue;
+
+begin
+  if Not assigned(FComparer) then
+    Exit(key);
+  it:=FMap.Keys;
+  v:=it.next;
+  While not v.Done do
+    begin
+    Result:=TKey(v.Value);
+    if FComparer.Compare(Result,Key)=0 then
+      exit;
+    v:=it.Next;
+    end;
+  Result:=Key;
+end;
+
 function TDictionary<TKey, TValue>.GetItem(const Key: TKey): TValue;
 
 Var
   V : JSValue;
 
 begin
-  V:=FMap.Get(Key);
+  v:=FMap.Get(GetEffectiveKey(Key));
   if isUndefined(v) then
     Raise EDictionary.Create(SErrDictKeyNotFound);
   Result:=TValue(V);
@@ -1209,7 +1234,7 @@ Var
   V : JSValue;
 
 begin
-  V:=FMap.Get(Key);
+  v:=FMap.Get(GetEffectiveKey(Key));
   if Not isUndefined(v) then
     ValueNotify(TValue(V),cnRemoved);
   FMap.&Set(Key,Value);
@@ -1217,8 +1242,10 @@ begin
 end;
 
 procedure TDictionary<TKey, TValue>.DoAdd(const Key: TKey; const Value: TValue);
+Var
+  k : Tkey;
 begin
-  FMap.&Set(Key,Value);
+  FMap.&Set(GetEffectiveKey(Key),Value);
   KeyNotify(Key,cnAdded);
   ValueNotify(Value,cnAdded);
 end;
@@ -1227,12 +1254,14 @@ end;
 function TDictionary<TKey, TValue>.DoRemove(const Key: TKey; Notification: TCollectionNotification): TValue;
 Var
   V : JSValue;
+  K : TKey;
 
 begin
-  V:=FMap.Get(Key);
+  K:=GetEffectiveKey(Key);
+  V:=FMap.Get(k);
   if Not isUndefined(v) then
     begin
-    FMap.Delete(Key);
+    FMap.Delete(k);
     Result:=TValue(v);
     KeyNotify(Key,Notification);
     ValueNotify(Result,Notification);
@@ -1244,7 +1273,8 @@ begin
   Result:=FMap.Size;
 end;
 
-function TDictionary<TKey, TValue>.DoGetEnumerator: TEnumerator<TMyPair>;
+function TDictionary<TKey, TValue>.DoGetEnumerator: TEnumerator<TPair<TKey,
+  TValue>>;
 begin
   Result:=TPairEnumerator.Create(Self);
 end;
@@ -1284,6 +1314,12 @@ begin
     Add(aPair.Key,aPair.Value);
 end;
 
+constructor TDictionary<TKey, TValue>.Create(const AComparer: IComparer<TKey>);
+begin
+  Create(0);
+  FComparer:=aComparer;
+end;
+
 destructor TDictionary<TKey, TValue>.Destroy;
 begin
   FreeAndNil(FKeyCollection);
@@ -1295,7 +1331,7 @@ end;
 
 procedure TDictionary<TKey, TValue>.Add(const Key: TKey; const Value: TValue);
 begin
-  if FMap.Has(Key) then
+  if FMap.Has(GetEffectiveKey(Key)) then
     Raise EDictionary.Create(SErrDictDuplicateKey);
   DoAdd(Key,Value);
 end;
@@ -1307,18 +1343,22 @@ end;
 
 function TDictionary<TKey, TValue>.ExtractPair(const Key: TKey): TMyPair;
 
+Var
+  K : TKey;
+
 begin
   Result:=Default(TMyPair);
-  if FMap.Has(Key) then
+  K:=GetEffectiveKey(Key);
+  if FMap.Has(K) then
     begin
-    Result.Create(Key,TValue(FMap.get(key)));
-    FMap.Delete(Key);
+    Result.Create(Key,TValue(FMap.get(K)));
+    FMap.Delete(k);
     end
   else
     Result.Create(Key,Default(TValue));
 end;
 
-Function TDictionary<TKey, TValue>.CanClearMap : Boolean;
+function TDictionary<TKey, TValue>.CanClearMap: Boolean;
 
 begin
   Result:=(FOnKeyNotify=Nil) and (FOnValueNotify=Nil);
@@ -1355,23 +1395,33 @@ end;
 
 
 function TDictionary<TKey, TValue>.TryGetValue(const Key: TKey; out Value: TValue): Boolean;
+
+Var
+  K : TKey;
 begin
-  Result:=FMap.Has(Key);
+  K:=GetEffectiveKey(Key);
+  Result:=FMap.Has(K);
   If Result then
-    Value:=TValue(FMap.get(Key));
+    Value:=TValue(FMap.get(K));
 end;
 
+
 procedure TDictionary<TKey, TValue>.AddOrSetValue(const Key: TKey; const Value: TValue);
+
+Var
+  k : TKey;
+
 begin
-  if Not FMap.Has(Key) then
+  K:=GetEffectiveKey(Key);
+  if Not FMap.Has(k) then
     DoAdd(Key,Value)
   else
-    SetItem(Key,Value);
+    SetItem(K,Value);
 end;
 
 function TDictionary<TKey, TValue>.ContainsKey(const Key: TKey): Boolean;
 begin
-  Result:=FMap.Has(Key);
+  Result:=FMap.Has(GetEffectiveKey(Key));
 end;
 
 function TDictionary<TKey, TValue>.ContainsValue(const Value: TValue): Boolean;

@@ -41,6 +41,7 @@ Type
   TJSPointerEvent = Class;
   TJSUIEvent = class;
   TJSTouchEvent = Class;
+  TJSBlob = class;
 
 
   { TEventListenerEvent }
@@ -725,6 +726,14 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
   TJSDragDropEventHandler = reference to function(aEvent: TJSDragEvent) : Boolean; safecall;
   THTMLClickEventHandler = reference to function(aEvent : TJSMouseEvent) : boolean; safecall;
+
+  TJSClipBoardEvent = Class external name 'ClipboardEvent' (TJSEvent)
+  Private
+    FClipboardData: TJSDataTransfer external name 'clipboardData';
+  Public
+    Property ClipBoardData : TJSDataTransfer Read FClipBoardData;
+  end;
+
   { Various events }
 
 {$IFNDEF FIREFOX}
@@ -1766,6 +1775,22 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property ready : TJSPromise read FReady;
   end;
 
+  TJSClipboardItemOptions = Class external name 'Object' (TJSObject)
+    presentationStyle : String;
+  end;
+
+  TJSClipBoardItem = Class external name 'ClipboardItem' (TJSObject)
+    constructor new(aData : TJSObject; aOptions : TJSOBject); overload;
+    constructor new(aData : TJSObject; aOptions : TJSClipboardItemOptions); overload;
+    constructor new(aData : TJSObject); overload;
+  end;
+
+  TJSClipBoard = class external name 'Clipboard' (TJSEventTarget)
+    Function read : TJSPromise;
+    Function readText : TJSPromise;
+    Function write(Data : Array of TJSClipBoardItem) : TJSPromise;
+    Function writeText(aText : String) : TJSPromise;
+  end;
 
   { TJSNavigator }
 
@@ -1786,6 +1811,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FPlatform: string; external name 'platform';
     FServiceWorker: TJSServiceWorkerContainer; external name 'serviceWorker';
     FUserAgent: string; external name 'userAgent';
+    fClipBoard : TJSClipBoard; external name 'clipboard';
   public
     function getBattery : TJSPromise;
     function requestMediaKeySystemAccess(aKeySystem : String; supportedConfigurations : TJSValueDynArray) : TJSPromise;
@@ -1808,6 +1834,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property platform : string read FPlatform;
     property userAgent : string read FUserAgent;
     property serviceWorker : TJSServiceWorkerContainer read FServiceWorker;
+    property ClipBoard : TJSClipBoard Read FCLipboard;
   end;
 
   { TJSTouchEvent }
@@ -1866,7 +1893,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property width: Integer read Fwidth;
   end;
 
-  TJSBlob = class;
 
   TJSParamEnumCallBack = reference to procedure (const aKey,aValue : string);
   TJSURLSearchParams = class external name 'URLSearchParams' (TJSObject)
@@ -3763,6 +3789,20 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSHTMLTemplateElement = class external name 'HTMLTemplateElement' (TJSHTMLElement)
     content : TJSHTMLElement;
+  end;
+
+    TJSHTMLOrXMLDocument = Class external name 'Document' (TJSDocument)
+  end;
+
+  TJSHTMLDocument = Class external name 'HTMLDocument' (TJSHTMLOrXMLDocument)
+  end;
+
+  TJSXMLDocument = Class external name 'HTMLDocument' (TJSHTMLOrXMLDocument)
+  end;
+
+  TDOMParser = Class external name 'DOMParser' (TJSObject)
+  Public
+    Function parseFromString (aString,aMimetype : String): TJSHTMLOrXMLDocument;
   end;
 
 

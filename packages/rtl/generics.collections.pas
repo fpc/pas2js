@@ -152,6 +152,7 @@ type
   TList<T> = class(TCustomList<T>)
   private
     FComparer: IComparer<T>;
+    function SameValue(const Left, Right: T): Boolean;
   protected
     procedure SetCapacity(AValue: SizeInt); override;
     procedure SetCount(AValue: SizeInt);
@@ -812,6 +813,14 @@ end;
 
 { TList }
 
+function TList<T>.SameValue(const Left, Right: T): Boolean;
+begin
+  if Assigned(FComparer) then
+    Result:=(FComparer.Compare(Left, Right) = 0)
+  else
+    Result:=(Left = Right);
+end;
+
 procedure TList<T>.SetCapacity(AValue: SizeInt);
 begin
   if AValue < Count then
@@ -877,7 +886,6 @@ end;
 constructor TList<T>.Create;
 begin
   InitializeList;
-  FComparer := TComparer<T>.Default;
 end;
 
 constructor TList<T>.Create(const AComparer: IComparer<T>);
@@ -1111,7 +1119,7 @@ var
   i: SizeInt;
 begin
   for i := 0 to Count - 1 do
-    if FComparer.Compare(AValue, FItems[i]) = 0 then
+    if SameValue(AValue, FItems[i]) then
       Exit(i);
   Result:=-1;
 end;
@@ -1121,7 +1129,7 @@ var
   i: SizeInt;
 begin
   for i := Count - 1 downto 0 do
-    if FComparer.Compare(AValue, FItems[i]) = 0 then
+    if SameValue(AValue, FItems[i]) then
       Exit(i);
   Result:=-1;
 end;

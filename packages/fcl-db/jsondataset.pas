@@ -415,6 +415,8 @@ type
     property OnFilterRecord;
     property OnNewRecord;
     property OnPostError;
+    Property OnRecordResolved;
+    property OnLoadFail;
   end;
 
   { TJSONObjectFieldMapper }

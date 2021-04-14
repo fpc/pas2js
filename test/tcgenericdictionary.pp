@@ -110,7 +110,101 @@ Type
     Procedure TestNoFreeOnRemove;
   end;
 
+  TMyStringDict = Class(Specialize TDictionary<string,string>);
+  TMyStringComparer = Specialize TComparer<string>;
+
+  { TTestComparerDictionary }
+
+  TTestComparerDictionary = Class(TTestCase)
+  private
+    FDict: TMyStringDict;
+  public
+    Procedure Setup; override;
+    Procedure TearDown; override;
+    Procedure FillDict;
+    Property Dict : TMyStringDict Read FDict;
+  Published
+    Procedure TestHasKey;
+    Procedure TestTryGetValue;
+    Procedure TestAddOrSet;
+    Procedure TestRemove;
+  end;
+
 implementation
+
+{ TTestComparerDictionary }
+
+procedure TTestComparerDictionary.Setup;
+begin
+  inherited Setup;
+  FDict:=TMyStringDict.Create(TMyStringComparer.Construct(function (Const a,b : String) : integer
+    begin
+      Result:=CompareText(a,b);
+      // writeln('Comparing ',a,' and ',b,' result: ',Result);
+    end
+    ));
+  FillDict;
+end;
+
+procedure TTestComparerDictionary.TearDown;
+begin
+  FreeAndNil(FDict);
+  inherited TearDown;
+end;
+
+procedure TTestComparerDictionary.FillDict;
+begin
+  With Dict do
+    begin
+    add('a','A');
+    add('B','b');
+    add('c','C');
+    end;
+end;
+
+procedure TTestComparerDictionary.TestHasKey;
+begin
+  AssertTrue('ContainsKey A',Dict.ContainsKey('A'));
+  AssertTrue('ContainsKey b',Dict.ContainsKey('b'));
+  AssertTrue('ContainsKey c',Dict.ContainsKey('c'));
+  AssertFalse('ContainsKey D',Dict.ContainsKey('D'));
+end;
+
+procedure TTestComparerDictionary.TestTryGetValue;
+
+Var
+  S : String;
+
+begin
+  AssertTrue('A',Dict.TryGetValue('A',S));
+  AssertEquals('Value A','A',S);
+  AssertTrue('b',Dict.TryGetValue('b',S));
+  AssertEquals('Value b','b',S);
+  AssertTrue('c',Dict.TryGetValue('c',S));
+  AssertEquals('Value C','C',S);
+  AssertFalse('d',Dict.TryGetValue('D',S));
+end;
+
+procedure TTestComparerDictionary.TestAddOrSet;
+
+Var
+  S : String;
+
+begin
+  Dict.AddOrSetValue('d','E');
+  AssertTrue('d',Dict.TryGetValue('d',S));
+  AssertEquals('Value d','E',S);
+  Dict.AddOrSetValue('D','D');
+  AssertTrue('D',Dict.TryGetValue('D',S));
+  AssertEquals('Value D','D',S);
+end;
+
+procedure TTestComparerDictionary.TestRemove;
+begin
+  Dict.Remove('C');
+  AssertFalse('ContainsKey C',Dict.ContainsKey('C'));
+  AssertFalse('ContainsKey c',Dict.ContainsKey('c'));
+end;
 
 { TTestSingleObjectDict }
 
@@ -668,8 +762,9 @@ begin
 end;
 
 begin
-  RegisterTests([TTestSimpleDictionary,
+  RegisterTests([{TTestSimpleDictionary,
                  TTestSingleObjectDict,
-                 TTestDualObjectDict]);
+                 TTestDualObjectDict,}
+                 TTestComparerDictionary]);
 end.
 

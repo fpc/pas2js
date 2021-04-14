@@ -4919,6 +4919,8 @@ begin
   Result.TimeSeparator := ':';
   Result.ShortDateFormat := 'yyyy-mm-dd';
   Result.LongDateFormat := 'ddd, yyyy-mm-dd';
+  Result.ShortTimeFormat := 'hh:nn';
+  Result.LongTimeFormat := 'hh:nn:ss';
   Result.DecimalSeparator := '.';
   Result.ThousandSeparator := ',';
   Result.TimeAMString := 'AM';

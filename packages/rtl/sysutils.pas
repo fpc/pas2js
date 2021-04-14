@@ -291,6 +291,10 @@ Function StrToIntDef(const S : String; Const aDef : Integer) : Integer;
 Function StrToIntDef(const S : String; Const aDef : NativeInt) : NativeInt;
 Function StrToInt(const S : String) : Integer;
 Function StrToNativeInt(const S : String) : NativeInt;
+function StrToUInt(const s: string): Cardinal;
+function StrToUIntDef(const s: string; aDef : Cardinal): Cardinal;
+function UIntToStr(Value: Cardinal): string; 
+function TryStrToUInt(const s: string; out C: Cardinal): Boolean;
 // For compatibility
 Function StrToInt64(const S : String) : NativeLargeInt;
 Function StrToInt64Def(const S : String; ADefault : NativeLargeInt) : NativeLargeInt;
@@ -4739,6 +4743,36 @@ function StrToNativeInt(const S: String): NativeInt;
 begin
   if not TryStrToInt(S,Result) then
     Raise EConvertError.CreateFmt(SErrInvalidInteger,[S]);
+end;
+
+function StrToUInt(const s: string): Cardinal;
+
+begin
+  If not TryStrToUint(S,Result) then
+    Raise EConvertError.CreateFmt(SErrInvalidInteger,[S])
+end;
+
+function StrToUIntDef(const s: string; aDef : Cardinal): Cardinal;
+
+begin
+  If not TryStrToUint(S,Result) then
+    Result:=aDef;
+end;
+
+function UIntToStr(Value: Cardinal): string; 
+
+begin
+  Result:=IntToStr(Value);
+end;
+
+function TryStrToUInt(const s: string; out C: Cardinal): Boolean;
+Var
+  N : NativeInt;
+begin
+  Result:=TryStrToInt(S,N);
+  Result:=(N>=0) and (N<=4294967295);
+  If Result then 
+    C:=N;
 end;
 
 function StrToInt64(const S: String): NativeLargeInt;

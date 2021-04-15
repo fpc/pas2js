@@ -2,7 +2,7 @@
 
 var rtl = {
 
-  version: 20004,
+  version: 20006,
 
   quiet: false,
   debug_load_units: false,

@@ -722,6 +722,7 @@ end;
 
 class function TValue.Empty: TValue;
 begin
+  Result.FData := nil;
   Result.FTypeInfo := nil;
 end;
 

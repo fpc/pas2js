@@ -2929,7 +2929,7 @@ begin
 end;
 
 Const
-  RESpecials = '([\$\+\[\]\(\)\\\.\*\^\?])';
+  RESpecials = '([\$\+\[\]\(\)\\\.\*\^\?\|])';
 
 function StringReplace(aOriginal, aSearch, aReplace: string;
   Flags: TStringReplaceFlags): String;

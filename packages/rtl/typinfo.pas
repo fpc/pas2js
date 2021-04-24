@@ -139,7 +139,9 @@ type
   TProcedureFlag = (
     pfStatic,   // 2^0 = 1
     pfVarargs,  // 2^1 = 2
-    pfExternal  // 2^2 = 4  name may be an expression
+    pfExternal, // 2^2 = 4  name may be an expression
+    pfSafeCall, // 2^3 = 8
+    pfAsync     // 2^4 = 16
     );
   TProcedureFlags = set of TProcedureFlag;
 

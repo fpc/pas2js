@@ -166,28 +166,33 @@ type
   private
     FParameters: TRttiParameterArray;
 
-    function GetMethodTypeInfo: TTypeMemberMethod;
-    function GetIsClassMethod: boolean;
-    function GetIsConstructor: boolean;
-    function GetIsDestructor: boolean;
-    function GetIsExternal: boolean;
-    function GetIsStatic: boolean;
-    function GetIsVarArgs: boolean;
+    function GetIsAsyncCall: Boolean;
+    function GetIsClassMethod: Boolean;
+    function GetIsConstructor: Boolean;
+    function GetIsDestructor: Boolean;
+    function GetIsExternal: Boolean;
+    function GetIsSafeCall: Boolean;
+    function GetIsStatic: Boolean;
+    function GetIsVarArgs: Boolean;
     function GetMethodKind: TMethodKind;
+    function GetMethodTypeInfo: TTypeMemberMethod;
+    function GetProcedureFlags: TProcedureFlags;
     function GetReturnType: TRttiType;
 
     procedure LoadParameters;
   public
     function GetParameters: TRttiParameterArray;
+
+    property IsAsyncCall: Boolean read GetIsAsyncCall;
+    property IsClassMethod: Boolean read GetIsClassMethod;
+    property IsConstructor: Boolean read GetIsConstructor;
+    property IsDestructor: Boolean read GetIsDestructor;
+    property IsExternal: Boolean read GetIsExternal;
+    property IsSafeCall: Boolean read GetIsSafeCall;
+    property IsStatic: Boolean read GetIsStatic;
+    property MethodKind: TMethodKind read GetMethodKind;
     property MethodTypeInfo: TTypeMemberMethod read GetMethodTypeInfo;
     property ReturnType: TRttiType read GetReturnType;
-    property MethodKind: TMethodKind read GetMethodKind;
-    property IsConstructor: boolean read GetIsConstructor;
-    property IsDestructor: boolean read GetIsDestructor;
-    property IsClassMethod: boolean read GetIsClassMethod;
-    property IsExternal: boolean read GetIsExternal;
-    property IsStatic: boolean read GetIsStatic;// true = has Self argument
-    property IsVarArgs: boolean read GetIsVarArgs;
   end;
 
   TRttiMethodArray = specialize TArray<TRttiMethod>;
@@ -1321,39 +1326,65 @@ begin
   Result := TTypeMemberMethod(FTypeInfo);
 end;
 
-function TRttiMethod.GetIsClassMethod: boolean;
+function TRttiMethod.GetIsClassMethod: Boolean;
 begin
   Result:=MethodTypeInfo.MethodKind in [mkClassFunction,mkClassProcedure];
 end;
 
-function TRttiMethod.GetIsConstructor: boolean;
+function TRttiMethod.GetIsConstructor: Boolean;
 begin
   Result:=MethodTypeInfo.MethodKind=mkConstructor;
 end;
 
-function TRttiMethod.GetIsDestructor: boolean;
+function TRttiMethod.GetIsDestructor: Boolean;
 begin
   Result:=MethodTypeInfo.MethodKind=mkDestructor;
 end;
 
-function TRttiMethod.GetIsExternal: boolean;
+function TRttiMethod.GetIsExternal: Boolean;
 begin
-  Result:=(MethodTypeInfo.ProcSig.Flags and 4)>0; // pfExternal
+  Result := pfExternal in GetProcedureFlags;
 end;
 
-function TRttiMethod.GetIsStatic: boolean;
+function TRttiMethod.GetIsStatic: Boolean;
 begin
-  Result:=(MethodTypeInfo.ProcSig.Flags and 1)>0; // pfStatic
+  Result := pfStatic in GetProcedureFlags;
 end;
 
-function TRttiMethod.GetIsVarArgs: boolean;
+function TRttiMethod.GetIsVarArgs: Boolean;
 begin
-  Result:=(MethodTypeInfo.ProcSig.Flags and 2)>0; // pfVarargs
+  Result := pfVarargs in GetProcedureFlags;
+end;
+
+function TRttiMethod.GetIsAsyncCall: Boolean;
+begin
+  Result := pfAsync in GetProcedureFlags;
+end;
+
+function TRttiMethod.GetIsSafeCall: Boolean;
+begin
+  Result := pfSafeCall in GetProcedureFlags;
 end;
 
 function TRttiMethod.GetMethodKind: TMethodKind;
 begin
   Result:=MethodTypeInfo.MethodKind;;
+end;
+
+function TRttiMethod.GetProcedureFlags: TProcedureFlags;
+const
+  PROCEDURE_FLAGS: array of NativeInt = (1, 2, 4, 8, 16);
+
+var
+  Flag, ProcedureFlags: NativeInt;
+
+begin
+  ProcedureFlags := MethodTypeInfo.ProcSig.Flags;
+  Result := [];
+
+  for Flag := Low(PROCEDURE_FLAGS) to High(PROCEDURE_FLAGS) do
+    if PROCEDURE_FLAGS[Flag] and ProcedureFlags > 0 then
+      Result := Result + [TProcedureFlag(Flag)];
 end;
 
 function TRttiMethod.GetReturnType: TRttiType;

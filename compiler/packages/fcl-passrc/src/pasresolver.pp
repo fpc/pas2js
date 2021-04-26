@@ -25432,6 +25432,7 @@ function TPasResolver.ResolvedElIsClassOrRecordInstance(
   const ResolvedEl: TPasResolverResult): boolean;
 var
   TypeEl: TPasType;
+  C: TClass;
 begin
   Result:=false;
   if ResolvedEl.BaseType<>btContext then exit;
@@ -25444,10 +25445,14 @@ begin
   else if TypeEl.ClassType=TPasRecordType then
   else
     exit;
-  if (ResolvedEl.IdentEl is TPasVariable)
-      or (ResolvedEl.IdentEl.ClassType=TPasArgument)
-      or (ResolvedEl.IdentEl.ClassType=TPasResultElement) then
-    exit(true);
+  if ResolvedEl.IdentEl<>nil then
+    begin
+    C:=ResolvedEl.IdentEl.ClassType;
+    if C.InheritsFrom(TPasVariable)
+        or (C=TPasArgument)
+        or (C=TPasResultElement) then
+      exit(true);
+    end;
 end;
 
 function TPasResolver.GetResolver(El: TPasElement): TPasResolver;

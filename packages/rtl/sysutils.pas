@@ -4403,7 +4403,11 @@ Var
 begin
   Result:=TryStrToInt(S,NI);
   if Result then
+    begin
     res:=NI;
+    if (NI<low(res)) or (NI>high(res)) then
+      Result:=false;
+    end;
 end;
 
 function TryStrToInt(const S: String; out res: NativeInt): Boolean;

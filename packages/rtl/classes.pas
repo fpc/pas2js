@@ -867,6 +867,7 @@ type
   private
     function GetDataString : String;
   public
+    constructor Create; reintroduce; overload;
     constructor Create(const aString: String); virtual; overload;
     function ReadString(Count: Integer): string;
     procedure WriteString(const AString: string);
@@ -1527,6 +1528,11 @@ begin
       // Result=String.fromCharCode.apply(null, new Uint16Array(a));
       Result=String.fromCharCode.apply(null, a);
     end;
+end;
+
+constructor TStringStream.Create;
+begin
+  Create('');
 end;
 
 constructor TStringStream.Create(const aString: String);

@@ -4664,12 +4664,9 @@ Var
 
 begin
   Result:=TryStrToInt(S,NI);
+  Result:=Result and (-2147483648<=NI) and (NI<=2147483647);
   if Result then
-    begin
     res:=NI;
-    if (NI<low(res)) or (NI>high(res)) then
-      Result:=false;
-    end;
 end;
 
 

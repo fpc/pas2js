@@ -4665,7 +4665,11 @@ Var
 begin
   Result:=TryStrToInt(S,NI);
   if Result then
+    begin
     res:=NI;
+    if (NI<low(res)) or (NI>high(res)) then
+      Result:=false;
+    end;
 end;
 
 
@@ -4776,7 +4780,7 @@ Var
   N : NativeInt;
 begin
   Result:=TryStrToInt(S,N);
-  Result:=(N>=0) and (N<=4294967295);
+  Result:=(N>=0) and (N<=high(longword));
   If Result then 
     C:=N;
 end;

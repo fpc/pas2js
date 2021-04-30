@@ -146,6 +146,8 @@ type
 
   TRttiFieldArray = specialize TArray<TRttiField>;
 
+  { TRttiParameter }
+
   TRttiParameter = class(TRttiNamedObject)
   private
     FParamType: TRttiType;
@@ -165,6 +167,7 @@ type
   TRttiMethod = class(TRttiMember)
   private
     FParameters: TRttiParameterArray;
+    FParametersLoaded: Boolean;
 
     function GetIsAsyncCall: Boolean;
     function GetIsClassMethod: Boolean;
@@ -1373,10 +1376,12 @@ end;
 
 function TRttiMethod.GetProcedureFlags: TProcedureFlags;
 const
-  PROCEDURE_FLAGS: array of NativeInt = (1, 2, 4, 8, 16);
+  PROCEDURE_FLAGS: array[TProcedureFlag] of NativeInt = (1, 2, 4, 8, 16);
 
 var
-  Flag, ProcedureFlags: NativeInt;
+  Flag: TProcedureFlag;
+
+  ProcedureFlags: NativeInt;
 
 begin
   ProcedureFlags := MethodTypeInfo.ProcSig.Flags;
@@ -1384,7 +1389,7 @@ begin
 
   for Flag := Low(PROCEDURE_FLAGS) to High(PROCEDURE_FLAGS) do
     if PROCEDURE_FLAGS[Flag] and ProcedureFlags > 0 then
-      Result := Result + [TProcedureFlag(Flag)];
+      Result := Result + [Flag];
 end;
 
 function TRttiMethod.GetReturnType: TRttiType;
@@ -1394,28 +1399,35 @@ end;
 
 procedure TRttiMethod.LoadParameters;
 const
-  FLAGS_CONVERSION: array[TParamFlag] of Integer = (1, 2, 4, 8, 16, 32);
+  FLAGS_CONVERSION: array[TParamFlag] of NativeInt = (1, 2, 4, 8, 16, 32);
 
 var
-  A, Flag: Integer;
+  A: Integer;
+
+  Flag: TParamFlag;
 
   Param: TProcedureParam;
 
   RttiParam: TRttiParameter;
 
+  MethodParams: TProcedureParams;
+
 begin
-  SetLength(FParameters, Length(MethodTypeInfo.ProcSig.Params));
+  FParametersLoaded := True;
+  MethodParams := MethodTypeInfo.ProcSig.Params;
+
+  SetLength(FParameters, Length(MethodParams));
 
   for A := Low(FParameters) to High(FParameters) do
   begin
-    Param := MethodTypeInfo.ProcSig.Params[A];
+    Param := MethodParams[A];
     RttiParam := TRttiParameter.Create;
     RttiParam.FName := Param.Name;
     RttiParam.FParamType := GRttiContext.GetType(Param.TypeInfo);
 
-    for Flag in FLAGS_CONVERSION do
-      if Flag and Param.Flags > 0 then
-        RttiParam.FFlags := RttiParam.FFlags + [TParamFlag(A)];
+    for Flag := Low(FLAGS_CONVERSION) to High(FLAGS_CONVERSION) do
+      if FLAGS_CONVERSION[Flag] and Param.Flags > 0 then
+        RttiParam.FFlags := RttiParam.FFlags + [Flag];
 
     FParameters[A] := RttiParam;
   end;
@@ -1423,7 +1435,7 @@ end;
 
 function TRttiMethod.GetParameters: TRttiParameterArray;
 begin
-  if not Assigned(FParameters) then
+  if not FParametersLoaded then
     LoadParameters;
 
   Result := FParameters;

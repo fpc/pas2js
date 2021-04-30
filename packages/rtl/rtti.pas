@@ -281,6 +281,7 @@ type
 
   TRttiStructuredType = class abstract(TRttiType)
   private
+    FFields: TRttiFieldArray;
     FMethods: TRttiMethodArray;
     FProperties: TRttiPropertyArray;
   protected
@@ -291,8 +292,10 @@ type
 
     destructor Destroy; override;
 
+    function GetDeclaredFields: TRttiFieldArray; override;
     function GetDeclaredMethods: TRttiMethodArray; override;
     function GetDeclaredProperties: TRttiPropertyArray; override;
+    function GetFields: TRttiFieldArray; override;
     function GetMethod(const aName: String): TRttiMethod; override;
     function GetMethods: TRttiMethodArray; override;
     function GetMethods(const aName: String): TRttiMethodArray; override;
@@ -306,17 +309,12 @@ type
 
   TRttiInstanceType = class(TRttiStructuredType)
   private
-    FFields: TRttiFieldArray;
-
     function GetClassTypeInfo: TTypeInfoClass;
     function GetMetaClassType: TClass;
   protected
     function GetAncestor: TRttiStructuredType; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
-
-    function GetFields: TRttiFieldArray; override;
-    function GetDeclaredFields: TRttiFieldArray; override;
 
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
@@ -992,31 +990,7 @@ begin
   Result := FMethods;
 end;
 
-{ TRttiInstanceType }
-
-function TRttiInstanceType.GetClassTypeInfo: TTypeInfoClass;
-begin
-  Result:=TTypeInfoClass(FTypeInfo);
-end;
-
-function TRttiInstanceType.GetMetaClassType: TClass;
-begin
-  Result:=ClassTypeInfo.ClassType;
-end;
-
-function TRttiInstanceType.GetAncestor: TRttiStructuredType;
-begin
-  Result := GRttiContext.GetType(ClassTypeInfo.Ancestor) as TRttiStructuredType;
-end;
-
-constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
-begin
-  if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
-    raise EInvalidCast.Create('');
-  inherited Create(ATypeInfo);
-end;
-
-function TRttiInstanceType.GetDeclaredFields: TRttiFieldArray;
+function TRttiStructuredType.GetDeclaredFields: TRttiFieldArray;
 var
   A, FieldCount: Integer;
 
@@ -1034,7 +1008,7 @@ begin
   Result := FFields;
 end;
 
-function TRttiInstanceType.GetFields: TRttiFieldArray;
+function TRttiStructuredType.GetFields: TRttiFieldArray;
 var
   A, Start: Integer;
 
@@ -1058,6 +1032,30 @@ begin
 
     BaseClass := BaseClass.GetAncestor;
   end;
+end;
+
+{ TRttiInstanceType }
+
+function TRttiInstanceType.GetClassTypeInfo: TTypeInfoClass;
+begin
+  Result:=TTypeInfoClass(FTypeInfo);
+end;
+
+function TRttiInstanceType.GetMetaClassType: TClass;
+begin
+  Result:=ClassTypeInfo.ClassType;
+end;
+
+function TRttiInstanceType.GetAncestor: TRttiStructuredType;
+begin
+  Result := GRttiContext.GetType(ClassTypeInfo.Ancestor) as TRttiStructuredType;
+end;
+
+constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
+    raise EInvalidCast.Create('');
+  inherited Create(ATypeInfo);
 end;
 
 { TRttiInterfaceType }
@@ -1291,7 +1289,7 @@ end;
 
 function TRttiField.GetFieldType: TRttiType;
 begin
-  Result := GRttiContext.GetType(FTypeInfo);
+  Result := GRttiContext.GetType(FieldTypeInfo.TypeInfo);
 end;
 
 function TRttiField.GetFieldTypeInfo: TTypeMemberField;

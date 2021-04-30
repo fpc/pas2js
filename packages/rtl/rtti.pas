@@ -1187,13 +1187,13 @@ begin
   Name:=t.Name;
   if isModule(t.Module) then
     Name:=t.Module.Name+'.'+Name;
-  if FPool.hasOwnProperty(Name) then
-    Result:=TRttiType(FPool[Name])
+  if GRttiContext.FPool.hasOwnProperty(Name) then
+    Result:=TRttiType(GRttiContext.FPool[Name])
   else
     begin
     Result := RttiTypeClass[T.Kind].Create(aTypeInfo);
 
-    FPool[Name]:=Result;
+    GRttiContext.FPool[Name]:=Result;
     end;
 end;
 

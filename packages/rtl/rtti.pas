@@ -34,40 +34,46 @@ type
     function GetIsEmpty: boolean;
     function GetTypeKind: TTypeKind;
   public
-    generic class function From<T>(const Value: T): TValue; static;
-    class function FromJSValue(v: JSValue): TValue; static;
-
-    property Kind: TTypeKind read GetTypeKind;
-    property TypeInfo: TTypeInfo read FTypeInfo;
-
-    property IsEmpty: boolean read GetIsEmpty; // check if nil or undefined
-    generic function AsType<T>: T;
-    function IsObject: boolean;
-    function AsObject: TObject;
-    function IsObjectInstance: boolean;
-    function IsArray: boolean;
-    function IsClass: boolean;
-    function AsClass: TClass;
-    function IsOrdinal: boolean;
-    function AsOrdinal: NativeInt;
-    function AsBoolean: boolean;
-    //ToDo: function AsCurrency: Currency;
-    function AsInteger: Integer;
-    function AsNativeInt: NativeInt;
-    function AsInterface: IInterface;
-    function AsString: string;
-    function AsUnicodeString: UnicodeString;
-    function AsExtended: Extended;
-    function ToString: String;
-    function GetArrayLength: SizeInt;
-    function GetArrayElement(aIndex: SizeInt): TValue;
-    procedure SetArrayElement(aIndex: SizeInt; const AValue: TValue);
-    procedure SetArrayLength(const Size: SizeInt);
-    function IsType(ATypeInfo: PTypeInfo): boolean;
-    function AsJSValue: JSValue;
     class function Empty: TValue; static;
+    generic class function From<T>(const Value: T): TValue; static;
+    class function FromArray(TypeInfo: TTypeInfo; const Values: specialize TArray<TValue>): TValue; static;
+    class function FromJSValue(v: JSValue): TValue; static;
+    class function FromOrdinal(ATypeInfo: TTypeInfo; AValue: JSValue): TValue; static;
     class function Make(TypeInfo: TTypeInfo; const Value: JSValue): TValue; static;
     class function Make(const Value: TValue): TValue; static;
+
+    function AsBoolean: boolean;
+    function AsClass: TClass;
+    //ToDo: function AsCurrency: Currency;
+    function AsExtended: Extended;
+    function AsInteger: Integer;
+    function AsInterface: IInterface;
+    function AsJSValue: JSValue;
+    function AsNativeInt: NativeInt;
+    function AsObject: TObject;
+    function AsOrdinal: NativeInt;
+    function AsString: string;
+    generic function AsType<T>: T;
+    function AsUnicodeString: UnicodeString;
+    function Cast(ATypeInfo: TTypeInfo; const EmptyAsAnyType: Boolean = True): TValue; overload;
+    generic function Cast<T>(const EmptyAsAnyType: Boolean = True): TValue; overload;
+    function GetArrayElement(aIndex: SizeInt): TValue;
+    function GetArrayLength: SizeInt;
+    function IsArray: boolean;
+    function IsClass: boolean;
+    function IsObject: boolean;
+    function IsObjectInstance: boolean;
+    function IsOrdinal: boolean;
+    function IsType(ATypeInfo: TTypeInfo): boolean;
+    function ToString: String;
+    function TryCast(ATypeInfo: TTypeInfo; out AResult: TValue; const EmptyAsAnyType: Boolean = True): Boolean;
+
+    procedure SetArrayElement(aIndex: SizeInt; const AValue: TValue);
+    procedure SetArrayLength(const Size: SizeInt);
+
+    property IsEmpty: boolean read GetIsEmpty; // check if nil or undefined
+    property Kind: TTypeKind read GetTypeKind;
+    property TypeInfo: TTypeInfo read FTypeInfo;
   end;
 
   TRttiType = class;
@@ -212,11 +218,10 @@ type
     function GetVisibility: TMemberVisibility; override;
   public
     constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
+
     function GetValue(Instance: JSValue): TValue;
 
-    procedure SetValue(Instance: JSValue; const AValue: JSValue); overload;
-    procedure SetValue(Instance: JSValue; const AValue: TValue); overload;
-    procedure SetValue(Instance: TObject; const AValue: TValue); overload;
+    procedure SetValue(Instance: JSValue; const AValue: TValue);
 
     property PropertyTypeInfo: TTypeMemberProperty read GetPropertyTypeInfo;
     property PropertyType: TRttiType read GetPropertyType;
@@ -590,6 +595,81 @@ begin
   Result := TValue.Make(Value.TypeInfo, Value.AsJSValue);
 end;
 
+function TValue.Cast(ATypeInfo: TTypeInfo; const EmptyAsAnyType: Boolean): TValue;
+begin
+  if not TryCast(ATypeInfo, Result, EmptyAsAnyType) then
+    raise EInvalidCast.Create('');
+end;
+
+generic function TValue.Cast<T>(const EmptyAsAnyType: Boolean): TValue;
+begin
+  Result := Cast(System.TypeInfo(T), EmptyAsAnyType);
+end;
+
+function TValue.TryCast(ATypeInfo: TTypeInfo; out AResult: TValue; const EmptyAsAnyType: Boolean): Boolean;
+
+  function ConversionAccepted: TTypeKinds;
+  begin
+    case TypeInfo.Kind of
+      tkString: Exit([tkChar, tkString]);
+
+      tkDouble: Exit([tkInteger, tkDouble]);
+
+      tkEnumeration: Exit([tkInteger, tkEnumeration]);
+
+      else Exit([ATypeInfo.Kind]);
+    end;
+  end;
+
+begin
+  if EmptyAsAnyType and IsEmpty then
+  begin
+    AResult := TValue.Empty;
+
+    if ATypeInfo <> nil then
+    begin
+      AResult.FTypeInfo := ATypeInfo;
+
+      case ATypeInfo.Kind of
+        tkBool: AResult.FData := False;
+        tkChar: AResult.FData := #0;
+        tkString: AResult.FData := EmptyStr;
+        tkDouble,
+        tkEnumeration,
+        tkInteger: AResult.FData := 0;
+      end;
+
+      Exit(True);
+    end;
+  end;
+
+  if not EmptyAsAnyType and (FTypeInfo = nil) then
+    Exit(False);
+
+  if FTypeInfo = ATypeInfo then
+  begin
+    AResult := Self;
+    Exit(True);
+  end;
+
+  if ATypeInfo = nil then
+    Exit(False);
+
+  if ATypeInfo = System.TypeInfo(TValue) then
+  begin
+    AResult := TValue.Make(System.TypeInfo(TValue), Self);
+    Exit(True);
+  end;
+
+  Result := ATypeInfo.Kind in ConversionAccepted;
+
+  if Result then
+  begin
+    AResult.FData := FData;
+    AResult.FTypeInfo := ATypeInfo;
+  end;
+end;
+
 class function TValue.FromJSValue(v: JSValue): TValue;
 var
   i: NativeInt;
@@ -597,37 +677,73 @@ var
 
 begin
   case jsTypeOf(v) of
-  'number':
-    if JS.isInteger(v) then
-      begin
-      i:=NativeInt(v);
-      if (i>=low(integer)) and (i<=high(integer)) then
-        TypeOfValue:=system.TypeInfo(Integer)
+    'number':
+      if JS.isInteger(v) then
+        begin
+        i:=NativeInt(v);
+        if (i>=low(integer)) and (i<=high(integer)) then
+          TypeOfValue:=System.TypeInfo(Integer)
+        else
+          TypeOfValue:=System.TypeInfo(NativeInt);
+        end
       else
-        TypeOfValue:=system.TypeInfo(NativeInt);
-      end
+        TypeOfValue:=system.TypeInfo(Double);
+    'string':  TypeOfValue:=System.TypeInfo(String);
+    'boolean': TypeOfValue:=System.TypeInfo(Boolean);
+    'object':
+      if v=nil then
+        Exit(TValue.Empty)
+      else if JS.isClass(v) and JS.isExt(v,TObject) then
+        TypeOfValue:=System.TypeInfo(TClass(v))
+      else if JS.isObject(v) and JS.isExt(v,TObject) then
+        TypeOfValue:=System.TypeInfo(TObject(v))
+      else if isRecord(v) then
+        TypeOfValue:=System.TypeInfo(TObject(v))
+      else if TJSArray.IsArray(V) then
+        TypeOfValue:=System.TypeInfo(TObject(v))
+      else
+        raise EInvalidCast.Create('Type not recognized in FromJSValue!');
     else
-      TypeOfValue:=system.TypeInfo(Double);
-  'string':  TypeOfValue:=system.TypeInfo(String);
-  'boolean': TypeOfValue:=system.TypeInfo(Boolean);
-  'object':
-    begin
-    if v=nil then
-      TypeOfValue:=system.TypeInfo(Pointer)
-    else if JS.isClass(v) and JS.isExt(v,TObject) then
-      TypeOfValue:=system.TypeInfo(TClass(v))
-    else if JS.isObject(v) and JS.isExt(v,TObject) then
-      TypeOfValue:=system.TypeInfo(TObject(v))
-    else
-      TypeOfValue:=system.TypeInfo(Pointer);
-    if (TypeOfValue=JS.Undefined) or (TypeOfValue=nil) then
-      TypeOfValue:=system.TypeInfo(Pointer);
-    end
-  else
-    TypeOfValue:=system.TypeInfo(JSValue);
+      TypeOfValue:=System.TypeInfo(JSValue);
   end;
 
   Result := Make(TypeOfValue, v);
+end;
+
+class function TValue.FromArray(TypeInfo: TTypeInfo; const Values: specialize TArray<TValue>): TValue;
+var
+  A: Integer;
+
+  DynTypeInfo: TTypeInfoDynArray absolute TypeInfo;
+
+  NewArray: TJSArray;
+
+  ElementType: TTypeInfo;
+
+begin
+  if TypeInfo.Kind <> tkDynArray then
+    raise EInvalidCast.Create('Type not an array in FromArray!');
+
+  ElementType := DynTypeInfo.ElType;
+  NewArray := TJSArray.new;
+  NewArray.Length := Length(Values);
+
+  for A := 0 to High(Values) do
+    NewArray[A] := Values[A].Cast(ElementType).AsJSValue;
+
+  Result.FData := NewArray;
+  Result.FTypeInfo := TypeInfo;
+end;
+
+class function TValue.FromOrdinal(ATypeInfo: TTypeInfo; AValue: JSValue): TValue;
+begin
+  if (ATypeInfo = nil) or not (ATypeInfo.Kind in [tkBool, tkEnumeration, tkInteger]) then
+    raise EInvalidCast.Create('Invalid type in FromOrdinal');
+
+  if ATypeInfo.Kind = tkBool then
+    Result := TValue.Make(ATypeInfo, AValue = True)
+  else
+    Result := TValue.Make(ATypeInfo, NativeInt(AValue));
 end;
 
 function TValue.IsObject: boolean;
@@ -804,7 +920,7 @@ begin
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
 
-function TValue.IsType(ATypeInfo: PTypeInfo): boolean;
+function TValue.IsType(ATypeInfo: TTypeInfo): boolean;
 begin
   Result := ATypeInfo = TypeInfo;
 end;
@@ -1310,7 +1426,7 @@ var
   JSInstance: TJSObject absolute Instance;
 
 begin
-  JSInstance[Name] := AValue.AsJSValue;
+  JSInstance[Name] := AValue.Cast(FieldType.Handle, True).ASJSValue;
 end;
 
 { TRttiParameter }
@@ -1464,23 +1580,10 @@ end;
 
 procedure TRttiProperty.SetValue(Instance: JSValue; const AValue: TValue);
 var
-  JSObject: TJSObject absolute Instance;
+  JSInstance: TJSObject absolute Instance;
 
 begin
-  SetJSValueProp(JSObject, PropertyTypeInfo, AValue.AsJSValue);
-end;
-
-procedure TRttiProperty.SetValue(Instance: JSValue; const AValue: JSValue);
-var
-  JSObject: TJSObject absolute Instance;
-
-begin
-  SetJSValueProp(JSObject, PropertyTypeInfo, AValue);
-end;
-
-procedure TRttiProperty.SetValue(Instance: TObject; const AValue: TValue);
-begin
-  SetValue(JSValue(Instance), AValue);
+  SetJSValueProp(JSInstance, PropertyTypeInfo, AValue.Cast(PropertyType.Handle, True).AsJSValue);
 end;
 
 function TRttiProperty.GetPropertyType: TRttiType;

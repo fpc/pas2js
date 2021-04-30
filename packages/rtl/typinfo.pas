@@ -32,7 +32,7 @@ type
 
   { TTypeInfoModule }
 
-  TTypeInfoModule = class external name 'pasmodule'
+  TTypeInfoModule = class external name 'pasmodule'(TJSObject)
   public
     Name: String external name '$name';
     RTTI: TSectionRTTI external name '$rtti';

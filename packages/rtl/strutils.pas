@@ -2161,13 +2161,13 @@ end;
 Function StartsStr(const ASubText, AText: string): Boolean;
 
 begin
-  Result := AnsiStartsStr(AText, ASubText);
+  Result := AnsiStartsStr(ASubText, AText);
 end;
 
 Function EndsStr(const ASubText, AText: string): Boolean;
 
 begin
-  Result := AnsiEndsStr(AText, ASubText);
+  Result := AnsiEndsStr(ASubText, AText);
 end;
 
 

@@ -336,6 +336,8 @@ type
 
   EPropertyError  = class(Exception);
 
+function GetTypeName(TypeInfo: TTypeInfo): string;
+
 function GetClassMembers(aTIStruct: TTypeInfoStruct): TTypeMemberDynArray;
 function GetClassMember(aTIStruct: TTypeInfoStruct; const aName: String): TTypeMember;
 function GetInstanceMethod(Instance: TObject; const aName: String): Pointer;
@@ -454,6 +456,11 @@ procedure SetRawInterfaceProp(Instance: TObject; const PropName: string; const V
 procedure SetRawInterfaceProp(Instance: TObject; PropInfo: TTypeMemberProperty; const Value: Pointer);
 
 implementation
+
+function GetTypeName(TypeInfo: TTypeInfo): string;
+begin
+  Result := TypeInfo.Name;
+end;
 
 function GetClassMembers(aTIStruct: TTypeInfoStruct): TTypeMemberDynArray;
 var

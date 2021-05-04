@@ -910,7 +910,6 @@ asm
   return (aClass!=null) && ((this==aClass) || aClass.isPrototypeOf(this));
 end;
 
-
 Class function TObject.MethodName(aCode : Pointer) : String;
 
 begin
@@ -972,16 +971,13 @@ begin
   Result:=Nil;
   if aName='' then exit;
   asm
-    var aClass = null;
-    var i = 0;
+    var aClass = this.$class;
     var ClassTI = null;
     var myName = aName.toLowerCase();
     var MemberTI = null;
-    aClass = this.$class;
     while (aClass !== null) {
       ClassTI = aClass.$rtti;
-      for (var $l1 = 0, $end2 = ClassTI.fields.length - 1; $l1 <= $end2; $l1++) {
-        i = $l1;
+      for (var i = 0, $end2 = ClassTI.fields.length - 1; i <= $end2; i++) {
         MemberTI = ClassTI.getField(i);
         if (MemberTI.name.toLowerCase() === myName) {
            return MemberTI;

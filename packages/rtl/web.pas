@@ -2675,9 +2675,13 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSHTMLLabelElement = class external name 'HTMLLabelElement' (TJSHTMLElement)
+  Private
+    FForm: TJSHTMLFormElement; external name 'form';
+    FControl : TJSHTMLElement; external name 'control';
   Public
-    For_ : String; external name 'for';
-    form : String;
+    For_ : String; external name 'htmlFor';
+    property Control : TJSHTMLElement Read FControl;
+    property Form : TJSHTMLFormElement read FForm;
   end;
 
   { TJSHTMLTextAreaElement }

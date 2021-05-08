@@ -2452,7 +2452,7 @@ Begin
    Else If Digits > 18 Then
      Digits := 18;
    Str(Value:0:Digits, Result);
-   // Writeln('1. Result ',Result,' currencystring : ',CurrencyString);
+   // Writeln('1. Result ',Result,' currencystring : ',CS);
    Negative:=Result[1] = '-';
    if Negative then
      System.Delete(Result, 1, 1);
@@ -2467,11 +2467,11 @@ Begin
      Dec(P, 3);
      While (P > 1) Do
      Begin
-         Insert(DS, Result, P);
+         Insert(TS, Result, P);
      Dec(P, 3);
      End;
      end;
-   // Writeln('3. Result ',Result,' currencystring : ',CurrencyString);
+   // Writeln('3. Result ',Result,' currencystring : ',CS);
    if Negative then
      RemoveLeadingNegativeSign(Result,DS,TS);
    // Writeln('4. Result ',Result,' currencystring : ',CurrencyString);

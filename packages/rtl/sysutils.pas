@@ -114,9 +114,9 @@ type
       LogMessageOnCreate : Boolean;
   Public
     constructor Create(const Msg: String); reintroduce;
-    constructor CreateFmt(const Msg: string; const Args: array of jsvalue);
+    constructor CreateFmt(const Msg: string; const Args: array of const);
     constructor CreateHelp(const Msg: String; AHelpContext: Integer);
-    constructor CreateFmtHelp(const Msg: string; const Args: array of jsvalue; AHelpContext: Integer);
+    constructor CreateFmtHelp(const Msg: string; const Args: array of const; AHelpContext: Integer);
     function ToString: String; override;
     property HelpContext: Integer read fHelpContext write fHelpContext;
     property Message: String read fMessage write fMessage;
@@ -250,8 +250,8 @@ function AnsiSameText(const s1, s2: String): Boolean; assembler;
 function AnsiCompareStr(const s1, s2: String): Integer;
 procedure AppendStr(var Dest: String; const S: string);
 
-function Format(const Fmt: String; const Args: array of JSValue): String;
-function Format(const Fmt: String; const Args: array of JSValue; const aSettings : TFormatSettings): String;
+function Format(const Fmt: String; const Args: array of const): String;
+function Format(const Fmt: String; const Args: array of const; const aSettings : TFormatSettings): String;
 
 function BytesOf(const AVal: string): TBytes;
 function StringOf(const ABytes: TBytes): string;
@@ -696,10 +696,10 @@ Type
     Class Function Create(const AValue: array of Char; StartIndex: SizeInt; ALen: SizeInt): string; overload; static;
     Class Function EndsText(const ASubText, AText: string): Boolean; static;
     Class Function Equals(const a: string; const b: string): Boolean; overload; static;
-    Class Function Format(const AFormat: string; const args: array of JSValue): string; overload; static;
+    Class Function Format(const AFormat: string; const args: array of const): string; overload; static;
     Class Function IsNullOrEmpty(const AValue: string): Boolean; static;
     Class Function IsNullOrWhiteSpace(const AValue: string): Boolean; static;
-    Class Function Join(const Separator: string; const Values: array of JSValue): string; overload; static;
+    Class Function Join(const Separator: string; const Values: array of const): string; overload; static;
     Class Function Join(const Separator: string; const Values: array of string): string; overload; static;
     Class Function Join(const Separator: string; const Values: array of string; StartIndex: SizeInt; ACount: SizeInt): string; overload; static;
     Class Function LowerCase(const S: string): string; overload; static; inline;
@@ -722,7 +722,7 @@ Type
     Function EndsWith(const AValue: string): Boolean; overload; inline;
     Function EndsWith(const AValue: string; IgnoreCase: Boolean): Boolean; overload;
     Function Equals(const AValue: string): Boolean; overload;
-    Function Format(const args: array of jsValue): string; overload;
+    Function Format(const args: array of const): string; overload;
     Function GetHashCode: Integer;
     Function IndexOf(AValue: Char): SizeInt; overload; inline;
     Function IndexOf(const AValue: string): SizeInt; overload; inline;
@@ -2536,13 +2536,13 @@ Begin
     RemoveLeadingNegativeSign(Result,DS,TS);
 end;
 
-function Format(const Fmt: String; const Args: array of JSValue): String;
+function Format(const Fmt: String; const Args: array of const): String;
 
 begin
   Result:=Format(Fmt,Args,FormatSettings)
 end;
 
-function Format(const Fmt: String; const Args: array of JSValue  ; const aSettings : TFormatSettings): String;
+function Format(const Fmt: String; const Args: array of Const; const aSettings : TFormatSettings): String;
 
 Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
     Hs,ToAdd : String;
@@ -2591,10 +2591,12 @@ Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
 
         ArgPos:=ArgN+1;
 
-        if IsNumber(Args[ArgN]) and IsInteger(Args[ArgN]) then
-          Value:=Integer(Args[ArgN])
+        case Args[ArgN].Vtype of
+           vtInteger: Value := Args[ArgN].VInteger;
+           vtNativeInt: Value := Args[ArgN].VNativeInt;
         else
           DoFormatError(feInvalidFormat,Fmt);
+        end;
         Inc(ChPos);
         end
       else
@@ -2682,7 +2684,7 @@ Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
   end;
 
 
-  function Checkarg (AT : TJSValueType; err:boolean):boolean;
+  function Checkarg (AT : Integer; err:boolean):boolean;
   {
     Check if argument INDEX is of correct type (AT)
     If Index=-1, ArgPos is used, and argpos is augmented with 1
@@ -2695,7 +2697,7 @@ Var ChPos,OldPos,ArgPos,DoArg,Len : SizeInt;
     else
       DoArg:=Index;
     ArgPos:=DoArg+1;
-    If (Doarg>High(Args)) or (GetValueTYpe(Args[Doarg])<>AT) then
+    If (Doarg>High(Args)) or (Args[Doarg].VType<>AT) then
      begin
        if err then
         DoFormatError(feInvalidArgindex,Fmt);
@@ -2725,8 +2727,10 @@ begin
 {$endif}
       Case FChar of
         'D' : begin
-              Checkarg(jvtinteger,true);
-              toAdd:=IntToStr(NativeInt(Args[DoArg]));
+              if Checkarg(vtinteger,false) then
+                toAdd:=IntToStr(Args[DoArg].VInteger)
+              else if CheckArg(vtNativeInt,True) then
+                toAdd:=IntToStr(Args[DoArg].VNativeInt);
               Width:=Abs(width);
               Index:=Prec-Length(ToAdd);
               If ToAdd[1]<>'-' then
@@ -2736,52 +2740,73 @@ begin
                 Insert(StringOfChar('0',Index+1),toadd,2);
               end;
         'U' : begin
-              Checkarg(jvtinteger,True);
-              if NativeInt(Args[Doarg])<0 then
-                DoFormatError(feInvalidArgindex,Fmt);
-              Toadd:=IntToStr(NativeInt(Args[Doarg]));
+              if Checkarg(vtinteger,false) then
+                toAdd:=IntToStr(Cardinal(Args[DoArg].VInteger))
+              else if CheckArg(vtNativeInt,True) then
+                toAdd:=IntToStr(NativeUInt(Args[DoArg].VNativeInt));
               Width:=Abs(width);
               Index:=Prec-Length(ToAdd);
               ToAdd:=StringOfChar('0',Index)+ToAdd
               end;
         'E' : begin
-              if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffFixed,9999,Prec,aSettings);
+              if CheckArg(vtCurrency,false) then
+                ToAdd:=FloatToStrF(Args[doarg].VCurrency,ffExponent,3,Prec,aSettings)
+              else if CheckArg(vtExtended,True) then
+                ToAdd:=FloatToStrF(Args[doarg].VExtended,ffExponent,3,Prec,aSettings);
               end;
         'F' : begin
-              if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffFixed,9999,Prec,aSettings);
+              if CheckArg(vtCurrency,false) then
+                ToAdd:=FloatToStrF(Args[doarg].VCurrency,ffFixed,9999,Prec,aSettings)
+              else if CheckArg(vtExtended,True) then
+                ToAdd:=FloatToStrF(Args[doarg].VExtended,ffFixed,9999,Prec,aSettings);
               end;
         'G' : begin
-              if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffGeneral,Prec,3,aSettings);
+              if CheckArg(vtCurrency,false) then
+                ToAdd:=FloatToStrF(Args[doarg].VCurrency,ffGeneral,Prec,3,aSettings)
+              else if CheckArg(vtExtended,True) then
+                ToAdd:=FloatToStrF(Args[doarg].VExtended,ffGeneral,Prec,3,aSettings);
               end;
         'N' : begin
-              if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffNumber,9999,Prec,aSettings);
+              if CheckArg(vtCurrency,false) then
+                ToAdd:=FloatToStrF(Args[doarg].VCurrency,ffNumber,9999,Prec,aSettings)
+              else if CheckArg(vtExtended,True) then
+                ToAdd:=FloatToStrF(Args[doarg].VExtended,ffNumber,9999,Prec,aSettings);
               end;
         'M' : begin
-              if CheckArg(jvtFloat,false) or CheckArg(jvtInteger,True) then
-                ToAdd:=FloatToStrF(Double(Args[doarg]),ffCurrency,9999,Prec,aSettings);
+              if CheckArg(vtCurrency,false) then
+                ToAdd:=FloatToStrF(Args[doarg].VCurrency,ffCurrency,9999,Prec,aSettings)
+              else if CheckArg(vtExtended,True) then
+                ToAdd:=FloatToStrF(Args[doarg].VExtended,ffCurrency,9999,Prec,aSettings);
               end;
         'S' : begin
-              CheckArg(jvtString,true);
-              hs:=String(Args[doarg]);
+              if CheckArg(vtUnicodeString,false) then
+                hs:=Args[doarg].VUnicodeString
+              else if CheckArg(vtWideChar,True) then
+                hs:=Args[doarg].VWideChar;
               Index:=Length(hs);
               If (Prec<>-1) and (Index>Prec) then
                 Index:=Prec;
               ToAdd:=Copy(hs,1,Index);
               end;
         'P' : Begin
-              CheckArg(jvtInteger,true);
-              ToAdd:=IntToHex(NativeInt(Args[DoArg]),31);
+              if CheckArg(vtInteger,false) then
+                ToAdd:=IntToHex(Args[DoArg].VInteger,8)
+              else if CheckArg(vtInteger,true) then
+                ToAdd:=IntToHex(Args[DoArg].VNativeInt,16);
               end;
         'X' : begin
-              Checkarg(jvtinteger,true);
-              vq:=nativeInt(Args[Doarg]);
-              index:=31; // May need to adjust to NativeInt
+              if Checkarg(vtinteger,false) then
+                begin
+                vq:=Args[Doarg].VInteger;
+                Index:=16;
+                end
+              else if Checkarg(vtNativeint,True) then
+                begin
+                vq:=Args[Doarg].VNativeInt;
+                index:=31; // May need to adjust to NativeInt
+                end;
               If Prec>index then
-                ToAdd:=IntToHex(NativeInt(vq),index)
+                ToAdd:=IntToHex(vq,index)
               else
                 begin
                 // determine minimum needed number of hex digits.
@@ -2902,7 +2927,7 @@ begin
     Writeln('Created exception ',ClassName,' with message: ',Msg);
 end;
 
-constructor Exception.CreateFmt(const Msg: string; const Args: array of jsvalue
+constructor Exception.CreateFmt(const Msg: string; const Args: array of Const
   );
 begin
   //writeln('Exception.CreateFmt START ',ClassName,' "',Msg,'" Args=',Args);
@@ -2917,7 +2942,7 @@ begin
 end;
 
 constructor Exception.CreateFmtHelp(const Msg: string;
-  const Args: array of jsvalue; AHelpContext: Integer);
+  const Args: array of Const; AHelpContext: Integer);
 begin
   Create(Format(Msg,Args));
   fHelpContext:=AHelpContext;
@@ -5615,7 +5640,7 @@ begin
 end;
 
 
-class function TStringHelper.Format(const AFormat: string; const args: array of JSValue): string;
+class function TStringHelper.Format(const AFormat: string; const args: array of const): string;
 begin
   Result:=Sysutils.Format(AFormat,Args);
 end;
@@ -5633,7 +5658,7 @@ begin
 end;
 
 
-class function TStringHelper.Join(const Separator: string; const Values: array of JSValue): string;
+class function TStringHelper.Join(const Separator: string; const Values: array of const): string;
 
 begin
   Result:=TJSArray(Values).Join(Separator);
@@ -5846,7 +5871,7 @@ begin
 end;
 
 
-function TStringHelper.Format(const args: array of jsValue): string;
+function TStringHelper.Format(const args: array of const): string;
 
 begin
   Result:=Sysutils.Format(Self,Args);

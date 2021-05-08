@@ -874,7 +874,7 @@ begin
   Raise EExprParser.Create(Msg);
 end;
 
-Procedure RaiseParserError(Fmt : String; Args : Array of JSValue);
+Procedure RaiseParserError(Fmt : String; Args : Array of Const);
 begin
   Raise EExprParser.CreateFmt(Fmt,Args);
 end;

@@ -304,10 +304,10 @@ type
     function ToStringArray: TStringDynArray; overload;
     function ToStringArray(aStart,aEnd : Integer): TStringDynArray; overload;
     function Add(const S: string): Integer; virtual; overload;
-    function Add(const Fmt : string; const Args : Array of JSValue): Integer; overload;
-    function AddFmt(const Fmt : string; const Args : Array of JSValue): Integer;
+    function Add(const Fmt : string; const Args : Array of const): Integer; overload;
+    function AddFmt(const Fmt : string; const Args : Array of const): Integer;
     function AddObject(const S: string; AObject: TObject): Integer; virtual; overload;
-    function AddObject(const Fmt: string; Args : Array of JSValue; AObject: TObject): Integer; overload;
+    function AddObject(const Fmt: string; Args : Array of const; AObject: TObject): Integer; overload;
     procedure Append(const S: string);
     procedure AddStrings(TheStrings: TStrings); overload; virtual;
     procedure AddStrings(TheStrings: TStrings; ClearFirst : Boolean); overload;
@@ -1307,7 +1307,7 @@ type
     procedure CheckToken(T: TParserToken);
     procedure CheckTokenSymbol(const S: string);
     procedure Error(const Ident: string);
-    procedure ErrorFmt(const Ident: string; const Args: array of JSValue);
+    procedure ErrorFmt(const Ident: string; const Args: array of const);
     procedure ErrorStr(const Message: string);
     procedure HexToBinary(Stream: TStream);
     function NextToken: TParserToken;
@@ -3426,13 +3426,13 @@ begin
 end;
 
 
-function TStrings.Add(const Fmt: string; const Args: array of JSValue): Integer;
+function TStrings.Add(const Fmt: string; const Args: array of const): Integer;
 
 begin
   Result:=Add(Format(Fmt,Args));
 end;
 
-function TStrings.AddFmt(const Fmt: string; const Args: array of JSValue): Integer;
+function TStrings.AddFmt(const Fmt: string; const Args: array of const): Integer;
 
 begin
   Result:=Add(Format(Fmt,Args));
@@ -3446,7 +3446,7 @@ begin
   Objects[result]:=AObject;
 end;
 
-function TStrings.AddObject(const Fmt: string; Args: array of JSValue; AObject: TObject): Integer;
+function TStrings.AddObject(const Fmt: string; Args: array of const; AObject: TObject): Integer;
 
 begin
   Result:=AddObject(Format(Fmt,Args),AObject);
@@ -10396,7 +10396,7 @@ begin
   ErrorStr(Ident);
 end;
 
-procedure TParser.ErrorFmt(const Ident: string; const Args: array of JSValue);
+procedure TParser.ErrorFmt(const Ident: string; const Args: array of const);
 begin
   ErrorStr(Format(Ident,Args));
 end;

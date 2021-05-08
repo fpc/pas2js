@@ -1774,8 +1774,8 @@ Const
 
 Procedure DatabaseError (Const Msg : String); overload;
 Procedure DatabaseError (Const Msg : String; Comp : TComponent); overload;
-Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of JSValue); overload;
-Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of JSValue; Comp : TComponent); overload;
+Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of Const); overload;
+Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of Const; Comp : TComponent); overload;
 Function ExtractFieldName(Const Fields: String; var Pos: Integer): String;
 
 // function SkipComments(var p: PChar; EscapeSlash, EscapeRepeat : Boolean) : boolean;
@@ -1805,13 +1805,13 @@ begin
     DatabaseError(Msg);
 end;
 
-Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of JSValue);
+Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of Const);
 
 begin
   Raise EDatabaseError.CreateFmt(Fmt,Args);
 end;
 
-Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of JSValue;
+Procedure DatabaseErrorFmt (Const Fmt : String; Const Args : Array Of Const;
                             Comp : TComponent);
 begin
   if assigned(comp) then

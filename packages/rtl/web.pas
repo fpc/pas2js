@@ -1897,6 +1897,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   TJSParamEnumCallBack = reference to procedure (const aKey,aValue : string);
   TJSURLSearchParams = class external name 'URLSearchParams' (TJSObject)
   Public
+    constructor new(aQuery : String);
     Procedure append(const aName,aValue : string);
     Procedure delete(const aName : string);
     Function entries : TJSIterator;

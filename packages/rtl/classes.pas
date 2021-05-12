@@ -2278,6 +2278,67 @@ end;
 // Needed by Sort method.
 
 Procedure QuickSort(aList: TJSValueDynArray; L, R : Longint;
+                    const Compare: TListSortCompareFunc
+                    );
+var
+  I, J, PivotIdx : SizeUInt;
+  P, Q : JSValue;
+begin
+ repeat
+   I := L;
+   J := R;
+   PivotIdx := L + ((R - L) shr 1); { same as ((L + R) div 2), but without the possibility of overflow }
+   P := aList[PivotIdx];
+   repeat
+     while (I < PivotIdx) and (Compare(P, aList[i]) > 0) do
+       Inc(I);
+     while (J > PivotIdx) and (Compare(P, aList[J]) < 0) do
+       Dec(J);
+     if I < J then
+     begin
+       Q := aList[I];
+       aList[I] := aList[J];
+       aList[J] := Q;
+       if PivotIdx = I then
+       begin
+         PivotIdx := J;
+         Inc(I);
+       end
+       else if PivotIdx = J then
+       begin
+         PivotIdx := I;
+         Dec(J);
+       end
+       else
+       begin
+         Inc(I);
+         Dec(J);
+       end;
+     end;
+   until I >= J;
+   // sort the smaller range recursively
+   // sort the bigger range via the loop
+   // Reasons: memory usage is O(log(n)) instead of O(n) and loop is faster than recursion
+   if (PivotIdx - L) < (R - PivotIdx) then
+   begin
+     if (L + 1) < PivotIdx then
+       QuickSort(aList, L, PivotIdx - 1, Compare);
+     L := PivotIdx + 1;
+   end
+   else
+   begin
+     if (PivotIdx + 1) < R then
+       QuickSort(aList, PivotIdx + 1, R, Compare);
+     if (L + 1) < PivotIdx then
+       R := PivotIdx - 1
+     else
+       exit;
+   end;
+ until L >= R;
+end;
+
+(*
+Procedure QuickSort(aList: TJSValueDynArray; L, R : Longint;
                     const Compare: TListSortCompareFunc);
 var
   I, J : Longint;
@@ -2318,6 +2379,7 @@ begin
     end;
   until L >= R;
 end;
+*)
 
 procedure TFPList.Sort(const Compare: TListSortCompare);
 begin

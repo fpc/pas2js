@@ -17956,11 +17956,20 @@ begin
   '{$modeswitch externalclass}',
   'type',
   '  TExtA = class external name ''ExtA''',
+  '  public type',
+  '    TExtB = class external name ''ExtB''',
+  '    public type',
+  '      TExtC = class external name ''ExtC''',
+  '        constructor New;',
+  '        constructor New(i: word);',
+  '      end;',
+  '    end;',
   '    constructor Create;',
   '    constructor Create(i: longint; j: longint = 2);',
   '  end;',
   'var',
   '  A: texta;',
+  '  C: texta.textb.textc;',
   'begin',
   '  a:=texta.create;',
   '  a:=texta(texta.create);',
@@ -17974,11 +17983,15 @@ begin
   '  a:=test1.texta.create;',
   '  a:=test1.texta.create();',
   '  a:=test1.texta.create(3);',
+  '  c:=texta.textb.textc.new;',
+  '  c:=texta.textb.textc.new();',
+  '  c:=texta.textb.textc.new(4);',
   '']);
   ConvertProgram;
   CheckSource('TestExternalClass_Constructor',
     LinesToStr([ // statements
     'this.A = null;',
+    'this.C = null;',
     '']),
     LinesToStr([ // $mod.$main
     '$mod.A = new ExtA.Create();',
@@ -17991,6 +18004,9 @@ begin
     '$mod.A = new ExtA.Create();',
     '$mod.A = new ExtA.Create();',
     '$mod.A = new ExtA.Create(3,2);',
+    '$mod.C = new ExtA.ExtB.ExtC();',
+    '$mod.C = new ExtA.ExtB.ExtC();',
+    '$mod.C = new ExtA.ExtB.ExtC(4);',
     '']));
 end;
 

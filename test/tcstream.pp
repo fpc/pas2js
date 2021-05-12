@@ -103,6 +103,8 @@ type
     Procedure TestDataString;
     Procedure TestWrite;
     Procedure TestRead;
+    Procedure TestReadString;
+    Procedure TestWriteString;
     Procedure TestCopyFrom;
   end;
 
@@ -159,6 +161,28 @@ begin
     Stream.ReadBufferData(C);
     AssertEquals(Format('Character at',[i]),S[i],C);
     end;
+end;
+
+procedure TTestStringStream.TestReadString;
+Var
+  S : String;
+
+begin
+  S:='ABCDEFGH';
+  DoCreate(S);
+  AssertEquals('2 characters','AB',Stream.ReadString(4));
+  AssertEquals('Top off characters','CDEFGH',Stream.ReadString(22));
+end;
+
+procedure TTestStringStream.TestWriteString;
+begin
+  DoCreate('');
+  Stream.WriteString('AB');
+  AssertEquals('Length 1',4,Stream.Size);
+  AssertEquals('Datastring 1','AB',Stream.DataString);
+  Stream.WriteString('CDEFGH');
+  AssertEquals('Length 2',16,Stream.Size);
+  AssertEquals('Datastring 2','ABCDEFGH',Stream.DataString);
 end;
 
 procedure TTestStringStream.TestCopyFrom;
@@ -861,6 +885,6 @@ end;
 
 
 initialization
-  RegisterTests([TTestStream,TTestBigendianStream,TTestStringStream]);
+  RegisterTests([{TTestStream,TTestBigendianStream,}TTestStringStream]);
 end.
 

@@ -1267,7 +1267,7 @@ type
   TParser = class(TObject)
   private
     fStream : TStream;
-    fBuf : Array of Char;
+    fBuf : Array of WideChar;
     FBufLen : integer;
     fPos : integer;
     fDeltaPos : integer;
@@ -6733,7 +6733,7 @@ end;
 function TBinaryObjectReader.ReadIdent(ValueType: TValueType): String;
 var
   i: Byte;
-  c : Char;
+  c : WideChar;
 begin
   case ValueType of
     vaIdent:
@@ -6822,7 +6822,7 @@ end;
 function TBinaryObjectReader.ReadStr: String;
 var
   l,i: Byte;
-  c : Char;
+  c : WideChar;
 begin
   FStream.ReadBufferData(L);
   SetLength(Result,L);
@@ -6836,7 +6836,7 @@ end;
 function TBinaryObjectReader.ReadString(StringType: TValueType): String;
 var
   i: Integer;
-  C : Char;
+  C : WideChar;
 
 begin
   Result:='';
@@ -9863,7 +9863,7 @@ function TObjectStreamConverter.ReadStr: String;
 
 var
   l,i: Byte;
-  c : Char;
+  c : WideChar;
 
 begin
   Input.ReadBufferData(L);
@@ -9879,7 +9879,7 @@ function TObjectStreamConverter.ReadString(StringType: TValueType): String;
 
 var
   i: Integer;
-  C : Char;
+  C : WideChar;
 
 begin
   Result:='';

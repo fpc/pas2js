@@ -2260,11 +2260,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property parentRule : TJSCSSRule read FParentRule;
   end;
 
-
-
-
-
   { TJSHTMLElement }
+
   TJSHTMLElement = class external name 'HTMLElement' (TJSElement)
   private
     FDataset: TJSObject ; external name 'dataset';
@@ -2373,6 +2370,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property offsetTop : Double Read FOffsetTop;
     property offsetWidth : Double Read FOffsetWidth;
     property offsetParent : TJSElement Read FOffsetParent;
+  end;
+
+  TJSHTMLDivElement = class external name 'HTMLDivElement' (TJSHTMLElement)
   end;
 
   TJSHTMLFormControlsCollection = class external name 'HTMLFormControlsCollection' (TJSHTMLCollection)

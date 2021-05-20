@@ -2024,7 +2024,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function redirect(url: String; Status: NativeInt): TJSResponse;
   end;
 
-  { TJSWindow }
   TJSDOMHighResTimeStamp = Double;
   TFrameRequestCallback = reference to procedure (aTime: TJSDOMHighResTimeStamp);
 
@@ -2033,7 +2032,26 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     transfer : TJSValueDynArray;
   end;
 
+  TJSIdleCallbackOptions = class
+  public
+    timeout: Cardinal;
+  end;
+
+  TJSIdleDeadline = class external name 'IdleDeadline'
+  private
+    FDidTimeout: Boolean; external name 'didTimeout';
+  public
+    function timeRemaining: TJSDOMHighResTimeStamp;
+
+    property didTimeout: Boolean read FDidTimeout;
+  end;
+
+  TIdleCallbackProc = reference to procedure(idleDeadline: TJSIdleDeadline);
+
   TJSWindowArray = Array of TJSWindow;
+
+  { TJSWindow }
+
   TJSWindow = class external name 'Window' (TJSObject)
   Private
     FClosed: boolean; external name 'closed';
@@ -2183,6 +2201,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Function setTimeout(ahandler : TJSTimerCallBack; aTimeout : NativeUInt) : NativeInt; varargs;
     Function setTimeout(ahandler : TJSTimerCallBack) : NativeInt;
     procedure stop;
+    procedure cancelIdleCallback(handle: NativeInt);
+    function requestIdleCallback(handler: TIdleCallbackProc): NativeInt; overload;
+    function requestIdleCallback(handler: TIdleCallbackProc; options: TJSIdleCallbackOptions): NativeInt; overload;
     { public properties }
     property console : TJSConsole Read FConsole;
     property closed : boolean read FClosed;
@@ -2196,7 +2217,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property innerHeight : NativeInt Read FInnerheight;
     Property innerWidth : NativeInt Read FInnerWidth;
     Property length : NativeInt Read FLength;
-    Property localStorage : TJSStorage Read FLocalStorage; 
+    Property localStorage : TJSStorage Read FLocalStorage;
     property location : TJSLocation Read FLocation;
     Property locationString : String read FLocationString write FLocationString;
     property locationbar : TJSLocationBar Read FLocationBar;
@@ -2215,10 +2236,10 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property scrollX : NativeInt read FScrollX;
     Property scrollY : NativeInt read FScrollY;
     Property _Self : TJSWindow read FSelf;
-    Property sessionStorage : TJSStorage Read FSessionStorage; 
+    Property sessionStorage : TJSStorage Read FSessionStorage;
     property toolbar : TJSToolBar Read FToolBar;
     property top : TJSWindow Read FTop;
-    property URL : TJSURL Read FURL; 
+    property URL : TJSURL Read FURL;
   end;
 
   { TJSCSSStyleDeclaration }

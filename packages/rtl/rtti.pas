@@ -240,6 +240,7 @@ type
     FTypeInfo: TTypeInfo;
     //FMethods: specialize TArray<TRttiMethod>;
     function GetAsInstance: TRttiInstanceType;
+    function GetQualifiedName: String;
   protected
     function GetName: string; override;
     //function GetHandle: Pointer; override;
@@ -278,6 +279,7 @@ type
     property AsInstance: TRttiInstanceType read GetAsInstance;
     property TypeKind: TTypeKind read GetTypeKind;
     //property TypeSize: integer read GetTypeSize;
+    property QualifiedName: String read GetQualifiedName;
   end;
 
   TRttiTypeClass = class of TRttiType;
@@ -1717,6 +1719,11 @@ end;
 function TRttiType.GetFields: TRttiFieldArray;
 begin
   Result := nil;
+end;
+
+function TRttiType.GetQualifiedName: String;
+begin
+  Result := Format('%s.%s', [Handle.Module.Name, Name]);
 end;
 
 { TVirtualInterface }

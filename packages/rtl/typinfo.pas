@@ -298,8 +298,9 @@ type
 
   { TTypeInfoExtClass - Kind = tkExtClass }
 
-  TTypeInfoExtClass = class external name 'rtl.tTypeInfoExtClass'(TTypeInfoClass)
+  TTypeInfoExtClass = class external name 'rtl.tTypeInfoExtClass'(TTypeInfo)
   public
+    Ancestor: TTypeInfoExtClass external name 'ancestor';
     JSClassName: String external name 'jsclass';
   end;
 

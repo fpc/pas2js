@@ -81,7 +81,7 @@ unit Pas2JsFiler;
 
 {$mode objfpc}{$H+}
 
-{$IF FPC_FULLVERSION>30200}
+{$IF FPC_FULLVERSION>=30300}
 {$WARN 6060 off : case statement does not handle all possible cases}
 {$ENDIF}
 

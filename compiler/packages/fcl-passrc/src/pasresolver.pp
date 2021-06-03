@@ -1806,6 +1806,8 @@ type
     procedure OnRangeCheckEl(Sender: TResExprEvaluator; El: TPasElement;
       var MsgType: TMessageType); virtual;
     function EvalBaseTypeCast(Params: TParamsExpr; bt: TResolverBaseType): TResEvalvalue;
+    function EvalLengthOfString(ParamResolved: TPasResolverResult;
+      Param: TPasExpr; Flags: TResEvalFlags): TResEvalValue; virtual;
   protected
     // generic/specialize
     type
@@ -14822,6 +14824,7 @@ begin
       '0'..'9': i:=i*base+ord(Value[p])-ord('0');
       'A'..'Z': i:=i*base+ord(Value[p])-ord('A')+10;
       'a'..'z': i:=i*base+ord(Value[p])-ord('a')+10;
+      else break;
       end;
       inc(p);
       end;
@@ -15901,6 +15904,28 @@ begin
   finally
     ReleaseEvalValue(Value);
   end;
+end;
+
+function TPasResolver.EvalLengthOfString(ParamResolved: TPasResolverResult;
+  Param: TPasExpr; Flags: TResEvalFlags): TResEvalValue;
+var
+  Value: TResEvalValue;
+begin
+  Result:=nil;
+  if rrfReadable in ParamResolved.Flags then
+    begin
+    Value:=Eval(Param,Flags);
+    if Value=nil then exit;
+    case Value.Kind of
+    {$ifdef FPC_HAS_CPSTRING}
+    revkString:
+      Result:=TResEvalInt.CreateValue(length(TResEvalString(Value).S));
+    {$endif}
+    revkUnicodeString:
+      Result:=TResEvalInt.CreateValue(length(TResEvalUTF16(Value).S));
+    end;
+    ReleaseEvalValue(Value);
+    end
 end;
 
 procedure TPasResolver.AddGenericTemplateIdentifiers(
@@ -18672,7 +18697,6 @@ procedure TPasResolver.BI_Length_OnEval(Proc: TResElDataBuiltInProc;
 var
   Param, Expr: TPasExpr;
   ParamResolved: TPasResolverResult;
-  Value: TResEvalValue;
   Ranges: TPasExprArray;
   IdentEl: TPasElement;
 begin
@@ -18681,22 +18705,7 @@ begin
   Param:=Params.Params[0];
   ComputeElement(Param,ParamResolved,[]);
   if ParamResolved.BaseType in btAllStringAndChars then
-    begin
-    if rrfReadable in ParamResolved.Flags then
-      begin
-      Value:=Eval(Param,Flags);
-      if Value=nil then exit;
-      case Value.Kind of
-      {$ifdef FPC_HAS_CPSTRING}
-      revkString:
-        Evaluated:=TResEvalInt.CreateValue(length(TResEvalString(Value).S));
-      {$endif}
-      revkUnicodeString:
-        Evaluated:=TResEvalInt.CreateValue(length(TResEvalUTF16(Value).S));
-      end;
-      ReleaseEvalValue(Value);
-      end
-    end
+    Evaluated:=EvalLengthOfString(ParamResolved,Param,Flags)
   else if ParamResolved.BaseType=btContext then
     begin
     if (ParamResolved.LoTypeEl.ClassType=TPasArrayType) then
@@ -19262,6 +19271,7 @@ var
   Param: TPasExpr;
   ParamResolved: TPasResolverResult;
   C: TClass;
+  bt: TResolverBaseType;
 begin
   if not CheckBuiltInMinParamCount(Proc,Expr,1,RaiseOnError) then
     exit(cIncompatible);
@@ -19271,12 +19281,15 @@ begin
   Param:=Params.Params[0];
   ComputeElement(Param,ParamResolved,[]);
   Result:=cIncompatible;
-  if ParamResolved.BaseType in btAllRanges then
+  bt:=ParamResolved.BaseType;
+  if bt in btAllRanges then
     // e.g. high(char)
     Result:=cExact
-  else if ParamResolved.BaseType=btSet then
+  else if bt=btSet then
     Result:=cExact
-  else if (ParamResolved.BaseType=btContext) then
+  else if bt in btAllStrings then
+    Result:=cExact
+  else if (bt=btContext) then
     begin
     C:=ParamResolved.LoTypeEl.ClassType;
     if (C=TPasArrayType)
@@ -19331,6 +19344,12 @@ begin
     begin
     ResolvedEl.BaseType:=ResolvedEl.SubType;
     ResolvedEl.SubType:=btNone;
+    end
+  else if ResolvedEl.BaseType in btAllStrings then
+    begin
+    // high(aString)
+    SetResolverIdentifier(ResolvedEl,BaseTypeLength,Proc.Proc,
+      FBaseTypes[BaseTypeLength],FBaseTypes[BaseTypeLength],[rrfReadable]);
     end
   else
     ;// ordinal: result type is argument type
@@ -19511,6 +19530,13 @@ begin
       else
         Evaluated:=TResEvalUTF16.CreateValue(#$ffff);
       end
+    else if bt in btAllStrings then
+      begin
+      if Proc.BuiltIn=bfLow then
+        Evaluated:=TResEvalInt.CreateValue(1)
+      else
+        Evaluated:=EvalLengthOfString(ParamResolved,Param,Flags);
+      end
     else
       begin
       {$IFDEF VerbosePasResolver}
@@ -19523,6 +19549,13 @@ begin
     begin
     // e.g. type t = 2..10;
     Evaluated:=EvalRangeLimit(TPasRangeType(TypeEl).RangeExpr,FLags,Proc.BuiltIn=bfLow,Param);
+    end
+  else if ParamResolved.BaseType in btAllStrings then
+    begin
+    if Proc.BuiltIn=bfLow then
+      Evaluated:=TResEvalInt.CreateValue(1)
+    else
+      Evaluated:=EvalLengthOfString(ParamResolved,Param,Flags);
     end
   else
     begin

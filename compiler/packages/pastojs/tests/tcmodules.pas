@@ -7815,8 +7815,11 @@ begin
   '  c = string(''ä'');',
   '  d = UnicodeString(''b'');',
   '  e = UnicodeString(''ö'');',
+  '  f = low(a)+high(b);',
+  '  g: word = low(a);',
   'var',
   '  s: string = ''abc'';',
+  '  i: longint;',
   'begin',
   '  s:='''';',
   '  s:=#13#10;',
@@ -7835,6 +7838,7 @@ begin
   '  s:=concat(s);',
   '  s:=concat(s,''a'',s);',
   '  s:=#250#269;',
+  '  i:=low(s)+high(a);',
   //'  s:=#$2F804;',
   // ToDo: \uD87E\uDC04 -> \u{2F804}
   '']);
@@ -7846,7 +7850,10 @@ begin
     'this.c = "ä";',
     'this.d = "b";',
     'this.e = "ö";',
+    'this.f = 1 + this.b.length;',
+    'this.g = 1;',
     'this.s="abc";',
+    'this.i = 0;',
     '']),
     LinesToStr([
     '$mod.s="";',
@@ -7866,6 +7873,7 @@ begin
     '$mod.s = $mod.s;',
     '$mod.s = $mod.s.concat("a", $mod.s);',
     '$mod.s = "úč";',
+    '$mod.i = 1 + $mod.a.length;',
     '']));
 end;
 

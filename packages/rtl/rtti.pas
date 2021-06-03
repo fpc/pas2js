@@ -97,9 +97,18 @@ type
   { TRttiObject }
 
   TRttiObject = class abstract
+  private
+    FAttributesLoaded: Boolean;
+    FAttributes: TCustomAttributeArray;
+  protected
+    function LoadCustomAttributes: TCustomAttributeArray; virtual;
   public
+    destructor Destroy; override;
+
     //property Handle: Pointer read GetHandle;  not supported in pas2js
-    function GetAttributes: TCustomAttributeArray; virtual;
+    function GetAttributes: TCustomAttributeArray;
+
+    property Attributes: TCustomAttributeArray read GetAttributes;
   end;
 
   { TRttiNamedObject }
@@ -127,9 +136,9 @@ type
     function GetMemberTypeInfo: TTypeMember;
     function GetName: string; override;
     function GetVisibility: TMemberVisibility; virtual;
+    function LoadCustomAttributes: TCustomAttributeArray; override;
   public
     constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
-    function GetAttributes: TCustomAttributeArray; override;
 
     property MemberTypeInfo: TTypeMember read GetMemberTypeInfo;
     property Visibility: TMemberVisibility read GetVisibility;
@@ -236,7 +245,6 @@ type
 
   TRttiType = class(TRttiNamedObject)
   private
-    FAttributes: TCustomAttributeArray;
     FTypeInfo: TTypeInfo;
     //FMethods: specialize TArray<TRttiMethod>;
     function GetAsInstance: TRttiInstanceType;
@@ -252,10 +260,9 @@ type
     function GetTypeKind: TTypeKind; virtual;
     //function GetTypeSize: integer; virtual;
     //function GetBaseType: TRttiType; virtual;
+    function LoadCustomAttributes: TCustomAttributeArray; override;
   public
     constructor Create(ATypeInfo : PTypeInfo);
-    destructor Destroy; override;
-    function GetAttributes: TCustomAttributeArray; override;
     function GetField(const AName: string): TRttiField; virtual;
     function GetFields: TRttiFieldArray; virtual;
     function GetMethods: TRttiMethodArray; virtual;
@@ -1350,9 +1357,32 @@ end;
 
 { TRttiObject }
 
+destructor TRttiObject.Destroy;
+var
+  Attribute: TCustomAttribute;
+begin
+  for Attribute in FAttributes do
+    Attribute.Free;
+
+  FAttributes := nil;
+
+  inherited Destroy;
+end;
+
+function TRttiObject.LoadCustomAttributes: TCustomAttributeArray;
+begin
+  Result := nil;
+end;
+
 function TRttiObject.GetAttributes: TCustomAttributeArray;
 begin
-  Result:=nil;
+  if not FAttributesLoaded then
+  begin
+    FAttributes := LoadCustomAttributes;
+    FAttributesLoaded := True;
+  end;
+
+  Result := FAttributes;
 end;
 
 { TRttiNamedObject }
@@ -1385,9 +1415,9 @@ begin
   FTypeInfo:=ATypeInfo;
 end;
 
-function TRttiMember.GetAttributes: TCustomAttributeArray;
+function TRttiMember.LoadCustomAttributes: TCustomAttributeArray;
 begin
-  Result:=inherited GetAttributes;
+  Result:=GetRTTIAttributes(FTypeInfo.Attributes);
 end;
 
 function TRttiMember.GetMemberTypeInfo: TTypeMember;
@@ -1652,20 +1682,9 @@ begin
   FTypeInfo:=TTypeInfo(ATypeInfo);
 end;
 
-destructor TRttiType.Destroy;
-var
-  o: TCustomAttribute;
+function TRttiType.LoadCustomAttributes: TCustomAttributeArray;
 begin
-  for o in FAttributes do
-    o.Free;
-  FAttributes:=nil;
-  inherited Destroy;
-end;
-
-function TRttiType.GetAttributes: TCustomAttributeArray;
-begin
-  FAttributes:=GetRTTIAttributes(FTypeInfo.Attributes);
-  Result:=FAttributes;
+  Result:=GetRTTIAttributes(Handle.Attributes);
 end;
 
 function TRttiType.GetDeclaredProperties: TRttiPropertyArray;

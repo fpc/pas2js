@@ -2464,24 +2464,20 @@ end;
 procedure TDataSet.CalculateFields(var Buffer: TDataRecord);
 var
   i: Integer;
-  OldState: TDatasetState;
 begin
   FCalcBuffer := Buffer;
+
   if FState <> dsInternalCalc then
   begin
-    OldState := FState;
-    FState := dsCalcFields;
-    try
-      ClearCalcFields(FCalcBuffer);
-      if not IsUniDirectional then
-        for i := 0 to FFieldList.Count - 1 do
-          if FFieldList[i].FieldKind = fkLookup then
-            FFieldList[i].CalcLookupValue;
-    finally
-      DoOnCalcFields;
-      FState := OldState;
-    end;
+    ClearCalcFields(FCalcBuffer);
+
+    if not IsUniDirectional then
+      for i := 0 to FFieldList.Count - 1 do
+        if FFieldList[i].FieldKind = fkLookup then
+          FFieldList[i].CalcLookupValue;
   end;
+
+  DoOnCalcFields;
 end;
 
 procedure TDataSet.CheckActive;
@@ -3142,10 +3138,20 @@ begin
 end;
 
 procedure TDataSet.GetCalcFields(var Buffer: TDataRecord);
-
+var
+  i: Integer;
+  OldState: TDatasetState;
 begin
   if (FCalcFieldsCount > 0) or FInternalCalcFields then
-    CalculateFields(Buffer);
+  begin
+    OldState := FState;
+    FState := dsCalcFields;
+    try
+      CalculateFields(Buffer);
+    finally
+      FState := OldState;
+    end;
+  end;
 end;
 
 function TDataSet.GetCanModify: Boolean;

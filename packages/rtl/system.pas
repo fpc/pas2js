@@ -664,6 +664,11 @@ function valint(const S: String; MinVal, MaxVal: NativeInt; out Code: Integer): 
 var
   x: double;
 begin
+  if S='' then
+    begin
+    code:=1;
+    exit;
+    end;
   x:=Number(S);
   if isNaN(x) then
     case copy(s,1,1) of
@@ -694,6 +699,11 @@ procedure val(const S: String; out NI: NativeUInt; out Code: Integer);
 var
   x : double;
 begin
+  if S='' then
+    begin
+    code:=1;
+    exit;
+    end;
   x:=Number(S);
   if isNaN(x) or (X<>Int(X)) or (X<0) then
     Code:=1
@@ -738,6 +748,11 @@ procedure val(const S : String; out d : double; out Code : Integer);
 Var
   x: double;
 begin
+  if S='' then
+    begin
+    code:=1;
+    exit;
+    end;
   x:=Number(S);
   if isNaN(x) then
     Code:=1

@@ -6923,8 +6923,10 @@ begin
     vaInt64,
     vaDouble:
       SkipBytes(8);
-    vaString, vaIdent:
+    vaIdent:
       ReadStr;
+    vaString:
+      ReadString(vaString);
     vaBinary:
       begin
         Count:=LongInt(ReadDWord);

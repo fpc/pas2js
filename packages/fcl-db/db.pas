@@ -8231,6 +8231,7 @@ procedure TDatasource.SetEnabled(Value: Boolean);
 
 begin
   FEnabled:=Value;
+  ProcessEvent(deUpdateState,0);
 end;
 
 
@@ -8283,7 +8284,7 @@ begin
     begin
     NeedDataChange:=(FState=dsInactive);
     FLastState:=FState;
-    If Assigned(Dataset) then
+    If Assigned(Dataset) and enabled then
       FState:=Dataset.State
     else
       FState:=dsInactive;

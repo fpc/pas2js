@@ -39,8 +39,8 @@ type
     class function FromArray(TypeInfo: TTypeInfo; const Values: specialize TArray<TValue>): TValue; static;
     class function FromJSValue(v: JSValue): TValue; static;
     class function FromOrdinal(ATypeInfo: TTypeInfo; AValue: JSValue): TValue; static;
-    class function Make(TypeInfo: TTypeInfo; const Value: JSValue): TValue; static;
-    class function Make(const Value: TValue): TValue; static;
+    class procedure Make(ABuffer: JSValue; ATypeInfo: PTypeInfo; var Result: TValue); overload; static;
+    generic class procedure Make<T>(const Value: T; var Result: TValue); overload; static;
 
     function AsBoolean: boolean;
     function AsClass: TClass;
@@ -590,18 +590,18 @@ end;
 
 generic class function TValue.From<T>(const Value: T): TValue;
 begin
-  Result := Make(System.TypeInfo(T), Value);
+  Make(Value, System.TypeInfo(T), Result);
 end;
 
-class function TValue.Make(TypeInfo: TTypeInfo; const Value: JSValue): TValue;
+class procedure TValue.Make(ABuffer: JSValue; ATypeInfo: PTypeInfo; var Result: TValue);
 begin
-  Result.FData := Value;
-  Result.FTypeInfo := TypeInfo;
+  Result.FData := ABuffer;
+  Result.FTypeInfo := ATypeInfo;
 end;
 
-class function TValue.Make(const Value: TValue): TValue;
+generic class procedure TValue.Make<T>(const Value: T; var Result: TValue);
 begin
-  Result := TValue.Make(Value.TypeInfo, Value.AsJSValue);
+  TValue.Make(Value, System.TypeInfo(T), Result);
 end;
 
 function TValue.Cast(ATypeInfo: TTypeInfo; const EmptyAsAnyType: Boolean): TValue;
@@ -666,7 +666,7 @@ begin
 
   if ATypeInfo = System.TypeInfo(TValue) then
   begin
-    AResult := TValue.Make(System.TypeInfo(TValue), Self);
+    TValue.Make(Self, System.TypeInfo(TValue), AResult);
     Exit(True);
   end;
 
@@ -716,7 +716,7 @@ begin
       TypeOfValue:=System.TypeInfo(JSValue);
   end;
 
-  Result := Make(TypeOfValue, v);
+  Make(v, TypeOfValue, Result);
 end;
 
 class function TValue.FromArray(TypeInfo: TTypeInfo; const Values: specialize TArray<TValue>): TValue;
@@ -750,9 +750,9 @@ begin
     raise EInvalidCast.Create('Invalid type in FromOrdinal');
 
   if ATypeInfo.Kind = tkBool then
-    Result := TValue.Make(ATypeInfo, AValue = True)
+    TValue.Make(AValue = True, ATypeInfo, Result)
   else
-    Result := TValue.Make(ATypeInfo, NativeInt(AValue));
+    TValue.Make(NativeInt(AValue), ATypeInfo, Result);
 end;
 
 function TValue.IsObject: boolean;
@@ -1607,7 +1607,7 @@ var
   JSObject: TJSObject absolute Instance;
 
 begin
-  Result := TValue.Make(PropertyType.Handle, GetJSValueProp(JSObject, PropertyTypeInfo));
+  TValue.Make(GetJSValueProp(JSObject, PropertyTypeInfo), PropertyType.Handle, Result);
 end;
 
 procedure TRttiProperty.SetValue(Instance: JSValue; const AValue: TValue);

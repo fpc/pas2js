@@ -104,4 +104,4 @@ containing those parameters.
 
 [http://wiki.freepascal.org/pas2js.cfg]([http://wiki.freepascal.org/pas2js.cfg])
 
-
+

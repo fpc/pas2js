@@ -57,6 +57,8 @@ type
     function AsUnicodeString: UnicodeString;
     function Cast(ATypeInfo: TTypeInfo; const EmptyAsAnyType: Boolean = True): TValue; overload;
     generic function Cast<T>(const EmptyAsAnyType: Boolean = True): TValue; overload;
+    function IsType(ATypeInfo: TTypeInfo; const EmptyAsAnyType: Boolean = True): Boolean; overload;
+    generic function IsType<T>(const EmptyAsAnyType: Boolean = True): Boolean; overload;
     function GetArrayElement(aIndex: SizeInt): TValue;
     function GetArrayLength: SizeInt;
     function IsArray: boolean;
@@ -615,6 +617,19 @@ begin
   Result := Cast(System.TypeInfo(T), EmptyAsAnyType);
 end;
 
+function TValue.IsType(ATypeInfo: TTypeInfo; const EmptyAsAnyType: Boolean): Boolean;
+var
+  AnyValue: TValue;
+
+begin
+  Result := TryCast(ATypeInfo, AnyValue, EmptyAsAnyType);
+end;
+
+generic function TValue.IsType<T>(const EmptyAsAnyType: Boolean): Boolean;
+begin
+  Result := IsType(System.TypeInfo(T), EmptyAsAnyType);
+end;
+
 function TValue.TryCast(ATypeInfo: TTypeInfo; out AResult: TValue; const EmptyAsAnyType: Boolean): Boolean;
 
   function ConversionAccepted: TTypeKinds;
@@ -626,7 +641,7 @@ function TValue.TryCast(ATypeInfo: TTypeInfo; out AResult: TValue; const EmptyAs
 
       tkEnumeration: Exit([tkInteger, tkEnumeration]);
 
-      else Exit([ATypeInfo.Kind]);
+      else Exit([TypeInfo.Kind]);
     end;
   end;
 

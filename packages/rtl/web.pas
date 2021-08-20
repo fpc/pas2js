@@ -42,7 +42,11 @@ Type
   TJSUIEvent = class;
   TJSTouchEvent = Class;
   TJSBlob = class;
-
+  TJSPermissions = class;
+  TJSFileSystemFileHandle = class;
+  TJSFileSystemDirectoryHandle = class;
+  TJSShowOpenFilePickerOptions = class;
+  TJSShowSaveFilePickerOptions = class;
 
   { TEventListenerEvent }
 
@@ -1812,6 +1816,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FServiceWorker: TJSServiceWorkerContainer; external name 'serviceWorker';
     FUserAgent: string; external name 'userAgent';
     fClipBoard : TJSClipBoard; external name 'clipboard';
+    FPermissions: TJSPermissions; external name 'permissions';
   public
     function getBattery : TJSPromise;
     function requestMediaKeySystemAccess(aKeySystem : String; supportedConfigurations : TJSValueDynArray) : TJSPromise;
@@ -1835,6 +1840,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property userAgent : string read FUserAgent;
     property serviceWorker : TJSServiceWorkerContainer read FServiceWorker;
     property ClipBoard : TJSClipBoard Read FCLipboard;
+    property permissions: TJSPermissions read FPermissions;
   end;
 
   { TJSTouchEvent }
@@ -1982,6 +1988,16 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function pipeTo(destination: TJSObject): TJSPromise; overload;
     function pipeTo(destination, options: TJSObject): TJSPromise; overload;
     function tee(): TJSArray; // array containing two TJSReadableStream instances
+  end;
+
+  TJSWritableStream = class external name 'WritableStream' (TJSObject)
+  private
+    FLocked: Boolean; external name 'locked';
+  public
+    function abort(reason: String): TJSPromise;
+    function close: TJSPromise;
+    function getWriter: TJSObject;
+    property locked: Boolean read FLocked;
   end;
 
   TJSBody = class external name 'Body' (TJSObject)
@@ -2204,6 +2220,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure cancelIdleCallback(handle: NativeInt);
     function requestIdleCallback(handler: TIdleCallbackProc): NativeInt; overload;
     function requestIdleCallback(handler: TIdleCallbackProc; options: TJSIdleCallbackOptions): NativeInt; overload;
+    function showOpenFilePicker: array of TJSFileSystemFileHandle; async; overload;
+    function showOpenFilePicker(options: TJSShowOpenFilePickerOptions): array of TJSFileSystemFileHandle; async; overload;
+    function showSaveFilePicker: TJSFileSystemFileHandle; async; overload;
+    function showSaveFilePicker(options: TJSShowSaveFilePickerOptions): TJSFileSystemFileHandle; async; overload;
+    function FileSystemDirectoryHandle: array of TJSFileSystemDirectoryHandle; async;
     { public properties }
     property console : TJSConsole Read FConsole;
     property closed : boolean read FClosed;
@@ -2458,9 +2479,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function slice(aStart,aEnd : NativeInt; AContentType : String) : TJSBlob; overload;
     function arrayBuffer : TJSPromise;
     property size : NativeInt read FSize;
-    property _type : string read FType;
+    property _type : string read FType; deprecated;
+    property &type : string read FType;
   end;
-
 
   { TJSHTMLFile }
 
@@ -2469,10 +2490,10 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FLastModified: NativeInt; external name 'lastModified';
     FLastModifiedDate: TJSDate; external name 'lastModifiedDate';
     FName: string; external name 'name';
-  Public
-    property name : string read FName;
-    property lastModified : NativeInt read FLastModified;
-    property lastModifiedDate : TJSDate read FLastModifiedDate;
+  public
+    property lastModified: NativeInt read FLastModified;
+    property lastModifiedDate : TJSDate read FLastModifiedDate; deprecated;
+    property name: String read FName;
   end;
 
   { TJSHTMLFileList }
@@ -3842,6 +3863,117 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Function parseFromString (aString,aMimetype : String): TJSHTMLOrXMLDocument;
   end;
 
+
+  TOnChangeProcedure = reference to procedure;
+
+  TJSPermissionDescriptor = class external name 'Object' (TJSObject)
+  public
+    name: String;
+    userVisibleOnly: Boolean;
+    sysex: Boolean;
+  end;
+
+  TJSPermissionStatus = class external name 'PermissionStatus' (TJSObject)
+  private
+    FState: String; external name 'state';
+  public
+    onchange: TOnChangeProcedure;
+    property state: String read FState;
+  end;
+
+  TJSPermissions = class external name 'Permissions' (TJSObject)
+  public
+    function query(descriptor: TJSPermissionDescriptor): TJSPermissionStatus; async;
+  end;
+
+  TJSFileSystemHandlePermissionDescriptor = class external name 'Object' (TJSObject)
+  public
+    mode: String;
+  end;
+
+  TJSFileSystemCreateWritableOptions = class external name 'Object' (TJSObject)
+  public
+    keepExistingData: Boolean;
+  end;
+
+  TJSFileSystemWritableFileStream = class;
+
+  TJSFileSystemHandle = class external name 'FileSystemHandle' (TJSObject)
+  private
+    FKind: String; external name 'kind';
+    FName: String; external name 'name';
+  public
+    function isSameEntry(const Handle: TJSFileSystemHandle): Boolean;
+    function queryPermission(descriptor: TJSFileSystemHandlePermissionDescriptor): String;
+    function requestPermission(descriptor: TJSFileSystemHandlePermissionDescriptor): String;
+
+    property kind: String read FKind;
+    property name: String read FName;
+  end;
+
+  TJSFileSystemFileHandle = class external name 'FileSystemFileHandle' (TJSFileSystemHandle)
+  public
+    function getFile: TJSHTMLFile; async;
+    function createWritable: TJSFileSystemWritableFileStream; overload;
+    function createWritable(options: TJSFileSystemCreateWritableOptions): TJSFileSystemWritableFileStream; overload;
+  end;
+
+  TJSGetFileHandleOptions = class external name 'Object'
+  public
+    create: Boolean;
+
+    constructor new;
+  end;
+
+  TJSRemoveEntryOptions = class external name 'Object' (TJSObject)
+    recursive: Boolean;
+  end;
+
+  TJSFileSystemDirectoryHandle = class external name 'FileSystemDirectoryHandle' (TJSFileSystemHandle)
+  public
+    function entries: TJSObject;
+    function getDirectoryHandle(name: String): TJSFileSystemDirectoryHandle; async; overload;
+    function getDirectoryHandle(name: String; options: TJSGetFileHandleOptions): TJSFileSystemDirectoryHandle; async; overload;
+    function getFileHandle(name: String): TJSFileSystemFileHandle; async; overload;
+    function getFileHandle(name: String; options: TJSGetFileHandleOptions): TJSFileSystemFileHandle; async; overload;
+    function keys: array of TJSFileSystemDirectoryHandle;
+    function removeEntry(name: String): TJSPromise;
+    function removeEntry(name: String; options: TJSRemoveEntryOptions): TJSPromise;
+    function resolve(possibleDescendant: String): array of String; async;
+    function values(possibleDescendant: String): array of TJSFileSystemDirectoryHandle; async;
+  end;
+
+  TJSFileSystemWritableFileStream = class external name 'FileSystemWritableFileStream' (TJSWritableStream)
+  public
+    function seek(position: NativeInt): TJSPromise;
+    function write(data: JSValue): TJSPromise;
+    function truncate(size: NativeInt): TJSPromise;
+  end;
+
+  TJSShowOpenFilePickerTypeOptions = class external name 'Object' (TJSObject)
+  public
+    description: String;
+    accept: TJSObject;
+  end;
+
+  TJSShowOpenFilePickerOptions = class external name 'Object' (TJSObject)
+  public
+    multiple: Boolean;
+    excludeAcceptAllOption: Boolean;
+    types: array of TJSShowOpenFilePickerTypeOptions;
+  end;
+
+  TJSShowSaveFilePickerOptionsAccept = class external name 'Object' (TJSObject)
+  public
+    description: String;
+    accept: array of String;
+  end;
+
+  TJSShowSaveFilePickerOptions = class external name 'Object' (TJSObject)
+  public
+    excludeAcceptAllOption: Boolean;
+    accept: array of TJSShowSaveFilePickerOptionsAccept;
+  end;
 
 var
   document : TJSDocument; external name 'document';

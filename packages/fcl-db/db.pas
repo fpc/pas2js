@@ -6938,7 +6938,7 @@ function TDateTimeField.GetAsJSValue: JSValue;
 
 begin
   Result:=GetData;
-  if Not isString(Result) then
+  if Not isString(Result) and not IsObject(Result) then
     Result:=Null;
 end;
 

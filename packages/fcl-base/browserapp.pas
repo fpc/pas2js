@@ -17,7 +17,7 @@ type
     function CreateHTMLElement(aTag : String; aID : String = '') : TJSHTMLElement;
     procedure DoRun; override;
     function GetConsoleApplication: boolean; override;
-    Function LogGetElementErrors : Boolean;
+    Function LogGetElementErrors : Boolean; virtual;
     function GetLocation: String; override;
   public
     procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;

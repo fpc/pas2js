@@ -2260,6 +2260,13 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property parentRule : TJSCSSRule read FParentRule;
   end;
 
+  TJSScrollIntoViewOptions = class external name 'Object'  (TJSObject)
+    behaviour : string;
+    block : string;
+    inline_ : string; external name 'inline';
+  end;
+
+
   { TJSHTMLElement }
 
   TJSHTMLElement = class external name 'HTMLElement' (TJSElement)
@@ -2363,6 +2370,10 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Procedure blur;
     Procedure focus;
     Procedure click;
+    procedure scrollIntoView; overload;
+    procedure scrollIntoView(alignToTop : Boolean);
+    procedure scrollIntoView(aObj : TJSObject);
+    procedure scrollIntoView(Opts: TJSScrollIntoViewOptions);
     property dataset : TJSObject read FDataset;
     property isContentEditable : Boolean read FIsContentEditable;
     property offsetHeight : Double Read FOffsetHeight;

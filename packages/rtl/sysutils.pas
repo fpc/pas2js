@@ -1442,15 +1442,15 @@ var
   GotNonZeroBeforeDot, BeforeDot : boolean;
 
 begin
+  // Writeln('Precision ',Precision,' decimals: ',Decimals);
   Result.Negative:=False;
   Result.Exponent:=0;
   For C:=0 to FloatRecDigits do
     Result.Digits[C]:='0';
   if Value=0 then
     exit;
-  asm
-    Buffer=Value.toPrecision(21); // Double precision
-  end;
+  Str(Value:24,Buffer); // Double precision
+  // writeln('12345678901234567890123456789012345678901234567890');
   // Writeln('Buffer :',Buffer);
   N := 1;
   L := Length(Buffer);
@@ -1497,7 +1497,7 @@ begin
               GotNonZeroBeforeDot := true;
           end
         else
-          Result.Digits[Outpos] := Buffer[N];
+          Result.Digits[Outpos-1] := Buffer[N];
         Inc(outpos);
         end;
       Inc(N);
@@ -1801,7 +1801,7 @@ var
           begin
           if Result>3 then
             Raise Exception.Create('Invalid float format');
-          SP[Result]:=I+1;
+          SP[Result]:=I;
           Inc(Result);
           end;
         end;
@@ -1831,6 +1831,7 @@ var
 
   begin
     Len:=Length(Section);
+    // writeln(len);
     I:=1;
     InQuote:=False;
     Q:=#0;
@@ -1915,12 +1916,13 @@ var
     else
       begin
       P:=MaxPrecision;
+      // Writeln(RequestedDigits,'-',DecimalPos,'+1');
       D:=RequestedDigits-DecimalPos+1;
       end;
     FV:=FloatToDecimal(aValue,P,D);
     // Writeln('Number of digits available : ',Length(FV.Digits));
-    // For p:=0 to Length(FV.Digits)-1 do
-    //   Writeln(P,': ',FV.Digits[p]);
+    //   For p:=0 to Length(FV.Digits)-1 do
+    // Writeln(P,': ',FV.Digits[p]);
     DistToDecimal:=DecimalPos-1;
     // Writeln('DistToDecimal : ',DistToDecimal);
     if IsScientific then

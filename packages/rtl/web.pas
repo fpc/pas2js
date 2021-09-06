@@ -2480,7 +2480,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function arrayBuffer : TJSPromise;
     property size : NativeInt read FSize;
     property _type : string read FType; deprecated;
-    property &type : string read FType;
+    property type_ : string read FType;
   end;
 
   { TJSHTMLFile }

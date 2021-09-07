@@ -3,3 +3,7 @@ fpmake
 units
 *.fpm
 *.~*~
+*.compiled
+*.map
+*.lps
+*.js

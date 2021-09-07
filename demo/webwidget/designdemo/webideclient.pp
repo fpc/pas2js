@@ -26,7 +26,7 @@ type
 
   { TIDEClient }
   TCommandEvent = Procedure (Sender : TObject; aCommands : TJSArray) of object;
-  TActionEvent  = Procedure (Sender : TObject; aID : Int64; aName : String; aPayload : TJSObject) of object;
+  TActionEvent  = Procedure (Sender : TObject; aID : nativeint; aName : String; aPayload : TJSObject) of object;
 
   TIDEClient = Class(TComponent)
   private
@@ -52,7 +52,7 @@ type
     Function GetNextID : NativeInt;
     procedure SendAction(Const aName : String; aPayLoad : TJSObject);
     Property IDEURL : String read FIDEURL Write FIDEURL;
-    Property ClientID : Int64 read FClientID Write FClientID;
+    Property ClientID : nativeint read FClientID Write FClientID;
     Property CommandPollInterval : Integer Read FCommandPollInterval Write FCommandPollInterval;
     Property OnCommands : TCommandEvent Read FOnCommands Write FOnCommands;
     Property OnActionResponse : TActionEvent Read FOnActionResponse Write FOnActionResponse;

@@ -7,3 +7,4 @@ units
 *.map
 *.lps
 *.js
+*.o

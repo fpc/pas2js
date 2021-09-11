@@ -38,7 +38,7 @@
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
-        <Filename Value="testrtl.html"/>
+        <Filename Value="index.html"/>
         <IsPartOfProject Value="True"/>
         <CustomData Count="1">
           <Item0 Name="PasJSIsProjectHTMLFile" Value="1"/>

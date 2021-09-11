@@ -1554,16 +1554,18 @@ Var
   B : TBytes;
   Buf : TJSArrayBuffer;
   BytesLeft : Integer;
+  ByteCount : Integer;
 
 begin
   // Top off
+  ByteCount:=Count*2; // UTF-16
   BytesLeft:=(Size-Position);
-  if BytesLeft<Count then
-    Count:=BytesLeft;
-  SetLength(B,Count);
-  ReadBuffer(B,0,Count);
+  if BytesLeft<ByteCount then
+    ByteCount:=BytesLeft;
+  SetLength(B,ByteCount);
+  ReadBuffer(B,0,ByteCount);
   Buf:=BytesToMemory(B);
-  Result:=BufferToString(Buf,0,Count);
+  Result:=BufferToString(Buf,0,ByteCount);
 end;
 
 procedure TStringStream.WriteString(const AString: string);

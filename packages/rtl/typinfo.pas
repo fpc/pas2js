@@ -1074,6 +1074,9 @@ var
   o: TJSObject;
   Key: String;
   n: NativeInt;
+  v : JSValue;
+  vs : TJSString absolute key;
+
 begin
   if PropInfo.TypeInfo.Kind=tkSet then
   begin
@@ -1086,6 +1089,19 @@ begin
       if n<32 then
         Result:=Result+(1 shl n);
     end;
+  end else if PropInfo.TypeInfo.Kind=tkChar then
+  begin
+    v:=GetJSValueProp(Instance,PropInfo);
+    if isNumber(v) then
+      Result:=Longint(V)
+    else
+      begin
+      Key:=String(v);
+      If Key='' then
+        Result:=0
+      else
+        Result:=vs.CharCodeAt(0);
+      end
   end else
     Result:=longint(GetJSValueProp(Instance,PropInfo));
 end;
@@ -1108,7 +1124,9 @@ begin
       if (1 shl i) and Value>0 then
         o[str(i)]:=true;
     SetJSValueProp(Instance,PropInfo,o);
-  end else
+  end else if PropInfo.TypeInfo.Kind=tkChar then
+    SetJSValueProp(Instance,PropInfo,TJSString.fromCharCode(Value))
+  else
     SetJSValueProp(Instance,PropInfo,Value);
 end;
 

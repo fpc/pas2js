@@ -1334,7 +1334,9 @@ type
      FOutput : TStream;
      FEncoding : TObjectTextEncoding;
   Private
-    // Low level writing
+    FPlainStrings: Boolean;
+     // Low level writing
+     procedure Outchars(S : String); virtual;
      procedure OutLn(s: String); virtual;
      procedure OutStr(s: String); virtual;
      procedure OutString(s: String); virtual;
@@ -1356,6 +1358,8 @@ type
      procedure ObjectBinaryToText(aInput, aOutput: TStream);
      procedure ObjectBinaryToText(aInput, aOutput: TStream; aEncoding: TObjectTextEncoding);
      Procedure Execute;
+     // use this to get previous streaming behavour: strings written as-is
+     Property PlainStrings : Boolean Read FPlainStrings Write FPlainStrings;
      Property Input : TStream Read FInput Write FInput;
      Property Output : TStream Read Foutput Write FOutput;
      Property Encoding : TObjectTextEncoding Read FEncoding Write FEncoding;
@@ -9760,61 +9764,66 @@ begin
   OutStr(s + LineEnding);
 end;
 
-(*
-procedure TObjectStreamConverter.Outchars(P, LastP : Pointer; CharToOrdFunc: CharToOrdFuncty;  UseBytes: boolean = false);
+
+procedure TObjectStreamConverter.Outchars(S: String);
 
 var
   res, NewStr: String;
-  w: Cardinal;
+  i,len,w: Cardinal;
   InString, NewInString: Boolean;
+  SObj : TJSString absolute s;
+
 begin
- if p = nil then begin
-  res:= '''''';
- end
+ if S = '' then
+   res:= ''''''
  else
-  begin
-  res := '';
-  InString := False;
-  while P < LastP do
-    begin
-    NewInString := InString;
-    w := CharToOrdfunc(P);
-    if w = ord('''') then
-      begin //quote char
-      if not InString then
-        NewInString := True;
-      NewStr := '''''';
-      end
-    else if (Ord(w) >= 32) and ((Ord(w) < 127) or (UseBytes and (Ord(w)<256))) then
-      begin //printable ascii or bytes
-      if not InString then
-        NewInString := True;
-      NewStr := char(w);
-      end
+   begin
+   res := '';
+   InString := False;
+   len:= Length(S);
+   i:=0;
+   while i < Len do
+     begin
+     NewInString := InString;
+     w := SObj.charCodeAt(i);
+     if w = ord('''') then
+       begin //quote char
+       if not InString then
+         NewInString := True;
+       NewStr := '''''';
+       end
+     else if (w >= 32) and (w < 127) then
+       begin //printable ascii or bytes
+       if not InString then
+         NewInString := True;
+       NewStr := TJSString.FromCharCode(w);
+       end
     else
-      begin //ascii control chars, non ascii
-      if InString then
-        NewInString := False;
-      NewStr := '#' + IntToStr(w);
-      end;
+       begin //ascii control chars, non ascii
+       if InString then
+         NewInString := False;
+       NewStr := '#' + IntToStr(w);
+       end;
     if NewInString <> InString then
       begin
       NewStr := '''' + NewStr;
       InString := NewInString;
       end;
     res := res + NewStr;
+    Inc(i);
     end;
   if InString then
     res := res + '''';
   end;
  OutStr(res);
 end;
-*)
+
 
 procedure TObjectStreamConverter.OutString(s: String);
 begin
-  OutStr(S);
+  OutChars(S);
 end;
+
 
 (*
 procedure TObjectStreamConverter.OutUtf8Str(s: String);
@@ -9962,7 +9971,10 @@ begin
         OutLn(S);
       end;
     vaString: begin
-        OutString(''''+StringReplace(ReadString(vaString),'''','''''',[rfReplaceAll])+'''');
+        if PlainStrings then
+          OutStr( ''''+StringReplace(ReadString(vaString),'''','''''',[rfReplaceAll])+'''')
+        else
+          OutString(ReadString(vaString) {''''+StringReplace(ReadString(vaString),'''','''''',[rfReplaceAll])+''''});
         OutLn('');
       end;
     vaIdent: OutLn(ReadStr);

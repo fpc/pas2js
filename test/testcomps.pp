@@ -139,6 +139,18 @@ Type
     Property Int64Prop : NativeInt Read FIntProp Write FIntProp default 7;
   end;
 
+  { TCharComponent2 }
+
+  TCharComponent = Class(TComponent)
+  private
+    C: Char;
+  Public
+    Constructor Create(AOwner : TComponent);  override;
+  Published
+    Property CharProp : Char Read C Write C;
+  end;
+
+
   // String property.
   TStringComponent = Class(TComponent)
   private
@@ -568,6 +580,14 @@ Type
 
 
 Implementation
+
+{ TCharComponent2 }
+
+constructor TCharComponent.Create(AOwner: TComponent);
+begin
+  inherited Create(AOwner);
+  C:=#10;
+end;
 
 { TStringComponent3 }
 

@@ -167,11 +167,16 @@ procedure TTestStringStream.TestReadString;
 Var
   S : String;
 
+
 begin
   S:='ABCDEFGH';
   DoCreate(S);
-  AssertEquals('2 characters','AB',Stream.ReadString(4));
-  AssertEquals('Top off characters','CDEFGH',Stream.ReadString(22));
+  AssertEquals('2 characters','AB',Stream.ReadString(2));
+  AssertEquals('Top off characters','CDEFGH',Stream.ReadString(11));
+  S:='Hello World';
+  FreeAndNil(FStream);
+  DoCreate(S);
+  AssertEquals('Correct string',S,Stream.ReadString(Length(S)));
 end;
 
 procedure TTestStringStream.TestWriteString;

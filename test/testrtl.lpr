@@ -26,8 +26,8 @@ program testrtl;
 
 uses
   browserconsole, consoletestrunner, frmrtlrun, simplelinkedlist,
-//  tcstream,
-// tccompstreaming,
+  // tcstream,
+  tccompstreaming,
 //  tcsyshelpers,
 //  tcgenarrayhelper,
 //    tcstringhelp,
@@ -36,7 +36,7 @@ uses
 //    tcgenericqueue,
 //    tcgenericstack,
 //    tcsysutils,
-    tcclasses,
+    // tcclasses,
     strutils,
     sysutils;
 

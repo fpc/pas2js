@@ -53,11 +53,15 @@ Type
       Procedure TestTInt64Component4Text;
       Procedure TestTInt64Component5;
       Procedure TestTInt64Component6;
+      Procedure TestTCharComponent;
+      Procedure TestTCharComponentText;
       Procedure TestTStringComponent;
       Procedure TestTStringComponentText;
       Procedure TestTStringComponent2;
       Procedure TestTStringComponent3;
+      Procedure TestTStringComponent4;
       Procedure TestTStringComponent3Text;
+      Procedure TestTStringComponent4Text;
       Procedure TestTWideStringComponent;
       Procedure TestTWideStringComponentText;
       Procedure TestTWideStringComponent2;
@@ -125,6 +129,7 @@ Type
       Procedure TestTInt64Component4ReadText;
       Procedure TestTInt64Component5Read;
       Procedure TestTInt64Component6Read;
+      Procedure TestTCharComponentRead;
       Procedure TestTStringComponentRead;
       Procedure TestTStringComponentReadText;
       Procedure TestTStringComponent2Read;
@@ -192,7 +197,7 @@ Implementation
 Const
    LE = sLineBreak;
 
-Procedure TTestComponentStream.TestTEmptyComponent;
+procedure TTestComponentStream.TestTEmptyComponent;
 
 
 Var
@@ -254,7 +259,7 @@ begin
   end;
 end;
 
-Procedure TTestComponentStream.TestTIntegerComponent;
+procedure TTestComponentStream.TestTIntegerComponent;
 
 
 Var
@@ -599,6 +604,24 @@ begin
   Finally
     C.Free;
   end;
+end;
+
+procedure TTestComponentStream.TestTCharComponentRead;
+Var
+  C : TCharComponent;
+
+begin
+  TestTCharComponent;
+  C:=TCharComponent.Create(Nil);
+  Try
+    C.CharProp:='A';
+    LoadFromStream(C);
+    AssertEquals('Name','TestTCharComponent',C.Name);
+    AssertEquals('StringProp',#10,C.CharProp);
+  Finally
+    C.Free;
+  end;
+
 end;
 
 procedure TTestComponentStream.TestTStringComponentRead;
@@ -1427,7 +1450,7 @@ begin
   end;
 end;
 
-Procedure TTestComponentStream.TestTIntegerComponent2;
+procedure TTestComponentStream.TestTIntegerComponent2;
 
 Var
   C : TComponent;
@@ -1463,7 +1486,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTIntegerComponent3;
+procedure TTestComponentStream.TestTIntegerComponent3;
 
 Var
   C : TComponent;
@@ -1499,7 +1522,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTIntegerComponent4;
+procedure TTestComponentStream.TestTIntegerComponent4;
 
 Var
   C : TComponent;
@@ -1520,7 +1543,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTIntegerComponent5;
+procedure TTestComponentStream.TestTIntegerComponent5;
 
 Var
   C : TComponent;
@@ -1543,7 +1566,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTInt64Component;
+procedure TTestComponentStream.TestTInt64Component;
 
 Var
   C : TComponent;
@@ -1579,7 +1602,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTInt64Component2;
+procedure TTestComponentStream.TestTInt64Component2;
 
 Var
   C : TComponent;
@@ -1615,7 +1638,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTInt64Component3;
+procedure TTestComponentStream.TestTInt64Component3;
 
 Var
   C : TComponent;
@@ -1651,7 +1674,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTInt64Component4;
+procedure TTestComponentStream.TestTInt64Component4;
 
 Var
   C : TComponent;
@@ -1687,7 +1710,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTInt64Component5;
+procedure TTestComponentStream.TestTInt64Component5;
 
 Var
   C : TComponent;
@@ -1710,7 +1733,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTInt64Component6;
+procedure TTestComponentStream.TestTInt64Component6;
 
 Var
   C : TComponent;
@@ -1732,8 +1755,44 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTCharComponent;
 
-Procedure TTestComponentStream.TestTStringComponent;
+Var
+  C : TComponent;
+
+begin
+  C:=TCharComponent.Create(Nil);
+  Try
+    SaveToStream(C);
+    ExpectSignature;
+    ExpectFlags([],0);
+    ExpectBareString('TCharComponent');
+    ExpectBareString('TestTCharComponent');
+    ExpectBareString('CharProp');
+    ExpectString(#10);
+    ExpectEndOfList;
+    ExpectEndOfList;
+  Finally
+    C.Free;
+  end;
+end;
+
+procedure TTestComponentStream.TestTCharComponentText;
+
+Const
+  SData111 =
+     'object TestTCharComponent: TCharComponent'+sLineBreak+
+     '  CharProp = #10'+sLineBreak+
+     'end'+sLineBreak;
+
+
+begin
+  TestTCharComponent;
+  CheckAsString(SData111);
+end;
+
+
+procedure TTestComponentStream.TestTStringComponent;
 
 Var
   C : TComponent;
@@ -1769,7 +1828,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTStringComponent2;
+procedure TTestComponentStream.TestTStringComponent2;
 
 Var
   C : TComponent;
@@ -1790,6 +1849,7 @@ begin
 end;
 
 procedure TTestComponentStream.TestTStringComponent3;
+
 Var
   C : TComponent;
 
@@ -1810,6 +1870,28 @@ begin
   end;
 end;
 
+procedure TTestComponentStream.TestTStringComponent4;
+Var
+  C : TComponent;
+
+begin
+  C:=TStringComponent3.Create(Nil);
+  Try
+    TStringComponent3(C).StringProp:='A '#10' whitespace string';
+    SaveToStream(C);
+    ExpectSignature;
+    ExpectFlags([],0);
+    ExpectBareString('TStringComponent3');
+    ExpectBareString('TestTStringComponent3');
+    ExpectBareString('StringProp');
+    ExpectString('A '#10' whitespace string');
+    ExpectEndOfList;
+    ExpectEndOfList;
+  Finally
+    C.Free;
+  end;
+end;
+
 procedure TTestComponentStream.TestTStringComponent3Text;
 Const
   SData10 =
@@ -1822,8 +1904,20 @@ begin
   CheckAsString(SData10);
 end;
 
+procedure TTestComponentStream.TestTStringComponent4Text;
+Const
+  SData101 =
+     'object TestTStringComponent3: TStringComponent3'+sLineBreak+
+     '  StringProp = ''A ''#10'' whitespace string'''+sLineBreak+
+     'end'+sLineBreak;
 
-Procedure TTestComponentStream.TestTWideStringComponent;
+begin
+  TestTStringComponent4;
+  CheckAsString(SData101);
+end;
+
+
+procedure TTestComponentStream.TestTWideStringComponent;
 
 Var
   C : TComponent;
@@ -1858,7 +1952,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTWideStringComponent2;
+procedure TTestComponentStream.TestTWideStringComponent2;
 
 Var
   C : TComponent;
@@ -1879,7 +1973,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTSingleComponent;
+procedure TTestComponentStream.TestTSingleComponent;
 
 Var
   C : TComponent;
@@ -1902,7 +1996,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTDoubleComponent;
+procedure TTestComponentStream.TestTDoubleComponent;
 
 Var
   C : TComponent;
@@ -1929,7 +2023,7 @@ procedure TTestComponentStream.TestTDoubleComponentText;
 Const
  SData12 =
    'object TestTDoubleComponent: TDoubleComponent'+sLineBreak+
-   '  DoubleProp =  2.3E+000'+sLineBreak+
+   '  DoubleProp =  2.3399999999999999E+000'+sLineBreak+
    'end'+sLineBreak;
 
 begin
@@ -1938,7 +2032,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTExtendedComponent;
+procedure TTestComponentStream.TestTExtendedComponent;
 
 Var
   C : TComponent;
@@ -1985,7 +2079,7 @@ begin
 end;
 *)
 
-Procedure TTestComponentStream.TestTCurrencyComponent;
+procedure TTestComponentStream.TestTCurrencyComponent;
 
 Var
   C : TComponent;
@@ -2009,7 +2103,7 @@ begin
   end;
 end;
 
-procedure TTestComponentStream.TestTCurrencyComponentTExt;
+procedure TTestComponentStream.TestTCurrencyComponentText;
 Const
  SData13 =
    'object TestTCurrencyComponent: TCurrencyComponent'+sLineBreak+
@@ -2022,7 +2116,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTDateTimeComponent;
+procedure TTestComponentStream.TestTDateTimeComponent;
 
 Var
   C : TComponent;
@@ -2045,7 +2139,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTDateTimeComponent2;
+procedure TTestComponentStream.TestTDateTimeComponent2;
 
 Var
   C : TComponent;
@@ -2068,7 +2162,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTDateTimeComponent3;
+procedure TTestComponentStream.TestTDateTimeComponent3;
 
 Var
   C : TComponent;
@@ -2091,7 +2185,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTEnumComponent;
+procedure TTestComponentStream.TestTEnumComponent;
 
 Var
   C : TComponent;
@@ -2127,7 +2221,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTEnumComponent2;
+procedure TTestComponentStream.TestTEnumComponent2;
 
 Var
   C : TComponent;
@@ -2154,7 +2248,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTEnumComponent3;
+procedure TTestComponentStream.TestTEnumComponent3;
 
 Var
   C : TComponent;
@@ -2177,7 +2271,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTEnumComponent4;
+procedure TTestComponentStream.TestTEnumComponent4;
 
 Var
   C : TComponent;
@@ -2197,7 +2291,7 @@ begin
   end;
 end;
 
-Procedure TTestComponentStream.TestTEnumComponent5;
+procedure TTestComponentStream.TestTEnumComponent5;
 
 Var
   C : TComponent;
@@ -2218,7 +2312,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTSetComponent;
+procedure TTestComponentStream.TestTSetComponent;
 
 Var
   C : TComponent;
@@ -2256,7 +2350,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTSetComponent2;
+procedure TTestComponentStream.TestTSetComponent2;
 
 Var
   C : TComponent;
@@ -2284,7 +2378,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTSetComponent3;
+procedure TTestComponentStream.TestTSetComponent3;
 
 Var
   C : TComponent;
@@ -2310,7 +2404,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTSetComponent4;
+procedure TTestComponentStream.TestTSetComponent4;
 
 Var
   C : TComponent;
@@ -2332,7 +2426,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTMultipleComponent;
+procedure TTestComponentStream.TestTMultipleComponent;
 
 Var
   C : TComponent;
@@ -2383,7 +2477,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTPersistentComponent;
+procedure TTestComponentStream.TestTPersistentComponent;
 
 Var
   C : TComponent;
@@ -2422,7 +2516,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTCollectionComponent;
+procedure TTestComponentStream.TestTCollectionComponent;
 
 Var
   C : TComponent;
@@ -2458,7 +2552,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTCollectionComponent2;
+procedure TTestComponentStream.TestTCollectionComponent2;
 
 Var
   C : TComponent;
@@ -2515,7 +2609,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTCollectionComponent3;
+procedure TTestComponentStream.TestTCollectionComponent3;
 
 Var
   C : TComponent;
@@ -2549,7 +2643,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTCollectionComponent4;
+procedure TTestComponentStream.TestTCollectionComponent4;
 
 Var
   C : TComponent;
@@ -2576,7 +2670,7 @@ begin
   end;
 end;
 
-Procedure TTestComponentStream.TestTCollectionComponent5;
+procedure TTestComponentStream.TestTCollectionComponent5;
 
 Var
   C : TComponent;
@@ -2611,7 +2705,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTOwnedComponent;
+procedure TTestComponentStream.TestTOwnedComponent;
 
 Var
   C : TComponent;
@@ -2647,7 +2741,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTStreamedOwnedComponent;
+procedure TTestComponentStream.TestTStreamedOwnedComponent;
 
 Var
   C : TComponent;
@@ -2689,7 +2783,7 @@ begin
   CheckAsString(SData21);
 end;
 
-Procedure TTestComponentStream.TestTStreamedOwnedComponents;
+procedure TTestComponentStream.TestTStreamedOwnedComponents;
 
 Var
   C : TComponent;
@@ -2742,7 +2836,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTMethodComponent;
+procedure TTestComponentStream.TestTMethodComponent;
 
 Var
   C : TComponent;
@@ -2778,7 +2872,7 @@ begin
 end;
 
 
-Procedure TTestComponentStream.TestTMethodComponent2;
+procedure TTestComponentStream.TestTMethodComponent2;
 
 Var
   C : TComponent;
@@ -2939,5 +3033,5 @@ begin
 end;
 
 begin
-  RegisterTests([TTestComponentStream,TTestCollectionStream]);
+  RegisterTests([TTestComponentStream{,TTestCollectionStream}]);
 end.

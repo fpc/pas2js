@@ -44,7 +44,7 @@ Type
     function ReadBareStr: string;
     function ReadString(V : TValueType): string;
     function ReadWideString(V : TValueType): WideString;
-    Procedure Fail(Fmt : String; Args : Array of JSValue); overload;
+    Procedure Fail(Fmt : String; Args : Array of const); overload;
   Public
     Procedure Setup; override;
     Procedure TearDown; override;
@@ -342,7 +342,7 @@ begin
 end;
 
 
-procedure TTestStreaming.Fail(Fmt: String; Args: array of jsvalue);
+procedure TTestStreaming.Fail(Fmt: String; Args: array of Const);
 begin
   Fail(Format(Fmt,Args));
 end;

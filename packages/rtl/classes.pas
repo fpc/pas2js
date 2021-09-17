@@ -8159,7 +8159,7 @@ begin
         SetOrdProp(Instance, PropInfo, ReadInteger);
       end;
     tkBool:
-      SetOrdProp(Instance, PropInfo, Ord(ReadBoolean));
+      SetBoolProp(Instance, PropInfo, ReadBoolean);
     tkChar:
       SetOrdProp(Instance, PropInfo, Ord(ReadChar));
     tkEnumeration:

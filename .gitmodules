@@ -1,4 +1,4 @@
 [submodule "compiler"]
 	path = compiler
-	url = https://gitlab.com/freepascal.org/fpc/source
+	url = ../source
 	branch = main

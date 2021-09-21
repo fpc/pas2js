@@ -68,20 +68,17 @@ type
     procedure FormCreate(Sender: TObject);
     procedure Panel1Resize(Sender: TObject);
   private
-    FChromiumLogMsg: String;
+    FFormClosing: Boolean;
     FClientID : Int64; // Just one for now
     FDesignCaption : String;
     FWebIDEIntf : TIDEServer;
     FWidgetCount : Integer;
     FWidgets : Array of String;
-    FURL : String;
-    FURLCount : Integer;
     FAllowGo: Boolean;
 {$IFDEF WINDOWS}
     procedure WMEnterMenuLoop(var aMessage: TMessage); message WM_ENTERMENULOOP;
     procedure WMExitMenuLoop(var aMessage: TMessage); message WM_EXITMENULOOP;
 {$ENDIF}
-    procedure DoChromiumLogMessage;
     function GetProjectURL: String;
     procedure DoAddWidget(Sender: TObject);
     procedure DoAction(Sender: TObject; aExchange: TIDEExchange);
@@ -89,7 +86,6 @@ type
     procedure DoClientLeft(Sender: TObject; aClient: TIDEClient);
     procedure DoLogRequest(Sender: TObject; aURL: String);
     procedure IsWidgetEnabled(Sender: TObject);
-    procedure LogRequest;
     Procedure RegisterWidgets;
     Procedure RegisterWidget(aWidget: String; aImageIndex : Integer);
   public
@@ -106,6 +102,41 @@ uses lclintf, fpmimetypes;
 
 {$R *.lfm}
 
+type
+
+  { TLogMsg }
+
+  TLogMsg = class
+  private
+    FMsg: String;
+  public
+    constructor Create(AMsg: String);
+    procedure DoBrowserMsg(Data: PtrInt);
+    procedure DoLog(Data: PtrInt);
+  end;
+
+
+{ TLogMsg }
+
+constructor TLogMsg.Create(AMsg: String);
+begin
+  FMsg := AMsg;
+end;
+
+procedure TLogMsg.DoBrowserMsg(Data: PtrInt);
+begin
+  if MainForm <> nil then
+    MainForm.BLog.Append(FMsg);
+  Free;
+end;
+
+procedure TLogMsg.DoLog(Data: PtrInt);
+begin
+  if MainForm <> nil then
+    MainForm.Log(FMsg);
+  Free;
+end;
+
 { TMainForm }
 
 procedure TMainForm.DEProjectEditingDone(Sender: TObject);
@@ -116,6 +147,7 @@ end;
 procedure TMainForm.FormCloseQuery(Sender: TObject; var CanClose: boolean);
 begin
   FWebIDEIntf.Active:=False;
+  FFormClosing := True;
   BrowserWindow1.CloseBrowser(True);
   CanClose:=BrowserWindow1.IsClosed;
   Visible  := False;
@@ -172,17 +204,18 @@ begin
   FAllowGo:=True;
 end;
 
-procedure TMainForm.DoChromiumLogMessage;
-begin
-  BLog.Append(FChromiumLogMsg);
-end;
-
 procedure TMainForm.ChromiumConsoleMessage(Sender: TObject;
   const browser: ICefBrowser; level: TCefLogSeverity; const message,
   source: ustring; line: Integer; out Result: Boolean);
+var
+  m: TLogMsg;
 begin
-  FChromiumLogMsg := Format('%s [%s %d]', [message, source, line]);
-  TThread.Synchronize(nil, @DoChromiumLogMessage);
+  if FFormClosing then
+    exit;
+  m := TLogMsg.Create(Format('%s [%s %d]', [message, source, line]));
+  Application.QueueAsyncCall(@m.DoBrowserMsg, 0);
+  // Issue https://gitlab.com/freepascal.org/fpc/source/-/issues/39367
+  //Application.QueueAsyncCall(@TLogMsg.Create(Format('%s [%s %d]', [message, source, line])).DoBrowserMsg, 0);
 end;
 
 procedure TMainForm.FormCreate(Sender: TObject);
@@ -330,23 +363,16 @@ begin
     end;
 end;
 
-procedure TMainForm.LogRequest;
-
-begin
-  if (FURLCount=1) then // avoid excessive logging, command loop is on very short interval.
-    Log('Internal server request received: '+FURL);
-end;
-
 procedure TMainForm.DoLogRequest(Sender: TObject; aURL: String);
+var
+  m: TLogMsg;
 begin
-  if (aURL<>FURL) then
-    begin
-    FURLCount:=1;
-    FURL:=aURL
-    end
-  else
-    Inc(FURLCount);
-  TThread.Synchronize(TThread.CurrentThread,@LogRequest);
+  if FFormClosing then
+    exit;
+  m := TLogMsg.Create('Internal server request received: '+aURL);
+  Application.QueueAsyncCall(@m.DoLog, 0);
+  // Issue https://gitlab.com/freepascal.org/fpc/source/-/issues/39367
+  //Application.QueueAsyncCall(@TLogMsg.Create('Internal server request received: '+FURL).DoLog, 0);
 end;
 
 procedure TMainForm.IsWidgetEnabled(Sender: TObject);

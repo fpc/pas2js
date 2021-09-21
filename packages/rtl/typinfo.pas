@@ -46,8 +46,8 @@ type
   public
     Name: String external name 'name';
     Kind: TTypeKind external name 'kind';
-    Attributes: TTypeInfoAttributes external name 'attr'; // can be undefined
-    Module: TTypeInfoModule external name '$module'; // can be undefined
+    Attributes: TTypeInfoAttributes external name 'attr'; // can be nil
+    Module: TTypeInfoModule external name '$module'; // can be nil
   end;
   TTypeInfoClassOf = class of TTypeInfo;
 
@@ -149,8 +149,8 @@ type
 
   TProcedureSignature = class external name 'anonymous'
   public
-    Params: TProcedureParams external name 'params'; // can be null
-    ResultType: TTypeInfo external name 'resulttype'; // can be null
+    Params: TProcedureParams external name 'params'; // can be nil
+    ResultType: TTypeInfo external name 'resulttype'; // can be nil
     Flags: NativeInt external name 'flags'; // TProcedureFlags as bit vector
   end;
 
@@ -198,7 +198,7 @@ type
   public
     Name: String external name 'name';
     Kind: TTypeMemberKind external name 'kind';
-    Attributes: TTypeInfoAttributes external name 'attr'; // can be undefined
+    Attributes: TTypeInfoAttributes external name 'attr'; // can be nil
   end;
   TTypeMemberDynArray = array of TTypeMember;
 
@@ -234,7 +234,7 @@ type
   public
     TypeInfo: TTypeInfo external name 'typeinfo';
     Flags: NativeInt external name 'flags'; // bit vector, see pf constants above
-    Params: TProcedureParams external name 'params'; // can be null or undefined
+    Params: TProcedureParams external name 'params'; // can be nil
     Index: JSValue external name 'index'; // can be undefined
     Getter: String external name 'getter'; // name of field or function
     Setter: String external name 'setter'; // name of field or function

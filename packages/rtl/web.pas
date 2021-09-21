@@ -44,7 +44,9 @@ Type
   TJSBlob = class;
   TJSPermissions = class;
   TJSFileSystemFileHandle = class;
+  TJSFileSystemFileHandleArray = array of TJSFileSystemFileHandle;
   TJSFileSystemDirectoryHandle = class;
+  TJSFileSystemDirectoryHandleArray = array of TJSFileSystemDirectoryHandle;
   TJSShowOpenFilePickerOptions = class;
   TJSShowSaveFilePickerOptions = class;
 
@@ -2220,11 +2222,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure cancelIdleCallback(handle: NativeInt);
     function requestIdleCallback(handler: TIdleCallbackProc): NativeInt; overload;
     function requestIdleCallback(handler: TIdleCallbackProc; options: TJSIdleCallbackOptions): NativeInt; overload;
-    function showOpenFilePicker: array of TJSFileSystemFileHandle; async; overload;
-    function showOpenFilePicker(options: TJSShowOpenFilePickerOptions): array of TJSFileSystemFileHandle; async; overload;
+    function showOpenFilePicker: TJSFileSystemFileHandleArray; async; overload;
+    function showOpenFilePicker(options: TJSShowOpenFilePickerOptions): TJSFileSystemFileHandleArray; async; overload;
     function showSaveFilePicker: TJSFileSystemFileHandle; async; overload;
     function showSaveFilePicker(options: TJSShowSaveFilePickerOptions): TJSFileSystemFileHandle; async; overload;
-    function FileSystemDirectoryHandle: array of TJSFileSystemDirectoryHandle; async;
+    function FileSystemDirectoryHandle: TJSFileSystemDirectoryHandleArray; async;
     { public properties }
     property console : TJSConsole Read FConsole;
     property closed : boolean read FClosed;
@@ -3936,11 +3938,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function getDirectoryHandle(name: String; options: TJSGetFileHandleOptions): TJSFileSystemDirectoryHandle; async; overload;
     function getFileHandle(name: String): TJSFileSystemFileHandle; async; overload;
     function getFileHandle(name: String; options: TJSGetFileHandleOptions): TJSFileSystemFileHandle; async; overload;
-    function keys: array of TJSFileSystemDirectoryHandle;
+    function keys: TJSFileSystemDirectoryHandleArray;
     function removeEntry(name: String): TJSPromise;
     function removeEntry(name: String; options: TJSRemoveEntryOptions): TJSPromise;
-    function resolve(possibleDescendant: String): array of String; async;
-    function values(possibleDescendant: String): array of TJSFileSystemDirectoryHandle; async;
+    function resolve(possibleDescendant: String): TStringDynArray; async;
+    function values(possibleDescendant: String): TJSFileSystemDirectoryHandleArray; async;
   end;
 
   TJSFileSystemWritableFileStream = class external name 'FileSystemWritableFileStream' (TJSWritableStream)
@@ -3966,7 +3968,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   TJSShowSaveFilePickerOptionsAccept = class external name 'Object' (TJSObject)
   public
     description: String;
-    accept: array of String;
+    accept: TStringDynArray;
   end;
 
   TJSShowSaveFilePickerOptions = class external name 'Object' (TJSObject)

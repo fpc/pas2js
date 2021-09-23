@@ -158,13 +158,18 @@ var
   aParent,aNew : TCustomWebWidget;
   aNewActive : TJSHTMLElement;
   aNewWidget : TRegisteredWidget;
+  ElId: String;
 
 begin
   Result:=True;
   JQuery('.designerActive').removeClass('designerActive');
   JQuery('.designerToolbar').remove();
   aNewActive:=TJSHTMLElement(event.target);
-  aParent:=FPage.FindWidgetByID(String(aNewActive.dataset[STopElementData]));
+  if (aNewActive.dataset[STopElementData] <> nil) and not isUndefined(aNewActive.dataset[STopElementData]) then
+    ElId := String(aNewActive.dataset[STopElementData])
+  else
+    ElId := aNewActive.id;
+  aParent:=FPage.FindWidgetByID(ElId);
   if aParent=Nil then
     aParent:=FPage;
 

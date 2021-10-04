@@ -317,6 +317,13 @@ Type
     function offSet(const aOffset : TJQueryTopLeft): TJQuery;overload;
     function offSet(aHandler : TJQueryOffsetHandler): TJQuery;overload;
     Function offsetParent : TJQuery;
+    
+    Function off : TJQuery; overload;
+    Function off(events : String) : TJQuery; overload;
+    Function off(events : String; aHandler : TJSEventHandler) : TJQuery; overload;
+    Function off(events : String; selector : String; aHandler : TJSEventHandler) : TJQuery; overload;
+    Function off(events : String; selector : String; data : JSValue; aHandler : TJSEventHandler) : TJQuery; overload;
+    
     Function On_(events : String; aHandler : TJSEventHandler) : TJQuery; external name 'on'; overload;
     Function On_(events : String; selector : String; aHandler : TJSEventHandler) : TJQuery; external name 'on'; overload;
     Function On_(events : String; selector : String; data : JSValue; aHandler : TJSEventHandler) : TJQuery; external name 'on'; overload;

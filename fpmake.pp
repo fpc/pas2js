@@ -148,6 +148,7 @@ begin
     P.UnitPath.Add('compiler/packages/fcl-passrc/src');
     P.UnitPath.Add('compiler/packages/fcl-js/src');
     P.UnitPath.Add('compiler/packages/fcl-json/src');
+    P.UnitPath.Add('compiler/packages/fcl-web/src/base');
 {$IFDEF VER3_0}    
     P.UnitPath.Add('compiler/packages/compat');
 {$ENDIF}    

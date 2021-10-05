@@ -2900,7 +2900,13 @@ begin
     begin
     Result:=TRecordUpdateDescriptor(FChangeList[i]);
     Case aChange of
-      usDeleted : Result.FStatus:=usDeleted;
+      usDeleted :
+        begin
+        if Result.FStatus = usInserted then
+          FChangeList.Delete(I)
+        else
+          Result.FStatus:=usDeleted;
+        end;
       usInserted : DatabaseError(SErrInsertingSameRecordtwice,Self);
       usModified : Result.FData:=ActiveBuffer.Data;
     end

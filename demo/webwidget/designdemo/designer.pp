@@ -314,7 +314,7 @@ begin
   FPage.Refresh;
   For I:=0 to 9 do
     begin
-    FButtons[I]:=TWidgetButtonWidget.Create(FPage);
+    FButtons[I]:=TButtonWidget.Create(FPage);
     FButtons[I].Classes:='btn btn-'+ButtonClasses[I mod 9];
     FButtons[I].Text:='Button #'+IntToStr(I+1);
     FButtons[I].Parent:=FPage;

@@ -66,9 +66,6 @@
         <UnitName Value="InitSubProcess"/>
       </Unit>
     </Units>
-    <Debugger>
-      <Backend Value="{989A9BD5-DAAD-47D7-9EAF-B5A5EA0B17B7}"/>
-    </Debugger>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>

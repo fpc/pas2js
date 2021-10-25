@@ -3137,6 +3137,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FfillStyleColor: String; external name 'fillStyle';
     FfillStyleGradient: TJSCanvasGradient; external name 'fillStyle';
     FfillStylePattern: TJSCanvasPattern; external name 'fillStyle';
+    FimageSmoothingEnabled: Boolean; external name 'imageSmoothingEnabled';
     FstrokeStyleColor: String; external name 'strokeStyle';
     FstrokeStyleGradient: TJSCanvasGradient; external name 'strokeStyle';
     FstrokeStylePattern: TJSCanvasPattern; external name 'strokeStyle';
@@ -3220,6 +3221,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property fillStyleAsColor : String Read FfillStyleColor Write FfillStyleColor;
     property fillStyleAsGradient : TJSCanvasGradient Read FfillStyleGradient Write FfillStyleGradient;
     property fillStyleAsPattern : TJSCanvasPattern Read FfillStylePattern Write FfillStylePattern;
+    property imageSmoothingEnabled : Boolean Read FimageSmoothingEnabled Write FimageSmoothingEnabled;
     property strokeStyleAsColor : String Read FstrokeStyleColor Write FstrokeStyleColor;
     property strokeStyleAsGradient : TJSCanvasGradient Read FstrokeStyleGradient Write FstrokeStyleGradient;
     property strokeStyleAsPattern : TJSCanvasPattern Read FstrokeStylePattern Write FstrokeStylePattern;

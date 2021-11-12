@@ -9,8 +9,8 @@ uses
 type
   TMyApplication = class(TBrowserApplication)
   Public
-    {$IFDEF USEIDE}
     FDemo : TDesignDemo;
+    {$IFDEF USEIDE}
     FIDEIntf : TIDEClient;
     {$ENDIF}
     procedure doRun; override;

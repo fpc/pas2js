@@ -1460,7 +1460,7 @@ begin
     Result := DoNumber(nkBinary)
   else if IsDigit(C, nkDecimal) then
     Result:=DoNumber(nkDecimal)
-  else if IsAlpha(C) or (C='"') then
+  else if IsAlpha(C) or (C='"') or (C='_') then
     Result:=DoIdentifier
   else
     ScanError(Format(SErrUnknownCharacter,[FPos,C]))  ;

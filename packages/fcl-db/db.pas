@@ -1184,7 +1184,7 @@ type
     Procedure DoneChangeList; virtual;
     Procedure ClearChangeList;
     procedure ResetUpdateDescriptors;
-    function GetUpdateData(aBuffer: TDataRecord) : JSValue; virtual;
+    function GetApplyUpdateData(aBuffer: TDataRecord) : JSValue; virtual;
     Function IndexInChangeList(aBookmark: TBookmark): Integer; virtual;
     Function AddToChangeList(aChange : TUpdateStatus) : TRecordUpdateDescriptor ; virtual;
     Procedure RemoveFromChangeList(R : TRecordUpdateDescriptor); virtual;
@@ -2877,7 +2877,7 @@ begin
     Dec(Result);
 end;
 
-function TDataSet.GetUpdateData(aBuffer : TDataRecord) : JSValue;
+function TDataSet.GetApplyUpdateData(aBuffer : TDataRecord) : JSValue;
 
 begin
   Result:=aBuffer.Data;
@@ -2898,7 +2898,7 @@ begin
   I:=IndexInChangeList(B);
   if (I=-1) then
     begin
-    aData:=GetUpdateData(ActiveBuffer);
+    aData:=GetApplyUpdateData(ActiveBuffer);
     if Assigned(DataProxy) then
       Result:=DataProxy.GetUpdateDescriptor(Self,B,aData,aChange)
     else
@@ -2917,7 +2917,7 @@ begin
           Result.FStatus:=usDeleted;
         end;
       usInserted : DatabaseError(SErrInsertingSameRecordtwice,Self);
-      usModified : Result.FData:=GetUpdateData(ActiveBuffer);
+      usModified : Result.FData:=GetApplyUpdateData(ActiveBuffer);
     end
     end;
 end;

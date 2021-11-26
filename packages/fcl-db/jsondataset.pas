@@ -327,7 +327,7 @@ type
     procedure SetFilterText(const Value: string); override;
     procedure SetFiltered(Value: Boolean); override;
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; override;
-    Function GetUpdateData(Buffer : TDataRecord) : JSValue; override;
+    Function GetApplyUpdateData(Buffer : TDataRecord) : JSValue; override;
     function IsCursorOpen: Boolean; override;
     // Bookmark operations
     procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); override;
@@ -1609,7 +1609,7 @@ begin
     Result:=inherited GetFieldClass(FieldType);
 end;
 
-function TBaseJSONDataSet.GetUpdateData(Buffer: TDataRecord): JSValue;
+function TBaseJSONDataSet.GetApplyUpdateData(Buffer: TDataRecord): JSValue;
 begin
   Result:=FieldMapper.CopyRow(Buffer.Data);
   RemoveCalcFields(Result);

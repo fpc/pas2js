@@ -88,6 +88,7 @@ function ArcSin(const A : Double): Double; external name 'Math.asin';
 function ArcSinH(const A : Double): Double; external name 'Math.asinh'; // not on IE
 function ArcTanH(const A: Double): Double; external name 'Math.atanh'; // not on IE
 function CosH(const A: Double): Double; external name 'Math.cosh'; // not on IE
+procedure SinCos(const A: Double; var B: Double; var C: Double);
 function ExpM1(const A: Double): Double; external name 'Math.expm1'; // not on IE
 function FRound(const A: Double): Double; overload; external name 'Math.fround'; // not on IE
 function FTrunc(const A: Double): double; overload; external name 'Math.trunc'; // not on IE
@@ -334,6 +335,12 @@ begin
         Inc(Exponent);
         end;
   Mantissa:=X;
+end;
+
+procedure SinCos(const A: Double; var B: Double; var C: Double);
+begin
+  B:=Sin(A);
+  C:=Cos(A);
 end;
 
 function LogN(const A, Base: Double): Double; 

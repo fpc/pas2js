@@ -602,7 +602,7 @@ type
     class function from(aValue : jsValue) : TJSUInt8ClampedArray; reintroduce;
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt8ClampedArray; reintroduce;overload;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt8ClampedArray; reintroduce;overload;
-    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs; external name 'of'; reintroduce;overload;
+    class function _of(aValue : jsValue) : TJSUInt8ClampedArray; varargs; external name 'of'; reintroduce;
     procedure _set(anArray : Array of Byte); external name 'set'; reintroduce;overload;
     procedure _set(anArray : Array of Byte; anOffset : NativeInt); external name 'set';overload;
     function subarray(aBegin, aEnd: Integer): TJSUInt8ClampedArray;  overload;

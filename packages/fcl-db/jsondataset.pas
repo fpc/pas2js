@@ -281,13 +281,14 @@ type
     FRowType: TJSONRowType;
     FFilterExpression : TFPExpressionParser;
     function GetFilterField(const AName: String): TFPExpressionResult;
-    procedure RemoveCalcFields(Buf: JSValue);
     procedure SetActiveIndex(AValue: String);
     procedure SetIndexes(AValue: TJSONIndexDefs);
     procedure SetMetaData(AValue: TJSObject);
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
+    // Remove calculated fields from buffer
+    procedure RemoveCalcFields(Buf: JSValue);
     procedure ActivateIndex(Build : Boolean);
     // Determine filter value type based on field type
     function FieldTypeToExpressionType(aDataType: TFieldType): TResultType; virtual;
@@ -326,6 +327,7 @@ type
     procedure SetFilterText(const Value: string); override;
     procedure SetFiltered(Value: Boolean); override;
     function  GetFieldClass(FieldType: TFieldType): TFieldClass; override;
+    Function GetUpdateData(Buffer : TDataRecord) : JSValue; override;
     function IsCursorOpen: Boolean; override;
     // Bookmark operations
     procedure GetBookmarkData(Buffer: TDataRecord; var Data: TBookmark); override;
@@ -1359,7 +1361,7 @@ begin
       Buffer.Data:=FRows[bkmIdx];
       Buffer.BookmarkFlag := bfCurrent;
       Buffer.Bookmark:=BkmIdx;
-      CalculateFields(Buffer);
+      GetCalcFields(Buffer);
       if Filtered then
         begin
         FFilterRow:=Buffer.Data;
@@ -1468,7 +1470,7 @@ begin
   if not isUndefined(Rows[FEditIdx]) then
     begin
     FEditRow:=FieldMapper.CopyRow(Rows[FEditIdx]);
-    RemoveCalcFields(FEditRow);
+
     end
   else
     FEditRow:=FFieldMapper.CreateRow;
@@ -1607,6 +1609,12 @@ begin
     Result:=inherited GetFieldClass(FieldType);
 end;
 
+function TBaseJSONDataSet.GetUpdateData(Buffer: TDataRecord): JSValue;
+begin
+  Result:=FieldMapper.CopyRow(Buffer.Data);
+  RemoveCalcFields(Result);
+end;
+
 function TBaseJSONDataSet.IsCursorOpen: Boolean;
 begin
   Result := Assigned(FDefaultIndex);
@@ -1690,7 +1698,7 @@ begin
     if State=dsOldValue then
       R:=Buffer.data
     else
-      R:=FEditRow
+      R:=FEditRow;
     end
   else
     begin

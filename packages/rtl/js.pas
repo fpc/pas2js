@@ -863,6 +863,7 @@ type
     function next: TJSIteratorResult;
   end;
 
+  TJSSyntaxError = class external name 'SyntaxError' (TJSError);
 
 var
   // JSArguments can be used in procedures/functions to provide access to the 'arguments' array.

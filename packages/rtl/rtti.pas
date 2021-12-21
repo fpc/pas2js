@@ -264,7 +264,7 @@ type
     function GetIsSet: Boolean; virtual;
     function GetTypeKind: TTypeKind; virtual;
     //function GetTypeSize: integer; virtual;
-    //function GetBaseType: TRttiType; virtual;
+    function GetBaseType: TRttiType; virtual;
     function LoadCustomAttributes: TCustomAttributeArray; override;
   public
     constructor Create(ATypeInfo : PTypeInfo);
@@ -288,7 +288,7 @@ type
     property IsOrdinal: Boolean read GetIsOrdinal;
     property IsRecord: Boolean read GetIsRecord;
     property IsSet: Boolean read GetIsSet;
-    //property BaseType: TRttiType read GetBaseType;
+    property BaseType: TRttiType read GetBaseType;
     property AsInstance: TRttiInstanceType read GetAsInstance;
     property AsInstanceExternal: TRttiInstanceExternalType read GetAsInstanceExternal;
     property TypeKind: TTypeKind read GetTypeKind;
@@ -330,13 +330,16 @@ type
 
   TRttiInstanceType = class(TRttiStructuredType)
   private
+    function GetAncestorType: TRttiInstanceType;
     function GetClassTypeInfo: TTypeInfoClass;
     function GetMetaClassType: TClass;
   protected
     function GetAncestor: TRttiStructuredType; override;
+    function GetBaseType : TRttiType; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
-
+    property BaseType : TRttiInstanceType read GetAncestorType;
+    property Ancestor: TRttiInstanceType read GetAncestorType;
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
     property MetaClassType: TClass read GetMetaClassType;
   end;
@@ -345,13 +348,16 @@ type
 
   TRttiInterfaceType = class(TRttiStructuredType)
   private
+    function GetAncestorType: TRttiInterfaceType;
     function GetGUID: TGUID;
     function GetInterfaceTypeInfo: TTypeInfoInterface;
   protected
     function GetAncestor: TRttiStructuredType; override;
+    function GetBaseType : TRttiType; override;
   public
     constructor Create(ATypeInfo: PTypeInfo);
-
+    property BaseType : TRttiInterfaceType read GetAncestorType;
+    property Ancestor: TRttiInterfaceType read GetAncestorType;
     property GUID: TGUID read GetGUID;
     property InterfaceTypeInfo: TTypeInfoInterface read GetInterfaceTypeInfo;
   end;
@@ -1208,7 +1214,17 @@ end;
 
 function TRttiInstanceType.GetAncestor: TRttiStructuredType;
 begin
-  Result := GRttiContext.GetType(ClassTypeInfo.Ancestor) as TRttiStructuredType;
+  Result := GetAncestorType;
+end;
+
+function TRttiInstanceType.GetBaseType: TRttiType;
+begin
+  Result:=GetAncestorType;
+end;
+
+function TRttiInstanceType.GetAncestorType: TRttiInstanceType;
+begin
+  Result := GRttiContext.GetType(ClassTypeInfo.Ancestor) as TRttiInstanceType;
 end;
 
 constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
@@ -1244,7 +1260,17 @@ end;
 
 function TRttiInterfaceType.GetAncestor: TRttiStructuredType;
 begin
-  Result := GRttiContext.GetType(InterfaceTypeInfo.Ancestor) as TRttiStructuredType;
+  Result := GetAncestorType;
+end;
+
+function TRttiInterfaceType.GetBaseType: TRttiType;
+begin
+  Result:=GetAncestorType;
+end;
+
+function TRttiInterfaceType.GetAncestorType: TRttiInterfaceType;
+begin
+  Result := GRttiContext.GetType(InterfaceTypeInfo.Ancestor) as TRttiInterfaceType;
 end;
 
 { TRttiRecordType }
@@ -1734,6 +1760,11 @@ end;
 function TRttiType.GetTypeKind: TTypeKind;
 begin
   Result:=FTypeInfo.Kind;
+end;
+
+function TRttiType.GetBaseType: TRttiType;
+begin
+  Result:=Nil;
 end;
 
 function TRttiType.GetAsInstance: TRttiInstanceType;

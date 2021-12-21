@@ -80,6 +80,7 @@ type
 
   TRttiType = class;
   TRttiInstanceType = class;
+  TRttiInstanceExternalType = class;
 
   { TRTTIContext }
 
@@ -250,15 +251,17 @@ type
     FTypeInfo: TTypeInfo;
     //FMethods: specialize TArray<TRttiMethod>;
     function GetAsInstance: TRttiInstanceType;
+    function GetAsInstanceExternal: TRttiInstanceExternalType;
     function GetQualifiedName: String;
   protected
     function GetName: string; override;
     //function GetHandle: Pointer; override;
-    function GetIsInstance: boolean;
-    //function GetIsManaged: boolean; virtual;
-    function GetIsOrdinal: boolean; virtual;
-    function GetIsRecord: boolean; virtual;
-    function GetIsSet: boolean; virtual;
+    function GetIsInstance: Boolean;
+    function GetIsInstanceExternal: Boolean;
+    //function GetIsManaged: Boolean; virtual;
+    function GetIsOrdinal: Boolean; virtual;
+    function GetIsRecord: Boolean; virtual;
+    function GetIsSet: Boolean; virtual;
     function GetTypeKind: TTypeKind; virtual;
     //function GetTypeSize: integer; virtual;
     //function GetBaseType: TRttiType; virtual;
@@ -279,13 +282,15 @@ type
     function GetDeclaredFields: TRttiFieldArray; virtual;
 
     property Handle: TTypeInfo read FTypeInfo;
-    property IsInstance: boolean read GetIsInstance;
-    //property isManaged: boolean read GetIsManaged;
-    property IsOrdinal: boolean read GetIsOrdinal;
-    property IsRecord: boolean read GetIsRecord;
-    property IsSet: boolean read GetIsSet;
+    property IsInstance: Boolean read GetIsInstance;
+    property IsInstanceExternal: Boolean read GetIsInstanceExternal;
+    //property isManaged: Boolean read GetIsManaged;
+    property IsOrdinal: Boolean read GetIsOrdinal;
+    property IsRecord: Boolean read GetIsRecord;
+    property IsSet: Boolean read GetIsSet;
     //property BaseType: TRttiType read GetBaseType;
     property AsInstance: TRttiInstanceType read GetAsInstance;
+    property AsInstanceExternal: TRttiInstanceExternalType read GetAsInstanceExternal;
     property TypeKind: TTypeKind read GetTypeKind;
     //property TypeSize: integer read GetTypeSize;
     property QualifiedName: String read GetQualifiedName;
@@ -376,6 +381,21 @@ type
     property ClassRefTypeInfo: TTypeInfoClassRef read GetClassRefTypeInfo;
     property InstanceType: TRttiInstanceType read GetInstanceType;
     property MetaclassType: TClass read GetMetaclassType;
+  end;
+
+  { TRttiInstanceExternalType }
+
+  TRttiInstanceExternalType = class(TRttiType)
+  private
+    function GetAncestor: TRttiInstanceExternalType;
+    function GetExternalName: String;
+    function GetExternalClassTypeInfo: TTypeInfoExtClass;
+  public
+    constructor Create(ATypeInfo: PTypeInfo);
+
+    property Ancestor: TRttiInstanceExternalType read GetAncestor;
+    property ExternalClassTypeInfo: TTypeInfoExtClass read GetExternalClassTypeInfo;
+    property ExternalName: String read GetExternalName;
   end;
 
   { TRttiOrdinalType }
@@ -1271,6 +1291,31 @@ begin
   Result := InstanceType.MetaClassType;
 end;
 
+{ TRttiInstanceExternalType }
+
+function TRttiInstanceExternalType.GetAncestor: TRttiInstanceExternalType;
+begin
+  Result := GRttiContext.GetType(ExternalClassTypeInfo.Ancestor) as TRttiInstanceExternalType;
+end;
+
+function TRttiInstanceExternalType.GetExternalClassTypeInfo: TTypeInfoExtClass;
+begin
+  Result := TTypeInfoExtClass(FTypeInfo);
+end;
+
+function TRttiInstanceExternalType.GetExternalName: String;
+begin
+  Result := ExternalClassTypeInfo.JSClassName;
+end;
+
+constructor TRttiInstanceExternalType.Create(ATypeInfo: PTypeInfo);
+begin
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoExtClass) then
+    raise EInvalidCast.Create('');
+
+  inherited Create(ATypeInfo);
+end;
+
 { TRTTIContext }
 
 class constructor TRTTIContext.Init;
@@ -1319,7 +1364,7 @@ var
     TRttiType, // tkRefToProcVar
     TRttiInterfaceType, // tkInterface
     TRttiType, // tkHelper
-    TRttiInstanceType // tkExtClass
+    TRttiInstanceExternalType // tkExtClass
   );
   t: TTypeinfo absolute aTypeInfo;
   Name: String;
@@ -1522,7 +1567,7 @@ end;
 
 function TRttiMethod.GetIsAsyncCall: Boolean;
 begin
-  Result := pfAsync in GetProcedureFlags;
+  Result := (pfAsync in GetProcedureFlags) or Assigned(ReturnType) and ReturnType.IsInstanceExternal and (ReturnType.AsInstanceExternal.ExternalName = 'Promise');
 end;
 
 function TRttiMethod.GetIsSafeCall: Boolean;
@@ -1666,6 +1711,11 @@ begin
   Result:=Self is TRttiInstanceType;
 end;
 
+function TRttiType.GetIsInstanceExternal: boolean;
+begin
+  Result:=Self is TRttiInstanceExternalType;
+end;
+
 function TRttiType.GetIsOrdinal: boolean;
 begin
   Result:=false;
@@ -1689,6 +1739,11 @@ end;
 function TRttiType.GetAsInstance: TRttiInstanceType;
 begin
   Result := Self as TRttiInstanceType;
+end;
+
+function TRttiType.GetAsInstanceExternal: TRttiInstanceExternalType;
+begin
+  Result := Self as TRttiInstanceExternalType;
 end;
 
 constructor TRttiType.Create(ATypeInfo: PTypeInfo);

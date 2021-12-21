@@ -647,8 +647,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt16Array; reintroduce;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt16Array; reintroduce;
     class function _of(aValue : jsValue) : TJSUInt16Array; varargs; external name 'of'; reintroduce;
-    procedure _set(anArray : Array of Word); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of Word; anOffset : NativeInt); external name 'set';
+    procedure _set(anArray : Array of Word); external name 'set'; reintroduce; overload;
+    procedure _set(anArray : Array of Word; anOffset : NativeInt); external name 'set'; overload;
     function subarray(aBegin, aEnd: Integer): TJSUInt16Array;  overload;
     function subarray(aBegin: Integer): TJSUInt16Array; overload;
     Property values[Index : NativeInt] : Word Read getTypedValue Write setTypedValue; default;
@@ -669,8 +669,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSInt32Array; reintroduce;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSInt32Array; reintroduce;
     class function _of(aValue : jsValue) : TJSInt32Array; varargs;external name 'of'; reintroduce;
-    procedure _set(anArray : Array of LongInt); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of LongInt; anOffset : NativeInt); external name 'set';
+    procedure _set(anArray : Array of LongInt); external name 'set'; reintroduce; overload;
+    procedure _set(anArray : Array of LongInt; anOffset : NativeInt); external name 'set'; overload;
     function subarray(aBegin, aEnd: Integer): TJSInt32Array;  overload;
     function subarray(aBegin: Integer): TJSInt32Array; overload;
     Property values[Index : NativeInt] : longint Read getTypedValue Write setTypedValue; default;
@@ -691,8 +691,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSUInt32Array; reintroduce;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSUInt32Array; reintroduce;
     class function _of(aValue : jsValue) : TJSUInt32Array; varargs; external name 'of'; reintroduce;
-    procedure _set(anArray : Array of Cardinal); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of Cardinal; anOffset : NativeInt); external name 'set';
+    procedure _set(anArray : Array of Cardinal); external name 'set'; reintroduce; overload;
+    procedure _set(anArray : Array of Cardinal; anOffset : NativeInt); external name 'set'; overload;
     function subarray(aBegin, aEnd: Integer): TJSUInt32Array;  overload;
     function subarray(aBegin: Integer): TJSUInt32Array; overload;
     Property values[Index : NativeInt] : LongWord Read getTypedValue Write setTypedValue; default;
@@ -713,8 +713,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSFloat32Array; reintroduce;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSFloat32Array; reintroduce;
     class function _of(aValue : jsValue) : TJSFloat32Array; varargs; reintroduce;
-    procedure _set(anArray : Array of Double); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set'; reintroduce;
+    procedure _set(anArray : Array of Double); external name 'set'; reintroduce; overload;
+    procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set'; reintroduce; overload;
     function subarray(aBegin, aEnd: Integer): TJSFloat32Array;  overload;
     function subarray(aBegin: Integer): TJSFloat32Array; overload;
     Property values[Index : NativeInt] : Float32 Read getTypedValue Write setTypedValue; default;
@@ -735,8 +735,8 @@ type
     class function from(aValue : jsValue; Map : TJSTypedArrayMapCallBack) : TJSFloat64Array; reintroduce;
     class function from(aValue : jsValue; aMap : TJSTypedArrayMapEvent) : TJSFloat64Array; reintroduce;
     class function _of(aValue : jsValue) : TJSFloat64Array; varargs; reintroduce;
-    procedure _set(anArray : Array of Double); external name 'set'; reintroduce;
-    procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set'; reintroduce;
+    procedure _set(anArray : Array of Double); external name 'set'; reintroduce; overload;
+    procedure _set(anArray : Array of Double; anOffset : NativeInt); external name 'set'; reintroduce; overload;
     function subarray(aBegin, aEnd: Integer): TJSFloat64Array;  overload;
     function subarray(aBegin: Integer): TJSFloat64Array; overload;
     Property values[Index : NativeInt] : Float64 Read getTypedValue Write setTypedValue; default;

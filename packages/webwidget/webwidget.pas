@@ -377,6 +377,7 @@ Type
     Class Function FindElement(aID : String) : TJSHTMLElement;
     // Create element in DOM tree, set ID if it is nonzero
     Class function CreateElement (aTag : String; aID : String) : TJSHTMLElement;
+    Class function CreateElement (aParent:TJSElement; aTag : String; aID : String) : TJSHTMLElement;
     // references are relative to this element. By default, this is the element of the widget.
     // override if you want for instance to indicate the parent element.
     function GetReferenceElement: TJSHTMLELement; virtual;
@@ -2735,6 +2736,14 @@ begin
   Result:=TJSHTMLElement(Document.createElement(aTag));
   if aID<>'' then
     Result.id:=aID;
+end;
+
+class function TCustomWebWidget.CreateElement(aParent: TJSElement; 
+  aTag: String; aID: String): TJSHTMLElement;
+begin
+  Result := CreateElement(aTag, aID);
+  if aParent <> nil then
+    aParent.appendChild(Result);
 end;
 
 function TCustomWebWidget.GetReferenceElement: TJSHTMLELement;

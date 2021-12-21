@@ -696,7 +696,7 @@ Type
   Public
     Constructor Create(aTable : TCustomTableWidget;aTableID : String); virtual;
     Property Table : TCustomTableWidget Read FTable;
-    Property Column : TCustomTableColumn Read FColumn;
+    Property Column : TCustomTableColumn Read FColumn Write FColumn;
     Property Row : Integer Read FRow;
     Property Col : Integer Read FCol;
     Property Kind : TRowKind Read FKind;
@@ -3183,4 +3183,6 @@ end;
 
 
 end.
+
+
 

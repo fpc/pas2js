@@ -150,6 +150,14 @@ begin
     P.UnitPath.Add('compiler/packages/fcl-json/src');
     P.UnitPath.Add('compiler/packages/fcl-base/src');
     P.UnitPath.Add('compiler/packages/fcl-web/src/base');
+    P.UnitPath.Add('compiler/packages/fcl-net/src');
+    P.IncludePath.Add('compiler/packages/fcl-net/src/unix',AllUnixOSes);
+    P.IncludePath.Add('compiler/packages/fcl-net/src/win',AllWindowsOSes);
+    P.IncludePath.Add('compiler/packages/fcl-net/src/os2',[EMX]);
+    P.IncludePath.Add('compiler/packages/fcl-net/src/amiga',[morphos]);
+    P.IncludePath.Add('compiler/packages/fcl-net/src/$(OS)',AllOSes-AllWindowsOSes-AllUnixOSes-[EMX]);
+    P.UnitPath.Add('compiler/packages/fcl-base/src');
+    P.IncludePath.Add('compiler/packages/fcl-base/src/dummy');
 {$IFDEF VER3_0}    
     P.UnitPath.Add('compiler/packages/compat');
 {$ENDIF}    

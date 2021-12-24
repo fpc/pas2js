@@ -865,6 +865,47 @@ type
 
   TJSSyntaxError = class external name 'SyntaxError' (TJSError);
 
+  TJSTextDecoderOptions = class external name 'Object' (TJSObject)
+    fatal : Boolean;
+    ignoreBOM : Boolean;
+  end;
+
+  TJSTextDecodeOptions = class external name 'Object' (TJSObject)
+    stream : Boolean;
+  end;
+
+  TJSTextDecoder = class external name 'TextDecoder' (TJSObject)
+  Private
+    FEncoding : String; external name 'encoding';
+    FFatal : Boolean; external name 'fatal';
+    FIgnoreBOM : Boolean; external name 'ignoreBOM';
+  Public
+    Constructor New(utfLabel : String);
+    Constructor New(utfLabel : String; Options : TJSTextDecoderOptions);
+    Function decode(arr : TJSTypedArray) : String; overload;
+    Function decode(arr : TJSArrayBuffer) : String; overload;
+    Function decode(arr : TJSTypedArray; opts : TJSTextDecodeOptions) : String; overload;
+    Function decode(arr : TJSArrayBuffer; opts : TJSTextDecodeOptions) : String; overload;
+    property Encoding : string Read FEncoding;
+    Property Fatal : Boolean Read FFatal;
+    Property IgnoreBOM : Boolean Read FIgnoreBOM;
+  end;
+
+  TJSTextEncoderEncodeIntoResult = class external name 'Object' (TJSObject)
+    read : Nativeint;
+    written : NativeInt;
+  end;
+
+  TJSTextEncoder = class external name 'TextEncoder' (TJSObject)
+  Private
+    FEncoding : String; external name 'encoding';
+  Public
+    Constructor New;
+    function encode(aString : String) : TJSUInt8Array;
+    Function encodeInto(aString : String; aArray : TJSUInt8Array) : TJSTextEncoderEncodeIntoResult;
+    Property Encoding : string Read FEncoding;
+  end;
+
 var
   // JSArguments can be used in procedures/functions to provide access to the 'arguments' array.
   JSArguments: TJSFunctionArguments; external name 'arguments';

@@ -9,13 +9,32 @@ uses
   js, Web;
 
 Type
+  { TJSWebAssemblyMemory }
+
+  TJSWebAssemblyMemoryDescriptor = record
+    initial,
+    maximum : integer;
+  end;
+
+  TJSWebAssemblyMemory = class external name 'WebAssembly.Memory' (TJSObject)
+  private
+    FBuffer: TJSArrayBuffer; external name 'buffer';
+    FLength: NativeInt; external name 'length';
+  Public
+    constructor new (memorydescriptor : TJSWebAssemblyMemoryDescriptor);
+    constructor new (memorydescriptor : TJSObject);
+    Property buffer : TJSArrayBuffer Read FBuffer;
+    Property length: NativeInt Read FLength;
+  end;
 
   { TJSModulesArray }
 
   TJSModulesExports = Class external name 'anon' (TJSObject)
   private
+    FMemory : TJSWebAssemblyMemory; external name 'memory';
     function GetFun(aName : String): TJSFunction; external name '[]';
   public
+    Property Memory : TJSWebAssemblyMemory Read FMemory;
     Property functions [aName : String] : TJSFunction read GetFun; default;
   end;
 
@@ -81,23 +100,7 @@ Type
     constructor new (tabledescriptor : TJSObject);
     Property length: NativeInt Read FLength;
   end;
-  { TJSWebAssemblyMemory }
 
-  TJSWebAssemblyMemoryDescriptor = record
-    initial,
-    maximum : integer;
-  end;
-
-  TJSWebAssemblyMemory = class external name 'WebAssembly.Memory' (TJSObject)
-  private
-    FBuffer: TJSArrayBuffer; external name 'buffer';
-    FLength: NativeInt; external name 'length';
-  Public
-    constructor new (memorydescriptor : TJSWebAssemblyMemoryDescriptor);
-    constructor new (memorydescriptor : TJSObject);
-    Property buffer : TJSArrayBuffer Read FBuffer;
-    Property length: NativeInt Read FLength;
-  end;
 
 implementation
 

@@ -458,13 +458,14 @@ Var
   
 begin
   aObject[WASIImportName]:=ImportObject;
-  For I:=0 to FImportExtensions.Count-1 do
-    begin
-    Ext:=TImportExtension(FImportExtensions[i]);
-    O:=TJSObject.New;
-    Ext.FillImportObject(O);
-    aObject[Ext.ImportName]:=O;
-    end;
+  if Assigned(FImportExtensions) then
+    For I:=0 to FImportExtensions.Count-1 do
+      begin
+      Ext:=TImportExtension(FImportExtensions[i]);
+      O:=TJSObject.New;
+      Ext.FillImportObject(O);
+      aObject[Ext.ImportName]:=O;
+      end;
 end;
 
 procedure TPas2JSWASIEnvironment.AddExtension(aExtension : TImportExtension); 

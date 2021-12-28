@@ -9,3 +9,4 @@ units
 *.js
 *.o
 *.wasm
+link*.res

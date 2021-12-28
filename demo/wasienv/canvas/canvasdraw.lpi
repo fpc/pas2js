@@ -39,6 +39,21 @@
       <IncludeFiles Value="$(ProjOutDir)"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
+    <CodeGeneration>
+      <TargetCPU Value="wasm32"/>
+      <TargetOS Value="wasi"/>
+      <Optimizations>
+        <OptimizationLevel Value="0"/>
+      </Optimizations>
+    </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <GenerateDebugInfo Value="False"/>
+      </Debugging>
+    </Linking>
+    <Other>
+      <CompilerPath Value="/usr/lib/fpc/3.3.1/ppcrosswasm32"/>
+    </Other>
   </CompilerOptions>
   <Debugging>
     <Exceptions>

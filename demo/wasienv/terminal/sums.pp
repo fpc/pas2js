@@ -1,4 +1,4 @@
-program HelloWorld;
+program sums;
 
 Var
   A,B,C : Integer;

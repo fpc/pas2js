@@ -8,3 +8,4 @@ units
 *.lps
 *.js
 *.o
+*.wasm

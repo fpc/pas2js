@@ -880,8 +880,8 @@ type
     FFatal : Boolean; external name 'fatal';
     FIgnoreBOM : Boolean; external name 'ignoreBOM';
   Public
-    Constructor New(utfLabel : String);
-    Constructor New(utfLabel : String; Options : TJSTextDecoderOptions);
+    Constructor New(utfLabel : String); overload;
+    Constructor New(utfLabel : String; Options : TJSTextDecoderOptions); overload;
     Function decode(arr : TJSTypedArray) : String; overload;
     Function decode(arr : TJSArrayBuffer) : String; overload;
     Function decode(arr : TJSTypedArray; opts : TJSTextDecodeOptions) : String; overload;

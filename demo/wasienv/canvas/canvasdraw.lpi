@@ -33,7 +33,7 @@
   <CompilerOptions>
     <Version Value="11"/>
     <Target>
-      <Filename Value="canvasdraw"/>
+      <Filename Value="canvasdraw.wasm" ApplyConventions="False"/>
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>

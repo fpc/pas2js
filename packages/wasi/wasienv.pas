@@ -299,7 +299,8 @@ type
 
   TWASIWriteEvent = Reference to Procedure(Sender : TObject; Const aOutput : String);
 
-  TWASIExports = Class External name 'Object' (TJSObject)
+  // Standard FPC exports.
+  TWASIExports = Class External name 'Object' (TJSModulesExports)
   Public
      Procedure start; external name '_start';
   end;

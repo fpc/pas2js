@@ -29,7 +29,7 @@ Type
 
   { TJSModulesArray }
 
-  TJSModulesExports = Class external name 'anon' (TJSObject)
+  TJSModulesExports = Class external name 'Object' (TJSObject)
   private
     FMemory : TJSWebAssemblyMemory; external name 'memory';
     function GetFun(aName : String): TJSFunction; external name '[]';

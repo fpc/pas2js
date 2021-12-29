@@ -35,7 +35,6 @@ begin
   Result:=True;
   Exps := TWASIExports(TJSObject(Module.Instance.exports_));
   FWasiEnv.Instance:=Module.Instance;
-  console.info('got exports', exps);
   Exps.Start;
 end;
 

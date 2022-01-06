@@ -742,16 +742,13 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   { Various events }
 
-{$IFNDEF FIREFOX}
-  TJSFocusEvent = TJSEvent;
-{$ELSE}
   TJSFocusEvent = Class(TJSEvent)
   private
     FrelatedTarget : TJSElement external name 'relatedTarget';
   public
     property relatedTarget : TJSElement Read FrelatedTarget;
   end;
-{$ENDIF}
+
   TJSAnimationEvent = Class(TJSEvent);
   TJSLoadEvent = Class(TJSEvent);
 

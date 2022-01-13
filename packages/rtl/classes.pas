@@ -5199,9 +5199,9 @@ procedure TComponent.InsertComponent(AComponent: TComponent);
 
 begin
   AComponent.ValidateContainer(Self);
+  ValidateRename(AComponent,'',AComponent.FName);
   if AComponent.FOwner <> nil then
     AComponent.FOwner.RemoveComponent(AComponent);
-  ValidateRename(AComponent,'',AComponent.FName);
   Insert(AComponent);
   If csDesigning in FComponentState then
     AComponent.SetDesigning(true);

@@ -87,7 +87,7 @@ type
   TRTTIContext = record
   private
     FPool: TJSObject; // maps 'modulename.typename' to TRTTIType
-    class constructor Init;
+    FReferenceCount: Integer;
   public
     class function Create: TRTTIContext; static;
     procedure Free;
@@ -95,6 +95,7 @@ type
     function FindType(const AQualifiedName: String): TRttiType;
     function GetType(aTypeInfo: PTypeInfo): TRTTIType; overload;
     function GetType(aClass: TClass): TRTTIType; overload;
+    function GetTypes: specialize TArray<TRttiType>;
   end;
 
   { TRttiObject }
@@ -103,15 +104,20 @@ type
   private
     FAttributesLoaded: Boolean;
     FAttributes: TCustomAttributeArray;
+    FParent: TRttiObject;
+    FHandle: Pointer;
   protected
     function LoadCustomAttributes: TCustomAttributeArray; virtual;
   public
+    constructor Create(AParent: TRttiObject; AHandle: Pointer); virtual;
+
     destructor Destroy; override;
 
-    //property Handle: Pointer read GetHandle;  not supported in pas2js
     function GetAttributes: TCustomAttributeArray;
 
     property Attributes: TCustomAttributeArray read GetAttributes;
+    property Handle: Pointer read FHandle;
+    property Parent: TRttiObject read FParent;
   end;
 
   { TRttiNamedObject }
@@ -132,20 +138,18 @@ type
     mvPublished);
 
   TRttiMember = class(TRttiNamedObject)
-  private
-    FTypeInfo: TTypeMember;
-    FParent: TRttiType;
   protected
     function GetMemberTypeInfo: TTypeMember;
-    function GetName: string; override;
+    function GetName: String; override;
+    function GetParent: TRttiType;
     function GetVisibility: TMemberVisibility; virtual;
     function LoadCustomAttributes: TCustomAttributeArray; override;
   public
     constructor Create(AParent: TRttiType; ATypeInfo: TTypeMember);
 
     property MemberTypeInfo: TTypeMember read GetMemberTypeInfo;
+    property Parent: TRttiType read GetParent;
     property Visibility: TMemberVisibility read GetVisibility;
-    property Parent: TRttiType read FParent;
   end;
 
   { TRttiField }
@@ -248,10 +252,10 @@ type
 
   TRttiType = class(TRttiNamedObject)
   private
-    FTypeInfo: TTypeInfo;
     //FMethods: specialize TArray<TRttiMethod>;
     function GetAsInstance: TRttiInstanceType;
     function GetAsInstanceExternal: TRttiInstanceExternalType;
+    function GetHandle: TTypeInfo;
     function GetQualifiedName: String;
   protected
     function GetName: string; override;
@@ -267,7 +271,6 @@ type
     function GetBaseType: TRttiType; virtual;
     function LoadCustomAttributes: TCustomAttributeArray; override;
   public
-    constructor Create(ATypeInfo : PTypeInfo);
     function GetField(const AName: string): TRttiField; virtual;
     function GetFields: TRttiFieldArray; virtual;
     function GetMethods: TRttiMethodArray; virtual;
@@ -281,7 +284,7 @@ type
     function GetDeclaredMethods: TRttiMethodArray; virtual;
     function GetDeclaredFields: TRttiFieldArray; virtual;
 
-    property Handle: TTypeInfo read FTypeInfo;
+    property Handle: TTypeInfo read GetHandle;
     property IsInstance: Boolean read GetIsInstance;
     property IsInstanceExternal: Boolean read GetIsInstanceExternal;
     //property isManaged: Boolean read GetIsManaged;
@@ -309,7 +312,7 @@ type
     function GetAncestor: TRttiStructuredType; virtual;
     function GetStructTypeInfo: TTypeInfoStruct;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     destructor Destroy; override;
 
@@ -337,7 +340,7 @@ type
     function GetAncestor: TRttiStructuredType; override;
     function GetBaseType : TRttiType; override;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
     property BaseType : TRttiInstanceType read GetAncestorType;
     property Ancestor: TRttiInstanceType read GetAncestorType;
     property ClassTypeInfo: TTypeInfoClass read GetClassTypeInfo;
@@ -355,7 +358,7 @@ type
     function GetAncestor: TRttiStructuredType; override;
     function GetBaseType : TRttiType; override;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
     property BaseType : TRttiInterfaceType read GetAncestorType;
     property Ancestor: TRttiInterfaceType read GetAncestorType;
     property GUID: TGUID read GetGUID;
@@ -370,7 +373,7 @@ type
   protected
     function GetIsRecord: Boolean; override;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     property RecordTypeInfo: TTypeInfoRecord read GetRecordTypeInfo;
   end;
@@ -382,7 +385,7 @@ type
     function GetInstanceType: TRttiInstanceType;
     function GetMetaclassType: TClass;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     property ClassRefTypeInfo: TTypeInfoClassRef read GetClassRefTypeInfo;
     property InstanceType: TRttiInstanceType read GetInstanceType;
@@ -397,7 +400,7 @@ type
     function GetExternalName: String;
     function GetExternalClassTypeInfo: TTypeInfoExtClass;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     property Ancestor: TRttiInstanceExternalType read GetAncestor;
     property ExternalClassTypeInfo: TTypeInfoExtClass read GetExternalClassTypeInfo;
@@ -413,7 +416,7 @@ type
     function GetOrdType: TOrdType;
     function GetOrdinalTypeInfo: TTypeInfoInteger;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     property OrdType: TOrdType read GetOrdType;
     property MinValue: Integer read GetMinValue;
@@ -427,7 +430,7 @@ type
   private
     function GetEnumerationTypeInfo: TTypeInfoEnum;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     property EnumerationTypeInfo: TTypeInfoEnum read GetEnumerationTypeInfo;
 
@@ -443,7 +446,7 @@ type
     function GetDynArrayTypeInfo: TTypeInfoDynArray;
     function GetElementType: TRttiType;
   public
-    constructor Create(ATypeInfo: PTypeInfo);
+    constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
 
     property DynArrayTypeInfo: TTypeInfoDynArray read GetDynArrayTypeInfo;
     property ElementType: TRttiType read GetElementType;
@@ -503,7 +506,7 @@ end;
 
 function TRttiDynamicArrayType.GetDynArrayTypeInfo: TTypeInfoDynArray;
 begin
-  Result := TTypeInfoDynArray(FTypeInfo);
+  Result := TTypeInfoDynArray(inherited Handle);
 end;
 
 function TRttiDynamicArrayType.GetElementType: TRttiType;
@@ -511,12 +514,12 @@ begin
   Result := GRttiContext.GetType(DynArrayTypeInfo.ElType);
 end;
 
-constructor TRttiDynamicArrayType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiDynamicArrayType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoDynArray) then
     raise EInvalidCast.Create('');
 
-  inherited Create(ATypeInfo);
+  inherited;
 end;
 
 { TRttiOrdinalType }
@@ -538,22 +541,22 @@ end;
 
 function TRttiOrdinalType.GetOrdinalTypeInfo: TTypeInfoInteger;
 begin
-  Result := TTypeInfoInteger(FTypeInfo);
+  Result := TTypeInfoInteger(inherited Handle);
 end;
 
-constructor TRttiOrdinalType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiOrdinalType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoInteger) then
     raise EInvalidCast.Create('');
 
-  inherited Create(ATypeInfo);
+  inherited;
 end;
 
 { TRttiEnumerationType }
 
 function TRttiEnumerationType.GetEnumerationTypeInfo: TTypeInfoEnum;
 begin
-  Result := TTypeInfoEnum(FTypeInfo);
+  Result := TTypeInfoEnum(inherited Handle);
 end;
 
 function TRttiEnumerationType.GetNames: TStringArray;
@@ -593,12 +596,12 @@ begin
   Result := T(JSValue(GetEnumValue(TTypeInfoEnum(TypeInfo(T)), AValue)));
 end;
 
-constructor TRttiEnumerationType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiEnumerationType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoEnum) then
     raise EInvalidCast.Create('');
 
-  inherited Create(ATypeInfo);
+  inherited;
 end;
 
 { TValue }
@@ -613,7 +616,10 @@ end;
 
 generic function TValue.AsType<T>: T;
 begin
-  Result := T(AsJSValue)
+  if IsEmpty then
+    Result := Default(T)
+  else
+    Result := T(AsJSValue)
 end;
 
 generic class function TValue.From<T>(const Value: T): TValue;
@@ -1112,15 +1118,15 @@ end;
 
 function TRttiStructuredType.GetStructTypeInfo: TTypeInfoStruct;
 begin
-  Result:=TTypeInfoStruct(FTypeInfo);
+  Result:=TTypeInfoStruct(inherited Handle);
 end;
 
-constructor TRttiStructuredType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiStructuredType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoStruct) then
     raise EInvalidCast.Create('');
 
-  inherited Create(ATypeInfo);
+  inherited;
 end;
 
 destructor TRttiStructuredType.Destroy;
@@ -1204,7 +1210,7 @@ end;
 
 function TRttiInstanceType.GetClassTypeInfo: TTypeInfoClass;
 begin
-  Result:=TTypeInfoClass(FTypeInfo);
+  Result:=TTypeInfoClass(inherited Handle);
 end;
 
 function TRttiInstanceType.GetMetaClassType: TClass;
@@ -1224,23 +1230,25 @@ end;
 
 function TRttiInstanceType.GetAncestorType: TRttiInstanceType;
 begin
-  Result := GRttiContext.GetType(ClassTypeInfo.Ancestor) as TRttiInstanceType;
+  Result := inherited Parent as TRttiInstanceType;
 end;
 
-constructor TRttiInstanceType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiInstanceType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
     raise EInvalidCast.Create('');
-  inherited Create(ATypeInfo);
+
+  inherited;
 end;
 
 { TRttiInterfaceType }
 
-constructor TRttiInterfaceType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiInterfaceType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoInterface) then
     raise EInvalidCast.Create('');
-  inherited Create(ATypeInfo);
+
+  inherited;
 end;
 
 function TRttiInterfaceType.GetGUID: TGUID;
@@ -1255,7 +1263,7 @@ end;
 
 function TRttiInterfaceType.GetInterfaceTypeInfo: TTypeInfoInterface;
 begin
-  Result := TTypeInfoInterface(FTypeInfo);
+  Result := TTypeInfoInterface(inherited Handle);
 end;
 
 function TRttiInterfaceType.GetAncestor: TRttiStructuredType;
@@ -1277,7 +1285,7 @@ end;
 
 function TRttiRecordType.GetRecordTypeInfo: TTypeInfoRecord;
 begin
-  Result := TTypeInfoRecord(FTypeInfo);
+  Result := TTypeInfoRecord(inherited Handle);
 end;
 
 function TRttiRecordType.GetIsRecord: Boolean;
@@ -1285,26 +1293,27 @@ begin
   Result := True;
 end;
 
-constructor TRttiRecordType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiRecordType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
-  if not (TTypeInfo(ATypeInfo) is TTypeInfoClass) then
+  if not (TTypeInfo(ATypeInfo) is TTypeInfoRecord) then
     raise EInvalidCast.Create('');
-  inherited Create(ATypeInfo);
+
+  inherited;
 end;
 
 { TRttiClassRefType }
 
-constructor TRttiClassRefType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiClassRefType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoClassRef) then
     raise EInvalidCast.Create('');
 
-  inherited Create(ATypeInfo);
+  inherited;
 end;
 
 function TRttiClassRefType.GetClassRefTypeInfo: TTypeInfoClassRef;
 begin
-  Result := TTypeInfoClassRef(FTypeInfo);
+  Result := TTypeInfoClassRef(inherited Handle);
 end;
 
 function TRttiClassRefType.GetInstanceType: TRttiInstanceType;
@@ -1326,7 +1335,7 @@ end;
 
 function TRttiInstanceExternalType.GetExternalClassTypeInfo: TTypeInfoExtClass;
 begin
-  Result := TTypeInfoExtClass(FTypeInfo);
+  Result := TTypeInfoExtClass(inherited Handle);
 end;
 
 function TRttiInstanceExternalType.GetExternalName: String;
@@ -1334,24 +1343,24 @@ begin
   Result := ExternalClassTypeInfo.JSClassName;
 end;
 
-constructor TRttiInstanceExternalType.Create(ATypeInfo: PTypeInfo);
+constructor TRttiInstanceExternalType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
 begin
   if not (TTypeInfo(ATypeInfo) is TTypeInfoExtClass) then
     raise EInvalidCast.Create('');
 
-  inherited Create(ATypeInfo);
+  inherited;
 end;
 
 { TRTTIContext }
 
-class constructor TRTTIContext.Init;
-begin
-  GRttiContext:=TRTTIContext.Create;
-end;
-
 class function TRTTIContext.Create: TRTTIContext;
 begin
-  Result.FPool:=TJSObject.new;
+  if GRttiContext.FPool = Undefined then
+    GRttiContext.FPool := TJSObject.new;
+
+  Inc(GRttiContext.FReferenceCount);
+
+  Result := GRttiContext;
 end;
 
 procedure TRTTIContext.Free;
@@ -1359,15 +1368,23 @@ var
   key: string;
   o: TRttiType;
 begin
-  for key in FPool do
-    if FPool.hasOwnProperty(key) then begin
-      o:=TRTTIType(FPool[key]);
-      o.Free;
+  Dec(GRttiContext.FReferenceCount);
+
+  if GRttiContext.FReferenceCount = 0 then
+  begin
+    for key in FPool do
+      if FPool.hasOwnProperty(key) then
+      begin
+        o:=TRttiType(FPool[key]);
+
+        o.Free;
       end;
-  FPool:=nil;
+
+    FPool := nil;
+  end;
 end;
 
-function TRTTIContext.GetType(aTypeInfo: PTypeInfo): TRTTIType;
+function TRTTIContext.GetType(aTypeInfo: PTypeInfo): TRttiType;
 var
   RttiTypeClass: array[TTypeKind] of TRttiTypeClass = (
     nil, // tkUnknown
@@ -1376,10 +1393,10 @@ var
     TRttiType, // tkString
     TRttiEnumerationType, // tkEnumeration
     TRttiType, // tkSet
-    TRttiOrdinalType, // tkDouble
-    TRttiEnumerationType, // tkBool
+    TRttiType, // tkDouble
+    TRttiType, // tkBool
     TRttiType, // tkProcVar
-    nil, // tkMethod
+    TRttiType, // tkMethod
     TRttiType, // tkArray
     TRttiDynamicArrayType, // tkDynArray
     TRttiRecordType, // tkRecord
@@ -1392,26 +1409,36 @@ var
     TRttiType, // tkHelper
     TRttiInstanceExternalType // tkExtClass
   );
-  t: TTypeinfo absolute aTypeInfo;
+  t: TTypeInfo absolute aTypeInfo;
   Name: String;
+  Parent: TRttiObject;
 begin
-  if aTypeInfo=nil then exit(nil);
+  if IsNull(aTypeInfo) or IsUndefined(aTypeInfo) then
+    Exit(nil);
+
   Name:=t.Name;
+
   if isModule(t.Module) then
     Name:=t.Module.Name+'.'+Name;
+
   if GRttiContext.FPool.hasOwnProperty(Name) then
     Result:=TRttiType(GRttiContext.FPool[Name])
   else
-    begin
-    Result := RttiTypeClass[T.Kind].Create(aTypeInfo);
+  begin
+    if (T.Kind in [tkClass, tkInterface, tkHelper, tkExtClass]) and TJSObject(t).hasOwnProperty('ancestor') then
+      Parent := GetType(PTypeInfo(TJSObject(t)['ancestor']))
+    else
+      Parent := nil;
+
+    Result := RttiTypeClass[T.Kind].Create(Parent, ATypeInfo);
 
     GRttiContext.FPool[Name]:=Result;
-    end;
+  end;
 end;
 
 function TRTTIContext.GetType(aClass: TClass): TRTTIType;
 begin
-  if aClass=nil then exit(nil);
+  if aClass=nil then Exit(nil);
   Result:=GetType(TypeInfo(aClass));
 end;
 
@@ -1424,24 +1451,54 @@ var
   TypeFound: PTypeInfo;
 
 begin
-  Result := nil;
+  if GRttiContext.FPool.hasOwnProperty(AQualifiedName) then
+    Result := TRttiType(GRttiContext.FPool[AQualifiedName])
+  else
+  begin
+    Result := nil;
 
-  for ModuleName in TJSObject.Keys(pas) do
-    if AQualifiedName.StartsWith(ModuleName + '.') then
-    begin
-      Module := TTypeInfoModule(pas[ModuleName]);
-      TypeName := Copy(AQualifiedName, Length(ModuleName) + 2, Length(AQualifiedName));
-
-      if Module.RTTI.HasOwnProperty(TypeName) then
+    for ModuleName in TJSObject.Keys(pas) do
+      if AQualifiedName.StartsWith(ModuleName + '.') then
       begin
-        TypeFound := PTypeInfo(Module.RTTI[TypeName]);
+        Module := TTypeInfoModule(pas[ModuleName]);
+        TypeName := Copy(AQualifiedName, Length(ModuleName) + 2, Length(AQualifiedName));
 
-        Exit(GetType(TypeFound));
+        if Module.RTTI.HasOwnProperty(TypeName) then
+        begin
+          TypeFound := PTypeInfo(Module.RTTI[TypeName]);
+
+          Exit(GetType(TypeFound));
+        end;
       end;
-    end;
+  end;
+end;
+
+function TRTTIContext.GetTypes: specialize TArray<TRttiType>;
+var
+  ModuleName, ClassName: String;
+
+  ModuleTypes: TJSObject;
+
+begin
+  for ModuleName in TJSObject.Keys(pas) do
+  begin
+    ModuleTypes := TTypeInfoModule(pas[ModuleName]).RTTI;
+
+    for ClassName in ModuleTypes do
+      if TJSObject(ModuleTypes[ClassName]).HasOwnProperty('name') and (ClassName[1] <> '$') then
+        GetType(PTypeInfo(ModuleTypes[ClassName]));
+  end;
+
+  Result := specialize TArray<TRttiType>(TJSObject.Values(Self.FPool));
 end;
 
 { TRttiObject }
+
+constructor TRttiObject.Create(AParent: TRttiObject; AHandle: Pointer);
+begin
+  FParent := AParent;
+  FHandle := AHandle;
+end;
 
 destructor TRttiObject.Destroy;
 var
@@ -1482,12 +1539,17 @@ end;
 
 function TRttiMember.GetName: string;
 begin
-  Result:=FTypeInfo.Name;
+  Result := MemberTypeInfo.Name;
+end;
+
+function TRttiMember.GetParent: TRttiType;
+begin
+  Result := TRttiType(inherited Parent);
 end;
 
 function TRttiMember.GetVisibility: TMemberVisibility;
 begin
-  Result:=mvPublished;
+  Result := mvPublished;
 end;
 
 constructor TRttiMember.Create(AParent: TRttiType; ATypeInfo: TTypeMember);
@@ -1495,20 +1557,17 @@ begin
   if not (ATypeInfo is TTypeMember) then
     raise EInvalidCast.Create('');
 
-  inherited Create();
-
-  FParent := AParent;
-  FTypeInfo:=ATypeInfo;
+  inherited Create(AParent, ATypeInfo);
 end;
 
 function TRttiMember.LoadCustomAttributes: TCustomAttributeArray;
 begin
-  Result:=GetRTTIAttributes(FTypeInfo.Attributes);
+  Result := GetRTTIAttributes(MemberTypeInfo.Attributes);
 end;
 
 function TRttiMember.GetMemberTypeInfo: TTypeMember;
 begin
-  Result := TTypeMember(FTypeInfo);
+  Result := TTypeMember(inherited Handle);
 end;
 
 { TRttiField }
@@ -1528,7 +1587,7 @@ end;
 
 function TRttiField.GetFieldTypeInfo: TTypeMemberField;
 begin
-  Result := TTypeMemberField(FTypeInfo);
+  Result := TTypeMemberField(inherited Handle);
 end;
 
 function TRttiField.GetValue(Instance: JSValue): TValue;
@@ -1558,7 +1617,7 @@ end;
 
 function TRttiMethod.GetMethodTypeInfo: TTypeMemberMethod;
 begin
-  Result := TTypeMemberMethod(FTypeInfo);
+  Result := TTypeMemberMethod(inherited Handle);
 end;
 
 function TRttiMethod.GetIsClassMethod: Boolean;
@@ -1685,7 +1744,7 @@ end;
 
 function TRttiProperty.GetPropertyTypeInfo: TTypeMemberProperty;
 begin
-  Result := TTypeMemberProperty(FTypeInfo);
+  Result := TTypeMemberProperty(inherited Handle);
 end;
 
 function TRttiProperty.GetValue(Instance: JSValue): TValue;
@@ -1729,7 +1788,7 @@ end;
 
 function TRttiType.GetName: string;
 begin
-  Result:=FTypeInfo.Name;
+  Result := Handle.Name;
 end;
 
 function TRttiType.GetIsInstance: boolean;
@@ -1759,7 +1818,12 @@ end;
 
 function TRttiType.GetTypeKind: TTypeKind;
 begin
-  Result:=FTypeInfo.Kind;
+  Result:=Handle.Kind;
+end;
+
+function TRttiType.GetHandle: TTypeInfo;
+begin
+  Result := TTypeInfo(inherited Handle);
 end;
 
 function TRttiType.GetBaseType: TRttiType;
@@ -1775,12 +1839,6 @@ end;
 function TRttiType.GetAsInstanceExternal: TRttiInstanceExternalType;
 begin
   Result := Self as TRttiInstanceExternalType;
-end;
-
-constructor TRttiType.Create(ATypeInfo: PTypeInfo);
-begin
-  inherited Create();
-  FTypeInfo:=TTypeInfo(ATypeInfo);
 end;
 
 function TRttiType.LoadCustomAttributes: TCustomAttributeArray;

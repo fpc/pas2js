@@ -148,6 +148,7 @@ type
     Class function MethodAddress(aName : String) : Pointer;
     Class Function FieldAddress(aName : String) : Pointer;
     Class Function ClassInfo : Pointer;
+    class function QualifiedClassName: String;
 
     procedure AfterConstruction; virtual;
     procedure BeforeDestruction; virtual;
@@ -1142,6 +1143,10 @@ begin
   Result:=ClassName;
 end;
 
+class function TObject.QualifiedClassName: String;
+begin
+  Result := UnitName + '.' + ClassName;
+end;
 
 initialization
   ExitCode:=0; // set it here, so that WPO does not remove it

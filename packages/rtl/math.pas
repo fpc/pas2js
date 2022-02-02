@@ -65,7 +65,7 @@ const
   ZeroValue = 0;
   PositiveValue = 1;
 
-function Sign(const AValue: Integer): TValueSign; external name 'Math.sign'; overload;
+function Sign(const AValue: NativeInt): TValueSign; external name 'Math.sign'; overload;
 function Sign(const AValue: Double): TValueSign; external name 'Math.sign'; overload;
 
 function IsZero(const d: Double; Epsilon: Double): Boolean; overload;

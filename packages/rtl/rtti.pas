@@ -278,7 +278,7 @@ type
     function GetMethod(const aName: String): TRttiMethod; virtual;
     function GetProperty(const AName: string): TRttiProperty; virtual;
     //function GetIndexedProperty(const AName: string): TRttiIndexedProperty; virtual;
-
+    function GetProperties: TRttiPropertyArray; virtual;
     function GetDeclaredProperties: TRttiPropertyArray; virtual;
     //function GetDeclaredIndexedProperties: TRttiIndexedPropertyArray; virtual;
     function GetDeclaredMethods: TRttiMethodArray; virtual;
@@ -323,7 +323,7 @@ type
     function GetMethod(const aName: String): TRttiMethod; override;
     function GetMethods: TRttiMethodArray; override;
     function GetMethods(const aName: String): TRttiMethodArray; override;
-    function GetProperties: TRttiPropertyArray;
+    function GetProperties: TRttiPropertyArray; override;
     function GetProperty(const AName: string): TRttiProperty; override;
 
     property StructTypeInfo: TTypeInfoStruct read GetStructTypeInfo;
@@ -1847,6 +1847,11 @@ begin
 end;
 
 function TRttiType.GetDeclaredProperties: TRttiPropertyArray;
+begin
+  Result:=nil;
+end;
+
+function TRttiType.GetProperties: TRttiPropertyArray;
 begin
   Result:=nil;
 end;

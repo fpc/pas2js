@@ -1,17 +1,3 @@
-{
-    This file is part of the Pas2JS toolchain
-    Copyright (c) 2020 by Michael Van Canneyt
-
-    This unit implements a HTML to pascal class converter.
-
-    See the file COPYING.FPC, included in this distribution,
-    for details about the copyright.
-
-    This program is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
-
- **********************************************************************}
 unit formgen;
 
 {$mode objfpc}{$H+}
@@ -19,7 +5,57 @@ unit formgen;
 interface
 
 uses
-  Classes, SysUtils, sax, sax_html, pascodegen, fpjson, jsonparser;
+  Classes, SysUtils, sax, sax_html, fpjson, pascodegen;
+
+Type
+  TSpecialMethod = (smConstructor,smBindElements,smBindElementEvents);
+  TSpecialMethods = Set of TSpecialMethod;
+
+  TFormOption = (foEvents,foFormFile,foBindInConstructor);
+  TFormOptions = Set of TFormOption;
+
+
+  { THTML2ClassOptions }
+
+  THTML2ClassOptions = Class (TPersistent)
+  Private
+    FExcludeElements: TStrings;
+    FFormOptions: TFormOptions;
+    FMethods : Array[1..3] of TSpecialMethods;
+    FBools : Array[1..2] of Boolean;
+    FStrings : Array[1..10] of String;
+    function GetB(AIndex: Integer): Boolean;
+    function GetMethods(AIndex: Integer): TSpecialMethods;
+    function GetS(AIndex: Integer): String;
+    procedure SetB(AIndex: Integer; AValue: Boolean);
+    procedure SetExcludeElements(AValue: TStrings);
+    procedure SetMethods(AIndex: Integer; AValue: TSpecialMethods);
+    procedure SetS(AIndex: Integer; AValue: String);
+  Public
+    Constructor Create;
+    Destructor Destroy; override;
+    Procedure Reset; virtual;
+    Procedure toJSON(aObject : TJSONObject);
+    Procedure FromJSON(aObject : TJSONObject);
+    Function asJSON(Formatted : Boolean) : String;
+    Property OverrideMethods : TSpecialMethods index 1 Read GetMethods Write SetMethods;
+    Property AddMethods : TSpecialMethods index 2 Read GetMethods Write SetMethods;
+    Property VirtualMethods : TSpecialMethods index 3 Read GetMethods Write SetMethods;
+    Property FormOptions : TFormOptions Read FFormOptions Write FFormOptions;
+    Property ParentClassName : String Index 1 Read GetS Write SetS;
+    Property GetElementFunction : String Index 2 Read GetS Write SetS;
+    Property EventSignature : String Index 3 Read GetS Write SetS;
+    Property EventModifiers : String Index 4 Read GetS Write SetS;
+    Property ConstructorArgs : String Index 5 Read GetS Write SetS;
+    Property BelowID : String Index 6 Read GetS Write SetS;
+    Property HTMLFileName : String Index 7 Read GetS Write SetS;
+    Property TagMapFileName : String Index 8 Read GetS Write SetS;
+    Property FormClassname : String Index 9 Read GetS Write SetS;
+    Property ExtraUnits: String index 10 Read GetS Write SetS;
+    Property UseDefaultElements : Boolean Index 1 Read GetB Write SetB;
+    Property AddHTMLToProject : Boolean Index 2 Read GetB Write SetB;
+    Property ExcludeElements : TStrings Read FExcludeElements Write SetExcludeElements;
+  end;
 
 Type
   TLogEvent = Procedure (Sender : TObject; Const Msg : String) of object;
@@ -57,8 +93,8 @@ Type
     Function Find(Const aName : string) : TFormElement;
     Property Elements[aIndex : Integer] : TFormElement Read GetEl; default;
   end;
-  
-  TAttributeOperation = (aoNotPresent,aoPresent,aoEqual,aoNotEqual,aoContains);   
+
+  TAttributeOperation = (aoNotPresent,aoPresent,aoEqual,aoNotEqual,aoContains);
 
   { TAttributeCondition }
 
@@ -74,7 +110,7 @@ Type
     Property Operation : TAttributeOperation Read FOperation Write FOperation;
     Property Value : String Read FValue Write FValue;
   end;
-  
+
   { TAttributeConditionList }
 
   TAttributeConditionList = Class(TCollection)
@@ -85,7 +121,7 @@ Type
     Function IsMatch(Attrs: TSAXAttributes): Boolean;
     Property Conditions[aIndex : Integer] : TAttributeCondition Read GetC; default;
   end;
-  
+
 (* // Structure of accepted JSON
   [
    {
@@ -94,7 +130,7 @@ Type
      "attrs" : {
         name0 : null, // name0 Not present
         name1 : "value",  // name1 equals value
-        name2 ; "-value", // name2 does not equal value 
+        name2 ; "-value", // name2 does not equal value
         name3 : "~value"  // name3 contains value
        }
    }
@@ -134,7 +170,7 @@ Type
     Function FindMap(aTag: SAXString; Attrs: TSAXAttributes): THTMLElementMap;
     Property Maps[aIndex : Integer] : THTMLElementMap Read GetM; default;
   end;
-  
+
 
   { THTMLToFormELements }
 
@@ -168,6 +204,7 @@ Type
     Procedure Clear;
     Procedure LoadFromStream(aInput : TStream);
     Procedure LoadFromFile(Const aFileName : String);
+    Procedure LoadOptions(aOptions : THTML2ClassOptions);
     Property FormElements : TFormElementList Read FFormElements Write SetFormElements;
     Property BelowID : String Read FBelowID Write FBelowID;
     Property ExcludeIDS : TStrings Read FExcludeIDS Write SetExcludeIDS;
@@ -178,10 +215,7 @@ Type
 
   { TFormCodeGen }
 
-  TSpecialMethod = (smConstructor,smBindElements,smBindElementEvents);
-  TSpecialMethods = Set of TSpecialMethod;
-  TFormOption = (foEvents,foFormFile,foBindInConstructor);
-  TFormOptions = Set of TFormOption;
+
 
   { TFormFileCodeGen }
 
@@ -230,7 +264,7 @@ Type
     FEventSignature: string;
     FFormClassName: string;
     FFormElements: TFormElementList;
-    fFormFileGenerator: TFormFileCodeGen;
+    FFormFileGenerator: TFormFileCodeGen;
     FFormSource: Tstrings;
     FGetElementFunction: string;
     FOptions: TFormOptions;
@@ -259,6 +293,7 @@ Type
     class function Pretty(const S: String): string; virtual;
     class procedure GetEventNameAndHandler(const S,aFieldName: String; out aName, aHandler: string);
     Procedure Execute;
+    Procedure LoadOptions(aOptions : THTML2ClassOptions);
     Property FormFileGenerator  : TFormFileCodeGen Read fFormFileGenerator Write FFormFileGenerator;
     Property FormElements : TFormElementList Read FFormElements Write SetFormElements;
     Property FormClassName : string Read FFormClassName Write FFormClassName;
@@ -274,7 +309,223 @@ Type
     Property FormSource : Tstrings Read FFormSource;
   end;
 
+
+
 implementation
+
+uses TypInfo;
+
+{ ----------------------------------------------------------------------
+
+  ----------------------------------------------------------------------}
+
+{ THTML2ClassOptions }
+
+function THTML2ClassOptions.GetB(AIndex: Integer): Boolean;
+begin
+  Result:=FBools[aindex];
+end;
+
+function THTML2ClassOptions.GetMethods(AIndex: Integer): TSpecialMethods;
+begin
+  Result:=FMethods[aindex];
+end;
+
+function THTML2ClassOptions.GetS(AIndex: Integer): String;
+begin
+  Result:=FStrings[aindex];
+end;
+
+procedure THTML2ClassOptions.SetB(AIndex: Integer; AValue: Boolean);
+begin
+  FBools[aIndex]:=aValue;
+end;
+
+procedure THTML2ClassOptions.SetExcludeElements(AValue: TStrings);
+begin
+  if FExcludeElements=AValue then Exit;
+  FExcludeElements.Assign(AValue);
+end;
+
+procedure THTML2ClassOptions.SetMethods(AIndex: Integer; AValue: TSpecialMethods);
+begin
+  FMethods[aIndex]:=aValue;
+end;
+
+procedure THTML2ClassOptions.SetS(AIndex: Integer; AValue: String);
+begin
+  FStrings[aIndex]:=aValue;
+end;
+
+constructor THTML2ClassOptions.Create;
+begin
+  FExcludeElements:=TStringList.Create;
+  Reset;
+end;
+
+destructor THTML2ClassOptions.Destroy;
+begin
+  FreeAndNil(FExcludeElements);
+  inherited Destroy;
+end;
+
+procedure THTML2ClassOptions.Reset;
+begin
+  // Assume class is TComponent descendant
+  ConstructorArgs:='aOwner : TComponent';
+  FormClassName:='TMyForm';
+  ParentClassName:='TComponent';
+  EventSignature:='Event : TJSEvent';
+  EventModifiers:='virtual; abstract;';
+  GetElementFunction:='document.getelementByID';
+  AddMethods:=[smConstructor,smBindElements,smBindElementEvents];
+  VirtualMethods:=[smBindElementEvents,smBindElements];
+  OverrideMethods:=[smConstructor];
+  FormOptions:=[foBindInConstructor];
+  FExcludeElements.Clear;
+  ExtraUnits:='Classes'
+end;
+
+procedure THTML2ClassOptions.toJSON(aObject: TJSONObject);
+
+  Function GenToArray(aMethods : TSpecialMethods) : TJSONArray;
+
+  Var
+    M : TSpecialMethod;
+
+  begin
+    Result:=TJSONArray.Create;
+    For M in TSpecialMethods do
+      If M in aMethods then
+         Result.Add(GetEnumName(TypeInfo(TSpecialMethod),Ord(M)));
+  end;
+
+  Function OptionsToArray(aOptions : TFormOptions) : TJSONArray;
+
+  Var
+    F : TFormOption;
+
+  begin
+    Result:=TJSONArray.Create;
+    For F in TFormOptions do
+      If F in aOptions then
+         Result.Add(GetEnumName(TypeInfo(TFormOptions),Ord(F)));
+  end;
+
+
+Var
+  arr : TJSONArray;
+  S : String;
+
+begin
+  With aObject do
+    begin
+    Add('OverrideMethods',GenToArray(OverrideMethods));
+    Add('AddMethods',GenToArray(AddMethods));
+    Add('VirtualMethods',GenToArray(VirtualMethods));
+    Add('FormOptions',OptionsToArray(FormOptions));
+    Add('GetElementFunction',GetElementFunction);
+    Add('EventSignature',EventSignature);
+    Add('EventModifiers',EventModifiers);
+    Add('ConstructorArgs',ConstructorArgs);
+    Add('BelowID',BelowID);
+    Add('HTMLFileName',HTMLFileName);
+    Add('FormClassname',FormClassname);
+    Add('FormClassname',FormClassname);
+    Add('UseDefaultElements',UseDefaultElements);
+    Add('AddHTMLToProject',AddHTMLToProject);
+    arr:=TJSONArray.Create;
+    Add('ExcludeElements',Arr);
+    For S in ExcludeElements do
+      arr.Add(S);
+    end;
+end;
+
+procedure THTML2ClassOptions.FromJSON(aObject: TJSONObject);
+
+  Function GenFromArray(Arr : TJSONArray) : TSpecialMethods;
+
+  Var
+    I,Idx : integer;
+
+  begin
+    Result:=[];
+    if Assigned(Arr) then
+      For I:=0 to Arr.Count-1 do
+        if (Arr.types[I]=jtString) then
+          begin
+          Idx:=GetEnumValue(TypeInfo(TSpecialMethod),Arr.Strings[I]);
+          If Idx<>-1 then
+            include(Result,TSpecialMethod(Idx));
+          end;
+  end;
+
+  Function OptionsFromArray(arr : TJSONArray) : TFormOptions;
+
+  Var
+    I,Idx : integer;
+
+  begin
+    Result:=[];
+    if Assigned(Arr) then
+      For I:=0 to Arr.Count-1 do
+        if (Arr.types[I]=jtString) then
+          begin
+          Idx:=GetEnumValue(TypeInfo(TFormOption),Arr.Strings[I]);
+          If Idx<>-1 then
+            include(Result,TFormOption(Idx));
+          end;
+  end;
+
+Var
+  arr : TJSONArray;
+  I : integer;
+
+begin
+  With aObject do
+    begin
+    OverrideMethods:=GenFromArray(Get('OverrideMethods',TJSONArray(Nil)));
+    AddMethods:=GenFromArray(Get('AddMethods',TJSONArray(Nil)));
+    VirtualMethods:=GenFromArray(Get('VirtualMethods',TJSONArray(Nil)));
+    FormOptions:=OptionsFromArray(Get('FormOptions',TJSONArray(Nil)));
+    GetElementFunction:=Get('GetElementFunction','');
+    EventSignature:=Get('EventSignature','');
+    EventModifiers:=Get('EventModifiers','');
+    ConstructorArgs:=Get('ConstructorArgs','');
+    BelowID:=Get('BelowID','');
+    HTMLFileName:=Get('HTMLFileName','');
+    FormClassname:=Get('FormClassname','');
+    UseDefaultElements:=Get('UseDefaultElements',False);
+    AddHTMLToProject:=Get('AddHTMLToProject',False);
+    ExcludeElements.Clear;
+    Arr:=Get('ExcludeElements',TJSONArray(Nil));
+    if Assigned(Arr) then
+      For I:=0 to Arr.Count-1 do
+        if (Arr.types[I]=jtString) then
+           ExcludeElements.Add(Arr.Strings[I]);
+    end;
+
+end;
+
+function THTML2ClassOptions.asJSON(Formatted: Boolean): String;
+
+Var
+  J : TJSONObject;
+
+begin
+  J:=TJSONObject.Create;
+  try
+    ToJSON(J);
+    if Formatted then
+      Result:=J.FormatJSON()
+    else
+      Result:=J.asJSON;
+  finally
+    J.Free;
+  end;
+end;
+
+
 
 { TFormFileCodeGen }
 
@@ -773,6 +1024,15 @@ begin
   end;
 end;
 
+procedure THTMLToFormELements.LoadOptions(aOptions: THTML2ClassOptions);
+begin
+  BelowID:=aoptions.BelowID;
+  ExcludeIDS:=aOptions.ExcludeElements;
+  DefaultElements:=aOptions.UseDefaultElements;
+  if (aOptions.TagMapFileName<>'') and FileExists(aOptions.TagMapFileName) then
+    Map.LoadFromFile(aOptions.TagMapFileName);
+end;
+
 { TFormCodeGen }
 
 procedure TFormCodeGen.SetFormElements(AValue: TFormElementList);
@@ -792,22 +1052,24 @@ begin
 end;
 
 constructor TFormCodeGen.Create(aOwner: TComponent);
+
+Var
+  Defs : THTML2ClassOptions;
+
 begin
   inherited Create(aOwner);
-  // Assume class is TComponent descendant
-  FConstructorArgs:='aOwner : TComponent';
   FFormElements:=CreateElementList;
-  FormClassName:='TMyForm';
-  ParentClassName:='TComponent';
-  EventSignature:='Event : TJSEvent';
-  EventModifiers:='virtual; abstract;';
-  GetElementFunction:='document.getelementByID';
-  AddMethods:=[smConstructor,smBindElements,smBindElementEvents];
-  VirtualMethods:=[smBindElementEvents,smBindElements];
-  OverrideMethods:=[smConstructor];
-  Options:=[foBindInConstructor];
-  fFormFileGenerator:=CreateFormFileGen;
+  FFormFileGenerator:=CreateFormFileGen;
   FFormSource:=TStringList.Create;
+  // Defaults must be set in
+  Defs:=THTML2ClassOptions.Create;
+  try
+    Defs.Reset;
+    Loadoptions(Defs);
+
+  finally
+    Defs.Free;
+  end;
 end;
 
 destructor TFormCodeGen.Destroy;
@@ -910,6 +1172,21 @@ begin
    AddLn('end.');
 end;
 
+procedure TFormCodeGen.LoadOptions(aOptions: THTML2ClassOptions);
+begin
+  ExtraUnits:=aOptions.ExtraUnits;
+  FormClassName:=aOptions.FormClassname;
+  ParentClassName:=aOptions.ParentClassName;
+  GetElementFunction:=aOptions.GetElementFunction;
+  EventSignature:=aOptions.EventSignature;
+  EventModifiers:=aOptions.EventModifiers;
+  ConstructorArgs:=aOptions.ConstructorArgs;
+  Options:=aOptions.FormOptions;
+  AddMethods:=aOptions.AddMethods;
+  OverrideMethods:=aOptions.OverrideMethods;
+  VirtualMethods:=aOptions.VirtualMethods;
+end;
+
 procedure TFormCodeGen.EmitFormFile;
 
 begin
@@ -936,7 +1213,7 @@ procedure TFormCodeGen.EmitFormConstructor;
 
 begin
   Addln('');
-  Addln('Constructor %s.create(aOwner : TComponent);',[FormClassName]);
+  Addln('Constructor %s.create(%s);',[FormClassName,ConstructorArgs]);
   if not (foBindInConstructor in Options) then
     SimpleMethodBody(['Inherited;'])
   else
@@ -1123,6 +1400,7 @@ begin
   else
     inherited Assign(Source);
 end;
+
 
 end.
 

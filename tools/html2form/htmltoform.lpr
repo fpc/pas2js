@@ -15,7 +15,7 @@
 
 program htmltoform;
 
-uses sysutils, classes, sax,sax_html, custapp, formgen, webcoreformgen;
+uses sysutils, classes, fpjson, jsonparser, sax,sax_html, custapp, formgen, webcoreformgen;
 
 Type
 
@@ -67,8 +67,30 @@ end;
 
 procedure THTML2FormApplication.ReadConfigFile(const aFileName : String);
 
-begin
+Var
+  D : TJSONData;
+  J : TJSONObject absolute D;
+  F : TFileStream;
+  H : THTML2ClassOptions;
 
+begin
+  D:=Nil;
+  H:=nil;
+  F:=TFileStream.Create(aFileName,fmOpenRead or fmShareDenyWrite);
+  try
+    D:=GetJSON(F);
+    if D is TJSONObject then
+      begin
+      H:=THTML2ClassOptions.Create;
+      H.FromJSON(J);
+      FConv.LoadOptions(H);
+      FGen.LoadOptions(H);
+      end;
+  finally
+    H.Free;
+    F.Free;
+    D.Free;
+  end;
 end;
 
 procedure THTML2FormApplication.DoRun;

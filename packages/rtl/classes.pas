@@ -1448,6 +1448,10 @@ Function StringToBuffer(aString : String; aLen : Integer) : TJSArrayBuffer;
 // Create buffer from string. aPos,aLen are in bytes, not in characters.
 Function BufferToString(aBuffer : TJSArrayBuffer; aPos,aLen : Integer) : String;
 
+procedure BeginGlobalLoading;
+procedure NotifyGlobalLoading;
+procedure EndGlobalLoading;
+
 Const
   // Some aliases
   vaSingle = vaDouble;
@@ -1468,6 +1472,26 @@ var
   GlobalLoaded,
   IntConstList: TFPList;
   GlobalLoadHelper : TLoadHelperClass;
+
+procedure BeginGlobalLoading;
+begin
+  GlobalLoaded := TFPList.Create;
+end;
+
+procedure NotifyGlobalLoading;
+var
+  I: Integer;
+  G: TFPList;
+begin
+  G := GlobalLoaded;
+  for I := 0 to G.Count - 1 do
+    TComponent(G[I]).Loaded;
+end;
+
+procedure EndGlobalLoading;
+begin
+  GlobalLoaded.Free;
+end;
 
 Function SetLoadHelperClass(aClass : TLoadHelperClass) : TLoadHelperClass;
 

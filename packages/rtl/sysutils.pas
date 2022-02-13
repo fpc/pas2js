@@ -93,6 +93,7 @@ type
       class var InitLocaleHandler : TLocaleInitCallback;
       class function Create: TFormatSettings; overload; static;
       class function Create(const ALocale: string): TFormatSettings; overload; static;
+      class function Invariant: TFormatSettings; static;
     end;
 
 
@@ -4960,11 +4961,6 @@ begin
     Result:='0'+Result;
 end;
 
-
-
-{ TFormatSettings }
-
-
 { TFormatSettings }
 
 class function TFormatSettings.Create: TFormatSettings;
@@ -4972,11 +4968,8 @@ begin
   Result := Create(GetJSLocale);
 end;
 
-
-class function TFormatSettings.Create(const ALocale: string): TFormatSettings;
-
+class function TFormatSettings.Create(const ALocale: String): TFormatSettings;
 begin
-
   Result.LongDayNames:=DefaultLongDayNames;
   Result.ShortDayNames:=DefaultShortDayNames;
   Result.ShortMonthNames:=DefaultShortMonthNames;
@@ -4998,8 +4991,33 @@ begin
   Result.NegCurrFormat:=0;
   Result.CurrencyDecimals:=2;
   Result.CurrencyString:='$';
-  If Assigned(TFormatSettings.InitLocaleHandler) then
+
+  if Assigned(TFormatSettings.InitLocaleHandler) then
     TFormatSettings.InitLocaleHandler(UpperCase(aLocale),Result);
+end;
+
+class function TFormatSettings.Invariant: TFormatSettings;
+begin
+  Result.CurrencyString := #$00A4;
+  Result.CurrencyFormat := 0;
+  Result.CurrencyDecimals := 2;
+  Result.DateSeparator := '/';
+  Result.TimeSeparator := ':';
+  Result.ShortDateFormat := 'MM/dd/yyyy';
+  Result.LongDateFormat := 'dddd, dd MMMMM yyyy HH:mm:ss';
+  Result.TimeAMString := 'AM';
+  Result.TimePMString := 'PM';
+  Result.ShortTimeFormat := 'HH:mm';
+  Result.LongTimeFormat := 'HH:mm:ss';
+  Result.ShortMonthNames := DefaultShortMonthNames;
+  Result.ShortMonthNames := DefaultShortMonthNames;
+  Result.LongMonthNames := DefaultLongMonthNames;
+  Result.ShortDayNames := DefaultShortDayNames;
+  Result.LongDayNames := DefaultLongDayNames;
+  Result.ThousandSeparator := ',';
+  Result.DecimalSeparator := '.';
+  Result.TwoDigitYearCenturyWindow := 50;
+  Result.NegCurrFormat := 0;
 end;
 
 class function TFormatSettings.GetJSLocale: string; assembler;

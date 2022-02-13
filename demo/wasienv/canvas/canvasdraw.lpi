@@ -42,9 +42,6 @@
     <CodeGeneration>
       <TargetCPU Value="wasm32"/>
       <TargetOS Value="wasi"/>
-      <Optimizations>
-        <OptimizationLevel Value="0"/>
-      </Optimizations>
     </CodeGeneration>
     <Linking>
       <Debugging>

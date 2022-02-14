@@ -3937,11 +3937,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function getDirectoryHandle(name: String; options: TJSGetFileHandleOptions): TJSFileSystemDirectoryHandle; async; overload;
     function getFileHandle(name: String): TJSFileSystemFileHandle; async; overload;
     function getFileHandle(name: String; options: TJSGetFileHandleOptions): TJSFileSystemFileHandle; async; overload;
-    function keys: TJSFileSystemDirectoryHandleArray;
+    function keys: TJSFileSystemDirectoryHandleArray; reintroduce;
     function removeEntry(name: String): TJSPromise;
     function removeEntry(name: String; options: TJSRemoveEntryOptions): TJSPromise;
     function resolve(possibleDescendant: String): TStringDynArray; async;
-    function values(possibleDescendant: String): TJSFileSystemDirectoryHandleArray; async;
+    function values(possibleDescendant: String): TJSFileSystemDirectoryHandleArray; reintroduce; async;
   end;
 
   TJSFileSystemWritableFileStream = class external name 'FileSystemWritableFileStream' (TJSWritableStream)

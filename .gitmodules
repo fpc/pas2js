@@ -1,4 +1,5 @@
 [submodule "compiler"]
 	path = compiler
 	url = ../source
-	branch = main
+	branch = pas2js/fixes_2_2
+

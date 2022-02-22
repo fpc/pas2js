@@ -37,10 +37,10 @@ as well if it has the latest version.
 ### Complete checkout
 
 The makefile expects the sources of FPC to be present under the `compiler` directory.
-You can copy these sources there, or make a symlink to the sources.
+You can copy/clone the FPC sources there, or make a symlink to the FPC sources.
 
 The git repository contains a submodule link to the FPC sources.
-You can use this to have an automatically correct version of fpc
+You can use this to have an automatically correct version of fpc. This is useful for the `fixes` and `release` branches, as they automatically get the tested combination of pas2js and fpc sources.
 
 When you do a `git clone`, make sure you also specify the `--recurse-submodules`  option:
 ```sh

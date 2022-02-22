@@ -46,18 +46,20 @@ When you do a `git clone`, make sure you also specify the `--recurse-submodules`
 ```sh
 git clone --recurse-submodules https://gitlab.com/freepascal.org/fpc/pas2js.git
 ```
+
+Or for the fixes branch:
+```sh
+git clone --recurse-submodules https://gitlab.com/freepascal.org/fpc/pas2js.git --branch fixes_2_2
+```
 If you didn't do this, issue the init and update commands:
 ```sh
-git submodule init
-```
-and update:
-```sh
-git submodule update
+git submodule update --init --recursive
 ```
 This will have the same effect as when you do a --recurse-submodules.
 
-After doing a git pull, you must also update the submodule:
+After doing a `git pull` or a `git switch`, you must also update the submodule:
 ```sh
+git pull
 git submodule update --init --recursive
 ```
 This will pull any upstream changes to the FPC repository.

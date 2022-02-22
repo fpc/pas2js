@@ -58,7 +58,7 @@ After doing a `git pull` or a `git switch`, you must also update the submodule:
 git pull
 git submodule update --init --recursive
 ```
-This will pull any upstream changes to the FPC repository.
+This will pull any upstream changes to your local FPC repository.
 
 #### TortoiseGit ####
 

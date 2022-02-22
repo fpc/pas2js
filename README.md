@@ -60,6 +60,11 @@ git submodule update --init --recursive
 ```
 This will pull any upstream changes to the FPC repository.
 
+#### TortoiseGit ####
+
+To update the submodule 'compiler' do the following:
+In the Git Synchronization dialog, after the "Pull", click on the "Submodule Update" button.
+
 #### Under Linux/macOS
 type the following command:
 ```sh

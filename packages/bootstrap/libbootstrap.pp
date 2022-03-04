@@ -81,41 +81,38 @@ Type
     display : string;
   end;
 
-  TBootstrapDelayObject = Class External name 'Object' (TJSObject)
-    show : integer;
-    hide : integer;
-  End;
+  TBootstrapPopoverDelayOptions = Class external name 'Object' (TJSObject)
+    show : NativeInt;
+    hide : NativeInt;
+  end;
 
-  TBootstrapPlacementCallBack = reference to procedure (popoverEl,triggerEl : TJSHTMLElement);
-  TBootstrapProcCallBack = reference to procedure;
-
+  TPopoverContentFunction = reference to function(arg: jsValue): jsvalue;
+  TPopoverPlacementFunction = reference to function(popoverNode, triggeringNode: jsValue): jsvalue;
+  
   TBootstrapPopoverOptions = Class external name 'Object' (TJSObject)
-    animation :  boolean;
+    animation : boolean;
     container : string;
     containerEl : TJSHTMLElement; external name 'container';
-    containerBool : Boolean; external name 'container';
     content : string;
-    contentEl : TJSHTMLElement; external name 'container';
-    contentProc : TBootstrapProcCallBack; external name 'content';
-    delay : Integer;
-    delayObj : TBootstrapDelayObject; external name 'delay';
-    html : Boolean;
-    placement: string;
-    placementFunc : TBootstrapPlacementCallBack; external name 'placement';
+    contentEl : TJSHTMLElement; external name 'content';
+    contentFn : TPopoverContentFunction; external name 'content';
+    delay : NativeInt;
+    delayObj : TBootstrapPopoverDelayOptions; external name 'delay';
+    html : boolean;
+    placement : string;
+    placementFn : TPopoverPlacementFunction; external name 'placement';
     selector : string;
-    selectorBool : boolean; external name 'selector';
-    template : string;
-    title : string;
+    selectorBool: Boolean; external name 'selector';
+    template : string; 
+    title: string;
     titleEl : TJSHTMLElement; external name 'title';
-    titleProc : TBootstrapProcCallBack; external name 'tirle';
-    trigger : string;
-    offset : integer;
-    offsetStr : string; external name 'offset';
-    fallBackPlacement : string;
-    fallBackPlacementArr : string; external name 'fallBackPlacement';
-    boundary : string;
+    trigger: string;
+    offset : string;
+    offsetInt : Integer;  external name 'offset';
+    fallbackPlacement : string;
+    boundary: string;
     boundaryEl : TJSHTMLElement; external name 'boundary';
-  End;
+  end;
 
   TBootstrap = Class helper for TJQuery
     Procedure modal; external name 'modal';
@@ -175,16 +172,18 @@ Type
     Procedure DropDownHide;
     Procedure DropDownUpdate;
     Procedure DropDownDispose;
-    Procedure Popover(options : TJSObject); external name 'popover';
-    Procedure Popover(options : TBootstrapPopoverOptions); external name 'popover';
-    Procedure Popover(aCommand : String); external name 'popover';
-    Procedure PopoverShow;
-    Procedure PopoverHide;
-    Procedure PopoverToggle;
-    Procedure PopoverDispose;
-    Procedure PopoverEnable;
-    Procedure PopoverToggleEnabled;
-    Procedure PopoverUpdate;
+    Procedure PopOver; external name 'popover';
+    Procedure PopOver(aCommand : string); external name 'popover';
+    Procedure PopOver(options : TJSObject); external name 'popover';
+    Procedure PopOver(options : TBootstrapPopoverOptions); external name 'popover';
+    Procedure PopOverToggle;
+    Procedure PopOverShow;
+    Procedure PopOverHide;
+    Procedure PopOverDispose;
+    Procedure PopOverEnable;
+    Procedure PopOverDisable;
+    Procedure PopOverToggleEnabled;
+    Procedure PopOverUpdate;
   end;
 
 implementation
@@ -351,59 +350,46 @@ begin
   dropdown('dispose');
 end;
 
-Procedure TBootstrap.PopoverShow;
-
+procedure TBootstrap.PopOverDisable;
 begin
-  Popover('show');
+  popover('disable');
 end;
 
-
-Procedure TBootstrap.PopoverHide;
-
+procedure TBootstrap.PopOverDispose;
 begin
-
-  Popover('hide');
+  popover('dispose');
 end;
 
-
-Procedure TBootstrap.PopoverToggle;
-
+procedure TBootstrap.PopOverEnable;
 begin
-
-  Popover('toggle');
+  popover('enable');
 end;
 
-
-Procedure TBootstrap.PopoverDispose;
-
+procedure TBootstrap.PopOverHide;
 begin
-
-  Popover('dispose');
+  popover('hide');
 end;
 
-
-Procedure TBootstrap.PopoverEnable;
-
+procedure TBootstrap.PopOverShow;
 begin
-
-  Popover('enable');
+  popover('show');
 end;
 
-
-Procedure TBootstrap.PopoverToggleEnabled;
-
+procedure TBootstrap.PopOverToggle;
 begin
-
-  Popover('toggleEnabled');
+  popover('toggle');
 end;
 
-
-Procedure TBootstrap.PopoverUpdate;
-
+procedure TBootstrap.PopOverToggleEnabled;
 begin
+  popover('toggleEnabled');
+end;
 
-  Popover('update');
+procedure TBootstrap.PopOverUpdate;
+begin
+  popover('enabled');
 end;
 
 
 end.
+

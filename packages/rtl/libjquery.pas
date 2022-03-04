@@ -206,6 +206,11 @@ Type
     function children : TJQuery;overload;
     function clearQueue : TJQuery;overload;
     function clearQueue(const aQueueName : String) : TJQuery;overload;
+    function click : TJQuery; overload;
+    function click (aHandler : TJSRawEventHandler)  : TJQuery; overload;
+    function click (aHandler : TJSEventHandler)  : TJQuery; overload;
+    function click (aData : TJSObject; aHandler : TJSEventHandler)  : TJQuery; overload;
+    function click (aData : TJSObject; aHandler : TJSRawEventHandler)  : TJQuery; overload;
     function closest(Const aSelector : String) : TJQuery;overload;
     function closest(Const aSelector : String; AContext : TJSElement) : TJQuery;overload;
     function closest(Const aQuery : TJQuery) : TJQuery;overload;
@@ -317,7 +322,6 @@ Type
     function offSet(const aOffset : TJQueryTopLeft): TJQuery;overload;
     function offSet(aHandler : TJQueryOffsetHandler): TJQuery;overload;
     Function offsetParent : TJQuery;
-    
     Function off : TJQuery; overload;
     Function off(events : String) : TJQuery; overload;
     Function off(events : String; aHandler : TJSEventHandler) : TJQuery; overload;
@@ -427,6 +431,8 @@ Type
     function toggleClass(Const aClass : String; aState : Boolean) : TJQuery;overload;
     function toggleClass(Const aHandler : TJQueryToggleClassHandler) : TJQuery;overload;
     function toggleClass(Const aHandler : TJQueryToggleClassHandler; AState : Boolean) : TJQuery;overload;
+    function trigger(aEventName : string) : TJQuery; varargs;
+    function trigger(aEvent : TJSEvent) : TJQuery; varargs;
     function val : JSValue;overload;
     function val(Const aValue : String) : TJQuery;overload;
     function val(Const aValue : Integer) : TJQuery;overload;

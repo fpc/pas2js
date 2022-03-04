@@ -212,16 +212,37 @@ Type
     function encodeInt(data : NativeInt; bits : Integer; Signed : boolean) : String;
   end;
 
-Function ExtractErrorMsg(jsError : TJSError) : String;
+Function ExtractErrorMsg(jsError : TJSError; aFMT : String = '') : String;
+
+// So we can customize the message
+Var
+  UnexpectedErrorMsg : String;
 
 implementation
 
-Function ExtractErrorMsg(jsError : TJSError) : String;
+uses Sysutils;
+
+Resourcestring
+  SDefaultUnexpectedErrorMsg = 'An unexpected error occurred';
+
+Function ExtractErrorMsg(jsError : TJSError; aFMT : String = '') : String;
 begin
-  if Assigned(jsError) and isString(jsError.message) then
-    Result:=jsError.message
-  else
-    Result:='Unknown error'
+  Result:='';
+  if Assigned(jsError) then
+    begin
+    if isString(jsError.message) then
+      Result:=jsError.message
+    else if isClassInstance(jsError) and (TObject(JSValue(jsError))).InheritsFrom(Exception) then
+      Result:=Exception(JSValue(jsError)).Message;
+    end;
+  if Result='' then
+    begin
+    Result:=UnexpectedErrorMsg;
+    if Result='' then
+      Result:=SDefaultUnexpectedErrorMsg;
+    end;
+  if aFMT<>'' then
+    Result:=Format(aFmt,[Result]);
 end;
 
 

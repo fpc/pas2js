@@ -24,6 +24,14 @@ interface
 uses Types, Classes, DB, jsonDataset, JS, rosdk, da, dasdk;
 
 Type
+  // Server sends data as a regular string.
+  TWideMemoField = Class(TStringField)
+  Private
+    FBlobType : TFieldType;
+  Public
+    property BlobType : TFieldType Read FBlobType Write FBlobType;
+  End;
+
   EDADataset = Class(EDatabaseError);
   TDAConnection = Class;
 
@@ -62,6 +70,7 @@ Type
   TDADataRow = Class external name 'Object' (TJSObject)
     _new,
     _old : TJSValueDynArray;
+    _calc : TJSObject;
   end;
   TDaDataRowArray = Array of TDADataRow;
 
@@ -73,11 +82,20 @@ Type
   { TDAArrayFieldMapper }
 
   TDAArrayFieldMapper = Class(TJSONArrayFieldMapper)
+  Private
+    FIndexMap : TJSObject;
+  Protected
+    function GetFieldIndex(aFieldName : String) : Integer;
+    Procedure SetFieldIndex(aFieldName : String; aValue : Integer);
   Public
+    Constructor Create;
     Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
+    Function GetJSONDataForField(F : TField; Row : JSValue) : JSValue; override; overload;
+    procedure SetJSONDataForField(F : TField; Row,Data : JSValue); override; overload;
     Function CreateRow : JSValue; override;
+    Property FieldIndexes[aName : string] : Integer Read GetFieldIndex Write SetFieldIndex;
   end;
 
 
@@ -117,11 +135,36 @@ Type
     // DA is index based. So create array field mapper.
     function CreateFieldMapper : TJSONFieldMapper; override;
     Procedure CreateFieldDefs(a : TJSArray);
+  Published
     Property TableName : String Read FTableName Write FTableName;
     Property DAConnection : TDAConnection Read FDAConnection Write FDAConnection;
     Property Params : TParams Read FParams Write SetParams;
     Property WhereClause : String Read FWhereClause Write FWhereClause;
     Property DAOptions : TDADatasetOptions Read FDAOptions Write FDAOptions;
+    Property OnRecordResolved;
+    property OnLoadFail;
+    property BeforeOpen;
+    property AfterOpen;
+    property BeforeClose;
+    property AfterClose;
+    property BeforeInsert;
+    property AfterInsert;
+    property BeforeEdit;
+    property AfterEdit;
+    property BeforePost;
+    property AfterPost;
+    property BeforeCancel;
+    property AfterCancel;
+    property BeforeDelete;
+    property AfterDelete;
+    property BeforeScroll;
+    property AfterScroll;
+    property OnCalcFields;
+    property OnDeleteError;
+    property OnEditError;
+    property OnFilterRecord;
+    property OnNewRecord;
+    property OnPostError;
   end;
 
 
@@ -241,6 +284,28 @@ resourcestring
 
 { TDAArrayFieldMapper }
 
+Constructor TDAArrayFieldMapper.Create;
+begin
+  FIndexMap:=TJSObject.New;
+end;
+
+function TDAArrayFieldMapper.GetFieldIndex(aFieldName : String) : Integer;
+
+begin
+  aFieldName:=LowerCase(aFieldName);
+  if FindexMap.HasOwnProperty(aFieldName) then
+    Result:=Integer(FIndexMap[aFieldName])
+  else
+    Result:=-1;
+end;
+
+Procedure TDAArrayFieldMapper.SetFieldIndex(aFieldName : String; aValue : Integer);
+
+begin
+  aFieldName:=LowerCase(aFieldName);
+  FIndexMap[aFieldName]:=aValue;
+end;
+
 procedure TDAArrayFieldMapper.RemoveField(const FieldName: String; FieldIndex: Integer; Row: JSValue);
 
 begin
@@ -257,6 +322,32 @@ begin
   Result:=Inherited GetJSONDataForField(FieldName,FieldIndex,TDADataRow(Row)._new);
 end;
 
+Function TDAArrayFieldMapper.GetJSONDataForField(F : TField; Row : JSValue) : JSValue;
+
+Var
+  I : Integer;
+
+begin
+  if F.fieldKind=fkCalculated then
+    Result:=TJSObject(TDADataRow(Row)._calc).Properties[F.FieldName]
+  else
+    begin
+    I:=FieldIndexes[F.FieldName];
+    if I=-1 then
+      DatabaseErrorFmt('Cannot determine index of field %s',[F.FieldName]);
+    Result:=GetJSONDataForField(F.FieldName, I, Row);
+    end;
+end;
+
+procedure TDAArrayFieldMapper.SetJSONDataForField(F : TField; Row,Data : JSValue);
+
+begin
+  if F.fieldKind=fkCalculated then
+    TJSObject(TDADataRow(Row)._calc).Properties[F.FieldName]:=Data
+  else
+    Inherited;
+end;
+
 function TDAArrayFieldMapper.CreateRow: JSValue;
 
 begin
@@ -265,6 +356,7 @@ begin
     begin
     _new:=[];
     _old:=[];
+    _calc:=TJSObject.New;
     end;
 end;
 
@@ -576,6 +668,8 @@ begin
   inherited create(aOwner);
   FDataServiceName:='DataService';
   FLoginServiceName:='LoginService';
+  MessageType := mtBin;
+  StreamerType := stBin;
 end;
 
 destructor TDAConnection.Destroy;
@@ -903,6 +997,7 @@ begin
       fs:=1;
 //    Writeln('FieldDef : ',fn,', ',ft,', ',fs);
     FieldDefs.Add(fn,ft,fs,Req);
+    TDAArrayFieldMapper(FieldMapper).FieldIndexes[fn]:=I;
     end;
 end;
 
@@ -1044,7 +1139,8 @@ function TDADataProxy.ProcessUpdateBatch(aBatch: TRecordUpdateBatch): Boolean;
     For I:=0 to aBatch.List.Count-1 do
       begin
       aDesc:=aBatch.List[i];
-      aDesc.ResolveFailed(extractErrorMsg(Err));
+      if Assigned(aDesc) then
+        aDesc.ResolveFailed(extractErrorMsg(Err));
       end;
     If Assigned(aBatch.OnResolve) then
       ABatch.OnResolve(Self,aBatch);
@@ -1057,7 +1153,7 @@ function TDADataProxy.ProcessUpdateBatch(aBatch: TRecordUpdateBatch): Boolean;
 
   begin
     // Backwards or index will shift with each delete!
-    for I:=Length(aList)-1 downto 1 do
+    for I:=Length(aList)-1 downto 0 do
        TJSArray(aValue).Splice(aList[I],1);
   end;
 
@@ -1078,6 +1174,20 @@ Var
   DStr : TDADataStreamer;
   S : String;
 
+  Function CopyArray (aRow : TJSArray) : TJSValueDynArray;
+  // DA expects the dates to be Javascript Date objects.
+  // When a row was edited, it is written as a string.
+  // So we convert them here.
+  Var
+    I : integer;
+
+  begin
+    Result:=TJSValueDynArray(aRow.slice());
+    For I:=0 to lDataset.Fields.Count-1 do
+      if (lDataset.Fields[i].DataType in [ftDate,ftTime,ftDateTime])
+         and isString(Result[i]) then
+        Result[i]:=TJSDate.New(string(Result[i]))
+  end;
 
 begin
   lDataset:=TDADataset(aBatch.Dataset);
@@ -1094,10 +1204,10 @@ begin
     aChange:=TDaChange.New;
     aChange.Status:='pending';
     if aDesc.Status=usInserted then
-      aChange.old:=TJSValueDynArray(TJSArray(TDADataRow(aDesc.Data)._new).Slice())
+      aChange.old:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new))
     else
-      aChange.old:=TJSValueDynArray(TJSArray(TDADataRow(aDesc.Data)._old).Slice());
-    aChange.new_:=TJSValueDynArray(TJSArray(TDADataRow(aDesc.Data)._new).Slice());
+      aChange.old:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._Old));
+    aChange.new_:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new));
     excludeItems(ExcludedFields,aChange.new_);
     excludeItems(ExcludedFields,aChange.old);
     aChange.changeType:=ChangeTypes[aDesc.Status];
@@ -1174,6 +1284,7 @@ begin
       aRow:=TDADataRow.New;
       aRow._new:=TJSValueDynArray(DT.Rows[i].__newValues);
       aRow._old:=[];
+      aRow._calc:=TJSObject.New;
       Rows[i]:=aRow;
       end;
   (Dataset as TDADataset).Metadata:=New(['fields',TJSArray(DT.Fields)]);

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Module demo</title>
+  <link rel="stylesheet" href="bulma.min.css">
+  <script type="module" src="htmlutilsdemo.js"></script>
+</head>
+<body>
+   <div class="box">
+     <div class="field is-horizontal">
+       <div class="field-label is-normal">
+         <label class="label">Clear</label>
+       </div>
+       <div class="field-body">
+         <div class="field has-addons">
+           <div class="control">
+             <input id="edtBelowID" class="input" type="text" placeholder="ID of html element to clear">
+           </div>
+           <div class="control">
+             <button id="btnClear" class="button is-info">Clear</button>
+           </div>
+         </div> <!-- .field .has-addons -->
+       </div> <!-- .field-body -->
+     </div> <!-- .field .is-horizontal -->
+
+     <div class="field is-horizontal">
+       <div class="field-label is-normal">
+         <label class="label">Title</label>
+       </div>
+       <div class="field-body">
+         <div class="field has-addons">
+           <div class="control">
+             <input id="edtTitle" class="input" type="text" placeholder="Enter page title">
+           </div>
+           <div class="control">
+             <button id="btnSetTitle" class="button is-info">Set title</button>
+           </div>
+         </div> <!-- .field .has-addons -->
+       </div> <!-- .field-body -->
+     </div> <!-- .field .is-horizontal -->
+     <div class="field is-horizontal">
+       <div class="field-label is-normal">
+         <!-- empty label needed -->
+       </div>
+       <div class="field-body">
+         <div class="field has-addons">
+           <div class="control">
+            <label class="checkbox">
+              <input id="cbUseDefaultClearID" type="checkbox" >
+              Use DefaultBelowID
+              </label>
+           </div>
+         </div> <!-- .field .has-addons -->
+       </div> <!-- .field-body -->
+     </div> <!-- .field .is-horizontal -->
+   </div> <!-- ?box -->
+   <div id="all">
+     <div class="section" id="content">
+       <div class="container">
+         <div class="content">
+           <h3 class="title is-3">Box with ID <code>content</code></h3>
+           <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+         </div>
+       </div>
+     </div>
+     <div class="section" id="content2">
+       <div class="container">
+         <div class="content">
+           <h3 class="title is-3">Box with ID <code>content2</code></h3>
+           <p>Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500s, when an unknown printer took a galley of type and scrambled it to make a type specimen book. It has survived not only five centuries, but also the leap into electronic typesetting, remaining essentially unchanged. It was popularised in the 1960s with the release of Letraset sheets containing Lorem Ipsum passages, and more recently with desktop publishing software like Aldus PageMaker including versions of Lorem Ipsum.</p>
+         </div>
+       </div>
+     </div>
+   </div>
+   <footer class="footer"  id="footer">
+     <div class="content has-text-centered  ">
+     Modules demo. Created with <a href="https://wiki.freepascal.org/pas2js">Pas2JS</a>.
+     Sources: <a href="htmlutilsdemo.lpr">Program</a> and <a href="htmlutils.lpr">Library</a>.
+     </div>
+   <footer>
+
+</body>
+</html>

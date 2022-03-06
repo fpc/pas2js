@@ -9,52 +9,62 @@
 </head>
 <body>
    <div class="box">
-     <div class="field is-horizontal">
-       <div class="field-label is-normal">
-         <label class="label">Clear</label>
-       </div>
-       <div class="field-body">
-         <div class="field has-addons">
-           <div class="control">
-             <input id="edtBelowID" class="input" type="text" placeholder="ID of html element to clear">
+     <div class="columns">
+       <div class="column is-8">
+         <div class="field is-horizontal">
+           <div class="field-label is-normal">
+             <label class="label">Clear</label>
            </div>
-           <div class="control">
-             <button id="btnClear" class="button is-info">Clear</button>
-           </div>
-         </div> <!-- .field .has-addons -->
-       </div> <!-- .field-body -->
-     </div> <!-- .field .is-horizontal -->
+           <div class="field-body">
+             <div class="field has-addons">
+               <div class="control">
+                 <input id="edtBelowID" class="input" type="text" placeholder="ID of html element to clear">
+               </div>
+               <div class="control">
+                 <button id="btnClear" class="button is-info">Clear</button>
+               </div>
+             </div> <!-- .field .has-addons -->
+           </div> <!-- .field-body -->
+         </div> <!-- .field .is-horizontal -->
 
-     <div class="field is-horizontal">
-       <div class="field-label is-normal">
-         <label class="label">Title</label>
-       </div>
-       <div class="field-body">
-         <div class="field has-addons">
-           <div class="control">
-             <input id="edtTitle" class="input" type="text" placeholder="Enter page title">
+         <div class="field is-horizontal">
+           <div class="field-label is-normal">
+             <label class="label">Title</label>
            </div>
-           <div class="control">
-             <button id="btnSetTitle" class="button is-info">Set title</button>
+           <div class="field-body">
+             <div class="field has-addons">
+               <div class="control">
+                 <input id="edtTitle" class="input" type="text" placeholder="Enter page title">
+               </div>
+               <div class="control">
+                 <button id="btnSetTitle" class="button is-info">Set title</button>
+               </div>
+             </div> <!-- .field .has-addons -->
+           </div> <!-- .field-body -->
+         </div> <!-- .field .is-horizontal -->
+         <div class="field is-horizontal">
+           <div class="field-label is-normal">
+             <!-- empty label needed -->
            </div>
-         </div> <!-- .field .has-addons -->
-       </div> <!-- .field-body -->
-     </div> <!-- .field .is-horizontal -->
-     <div class="field is-horizontal">
-       <div class="field-label is-normal">
-         <!-- empty label needed -->
-       </div>
-       <div class="field-body">
-         <div class="field has-addons">
-           <div class="control">
-            <label class="checkbox">
-              <input id="cbUseDefaultClearID" type="checkbox" >
-              Use DefaultBelowID
-              </label>
-           </div>
-         </div> <!-- .field .has-addons -->
-       </div> <!-- .field-body -->
-     </div> <!-- .field .is-horizontal -->
+           <div class="field-body">
+             <div class="field has-addons">
+               <div class="control">
+                <label class="checkbox">
+                  <input id="cbUseDefaultClearID" type="checkbox" >
+                  Use DefaultBelowID
+                  </label>
+               </div>
+             </div> <!-- .field .has-addons -->
+           </div> <!-- .field-body -->
+         </div> <!-- .field .is-horizontal -->
+       </div> <!-- .column -->
+       <div class="column is-4">
+         <div class="content">
+         <p>Enter the name of a tag ID (<code>content</code>, <code>content2</code>) to clear HTML below that ID. Specifying no ID will clear the whole page</p>
+         <p>Enter a title to set the title of this page. See the effect in the browser tab or window title bar.
+         </div> <!-- .content -->
+       </div> <!-- .column -->
+     </div> <!-- .columns -->
    </div> <!-- ?box -->
    <div id="all">
      <div class="section" id="content">

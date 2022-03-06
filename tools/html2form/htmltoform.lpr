@@ -12,7 +12,8 @@
     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
  **********************************************************************}
-
+{$mode objfpc}
+{$h+}
 program htmltoform;
 
 uses sysutils, classes, fpjson, jsonparser, sax,sax_html, custapp, formgen, webcoreformgen;
@@ -47,6 +48,7 @@ begin
   Writeln('Where options is one or more of: ');
   Writeln('-h --help                    this message');
   Writeln('-b --below-id=ID             Only create elements for child elements of element ID');
+  Writeln('-c --config=FILE             Read a JSON configuration file with options.');
   Writeln('-f --formclass=NAME          name of pascal form class');
   Writeln('-F --form-file               Generate a form file.');
   Writeln('-g --getelementfunction=NAME Name of getelement function');

@@ -282,7 +282,7 @@ function setTimeout(aCallback : TNJSTimerCallBack; aMsecDelay : Integer) : TNJSt
 
 var
   Console: TNJSConsole external name 'console';
-  global : TJSObject;
+  global : TJSObject external name 'global';
   NJS_OS: TNJSOS;
 
 implementation

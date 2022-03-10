@@ -847,12 +847,8 @@ begin
 end;
 
 function TValue.IsOrdinal: boolean;
-var
-  k: TTypeKind;
 begin
-  k:=Kind;
-  Result := (k in [tkInteger, tkBool]) or
-            ((k in [tkClass, tkClassRef, tkUnknown]) and not JS.isObject(FData));
+  Result := IsEmpty or (Kind in [tkBool, tkInteger, tkChar, tkEnumeration]);
 end;
 
 function TValue.AsOrdinal: NativeInt;

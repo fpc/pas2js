@@ -158,6 +158,7 @@ Type
 
   TRoute = Class(TCollectionItem)
   private
+    FData: TObject;
     FDefault: Boolean;
     FEvent: TRouteEvent;
     FURLPattern: String;
@@ -172,6 +173,7 @@ Type
     Property Default : Boolean Read FDefault Write FDefault;
     Property URLPattern : String Read FURLPattern Write SetURLPattern;
     Property Event : TRouteEvent Read FEvent Write FEvent;
+    Property Data : TObject Read FData Write FData;
   end;
   TRouteClass = Class of TRoute;
 
@@ -841,7 +843,7 @@ end;
 
 { TRoute }
 
-Class Function TRoute.NormalizeURLPattern(AValue: String) : String;
+class function TRoute.NormalizeURLPattern(AValue: String): String;
 
 Var
   V : String;
@@ -870,7 +872,7 @@ begin
   Result:=(CompareText(URLPattern,NormalizeURLPattern(APattern))=0)
 end;
 
-Function TRoute.MatchPattern(Const Path : String; L : TStrings) : Boolean;
+function TRoute.MatchPattern(const Path: String; L: TStrings): Boolean;
 
   Function StartsWith(C : Char; S : String): Boolean; 
   

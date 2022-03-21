@@ -82,6 +82,13 @@ Resourcestring
   SRangeError                     = 'Range error';
 
   SParamIsNegative                = 'Parameter "%s" cannot be negative.';
+
+  SErrNoStreaming                 = 'Failed to initialize component class "%s": No streaming method available.';
+  SResNotFound                    = 'Resource %s not found';
+  SErrResourceStreamNoWrite       = 'Cannot write to resource stream';
+  SErrResourceNotBase64           = 'Resource %s is not base64 encoded';
+
+
 implementation
 
 end.

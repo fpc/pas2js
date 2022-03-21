@@ -17,7 +17,7 @@ unit Classes;
 interface
 
 uses
-  RTLConsts, Types, SysUtils, JS, TypInfo;
+  RTLConsts, Types, SysUtils, JS, TypInfo, p2jsres;
 
 type
   TNotifyEvent = procedure(Sender: TObject) of object;
@@ -874,6 +874,22 @@ type
     property DataString: String read GetDataString;
   end;
 
+  TFPResourceHMODULE = THandle;
+
+  { TResourceStream }
+
+  TResourceStream = class(TCustomMemoryStream)
+  private
+    procedure Initialize(aInfo : TResourceInfo);
+    procedure Initialize(Instance: TFPResourceHMODULE; Name, ResType: String);
+  public
+    constructor Create(aInfo: TResourceInfo);
+    constructor Create(Instance: TFPResourceHMODULE; const ResName, ResType : String);
+    constructor CreateFromID(Instance: TFPResourceHMODULE; ResID: Integer; ResType: String);
+    function Write(const Buffer: TBytes; Offset, Count: LongInt): LongInt; override;
+    destructor Destroy; override;
+  end;
+
 
   TFilerFlag = (ffInherited, ffChildPos, ffInline);
   TFilerFlags = set of TFilerFlag;
@@ -1407,6 +1423,52 @@ type
 
   TLoadHelperClass = Class of TLoadHelper;
 
+  { ---------------------------------------------------------------------
+      TDatamodule support
+    ---------------------------------------------------------------------}
+    TDataModule = class(TComponent)
+    private
+      FDPos: TPoint;
+      FDSize: TPoint;
+      FDPPI: Integer;
+      FOnCreate: TNotifyEvent;
+      FOnDestroy: TNotifyEvent;
+      FOldOrder : Boolean;
+      Procedure ReadP(Reader: TReader);
+      Procedure WriteP(Writer: TWriter);
+      Procedure ReadT(Reader: TReader);
+      Procedure WriteT(Writer: TWriter);
+      Procedure ReadL(Reader: TReader);
+      Procedure WriteL(Writer: TWriter);
+      Procedure ReadW(Reader: TReader);
+      Procedure WriteW(Writer: TWriter);
+      Procedure ReadH(Reader: TReader);
+      Procedure WriteH(Writer: TWriter);
+    protected
+      Procedure DoCreate; virtual;
+      Procedure DoDestroy; virtual;
+      Procedure DefineProperties(Filer: TFiler); override;
+      Procedure GetChildren(Proc: TGetChildProc; Root: TComponent); override;
+      Function HandleCreateException: Boolean; virtual;
+      Procedure ReadState(Reader: TReader); override;
+    public
+      constructor Create(AOwner: TComponent); override;
+      Constructor CreateNew(AOwner: TComponent);
+      Constructor CreateNew(AOwner: TComponent; CreateMode: Integer); virtual;
+      destructor Destroy; override;
+      Procedure AfterConstruction; override;
+      Procedure BeforeDestruction; override;
+      property DesignOffset: TPoint read FDPos write FDPos;
+      property DesignSize: TPoint read FDSize write FDSize;
+      property DesignPPI: Integer read FDPPI write FDPPI;
+    published
+      property OnCreate: TNotifyEvent read FOnCreate write FOnCreate;
+      property OnDestroy: TNotifyEvent read FOnDestroy write FOnDestroy;
+      property OldCreateOrder: Boolean read FOldOrder write FOldOrder;
+    end;
+    TDataModuleClass = Class of TDataModule;
+
+
 type
   TIdentMapEntry = record
     Value: Integer;
@@ -1426,6 +1488,8 @@ procedure RegisterFindGlobalComponentProc(AFindGlobalComponent: TFindGlobalCompo
 procedure UnregisterFindGlobalComponentProc(AFindGlobalComponent: TFindGlobalComponent);
 function FindGlobalComponent(const Name: string): TComponent;
 Function FindNestedComponent(Root : TComponent; APath : String; CStyle : Boolean = True) : TComponent;
+function InitInheritedComponent(Instance: TComponent; RootAncestor: TClass): Boolean;
+
 procedure RedirectFixupReferences(Root: TComponent; const OldRootName, NewRootName: string);
 procedure RemoveFixupReferences(Root: TComponent; const RootName: string);
 procedure RegisterIntegerConsts(IntegerType: Pointer; IdentToIntFn: TIdentToInt;  IntToIdentFn: TIntToIdent);
@@ -1451,6 +1515,18 @@ Function BufferToString(aBuffer : TJSArrayBuffer; aPos,aLen : Integer) : String;
 procedure BeginGlobalLoading;
 procedure NotifyGlobalLoading;
 procedure EndGlobalLoading;
+
+Type
+  TDataModuleNotifyEvent = procedure (DataModule: TDataModule) of object;
+  TExceptionNotifyEvent = procedure (E: Exception) of object;
+
+var
+  // IDE hooks for TDatamodule support.
+  AddDataModule              : TDataModuleNotifyEvent;
+  RemoveDataModule           : TDataModuleNotifyEvent;
+  ApplicationHandleException : TNotifyEvent;
+  ApplicationShowException   : TExceptionNotifyEvent;
+  FormResourceIsText : Boolean = True;
 
 Const
   // Some aliases
@@ -1542,6 +1618,66 @@ type
     constructor Create(AIntegerType: PTypeInfo; AIdentToInt: TIdentToInt;
       AIntToIdent: TIntToIdent);
   end;
+
+{ TResourceStream }
+
+// We need a polyfill for nodejs.
+Function atob (s : String) : string; external name 'atob';
+
+procedure TResourceStream.Initialize(aInfo: TResourceInfo);
+
+var
+  Ptr : TJSArrayBuffer;
+  S : String;
+
+begin
+  if aInfo.encoding<>'base64' then
+    Raise ENotSupportedException.CreateFmt(SErrResourceNotBase64,[aInfo.name]);
+  S:=atob(aInfo.Data);
+  Ptr:=StringToBuffer(S, length(S));
+  SetPointer(Ptr,Ptr.byteLength);
+end;
+
+procedure TResourceStream.Initialize(Instance: TFPResourceHMODULE; Name, ResType: String);
+
+Var
+  aInfo : TResourceInfo;
+
+begin
+  if not GetResourceInfo(Name, aInfo) then
+    raise EResNotFound.CreateFmt(SResNotFound,[Name]);
+  Initialize(aInfo);
+end;
+
+constructor TResourceStream.Create(aInfo: TResourceInfo);
+begin
+  inherited create;
+  Initialize(aInfo);
+end;
+
+constructor TResourceStream.Create(Instance: TFPResourceHMODULE; const ResName, ResType: String);
+begin
+  inherited create;
+  Initialize(Instance,ResName,ResType);
+end;
+
+constructor TResourceStream.CreateFromID(Instance: TFPResourceHMODULE;
+  ResID: Integer; ResType: String);
+begin
+  inherited create;
+  Initialize(Instance,IntToStr(ResID),ResType);
+end;
+
+function TResourceStream.Write(const Buffer: TBytes; Offset, Count: LongInt
+  ): LongInt;
+begin
+  Raise ENotSupportedException.Create(SErrResourceStreamNoWrite);
+end;
+
+destructor TResourceStream.Destroy;
+begin
+  inherited Destroy;
+end;
 
 { TStringStream }
 
@@ -9626,6 +9762,11 @@ end;
 { ---------------------------------------------------------------------
   Global routines
   ---------------------------------------------------------------------}
+Type
+  TInitHandler = Class(TObject)
+    AHandler : TInitComponentHandler;
+    AClass : TComponentClass;
+  end;
 
 var
   ClassList : TJSObject;
@@ -9735,11 +9876,29 @@ begin
     end;
 end;
 
-Type
-  TInitHandler = Class(TObject)
-    AHandler : TInitComponentHandler;
-    AClass : TComponentClass;
+function InitInheritedComponent(Instance: TComponent; RootAncestor: TClass): Boolean;
+Var
+  I : Integer;
+begin
+  I:=0;
+  if not Assigned(InitHandlerList) then begin
+    Result := True;
+    Exit;
   end;
+  Result:=False;
+  With InitHandlerList do
+    begin
+    I:=0;
+    // Instance is the normally the lowest one, so that one should be used when searching.
+    While Not result and (I<Count) do
+      begin
+      If (Instance.InheritsFrom(TInitHandler(Items[i]).AClass)) then
+        Result:=TInitHandler(Items[i]).AHandler(Instance,RootAncestor);
+      Inc(I);
+      end;
+    end;
+end;
+
 
 
 procedure RegisterInitComponentHandler(ComponentClass: TComponentClass;   Handler: TInitComponentHandler);
@@ -10933,7 +11092,232 @@ begin
 end;
 
 
+{ ----------------------------------------------------------------------
+  TDatamodule
+  ----------------------------------------------------------------------}
+
+Constructor TDataModule.Create(AOwner: TComponent);
+begin
+  CreateNew(AOwner);
+  if (ClassType <> TDataModule) and
+     not (csDesigning in ComponentState) then
+    begin
+    if not InitInheritedComponent(Self, TDataModule) then
+      raise EStreamError.CreateFmt(SErrNoSTreaming, [ClassName]);
+    if OldCreateOrder then
+      DoCreate;
+    end;
+end;
+
+Constructor TDataModule.CreateNew(AOwner: TComponent);
+
+begin
+  CreateNew(AOwner,0);
+end;
+
+constructor TDataModule.CreateNew(AOwner: TComponent; CreateMode: Integer);
+begin
+  inherited Create(AOwner);
+  FDPPI := 96;
+  if Assigned(AddDataModule) and (CreateMode>=0) then
+    AddDataModule(Self);
+end;
+
+Procedure TDataModule.AfterConstruction;
+begin
+   If not OldCreateOrder then
+     DoCreate;
+end;
+
+Procedure TDataModule.BeforeDestruction;
+begin
+  Destroying;
+  RemoveFixupReferences(Self, '');
+  if not OldCreateOrder then
+    DoDestroy;
+end;
+
+destructor TDataModule.Destroy;
+begin
+  if OldCreateOrder then
+    DoDestroy;
+  if Assigned(RemoveDataModule) then
+    RemoveDataModule(Self);
+  inherited Destroy;
+end;
+
+Procedure TDataModule.DoCreate;
+begin
+  if Assigned(FOnCreate) then
+    try
+      FOnCreate(Self);
+    except
+      if not HandleCreateException then
+        raise;
+    end;
+end;
+
+Procedure TDataModule.DoDestroy;
+begin
+  if Assigned(FOnDestroy) then
+    try
+      FOnDestroy(Self);
+    except
+      if Assigned(ApplicationHandleException) then
+        ApplicationHandleException(Self);
+    end;
+end;
+
+procedure TDataModule.DefineProperties(Filer: TFiler);
+
+var
+  Ancestor : TDataModule;
+  HaveData,
+  HavePPIData: Boolean;
+
+begin
+  inherited DefineProperties(Filer);
+  Ancestor := TDataModule(Filer.Ancestor);
+  HaveData:=(Ancestor=Nil) or
+            (FDSize.X<>Ancestor.FDSize.X) or
+            (FDSize.Y<>Ancestor.FDSize.Y) or
+            (FDPos.Y<>Ancestor.FDPos.Y) or
+            (FDPos.X<>Ancestor.FDPos.X);
+  HavePPIData:=(Assigned(Ancestor) and (FDPPI<>Ancestor.FDPPI)) or
+               (not Assigned(Ancestor) and (FDPPI<>96));
+  Filer.DefineProperty('Height', @ReadH, @WriteH, HaveData);
+  Filer.DefineProperty('HorizontalOffset', @ReadL, @WriteL, HaveData);
+  Filer.DefineProperty('VerticalOffset', @ReadT,@WriteT, HaveData);
+  Filer.DefineProperty('Width', @ReadW, @WriteW, HaveData);
+  Filer.DefineProperty('PPI', @ReadP, @WriteP,HavePPIData);
+end;
+
+procedure TDataModule.GetChildren(Proc: TGetChildProc; Root: TComponent);
+
+var
+  I : Integer;
+
+begin
+  inherited GetChildren(Proc, Root);
+  if (Root=Self) then
+    for I:=0 to ComponentCount-1 do
+      If Not Components[I].HasParent then
+         Proc(Components[i]);
+end;
+
+
+function TDataModule.HandleCreateException: Boolean;
+begin
+  Result:=Assigned(ApplicationHandleException);
+  if Result then
+    ApplicationHandleException(Self);
+end;
+
+Procedure TDataModule.ReadP(Reader: TReader);
+begin
+  FDPPI := Reader.ReadInteger;
+end;
+
+Procedure TDataModule.ReadState(Reader: TReader);
+begin
+  FOldOrder := false;
+  inherited ReadState(Reader);
+end;
+
+Procedure TDataModule.ReadT(Reader: TReader);
+begin
+  FDPos.Y := Reader.ReadInteger;
+end;
+
+Procedure TDataModule.WriteT(Writer: TWriter);
+begin
+  Writer.WriteInteger(FDPos.Y);
+end;
+
+Procedure TDataModule.ReadL(Reader: TReader);
+begin
+  FDPos.X := Reader.ReadInteger;
+end;
+
+Procedure TDataModule.WriteL(Writer: TWriter);
+begin
+  Writer.WriteInteger(FDPos.X);
+end;
+
+Procedure TDataModule.ReadW(Reader: TReader);
+begin
+  FDSIze.X := Reader.ReadInteger;
+end;
+
+Procedure TDataModule.WriteP(Writer: TWriter);
+begin
+  Writer.WriteInteger(FDPPI);
+end;
+
+Procedure TDataModule.WriteW(Writer: TWriter);
+begin
+  Writer.WriteInteger(FDSIze.X);
+end;
+
+Procedure TDataModule.ReadH(Reader: TReader);
+begin
+  FDSIze.Y := Reader.ReadInteger;
+end;
+
+Procedure TDataModule.WriteH(Writer: TWriter);
+begin
+  Writer.WriteInteger(FDSIze.Y);
+end;
+
+function CreateComponentfromRes(const res : string;Inst : THandle; var Component : TComponent) : Boolean;
+
+var
+  ResStream : TResourceStream;
+
+  Src : TStream;
+  aInfo : TResourceInfo;
+
+begin
+  result:=GetResourceInfo(Res,aInfo);
+  if Result then
+    begin
+    ResStream:=TResourceStream.Create(aInfo);
+    try
+      if Not FormResourceIsText then
+        Src:=ResStream
+      else
+        begin
+        Src:=TMemoryStream.Create;
+        ObjectTextToBinary(ResStream,Src);
+        Src.Position:=0;
+        end;
+      Component:=Src.ReadComponent(Component);
+    finally
+      if Src<>ResStream then
+        Src.Free;
+      ResStream.Free;
+    end;
+    end;
+end;
+
+function DefaultInitHandler(Instance: TComponent; RootAncestor: TClass): Boolean;
+
+  function doinit(_class : TClass) : boolean;
+    begin
+      result:=false;
+      if (_class.ClassType=TComponent) or (_class.ClassType=RootAncestor) then
+        exit;
+      result:=doinit(_class.ClassParent);
+      // Resources are written with their unit name
+      result:=CreateComponentfromRes(_class.UnitName,0,Instance) or result;
+    end;
+
+begin
+  result:=doinit(Instance.ClassType);
+end;
+
 initialization
+  RegisterInitComponentHandler(TDataModule,@DefaultInitHandler);
   ClassList:=TJSObject.New;
 end.
 

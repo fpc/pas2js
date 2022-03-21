@@ -17,6 +17,7 @@ unit Types;
 interface
 
 type
+  THandle = NativeInt;
   TDirection = (FromBeginning, FromEnd);
 
   TBooleanDynArray = array of Boolean;

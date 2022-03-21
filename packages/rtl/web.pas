@@ -2402,6 +2402,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property offsetWidth : Double Read FOffsetWidth;
     property offsetParent : TJSElement Read FOffsetParent;
   end;
+  TJSHTMLElementArray = Array of TJSHTMLElement;
 
   TJSHTMLDivElement = class external name 'HTMLDivElement' (TJSHTMLElement)
   end;

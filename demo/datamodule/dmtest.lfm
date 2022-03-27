@@ -1,0 +1,28 @@
+object TestModule: TTestModule
+  OldCreateOrder = True
+  Height = 152
+  HorizontalOffset = 465
+  VerticalOffset = 225
+  Width = 277
+  object alHTML: THTMLElementActionList
+    Left = 104
+    Top = 33
+    object actTitle: THTMLElementAction
+      Events = []
+      ElementID = 'hdrTitle'
+    end
+    object actSetTitle: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnSetTitle'
+      OnExecute = actSetTitleExecute
+    end
+    object acthdrTitle_2: THTMLElementAction
+      Events = []
+      ElementID = 'hdrTitle-2'
+    end
+    object actbtnSetTitle_2: THTMLElementAction
+      Events = []
+      ElementID = 'btnSetTitle-2'
+    end
+  end
+end

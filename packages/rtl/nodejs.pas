@@ -289,8 +289,8 @@ implementation
 
 initialization
   NJS_OS:=TNJSOS(Require('os'));
-  LineEnding:=NJS_OS.EOL;
-  sLineBreak:=NJS_OS.EOL;
+//  LineEnding:=NJS_OS.EOL;
+//  sLineBreak:=NJS_OS.EOL;
 
 end.
 

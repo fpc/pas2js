@@ -4121,7 +4121,7 @@ var
   document : TJSDocument; external name 'document';
   window : TJSWindow; external name 'window';
   console : TJSConsole; external name 'window.console';
-  caches : TJSCacheStorage;
+  caches : TJSCacheStorage; external name 'caches';
   serviceWorker : TJSServiceWorker; external name 'self';
 
 Function IsServiceWorker : Boolean;

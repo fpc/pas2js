@@ -4122,7 +4122,16 @@ var
   window : TJSWindow; external name 'window';
   console : TJSConsole; external name 'window.console';
   caches : TJSCacheStorage;
+  serviceWorker : TJSServiceWorker; external name 'self';
+
+Function IsServiceWorker : Boolean;
 
 implementation
-    
+
+Function IsServiceWorker : Boolean;
+
+begin
+  isDefined(serviceWorker);
+end;
+
 end.

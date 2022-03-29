@@ -4131,7 +4131,7 @@ implementation
 Function IsServiceWorker : Boolean;
 
 begin
-  isDefined(serviceWorker);
+  Result:=isDefined(serviceWorker);
 end;
 
 end.

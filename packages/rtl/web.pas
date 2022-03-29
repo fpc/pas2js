@@ -51,7 +51,8 @@ Type
   TJSShowSaveFilePickerOptions = class;
   TJSServiceWorker = class;
   TJSClient = class;
-
+  TJSRequest = Class;
+  TJSResponse = Class;
   { TEventListenerEvent }
 
 (*
@@ -1761,6 +1762,25 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property SourceClient : TJSClient Read FSourceClient;
   end;
 
+  { TJSFetchEvent }
+
+  TJSFetchEvent = class external name 'FetchEvent' (TJSExtendableEvent)
+  private
+    FClientID: String; external name 'clientId';
+    FReplacesClientID: String; external name 'replacesClientId';
+    FRequest: TJSRequest; external name 'request';
+    FResultingClientID: String; external name 'resultingClientId';
+    FPreloadResponse: TJSPromise; external name 'preloadResponse';
+  Public
+    Procedure respondWith(aPromise : TJSPromise);
+    Procedure respondWith(aResponse : TJSResponse);
+    Property ClientId : String Read FClientID;
+    Property PreloadResponse : TJSPromise Read FPreloadResponse;
+    Property ReplacesClientID : String Read FReplacesClientID;
+    Property ResultingClientID : String Read FResultingClientID;
+    Property request : TJSRequest Read FRequest;
+  end;
+
   { TJSClient }
 
   TJSClient = class external name 'Client' (TJSObject)
@@ -2109,9 +2129,81 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property didTimeout: Boolean read FDidTimeout;
   end;
 
-  TIdleCallbackProc = reference to procedure(idleDeadline: TJSIdleDeadline);
+  TJSCacheDeleteOptions = class external name 'Object' (TJSObject)
+    ignoreSearch : Boolean;
+    ignoreMethod : Boolean;
+    ignoreVary : Boolean;
+    cacheName : string;
+  end;
+
+  { TJSRequest }
+
+  TJSRequest = class external name 'Request' (TJSObject)
+  private
+    FBody: TJSReadableStream; external name 'body';
+    FBodyUsed: Boolean; external name 'bodyUsed';
+    FCache: String; external name 'cache';
+    FCredentials: TJSObject; external name 'credentials';
+    FDestination: String; external name 'destination';
+    FHeaders: TJSObject; external name 'headers';
+    FIntegrity: String; external name 'integrity';
+    FMethod: String; external name 'method';
+    FMode: String; external name 'mode';
+    FReferrer: string; external name 'referrer';
+    FReferrerPolicy: string; external name 'referrerPolicy';
+    FURL: String;external name 'url';
+  Public
+    Property body : TJSReadableStream Read FBody;
+    property bodyUsed : Boolean Read FBodyUsed;
+    Property Cache : String Read FCache;
+    Property Credentials : TJSObject Read FCredentials;
+    Property Destination : String Read FDestination;
+    // TODO : actually Headers object
+    Property Headers : TJSObject Read FHeaders;
+    Property Integrity : String Read FIntegrity;
+    Property Method : String Read FMethod;
+    Property Mode : String Read FMode;
+    Property Referrer : string Read FReferrer;
+    Property ReferrerPolicy : string Read FReferrerPolicy;
+    Property URL : String Read FURL;
+
+
+  end;
+
+  TJSCache = class external name 'Cache' (TJSObject)
+  Public
+    Function add(aRequest : String) : TJSPromise;
+    Function add(aRequest : TJSURL) : TJSPromise;
+    Function addAll(aRequests : Array of String) : TJSPromise;
+    Function addAll(aRequests : Array of TJSURL) : TJSPromise;
+    Function addAll(aRequests : TJSValueDynArray) : TJSPromise;
+    Function put(aRequest : String; aResponse : TJSResponse) : TJSPromise;
+    Function put(aRequest : TJSRequest; aResponse : TJSResponse) : TJSPromise;
+    Function delete(aRequest : String) : TJSPromise;
+    Function delete(aRequest : TJSRequest) : TJSPromise;
+    Function delete(aRequest : String; aOptions : TJSObject) : TJSPromise;
+    Function delete(aRequest : TJSRequest; aOptions : TJSObject) : TJSPromise;
+    Function delete(aRequest : String; aOptions : TJSCacheDeleteOptions) : TJSPromise;
+    Function delete(aRequest : TJSRequest; aOptions : TJSCacheDeleteOptions) : TJSPromise;
+    Function keys : TJSPromise; reintroduce;
+    Function match(aRequest : String): TJSPromise;
+    Function match(aRequest : TJSRequest): TJSPromise;
+    Function matchAll(aRequest : array of String): TJSPromise;
+    Function matchAll(aRequest : array of TJSRequest): TJSPromise;
+    Function matchAll(aRequests : TJSValueDynArray) : TJSPromise;
+  end;
+
+  TJSCacheStorage = class external name 'CacheStorage' (TJSObject)
+    function delete(aName : string) : TJSPromise;
+    function has(aName : string) : TJSPromise;
+    Function keys : TJSPromise; reintroduce;
+    Function match(aRequest : String): TJSPromise;
+    Function match(aRequest : TJSRequest): TJSPromise;
+    function open(aName : string) : TJSPromise;
+  end;
 
   TJSWindowArray = Array of TJSWindow;
+  TIdleCallbackProc = reference to procedure(idleDeadline: TJSIdleDeadline);
 
   { TJSWindow }
 
@@ -4029,6 +4121,7 @@ var
   document : TJSDocument; external name 'document';
   window : TJSWindow; external name 'window';
   console : TJSConsole; external name 'window.console';
+  caches : TJSCacheStorage;
 
 implementation
     

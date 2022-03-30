@@ -181,8 +181,9 @@ Function HasTemplate : Boolean;
 
 begin
   asm
-   return ('content' in document.createElement('template'))
+    return ('content' in document.createElement('template'))
   end;
+  Result:=false;
 end;
 
 

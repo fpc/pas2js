@@ -53,6 +53,8 @@ Type
   TJSClient = class;
   TJSRequest = Class;
   TJSResponse = Class;
+  TJSServiceWorkerRegistration = class;
+
   { TEventListenerEvent }
 
 (*
@@ -1802,11 +1804,31 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSServiceWorker = class external name 'ServiceWorker' (TJSWorker)
   private
-    FscriptURL: String;  external name 'scriptURL';
+    FRegistration: TJSServiceWorkerRegistration; external name 'registration';
+    FScriptURL: String;  external name 'scriptURL';
     FState: string;  external name 'state';
   Public
-    property state : string read FState;
-    property scriptURL : String Read FscriptURL;
+    property State : string read FState;
+    property ScriptURL : String Read FscriptURL;
+    property Registration: TJSServiceWorkerRegistration read FRegistration;
+  end;
+
+  { TJSNavigationPreloadState }
+
+  TJSNavigationPreloadState = class external name 'navigationPreloadState'
+  public
+    enabled: boolean;
+    headerValue: string;
+  end;
+
+  { TJSNavigationPreload }
+
+  TJSNavigationPreload = class external name 'navigationPreload' (TJSObject)
+  public
+    function enable: boolean; async;
+    function disable: boolean; async;
+    function setHeaderValue(Value: string): TJSPromise;
+    function getState: TJSNavigationPreloadState; async;
   end;
 
   { TJSServiceWorkerRegistration }
@@ -1817,13 +1839,15 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     FInstalling: TJSServiceWorker; external name 'installing';
     FScope: string; external name 'scope';
     FWaiting: TJSServiceWorker; external name 'waiting';
+    FNavigationPreload: TJSNavigationPreload; external name 'navigationPreload';
   public
     function unregister : TJSPromise;
     procedure update;
-    property active : TJSServiceWorker read FActive;
-    property scope : string read FScope;
-    property waiting : TJSServiceWorker read FWaiting;
-    property installing : TJSServiceWorker read FInstalling;
+    property Active : TJSServiceWorker read FActive;
+    property Scope : string read FScope;
+    property Waiting : TJSServiceWorker read FWaiting;
+    property Installing : TJSServiceWorker read FInstalling;
+    property NavigationPreload: TJSNavigationPreload read FNavigationPreload;
   end;
 
   TJSServiceWorkerContainerOptions = record
@@ -2009,6 +2033,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property Origin : String Read FOrigin;
     property SearchParams : TJSURLSearchParams read FSearchParams;
   end;
+  TJSURLDynArray = array of TJSURL;
 
   TJSTimerCallBack = reference to procedure; safecall;
   Theader = Array [0..1] of String;
@@ -2101,7 +2126,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property type_: String read ftype; //
     property url: String read furl; //
     property useFinalUrl: Boolean read fuseFinalUrl write fuseFinalUrl;
-    constructor new(body: TJSObject; init: TJSObject); varargs; external name 'new';
+    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new';
+    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';
     function clone(): TJSResponse;
     function error(): TJSResponse;
     function redirect(url: String; Status: NativeInt): TJSResponse;
@@ -2166,16 +2192,15 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property Referrer : string Read FReferrer;
     Property ReferrerPolicy : string Read FReferrerPolicy;
     Property URL : String Read FURL;
-
-
   end;
+  TJSRequestDynArray = array of TJSRequest;
 
   TJSCache = class external name 'Cache' (TJSObject)
   Public
     Function add(aRequest : String) : TJSPromise;
     Function add(aRequest : TJSURL) : TJSPromise;
-    Function addAll(aRequests : Array of String) : TJSPromise;
-    Function addAll(aRequests : Array of TJSURL) : TJSPromise;
+    Function addAll(aRequests : TJSStringDynArray) : TJSPromise;
+    Function addAll(aRequests : TJSURLDynArray) : TJSPromise;
     Function addAll(aRequests : TJSValueDynArray) : TJSPromise;
     Function put(aRequest : String; aResponse : TJSResponse) : TJSPromise;
     Function put(aRequest : TJSRequest; aResponse : TJSResponse) : TJSPromise;
@@ -2188,8 +2213,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Function keys : TJSPromise; reintroduce;
     Function match(aRequest : String): TJSPromise;
     Function match(aRequest : TJSRequest): TJSPromise;
-    Function matchAll(aRequest : array of String): TJSPromise;
-    Function matchAll(aRequest : array of TJSRequest): TJSPromise;
+    Function matchAll(aRequest : TJSStringDynArray): TJSPromise;
+    Function matchAll(aRequest : TJSRequestDynArray): TJSPromise;
     Function matchAll(aRequests : TJSValueDynArray) : TJSPromise;
   end;
 
@@ -4129,9 +4154,11 @@ Function IsServiceWorker : Boolean;
 implementation
 
 Function IsServiceWorker : Boolean;
-
 begin
-  Result:=isDefined(serviceWorker);
+  if jsvalue(window.navigator.serviceWorker) then
+    exit(true)
+  else
+    exit(false);
 end;
 
 end.

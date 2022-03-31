@@ -6,7 +6,8 @@ uses
   Classes, ServiceWorkerApp;
 
 const
-  YourCacheName = 'v6';
+  YourCacheName = 'v6'; // usually increased with every version
+   // The cache is specific to your domain, so no need to include your app name.
 
 type
 

@@ -1,3 +1,7 @@
+{
+  A service worker functions like a proxy server, allowing to modify requests
+  and responses, and replace them with items from its own cache, and more.
+}
 unit ServiceWorkerApp;
 
 {$mode objfpc}

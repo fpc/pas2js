@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <CONFIG>
-  <Package Version="4">
+  <Package Version="5">
     <Name Value="fcl_base_pas2js"/>
     <Type Value="RunTimeOnly"/>
     <Author Value="Mattias Gaertner"/>
@@ -30,7 +30,7 @@
 Port to pas2js."/>
     <License Value="Modified LGPL-2"/>
     <Version Major="1"/>
-    <Files Count="4">
+    <Files Count="5">
       <Item1>
         <Filename Value="custapp.pas"/>
         <UnitName Value="custapp"/>
@@ -47,7 +47,12 @@ Port to pas2js."/>
         <Filename Value="fpexprpars.pas"/>
         <UnitName Value="fpexprpars"/>
       </Item4>
+      <Item5>
+        <Filename Value="serviceworkerapp.pas"/>
+        <UnitName Value="ServiceWorkerApp"/>
+      </Item5>
     </Files>
+    <CompatibilityMode Value="True"/>
     <UsageOptions>
       <UnitPath Value="$(PkgOutDir)"/>
     </UsageOptions>

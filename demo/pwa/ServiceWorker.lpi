@@ -31,6 +31,9 @@
     </RunParams>
     <RequiredPackages>
       <Item>
+        <PackageName Value="fcl_base_pas2js"/>
+      </Item>
+      <Item>
         <PackageName Value="pas2js_rtl"/>
       </Item>
     </RequiredPackages>

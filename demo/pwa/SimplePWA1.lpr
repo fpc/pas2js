@@ -3,14 +3,32 @@ program SimplePWA1;
 {$mode objfpc}
 
 uses
-  JS, Classes, SysUtils, Web;
+  Web, BrowserApp;
 
 const
   GreekLetters: array[1..9] of string = (
    'Alpha', 'Beta', 'Gamma', 'Delta', 'Epsilon', 'Zeta', 'Eta', 'Theta', 'Iota'
     );
 
-procedure ShowLetters;
+type
+
+  { TWebApp }
+
+  TWebApp = class(TBrowserApplication)
+  protected
+    procedure DoRun; override;
+  public
+    procedure ShowLetters;
+  end;
+
+procedure TWebApp.DoRun;
+begin
+  inherited DoRun;
+  document.addEventListener('DOMContentLoaded', @ShowLetters);
+  RegisterServiceWorker('/ServiceWorker.js');
+end;
+
+procedure TWebApp.ShowLetters;
 var
   h, Letter: String;
   container: TJSElement;
@@ -28,25 +46,9 @@ begin
   container.innerHTML := h;
 end;
 
+var
+  App: TWebApp;
 begin
-  // Your code here
-  document.addEventListener('DOMContentLoaded', @ShowLetters);
-
-  // register service worker
-  if IsServiceWorker then
-    Window.addEventListener('load',
-      procedure()
-      begin
-        Window.navigator.serviceWorker
-          .register('/ServiceWorker.js')
-          ._then(TJSPromiseResolver(procedure(Registration: TJSServiceWorkerRegistration)
-            begin
-              console.log('service worker registered');
-              if IsDefined(Registration.installing) then ;
-            end))
-          .catch(TJSPromiseResolver(procedure(err: JSValue)
-            begin
-              console.log('service worker not registered: '+String(err));
-            end));
-      end);
+  App:=TWebApp.Create(nil);
+  App.Run;
 end.

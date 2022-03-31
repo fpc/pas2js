@@ -112,7 +112,7 @@ begin
   ServiceWorker.addEventListener('activate', procedure(Event: TJSExtendableEvent)
     begin
       Event.waitUntil(EnableNavigationPreload());
-      event.waitUntil(DeleteOldCaches());
+      Event.waitUntil(DeleteOldCaches());
     end);
 
   ServiceWorker.addEventListener('install', procedure(Event: TJSExtendableEvent)

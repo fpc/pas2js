@@ -25,9 +25,11 @@ type
     function DeleteOldCaches: jsvalue; async; virtual;
     procedure SetFallbackURL(const AValue: string); virtual;
     procedure DoRun; override;
+    procedure Activate(Event: TJSExtendableEvent); virtual;
+    procedure Install(Event: TJSExtendableEvent); virtual;
+    procedure Fetch(FetchEvent: TJSFetchEvent); virtual;
 
     function GetConsoleApplication: boolean; override;
-    function LogGetElementErrors : Boolean; virtual;
     function GetLocation: String; override;
   public
     procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;
@@ -126,7 +128,7 @@ begin
   PreloadResponse := await(TJSResponse,PreloadResponsePromise);
   if Assigned(PreloadResponse) then
   begin
-    console.info('using preload response: '+String(JSValue(PreloadResponse)));
+    //console.info('using preload response: '+String(JSValue(PreloadResponse)));
     putInCache(Request, PreloadResponse.clone());
     exit(PreloadResponse);
   end;
@@ -185,38 +187,37 @@ end;
 
 procedure TServiceWorkerApplication.DoRun;
 begin
-  ServiceWorker.addEventListener('activate', procedure(Event: TJSExtendableEvent)
-    begin
-      Event.waitUntil(EnableNavigationPreload());
-      Event.waitUntil(DeleteOldCaches());
-    end);
+  ServiceWorker.addEventListener('activate', @Activate);
+  ServiceWorker.addEventListener('install', @Install);
+  ServiceWorker.addEventListener('fetch', @Fetch);
+end;
 
-  ServiceWorker.addEventListener('install', procedure(Event: TJSExtendableEvent)
-    begin
-      Event.waitUntil(
-        Caches.Open(CacheName)._then(
-          TJSPromiseResolver(procedure(Cache: TJSCache)
-          begin
-            Cache.addAll(Resources);
-          end))
-      );
-    end);
+procedure TServiceWorkerApplication.Activate(Event: TJSExtendableEvent);
+begin
+  Event.waitUntil(EnableNavigationPreload());
+  Event.waitUntil(DeleteOldCaches());
+end;
 
-  ServiceWorker.addEventListener('fetch', procedure(FetchEvent: TJSFetchEvent)
-    begin
-      FetchEvent.RespondWith(CacheFirst(FetchEvent.request,
-                             FetchEvent.PreloadResponse,FallbackURL) );
-    end);
+procedure TServiceWorkerApplication.Install(Event: TJSExtendableEvent);
+begin
+  Event.waitUntil(
+    Caches.Open(CacheName)._then(
+      TJSPromiseResolver(procedure(Cache: TJSCache)
+      begin
+        Cache.addAll(Resources);
+      end))
+  );
+end;
+
+procedure TServiceWorkerApplication.Fetch(FetchEvent: TJSFetchEvent);
+begin
+  FetchEvent.RespondWith(CacheFirst(FetchEvent.request,
+                         FetchEvent.PreloadResponse,FallbackURL) );
 end;
 
 function TServiceWorkerApplication.GetConsoleApplication: boolean;
 begin
   Result:=true;
-end;
-
-function TServiceWorkerApplication.LogGetElementErrors: Boolean;
-begin
-  Result:=True;
 end;
 
 function TServiceWorkerApplication.GetLocation: String;
@@ -250,7 +251,7 @@ begin
     S:=E.ClassName+': '+E.Message
   else if ExceptObjectJS then
     s:=TJSObject(ExceptObjectJS).toString;
-  window.alert('Unhandled exception caught:'+S);
+  console.log('Unhandled exception caught:'+S);
 end;
 
 procedure TServiceWorkerApplication.HandleException(Sender: TObject);

@@ -3,28 +3,26 @@ program ServiceWorker;
 {$mode objfpc}
 
 uses
-  JS, Web, Types, ServiceWorkerApp;
+  Classes, ServiceWorkerApp;
 
 const
-  YourCacheName = 'v5';
+  YourCacheName = 'v6';
 
 type
 
   { TApplication }
 
   TApplication = class(TServiceWorkerApplication)
-  protected
-    procedure DoRun; override;
   public
+    constructor Create(AOwner: TComponent); override;
   end;
-
-var
-  App: TApplication;
 
 { TApplication }
 
-procedure TApplication.DoRun;
+constructor TApplication.Create(AOwner: TComponent);
 begin
+  inherited Create(AOwner);
+
   FCacheName:=YourCacheName;
   FResources:=[
     '/index.html',
@@ -41,9 +39,10 @@ begin
     '/images/Iota.png',
     '/images/error.png' ];
   FallbackURL := '/images/error.png';
-  inherited DoRun;
 end;
 
+var
+  App: TApplication;
 begin
   App:=TApplication.Create(nil);
   App.Run;

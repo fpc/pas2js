@@ -1,4 +1,4 @@
-unit browserapp;
+unit BrowserApp;
 
 {$mode objfpc}
 
@@ -8,6 +8,7 @@ uses
   Classes, SysUtils, Types, JS, web, CustApp;
 
 type
+  TServiceWorkerRegisteredEvent = reference to procedure(Registration: TJSServiceWorkerRegistration);
 
   { TBrowserApplication }
 
@@ -23,13 +24,13 @@ type
     procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;
     procedure ShowException(E: Exception); override;
     procedure HandleException(Sender: TObject); override;
+    function RegisterServiceWorker(aFile: String;
+      const aOnRegistered: TServiceWorkerRegisteredEvent = Nil; DoLogging: Boolean = false) : Boolean;
   end;
 
 procedure ReloadEnvironmentStrings;
 
 implementation
-
-uses Rtl.BrowserLoadHelper;
 
 var
   EnvNames: TJSObject;
@@ -170,6 +171,33 @@ begin
   if ExceptObject is Exception then
     ShowException(ExceptObject);
   inherited HandleException(Sender);
+end;
+
+function TBrowserApplication.RegisterServiceWorker(aFile: String;
+  const aOnRegistered: TServiceWorkerRegisteredEvent; DoLogging: Boolean
+  ): Boolean;
+begin
+  // register service worker if supported
+  Result:=HasServiceWorker;
+  if Result then
+    Window.addEventListener('load',
+      procedure()
+      begin
+        Window.navigator.serviceWorker
+          .register(aFile)
+          ._then(TJSPromiseResolver(procedure(Registration: TJSServiceWorkerRegistration)
+            begin
+              if DoLogging then
+                console.log('service worker registered');
+              if Assigned(aOnRegistered) then
+                aOnRegistered(Registration);
+            end))
+          .catch(TJSPromiseResolver(procedure(err: JSValue)
+            begin
+              if DoLogging then
+                console.log('service worker not registered: '+String(err));
+            end));
+      end);
 end;
 
 initialization

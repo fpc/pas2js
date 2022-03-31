@@ -29,6 +29,11 @@
     <RunParams>
       <FormatVersion Value="2"/>
     </RunParams>
+    <RequiredPackages>
+      <Item>
+        <PackageName Value="pas2js_rtl"/>
+      </Item>
+    </RequiredPackages>
     <Units>
       <Unit>
         <Filename Value="ServiceWorker.lpr"/>

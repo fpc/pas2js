@@ -3,10 +3,10 @@ program ServiceWorker;
 {$mode objfpc}
 
 uses
-  JS, Web;
+  JS, Web, Types;
 
 const
-  CacheName = 'v4';
+  CacheName = 'v5';
 
   FallbackURL = '/images/error.png';
 
@@ -88,10 +88,31 @@ begin
     await(serviceWorker.registration.navigationPreload.enable());
 end;
 
+procedure DeleteCache(key: string); async;
 begin
-  serviceWorker.addEventListener('activate', procedure(Event: TJSExtendableEvent)
+  await(boolean,caches.delete(key));
+end;
+
+function DeleteOldCaches: jsvalue; async;
+var
+  CacheKeepList: TStringDynArray;
+  CachesToDelete, KeyList: TJSArray;
+begin
+  CacheKeepList := [CacheName];
+  KeyList := await(TJSArray,caches.keys());
+  CachesToDelete := keyList.filter(
+    function (key: JSValue; index: NativeInt; anArray : TJSArray) : Boolean
+    begin
+      Result:=not TJSArray(CacheKeepList).includes(key);
+    end);
+  Result:=await(jsvalue,TJSPromise.all(CachesToDelete.map(TJSArrayMapEvent(@DeleteCache))));
+end;
+
+begin
+  ServiceWorker.addEventListener('activate', procedure(Event: TJSExtendableEvent)
     begin
       Event.waitUntil(EnableNavigationPreload());
+      event.waitUntil(DeleteOldCaches());
     end);
 
   ServiceWorker.addEventListener('install', procedure(Event: TJSExtendableEvent)

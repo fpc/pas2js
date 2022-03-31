@@ -2219,7 +2219,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSCacheStorage = class external name 'CacheStorage' (TJSObject)
-    function delete(aName : string) : TJSPromise;
+  Public
+    function delete(aName : string) : TJSPromise; // resolves to boolean
     function has(aName : string) : TJSPromise;
     Function keys : TJSPromise; reintroduce;
     Function match(aRequest : String): TJSPromise;
@@ -4149,11 +4150,11 @@ var
   caches : TJSCacheStorage; external name 'caches';
   serviceWorker : TJSServiceWorker; external name 'self';
 
-Function IsServiceWorker : Boolean;
+Function HasServiceWorker : Boolean;
 
 implementation
 
-Function IsServiceWorker : Boolean;
+Function HasServiceWorker : Boolean;
 begin
   if jsvalue(window.navigator.serviceWorker) then
     exit(true)

@@ -87,7 +87,7 @@ Resourcestring
   SResNotFound                    = 'Resource %s not found';
   SErrResourceStreamNoWrite       = 'Cannot write to resource stream';
   SErrResourceNotBase64           = 'Resource %s is not base64 encoded';
-
+  SErrUnknownResourceEncoding     = 'Unknown encoding for resource: "%s"';
 
 implementation
 

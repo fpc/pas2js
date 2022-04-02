@@ -30,24 +30,38 @@ Type
   TTemplateNotifyEvent = Reference to Procedure(Sender : TObject; Const aTemplate : String);
   TTemplateErrorNotifyEvent = Reference to Procedure(Sender : TObject; Const aTemplate,aError : String; aErrorcode : Integer);
 
+  TTemplateNotification = Record
+    Name : string;
+    Event  : TTemplateNotifyEvent;
+  end;
+  TTemplateNotificationDynArray = Array of TTemplateNotification;
+
+
   { TCustomTemplateLoader }
 
   TCustomTemplateLoader = Class(TComponent)
   Private
     FBaseURL: String;
+    FCheckResources: Boolean;
     FOnLoad: TTemplateNotifyEvent;
     FOnLoadFail: TTemplateErrorNotifyEvent;
     FTemplates : TJSObject;
-    function GetTemplate(aName : String): String;
-    procedure SetTemplate(aName : String; AValue: String);
+    FNotifications : TTemplateNotificationDynArray;
+    function IndexOfTemplateEvent(aName: String): Integer;
+    function GetTemplate(const aName : String): String;
+    procedure SetTemplate(const aName : String; const AValue: String);
   Protected
+    function CheckTemplateResource(const aName: string): string; virtual;
+    Procedure TemplateLoaded(const aName,aTemplate : String); virtual;
     // Process an url before it is used to fetch data
-    Function ProcessURL(const aURL : String) : String;
+    Function ProcessURL(const aURL : String) : String; virtual;
   Public
     Constructor Create (aOwner : TComponent); override;
     Destructor Destroy; override;
+    // call aEvent when template aName is loaded.
+    Procedure IfTemplate(const aName : String; aEvent : TTemplateNotifyEvent);
     // Remove a template
-    Procedure RemoveRemplate(aName : String);
+    Procedure RemoveRemplate(const aName : String);
     // fetch a template using promise. Promise resolves to template name. On fail a TFailData record is passed on.
     // Note that the global OnLoad/OnLoadFail a
     Function FetchTemplate(Const aName,aURL : String) : TJSPromise;
@@ -60,6 +74,9 @@ Type
     Procedure LoadTemplates(Const Templates : Array of String; aOnSuccess : TTemplateNotifyEvent = Nil; AOnFail : TTemplateErrorNotifyEvent= nil);
     // URLs will be relative to this. Take care that you add a / at the end if needed !
     Property BaseURL : String Read FBaseURL Write FBaseURl;
+    // Check resources for templates when accessing Templates.
+    Property CheckResources : Boolean Read FCheckResources Write FCheckResources;
+    // Access to templates based on name
     Property Templates[aName : String] : String Read GetTemplate Write SetTemplate; default;
     // Called when a template was loaded.
     Property OnLoad : TTemplateNotifyEvent Read FOnLoad Write FOnLoad;
@@ -78,6 +95,8 @@ Type
 Function GlobalTemplates : TCustomTemplateLoader;
 
 implementation
+
+uses p2jsres, rtlconsts;
 
 { TCustomTemplateLoader }
 
@@ -138,9 +157,7 @@ procedure TURLLoader.dofetch(resolve,reject : TJSPromiseResolver);
       Res.text._then(
         function (value : JSValue) : JSValue
           begin
-          Loader.Templates[FName]:=String(Value);
-          if Assigned(Loader.FonLoad) then
-            Loader.FOnLoad(FLoader,Name);
+          Loader.TemplateLoaded(Name,String(Value));
           Result:=Resolve(Name);
           end
       );
@@ -167,7 +184,7 @@ begin
   Result:=TJSPromise.New(@Dofetch)
 end;
 
-function TCustomTemplateLoader.GetTemplate(aName : String): String;
+function TCustomTemplateLoader.GetTemplate(const aName : String): String;
 
 Var
   V : jsValue;
@@ -176,13 +193,61 @@ begin
   V:=FTemplates[LowerCase(aName)];
   if isString(V) then
     Result:=String(V)
+  else if CheckResources then
+    Result:=CheckTemplateResource(aName)
   else
     Result:='';
 end;
 
-procedure TCustomTemplateLoader.SetTemplate(aName : String; AValue: String);
+// We need a polyfill for node.js
+Function atob (s : String) : string; external name 'atob';
+
+function TCustomTemplateLoader.CheckTemplateResource(const aName: string
+  ): string;
+
+Var
+  aInfo : TResourceInfo;
+
+begin
+  Result:='';
+  If GetResourceInfo(aName,aInfo) and (aInfo.format='application/octet-stream') then
+    if aInfo.Encoding='base64' then
+      Result:=atob(aInfo.Data)
+    else if (aInfo.Encoding='text') then
+      Result:=aInfo.Data
+    else
+      Raise EConvertError.CreateFmt(SErrUnknownResourceEncoding,[aInfo.Encoding]);
+end;
+
+procedure TCustomTemplateLoader.SetTemplate(const aName : String; const AValue: String);
 begin
   FTemplates[LowerCase(aName)]:=AValue;
+end;
+
+Function TCustomTemplateLoader.IndexOfTemplateEvent (aName : String) : Integer;
+
+begin
+  Result:=Length(FNotifications)-1;
+  While (Result>=0) and not SameText(FNotifications[Result].Name,aName) do
+    Dec(Result);
+end;
+
+procedure TCustomTemplateLoader.TemplateLoaded(const aName, aTemplate: String);
+
+Var
+  Idx : Integer;
+
+begin
+  FTemplates[aName]:=aTemplate;
+  if Assigned(FOnLoad) then
+    FOnLoad(Self,aName);
+  Idx:=IndexOfTemplateEvent(aName);
+  While Idx<>-1 do
+    begin
+    FNotifications[Idx].Event(Self,aName);
+    Delete(FNotifications,Idx,1);
+    Idx:=IndexOfTemplateEvent(aName);
+    end;
 end;
 
 function TCustomTemplateLoader.ProcessURL(const aURL: String): String;
@@ -210,7 +275,22 @@ begin
   inherited Destroy;
 end;
 
-procedure TCustomTemplateLoader.RemoveRemplate(aName: String);
+procedure TCustomTemplateLoader.IfTemplate(const aName: String; aEvent: TTemplateNotifyEvent);
+Var
+  N : TTemplateNotification;
+
+begin
+  if Templates[aName]<>'' then
+    aEvent(Self,aName)
+  else
+     begin
+     N.Name:=aname;
+     N.Event:=aEvent;
+     FNotifications:=Concat(FNotifications,[N]);
+     end;
+end;
+
+procedure TCustomTemplateLoader.RemoveRemplate(const aName: String);
 begin
   jsDelete(FTemplates,Lowercase(aName));
 end;

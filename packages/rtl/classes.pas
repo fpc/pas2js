@@ -1671,9 +1671,12 @@ var
   S : String;
 
 begin
-  if aInfo.encoding<>'base64' then
+  if aInfo.encoding='base64' then
+    S:=atob(aInfo.Data)
+  else if (aInfo.Encoding='text') then
+    s:=aInfo.Data
+  else
     Raise ENotSupportedException.CreateFmt(SErrResourceNotBase64,[aInfo.name]);
-  S:=atob(aInfo.Data);
   Ptr:=StringToBuffer(S, length(S));
   SetPointer(Ptr,Ptr.byteLength);
 end;

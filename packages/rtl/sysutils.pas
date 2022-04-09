@@ -58,43 +58,45 @@ type
 type
 
   { TFormatSettings }
+
   TFormatSettings = record
-    strict private
-      class function GetJSLocale: string; assembler; static;
-      class function GetLocaleShortDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
-      class function GetLocaleDecimalSeparator(const ALocale: string): string; static;
-      class function GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; static;
-      class function GetLocaleLongDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
-      class function GetLocaleShortMonthName(const AMonth: Integer; const ALocale: string): string; static;
-    public
-      CurrencyDecimals: Byte;
-      CurrencyFormat: Byte;
-      CurrencyString: string;
-      DateSeparator: Char;
-      DateTimeToStrFormat: array[Boolean] of string;
-      DecimalSeparator: string;
-      LongDateFormat: string;
-      LongDayNames: TDayNames;
-      LongMonthNames: TMonthNames;
-      LongTimeFormat: string;
-      NegCurrFormat: Byte;
-      ShortDateFormat: string;
-      ShortDayNames: TDayNames;
-      ShortMonthNames: TMonthNames;
-      ShortTimeFormat: string;
-      ThousandSeparator: string;
-      TimeAMString: string;
-      TimePMString: string;
-      TimeSeparator: Char;
-      TwoDigitYearCenturyWindow: Word;
-    public
-      Type
-         TLocaleInitCallback = Procedure(const aLocale : String; aInstance : TFormatSettings);
-      class var InitLocaleHandler : TLocaleInitCallback;
-      class function Create: TFormatSettings; overload; static;
-      class function Create(const ALocale: string): TFormatSettings; overload; static;
-      class function Invariant: TFormatSettings; static;
-    end;
+  strict private
+    class function GetJSLocale: string; assembler; static;
+    class function GetLocaleShortDayName(const ADayOfWeek: Integer; const ALocale: string): string; static;
+    class function GetLocaleDecimalSeparator(const ALocale: string): string; assembler; static;
+    class function GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; assembler; static;
+    class function GetLocaleLongDayName(const ADayOfWeek: Integer; const ALocale: string): string; assembler; static;
+    class function GetLocaleShortMonthName(const AMonth: Integer; const ALocale: string): string; static;
+  public
+    CurrencyDecimals: Byte;
+    CurrencyFormat: Byte;
+    CurrencyString: string;
+    DateSeparator: Char;
+    DateTimeToStrFormat: array[Boolean] of string;
+    DecimalSeparator: string;
+    LongDateFormat: string;
+    LongDayNames: TDayNames;
+    LongMonthNames: TMonthNames;
+    LongTimeFormat: string;
+    NegCurrFormat: Byte;
+    ShortDateFormat: string;
+    ShortDayNames: TDayNames;
+    ShortMonthNames: TMonthNames;
+    ShortTimeFormat: string;
+    ThousandSeparator: string;
+    TimeAMString: string;
+    TimePMString: string;
+    TimeSeparator: Char;
+    TwoDigitYearCenturyWindow: Word;
+  public
+    Type
+       TLocaleInitCallback = Procedure(const aLocale : String; aInstance : TFormatSettings);
+    class var InitLocaleHandler : TLocaleInitCallback;
+    class function Create: TFormatSettings; overload; static;
+    class function Create(const ALocale: string): TFormatSettings; overload; static;
+    class function Invariant: TFormatSettings; static;
+    class constructor Init;
+  end;
 
 
 {*****************************************************************************
@@ -4961,6 +4963,27 @@ begin
     Result:='0'+Result;
 end;
 
+procedure InitGlobalFormatSettings;
+begin
+  // So the defaults are taken from FormatSettings.
+  {$WARN 5043 off}
+  FormatSettings:=TFormatSettings.Create;
+  TimeSeparator:=FormatSettings.TimeSeparator;
+  DateSeparator:=FormatSettings.DateSeparator;
+  ShortDateFormat:=FormatSettings.ShortDateFormat;
+  LongDateFormat:=FormatSettings.LongDateFormat;
+  ShortTimeFormat:=FormatSettings.ShortTimeFormat;
+  LongTimeFormat:=FormatSettings.LongTimeFormat;
+  DecimalSeparator:=FormatSettings.DecimalSeparator;
+  ThousandSeparator:=FormatSettings.ThousandSeparator;
+  TimeAMString:=FormatSettings.TimeAMString;
+  TimePMString:=FormatSettings.TimePMString;
+  CurrencyFormat:=FormatSettings.CurrencyFormat;
+  NegCurrFormat:=FormatSettings.NegCurrFormat;
+  CurrencyDecimals:=FormatSettings.CurrencyDecimals;
+  CurrencyString:=FormatSettings.CurrencyString;
+end;
+
 { TFormatSettings }
 
 class function TFormatSettings.Create: TFormatSettings;
@@ -4968,7 +4991,7 @@ begin
   Result := Create(GetJSLocale);
 end;
 
-class function TFormatSettings.Create(const ALocale: String): TFormatSettings;
+class function TFormatSettings.Create(const ALocale: string): TFormatSettings;
 begin
   Result.LongDayNames:=DefaultLongDayNames;
   Result.ShortDayNames:=DefaultShortDayNames;
@@ -5020,26 +5043,34 @@ begin
   Result.NegCurrFormat := 0;
 end;
 
+class constructor TFormatSettings.Init;
+begin
+  InitGlobalFormatSettings;
+end;
+
 class function TFormatSettings.GetJSLocale: string; assembler;
 asm
   return Intl.DateTimeFormat().resolvedOptions().locale
 end;
 
-class function TFormatSettings.GetLocaleDecimalSeparator(const ALocale: string): string; assembler;
+class function TFormatSettings.GetLocaleDecimalSeparator(const ALocale: string
+  ): string; assembler;
 asm
   var lNumber = 1.1;
   lNumber = lNumber.toLocaleString(ALocale).substring(1, 2);
   return lNumber;
 end;
 
-class function TFormatSettings.GetLocaleLongDayName(const ADayOfWeek: Integer; const ALocale: string): string; assembler;
+class function TFormatSettings.GetLocaleLongDayName(const ADayOfWeek: Integer;
+  const ALocale: string): string; assembler;
 asm
   var lBaseDate = new Date(2017, 0, 1); // Sunday
   lBaseDate.setDate(lBaseDate.getDate() + ADayOfWeek - 1);
   return lBaseDate.toLocaleDateString(ALocale, { weekday: 'long' });
 end;
 
-class function TFormatSettings.GetLocaleLongMonthName(const AMonth: Integer; const ALocale: string): string; assembler;
+class function TFormatSettings.GetLocaleLongMonthName(const AMonth: Integer;
+  const ALocale: string): string; assembler;
 asm
   var lBaseDate = new Date(2017, AMonth - 1, 1);
   return lBaseDate.toLocaleDateString(ALocale, { month: 'long' });
@@ -8692,7 +8723,6 @@ begin
   Result:=Self;
 end;
 
-
 Function TStringBuilder.Replace(const OldValue, NewValue: String): TStringBuilder;
 begin
   Result:=Replace(OldValue,NewValue,0,Length);
@@ -8706,7 +8736,6 @@ begin
     Raise ERangeError.CreateFmt(SListCapacityError,[AValue]);
   // No-op
 end;
-
 
 function TStringBuilder.ToString: String;
 begin
@@ -8734,30 +8763,11 @@ begin
   System.Insert(New,FData,Index+1);
 end;
 
-
-
 initialization
-  {$WARN 5043 off}
   ShortMonthNames:=DefaultShortMonthNames;
   LongMonthNames:=DefaultLongMonthNames;
   ShortDayNames:=DefaultShortDayNames;
   LongDayNames:=DefaultLongDayNames;
-  FormatSettings:=TFormatSettings.Create;
-  // So the defaults are taken from FormatSettings.
-  TimeSeparator:=FormatSettings.TimeSeparator;
-  DateSeparator:=FormatSettings.DateSeparator;
-  ShortDateFormat:=FormatSettings.ShortDateFormat;
-  LongDateFormat:=FormatSettings.LongDateFormat;
-  ShortTimeFormat:=FormatSettings.ShortTimeFormat;
-  LongTimeFormat:=FormatSettings.LongTimeFormat;
-  DecimalSeparator:=FormatSettings.DecimalSeparator;
-  ThousandSeparator:=FormatSettings.ThousandSeparator;
-  TimeAMString:=FormatSettings.TimeAMString;
-  TimePMString:=FormatSettings.TimePMString;
-  CurrencyFormat:=FormatSettings.CurrencyFormat;
-  NegCurrFormat:=FormatSettings.NegCurrFormat;
-  CurrencyDecimals:=FormatSettings.CurrencyDecimals;
-  CurrencyString:=FormatSettings.CurrencyString;
 
 end.
 

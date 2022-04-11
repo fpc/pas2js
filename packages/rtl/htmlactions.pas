@@ -122,6 +122,7 @@ Type
      Constructor Create(aOwner : TComponent); override;
      Destructor Destroy; override;
      Procedure Clear;
+     Procedure Bind;
      Function IndexOfElementID(aID : String; StartAt : Integer = 0) : Integer;
      Function FindActionByElementID(aID : String; StartAt : Integer = 0) : THTMLCustomElementAction;
      Function GetActionsForElementID(aID : String) : THTMLCustomElementActionArray;
@@ -239,6 +240,16 @@ begin
     A:=Actions[ActionCount-1];
     A.Free;
     end;
+end;
+
+procedure THTMLCustomElementActionList.Bind;
+
+Var
+  I : Integer;
+
+begin
+  For I:=0 to ActionCount-1 do
+     Actions[I].Bind;
 end;
 
 function THTMLCustomElementActionList.IndexOfElementID(aID: String;

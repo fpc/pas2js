@@ -36,6 +36,28 @@ Type
   end;
   TTemplateNotificationDynArray = Array of TTemplateNotification;
 
+  TPreLoadTemplateItem = Class(TCollectionItem)
+  private
+    FHTMLFile: String;
+    FName: string;
+    function GetHTMLFile: String;
+  protected
+    function GetDisplayName: string; override;
+  Public
+    Procedure Assign(aSource : TPersistent); override;
+  Published
+    Property Name: string Read FName Write FName;
+    Property HTMLFile : String Read GetHTMLFile Write FHTMLFile;
+  end;
+
+  { TPreLoadTemplateItemList }
+
+  TPreLoadTemplateItemList = Class(TCollection)
+  private
+    function GetT(aIndex : Integer): TPreLoadTemplateItem;
+  Public
+    Property Template[aIndex : Integer] : TPreLoadTemplateItem  Read GetT;default;
+  end;
 
   { TCustomTemplateLoader }
 
@@ -47,17 +69,22 @@ Type
     FOnLoadFail: TTemplateErrorNotifyEvent;
     FTemplates : TJSObject;
     FNotifications : TTemplateNotificationDynArray;
+    FPreload: TPreLoadTemplateItemList;
     function IndexOfTemplateEvent(aName: String): Integer;
     function GetTemplate(const aName : String): String;
     procedure SetTemplate(const aName : String; const AValue: String);
+    procedure SetPreload(AValue: TPreLoadTemplateItemList);
   Protected
     function CheckTemplateResource(const aName: string): string; virtual;
     Procedure TemplateLoaded(const aName,aTemplate : String); virtual;
+    Procedure Loaded; override;
     // Process an url before it is used to fetch data
     Function ProcessURL(const aURL : String) : String; virtual;
   Public
     Constructor Create (aOwner : TComponent); override;
     Destructor Destroy; override;
+    // Load whatever is in PreloadTemplates;
+    Procedure Preload; virtual;
     // call aEvent when template aName is loaded.
     Procedure IfTemplate(const aName : String; aEvent : TTemplateNotifyEvent);
     // Remove a template
@@ -82,11 +109,15 @@ Type
     Property OnLoad : TTemplateNotifyEvent Read FOnLoad Write FOnLoad;
     // Called when a template failed to load.
     Property OnLoadFail : TTemplateErrorNotifyEvent Read FOnLoadFail Write FOnLoadFail;
+    // templates to load when the component is loaded.
+    Property PreloadTemplates : TPreLoadTemplateItemList Read FPreload Write SetPreload;
   end;
 
   TTemplateLoader = Class(TCustomTemplateLoader)
   Published
     Property BaseURL;
+    Property CheckResources;
+    Property PreloadTemplates;
     Property OnLoad;
     Property OnLoadFail;
   end;
@@ -127,6 +158,13 @@ Type
      Property URL : String Read FURL;
      Property Loader : TCustomTemplateLoader Read FLoader;
    end;
+
+{ TPreLoadTemplateItemList }
+
+function TPreLoadTemplateItemList.GetT(aIndex: Integer): TPreLoadTemplateItem;
+begin
+  Result:=Items[aIndex] as TPreLoadTemplateItem;
+end;
 
 
 { TURLLoader }
@@ -224,7 +262,13 @@ begin
   FTemplates[LowerCase(aName)]:=AValue;
 end;
 
-Function TCustomTemplateLoader.IndexOfTemplateEvent (aName : String) : Integer;
+procedure TCustomTemplateLoader.SetPreload(AValue: TPreLoadTemplateItemList);
+begin
+  if FPreload=AValue then Exit;
+  FPreload.Assign(AValue);
+end;
+
+function TCustomTemplateLoader.IndexOfTemplateEvent(aName: String): Integer;
 
 begin
   Result:=Length(FNotifications)-1;
@@ -250,6 +294,12 @@ begin
     end;
 end;
 
+procedure TCustomTemplateLoader.Loaded;
+begin
+  inherited Loaded;
+  Preload;
+end;
+
 function TCustomTemplateLoader.ProcessURL(const aURL: String): String;
 
 Var
@@ -267,12 +317,25 @@ constructor TCustomTemplateLoader.Create(aOwner: TComponent);
 begin
   inherited Create(aOwner);
   FTemplates:=TJSObject.New;
+  FPreload:=TPreLoadTemplateItemList.Create(TPreLoadTemplateItem);
 end;
 
 destructor TCustomTemplateLoader.Destroy;
 begin
   FTemplates:=nil;
+  FreeAndNil(FPreload);
   inherited Destroy;
+end;
+
+procedure TCustomTemplateLoader.Preload;
+
+Var
+  I : integer;
+
+begin
+  For I:=0 to PreloadTemplates.Count-1 do
+    With PreloadTemplates[I] do
+      LoadTemplate(Name,HTMLFile);
 end;
 
 procedure TCustomTemplateLoader.IfTemplate(const aName: String; aEvent: TTemplateNotifyEvent);
@@ -350,6 +413,40 @@ begin
    Inc(I,2);
    end;
 end;
+
+
+{ TPreLoadTemplateItem }
+
+function TPreLoadTemplateItem.GetHTMLFile: String;
+begin
+  Result:=FHTMLFile;
+  If (Result='') and (Name<>'') then
+    Result:=LowerCase(Name)+'.html';
+end;
+
+function TPreLoadTemplateItem.GetDisplayName: string;
+begin
+  Result:=Name;
+  if Result='' then
+    Result:=inherited GetDisplayName;
+end;
+
+procedure TPreLoadTemplateItem.Assign(aSource: TPersistent);
+
+Var
+  PLI : TPreLoadTemplateItem absolute aSource;
+
+begin
+  if aSource is TPreLoadTemplateItem then
+    begin
+    FName:=PLI.Name;
+    FHTMLFile:=PLI.FHTMLFile;
+    end
+  else
+    inherited Assign(aSource);
+end;
+
+
 
 end.
 

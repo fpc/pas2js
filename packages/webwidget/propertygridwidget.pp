@@ -158,7 +158,7 @@ Type
     function AllowProperty(M: TTypeMemberProperty): boolean; virtual;
     procedure CreatePropertyList(aInstance: TObject; aList: TFPObjectList); virtual;
     function CreatePropertyEditor(aInstance: TObject; aInfo: TTypeMemberProperty): TpropertyEditor; virtual;
-    procedure CreatePropertyGrid(aTableElement, aRowElement: TJSHTMLElement; FMySubject: TObject; aProperties: TFPObjectList); virtual;
+    procedure CreatePropertyGrid(aTableElement, aRowElement: TJSHTMLElement; aMySubject: TObject; aProperties: TFPObjectList); virtual;
     function DoBooleanEditor(aEditor: TJSHTMLElement; aInfo: TPropertyEditor): TJSHTMLElement; virtual;
     function DoComponentEditor(aEditor: TJSHTMLElement; aInfo: TPropertyEditor): TJSHTMLElement; virtual;
     function DoEnumerationEditor(aEditor: TJSHTMLElement; aInfo: TPropertyEditor): TJSHTMLElement; virtual;
@@ -188,13 +188,11 @@ uses js;
 function TSetPropertyEditor.InitEditor: TJSHTMLElement;
 
 Var
-  inp : TJSHTMLTableElement;
   cell : TJSHTMLTableDataCellElement;
   r : TJSHTMLTableRowElement;
-  vals : TIntegerDynArray;
   eInfo : TTypeInfoEnum;
   I : Integer;
-  selcb,CB : TJSHTMLInputElement;
+  CB : TJSHTMLInputElement;
   lbl : TJSHTMLLabelElement;
 
 begin
@@ -345,9 +343,8 @@ function TStringListPropertyEditor.InitEditor: TJSHTMLElement;
 
 Var
   inp : TJSHTMLSelectElement;
-  O,osel : TJSHTMLOptionElement;
-  avalS : String;
-  aVal,I : Integer;
+  O : TJSHTMLOptionElement;
+  I : Integer;
   aTexts,aValues : TStrings;
 
 begin
@@ -393,7 +390,6 @@ end;
 procedure TEnumerationPropertyEditor.EditorToProperty;
 
 Var
-  Sel : TJSHTMLSelectElement;
   S : String;
 
 begin
@@ -432,7 +428,6 @@ end;
 procedure TComponentPropertyEditor.EditorToProperty;
 
 Var
-  Sel : TJSHTMLSelectElement;
   S : String;
   C : TComponent;
   
@@ -584,8 +579,6 @@ end;
 
 function TStringsPropertyEditor.InitEditor: TJSHTMLElement;
 
-Var
-  AVal : TObject;
 
 begin
   Result:=TJSHTMLTextAreaElement(CreateEditorElement('textarea',''));
@@ -728,7 +721,7 @@ begin
   CreatePropertyGrid(aElement,Nil,FMySubject,FProperties);
 end;
 
-procedure TSimplePropertyGridWidget.CreatePropertyGrid(aTableElement, aRowElement: TJSHTMLElement; FMySubject: TObject;
+procedure TSimplePropertyGridWidget.CreatePropertyGrid(aTableElement, aRowElement: TJSHTMLElement; aMySubject: TObject;
   aProperties: TFPObjectList);
 
 Var
@@ -814,6 +807,7 @@ end;
 function TSimplePropertyGridWidget.DoBooleanEditor(aEditor : TJSHTMLElement; aInfo: TPropertyEditor) : TJSHTMLElement;
 
 begin
+  Result:=Nil;
 end;
 
 function TSimplePropertyGridWidget.DoEnumerationEditor(aEditor : TJSHTMLElement; aInfo: TPropertyEditor) : TJSHTMLElement;
@@ -861,13 +855,12 @@ end;
 function TSimplePropertyGridWidget.DoSetEditor(aEditor : TJSHTMLElement; aInfo: TPropertyEditor) : TJSHTMLElement;
 
 Var
-  inp : TJSHTMLTableElement;
   cell : TJSHTMLTableDataCellElement;
   r : TJSHTMLTableRowElement;
   vals : TIntegerDynArray;
   eInfo : TTypeInfoEnum;
   I : Integer;
-  selcb,CB : TJSHTMLInputElement;
+  CB : TJSHTMLInputElement;
   lbl : TJSHTMLLabelElement;
 
 begin
@@ -1005,7 +998,6 @@ function TSimplePropertyGridWidget.CreatePropertyEditor (aInstance : TObject; aI
 
 Var
   EditorClass : TPropertyEditorClass;
-  aEditor : TPropertyEditor;
 
 begin
   EditorClass:=nil;

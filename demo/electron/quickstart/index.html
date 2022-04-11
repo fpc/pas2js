@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'">
+    <meta http-equiv="X-Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'">
+    <title>Hello World!</title>
+    <script src="render.js"></script>
+  </head>
+  <body>
+    <h1>Hello World!</h1>
+    <p>We are using Pas2JS <b><span id="pas2js-version"></span></b>,</p>
+    <p>Node <b><span id="node-version"></span></b>,</p>
+    <p>Chromium <b><span id="chrome-version"></span></b>,</p>
+    <p>and Electron <b><span id="electron-version"></span></b>.</p>
+    <p>Additionally, <span id="renderertext"></span></p>
+    <script>
+      window.addEventListener("load",rtl.run);
+    </script>
+
+  </body>
+</html>

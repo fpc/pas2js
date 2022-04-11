@@ -59,6 +59,11 @@ Type
     Property Password : String Read FPassword Write FPassword;
     Property ConnectionsResourceName : String Read FConnectionsResourceName Write FConnectionsResourceName;
     Property CustomViewResourceName : String Read FCustomViewResourceName Write FCustomViewResourceName;
+    // Published from TRESTCOnnection
+    Property BaseURL;
+    Property PageParam;
+    Property OnGetURL;
+    Property OnUpdateURL;
   end;
 
   { TSQLDBRestDataset }

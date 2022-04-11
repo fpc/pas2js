@@ -142,7 +142,6 @@ Const
 procedure TBootstrapModalDemo.ShowDemo;
 
 Var
-  T : TContextual;
   R : TRowWidget;
   C : TColWidget;
 

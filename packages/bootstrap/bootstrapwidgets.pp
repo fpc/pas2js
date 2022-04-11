@@ -20,7 +20,7 @@ unit bootstrapwidgets;
 interface
 
 uses
-  Classes, SysUtils, js, libjquery, libbootstrap, web, webwidget, htmlwidgets;
+  Classes, SysUtils, js, libjquery, libbootstrap, web, webwidget, htmlwidgets, rtl.TemplateLoader;
 
 Type
 
@@ -197,18 +197,25 @@ Type
     FShowOnRender: Boolean;
     FTemplate: String;
     FShowing : Boolean;
+    FTemplateLoader: TCustomTemplateLoader;
+    FTemplateName: String;
     function GetModalReferences: TModalReferences;
     function HideClick(Event: TJSEvent): Boolean;
     procedure SetModalReferences(AValue: TModalReferences);
+    procedure SetTemplateLoader(AValue: TCustomTemplateLoader);
+    procedure SetTemplateName(AValue: String);
     procedure SetTemplate(AValue: String);
   protected
     Function BootstrapHide(Event : TJSEvent) : Boolean;
     Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
     Function GetTemplateHTML: String; override;
     Procedure RefreshReferences; override;
+    function GetTemplateManager: TCustomTemplateLoader; virtual;
+    procedure DoShow; virtual;
     Function CreateReferences: TWebWidgetReferences; override;
   Public
     procedure GetValues(aList: TStrings);
+    // Show is async
     Procedure Show;
     Procedure Hide;
     Property Showing : Boolean Read FShowing;
@@ -218,6 +225,8 @@ Type
     Property KeyBoard : Boolean Read FKeyBoard Write FKeyBoard;
     Property Focus : Boolean Read FFocus Write FFocus;
     Property Template : String Read FTemplate Write SetTemplate;
+    Property TemplateName : String Read FTemplateName Write SetTemplateName;
+    Property TemplateLoader : TCustomTemplateLoader Read FTemplateLoader Write SetTemplateLoader;
     Property OnHide : TOnModalHideEvent Read FOnHide Write FOnHide;
     Property References : TModalReferences Read GetModalReferences Write SetModalReferences;
   end;
@@ -229,6 +238,9 @@ Const
 Function Toasts : TToastManager;
 
 Implementation
+
+Resourcestring
+  SErrNoTemplateSet = '%s: No template set';
 
 function Toasts: TToastManager;
 begin
@@ -599,11 +611,17 @@ end;
 { TModalReferenceItem }
 
 procedure TModalReferenceItem.Assign(Source: TPersistent);
+
+Var
+  MRI : TModalReferenceItem absolute Source;
+
 begin
   if Source is TModalReferenceItem then
-    Self.Kind:=TModalReferenceItem(Source).Kind
-  else
-    inherited Assign(Source);
+    begin
+    Self.Kind:=MRI.Kind;
+    Self.InitialValue:=MRI.InitialValue;
+    end;
+  inherited Assign(Source); 
 end;
 
 function TModalReferenceItem.GetValue: String;
@@ -648,6 +666,7 @@ end;
 function TBootstrapModal.HideClick (Event : TJSEvent): Boolean;
 
 begin
+  Result:=False;
   // Writeln('In hide click');
   FHideEl:=TJSHtmlElement(Event.targetElement);
   Hide;
@@ -661,6 +680,27 @@ end;
 procedure TBootstrapModal.SetModalReferences(AValue: TModalReferences);
 begin
   References.Assign(aValue);
+end;
+
+procedure TBootstrapModal.SetTemplateLoader(AValue: TCustomTemplateLoader);
+begin
+  if FTemplateLoader=AValue then Exit;
+  if Assigned(FTemplateLoader) then
+    FTemplateLoader.RemoveFreeNotification(self);
+  FTemplateLoader:=AValue;
+  if Assigned(FTemplateLoader) then
+    FTemplateLoader.FreeNotification(self);
+end;
+
+procedure TBootstrapModal.SetTemplateName(AValue: String);
+begin
+  if FTemplateName=AValue then Exit;
+  if Showing Then
+    Raise EWidgets.Create('Cannot set template name while showing bootstrap modal');
+  FTemplateName:=AValue;
+  Template:='';
+  If IsRendered then
+    UnRender;
 end;
 
 procedure TBootstrapModal.SetTemplate(AValue: String);
@@ -774,13 +814,39 @@ begin
   Result:=TModalReferences.Create(Self,TModalReferenceItem);
 end;
 
-procedure TBootstrapModal.Show;
+function TBootstrapModal.GetTemplateManager: TCustomTemplateLoader;
+
+begin
+  Result:=FTemplateLoader;
+  if Result=Nil then
+    Result:=GlobalTemplates;
+end;
+
+procedure TBootstrapModal.DoShow;
+
 begin
   FHideEl:=Nil;
   if not IsRendered then
     Refresh;
   JQuery(Element).ModalShow;
   FShowing:=True;
+end;
+
+procedure TBootstrapModal.Show;
+
+  procedure DoShowTemplate(Sender: TObject; const aTemplate: String);
+  begin
+    Template:=GetTemplateManager.Templates[aTemplate];
+    DoShow;
+  end;
+
+begin
+  if (Template<>'') Then
+    DoShow
+  else if TemplateName<>'' then
+    GetTemplateManager.IfTemplate(TemplateName,@DoShowTemplate)
+  else
+    Raise EWidgets.CreateFmt(SErrNoTemplateSet,[Name]);
 end;
 
 

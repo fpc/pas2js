@@ -23,6 +23,7 @@ uses Types, JS;
 Type
   TJSEvent = Class;
   // Forward definitions
+  TJSHTMLElement = Class;
   TJSWindow = class;
   TJSDOMTokenList = class;
   TJSXPathResult = CLass;
@@ -907,6 +908,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     function execCommand(aCommandName : String; aShowDefaultUI : Boolean) : boolean; overload;
     Procedure exitFullScreen;
     function getElementById(aID : String) : TJSElement;
+    function getHTMLElementById(aID : String) : TJSHTMLElement; external name 'getElementById';
     function getElementsByClassName(aNames : string) : TJSHTMLCollection;
     function getElementsByName(aName : String) : TJSNodeList;
     function getElementsByTagName(aName : String) : TJSHTMLCollection;

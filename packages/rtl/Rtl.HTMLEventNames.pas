@@ -1,4 +1,4 @@
-unit htmleventnames;
+unit Rtl.HTMLEventNames;
 
 {$mode ObjFPC}
 {$h+}

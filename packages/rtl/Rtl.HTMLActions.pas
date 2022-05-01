@@ -1,4 +1,4 @@
-unit htmlactions;
+unit Rtl.HTMLActions;
 
 {$mode ObjFPC}
 {$H+}
@@ -9,7 +9,7 @@ uses
   {$ifdef pas2js}
   web,
   {$endif}
-  htmleventnames, Classes, SysUtils;
+  RTL.HTMLEventNames, Classes, SysUtils, Rtl.HTMLUtils;
 
 Type
    {$ifndef pas2js}
@@ -50,16 +50,23 @@ Type
      procedure SetElementID(AValue: String);
      procedure SetIndex(AValue: Integer);
    Protected
-     function GetParentComponent: TComponent; override;
+     function GetValue: String; virtual;
+     procedure SetValue(AValue: String); virtual;
      procedure SetParentComponent(AParent: TComponent); override;
      procedure ReadState(Reader: TReader); override;
-     function HasParent: Boolean; override;
      Procedure BindElementEvents; virtual;
-     Procedure DoBeforeBind;
-     Procedure DoAfterBind;
+     Procedure DoBind;
+     Procedure DoBeforeBind; virtual;
+     Procedure DoAfterBind; virtual;
    Public
      Destructor Destroy; override;
-     Procedure Bind; virtual;
+     Class Function GetElementValue(aElement : TJSHTMLElement) : String; virtual;
+     Class Procedure SetElementValue(aElement : TJSHTMLElement; const aValue : String; asHTML : Boolean = false); virtual;
+     function GetParentComponent: TComponent; override;
+     function HasParent: Boolean; override;
+     Procedure Bind;
+     Procedure ClearValue; virtual;
+     Procedure FocusControl; virtual;
      Procedure BindEvents(aEl : TJSElement); virtual;
      procedure HandleEvent(Event: TJSEvent); virtual;
      Procedure ForEach(aCallback : TForeachHTMLElementDataEx; aData : TObject); overload;
@@ -71,6 +78,9 @@ Type
      Property Element : TJSHTMLElement Read FElement;
      Property Elements : TJSHTMLElementArray Read FElements;
      Property Index : Integer Read GetIndex Write SetIndex;
+     // When reading, only the first value is returned in case of multiple elements.
+     // When writing, the value is set on all elements.
+     Property Value : String Read GetValue Write SetValue;
    Public
      // These can be published in descendents
      Property Events : THTMLEvents Read FEvents Write FEvents;
@@ -142,7 +152,7 @@ Type
 
 implementation
 
-uses strutils;
+uses StrUtils;
 
 { ----------------------------------------------------------------------
   THTMLCustomElementActionList
@@ -353,9 +363,26 @@ begin
     Result:=-1;
 end;
 
+function THTMLCustomElementAction.GetValue: String;
+begin
+  if (Length(FElements)>0) and Assigned (FElements[0]) then
+    Result:=GetElementValue(FElements[0]);
+end;
+
 procedure THTMLCustomElementAction.SetIndex(AValue: Integer);
 begin
   FActionList.SetActionIndex(Self,aValue);
+end;
+
+procedure THTMLCustomElementAction.SetValue(AValue: String);
+
+  procedure DoSetValue(aElement: TJSHTMLElement);
+  begin
+    SetElementValue(aElement,aValue);
+  end;
+
+begin
+  ForEach(@DoSetValue);
 end;
 
 function THTMLCustomElementAction.GetParentComponent: TComponent;
@@ -371,6 +398,26 @@ begin
   if Assigned(ActionList) then
     ActionList.RemoveAction(Self);
   Inherited;
+end;
+
+class function THTMLCustomElementAction.GetElementValue(aElement: TJSHTMLElement
+  ): String;
+begin
+  Result:=aElement.InputValue;
+end;
+
+class procedure THTMLCustomElementAction.SetElementValue(
+  aElement: TJSHTMLElement; const aValue: String; asHTML: Boolean);
+begin
+  if AsHTML then
+    begin
+    if Assigned(aElement) then
+      aElement.InnerHTML:=aValue
+    else
+      Console.Debug('('+ClassName+') : Attempting to set value "'+aValue+'" on nil element.');
+    end
+  else
+    aElement.InputValue:=aValue;
 end;
 
 procedure THTMLCustomElementAction.SetCSSSelector(AValue: String);
@@ -397,14 +444,14 @@ begin
     Bind;
 end;
 
-Procedure THTMLCustomElementAction.DoBeforeBind;
+procedure THTMLCustomElementAction.DoBeforeBind;
 
 begin
   If Assigned(FBeforeBind) then
     FBeforeBind(Self);
 end;
 
-Procedure THTMLCustomElementAction.DoAfterBind;
+procedure THTMLCustomElementAction.DoAfterBind;
 
 begin
    If Assigned(FAfterBind) then
@@ -478,12 +525,19 @@ end;
 
 procedure THTMLCustomElementAction.Bind;
 
+begin
+  DoBeforeBind;
+  DoBind;
+  DoAfterBind;
+end;
+
+procedure THTMLCustomElementAction.DoBind;
+
 Var
   Nodes : TJSNodeList;
   I : Integer;
 
 begin
-  DoBeforeBind;
   FElement:=Nil;
   FElements:=Nil;
   if ElementID<>'' then
@@ -500,6 +554,18 @@ begin
     end;
   BindElementEvents;
   DoAfterBind;
+end;
+
+
+procedure THTMLCustomElementAction.ClearValue;
+begin
+  Value:='';
+end;
+
+procedure THTMLCustomElementAction.FocusControl;
+begin
+  If (ElementID<>'') and Assigned(Element) then
+    Element.focus;
 end;
 
 procedure THTMLCustomElementAction.HandleEvent(Event: TJSEvent);
@@ -565,7 +631,7 @@ begin
   For I:=1 to aCount do
     begin
     S:=ExtractWord(I,CustomEvents,Delims);
-    aEl.removeEventListener(HTMLEventNameArray[H],@HandleEvent);
+    aEl.addEventListener(S,@HandleEvent);
     end;
 end;
 

@@ -312,7 +312,7 @@ Type
     FElement : TJSHTMLElement;
     FOwnsElement : Boolean;
     FParentID : String;
-    FElementID: String;
+    FElementID : String;
     FChildren : TJSArray;
     FClasses : String;
     FMyEvents : TJSObject;
@@ -328,6 +328,7 @@ Type
     function GetDataset(aName : String): String;
     function GetElement: TJSHTMLELement;
     function GetExternalElement: Boolean;
+    function GetFixedElementID: Boolean;
     function GetHaveReferences: Boolean;
     function GetHTMLEvent(AIndex: Integer): THTMLNotifyEvent;
     function GetIsElementDirty: Boolean;
@@ -387,6 +388,8 @@ Type
     function GetTopElement: TJSHTMLELement; virtual;
     // Auxiliary function to create a displayable name of this widget
     Function DisplayElementName : String;
+    // Called after ElementID was set
+    procedure DoOnSetElementID; virtual;
     // Make sure there is an element.
     function EnsureElement: TJSHTMLElement;
     // Set parent element to nil. No rendering is done. Can be called when there are no DOM elements
@@ -502,6 +505,8 @@ Type
     Property Data[aName : String] : String Read GetDataset Write SetDataset;
     // This works with style Display: none.
     Property Visible : Boolean Read GetVisible Write SetVisible;
+    // Is the ElementID Set
+    Property FixedElementID : Boolean Read GetFixedElementID;
   // This protected section can be published in descendents
   Protected
     // Parent or Element ID: Will be used when determining the HTML element when rendering.
@@ -1934,9 +1939,12 @@ Var
 begin
   If Assigned(Widget) then
     begin
-    el:=Widget.Element;
-    if Assigned(El) then
-      ApplyToDom(El,aItem);
+    if Not (csLoading in Widget.ComponentState) then
+      begin
+      el:=Widget.Element;
+      if Assigned(El) then
+        ApplyToDom(El,aItem);
+      end;
     end;
 end;
 
@@ -2232,7 +2240,7 @@ Var
 
 
 begin
-  if (FElement=Nil) then
+  if (FElement=Nil) and not (csLoading in ComponentState) then
     begin
     if (FElementID<>'') then
       begin
@@ -2254,6 +2262,11 @@ end;
 function TCustomWebWidget.GetExternalElement: Boolean;
 begin
   Result:=(FElementID<>'')
+end;
+
+function TCustomWebWidget.GetFixedElementID: Boolean;
+begin
+  Result:=(FElementID<>'');
 end;
 
 function TCustomWebWidget.GetHaveReferences: Boolean;
@@ -2462,6 +2475,13 @@ begin
     if IsRendered then
       Unrender(ParentElement);
     end;
+  DoOnSetElementID;
+end;
+
+procedure TCustomWebWidget.DoOnSetElementID;
+
+begin
+  // Override in descendents
 end;
 
 procedure TCustomWebWidget.SetHTMLEvent(AIndex: Integer; AValue: THTMLNotifyEvent);

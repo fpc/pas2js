@@ -609,7 +609,7 @@ end;
 
 function NaturalCompareText (const S1 , S2 : string ): Integer ;
 begin
-  Result := NaturalCompareText(S1, S2, DecimalSeparator,ThousandSeparator);
+  Result := NaturalCompareText(S1, S2, FormatSettings.DecimalSeparator,FormatSettings.ThousandSeparator);
 end;
 
 { ---------------------------------------------------------------------

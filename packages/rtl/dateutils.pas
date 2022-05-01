@@ -2136,12 +2136,12 @@ Var
 begin
   DecodeDateTime(ABasedate,Y,M,D,H,N,S,MS);
   Msg:=DoField(AYear,Y,'????');
-  Msg:=Msg+DateSeparator+DoField(AMonth,M,'??');
-  Msg:=Msg+DateSeparator+DoField(ADay,D,'??');
+  Msg:=Msg+FormatSettings.DateSeparator+DoField(AMonth,M,'??');
+  Msg:=Msg+FormatSettings.DateSeparator+DoField(ADay,D,'??');
   Msg:=Msg+' '+DoField(AHour,H,'??');
-  Msg:=Msg+TimeSeparator+DoField(AMinute,N,'??');
-  Msg:=Msg+TimeSeparator+Dofield(ASecond,S,'??');
-  Msg:=Msg+DecimalSeparator+DoField(AMilliSecond,MS,'???');
+  Msg:=Msg+FormatSettings.TimeSeparator+DoField(AMinute,N,'??');
+  Msg:=Msg+FormatSettings.TimeSeparator+Dofield(ASecond,S,'??');
+  Msg:=Msg+FormatSettings.DecimalSeparator+DoField(AMilliSecond,MS,'???');
   Raise EConvertError.CreateFmt(SErrInvalidTimeStamp,[Msg]);
 end;
 
@@ -2624,10 +2624,10 @@ begin
   i:=ScanPatternLength;
   case i of
   1,2 : FD:=scanfixedint(2);
-  3   : FD:=findmatch(shortDayNames);
-  4   : FD:=findmatch(longDayNames);
-  5   : matchpattern(shortdateformat);
-  6   : matchpattern(longdateformat);
+  3   : FD:=findmatch(FormatSettings.shortDayNames);
+  4   : FD:=findmatch(FormatSettings.longDayNames);
+  5   : matchpattern(FormatSettings.shortdateformat);
+  6   : matchpattern(FormatSettings.longdateformat);
   end;
 end;
 
@@ -2658,8 +2658,8 @@ begin
   I:=ScanPatternLength;
   case i of
   1,2: FM:=scanfixedint(2);
-  3:   FM:=findmatch(ShortMonthNames);
-  4:   FM:=findmatch(LongMonthNames);
+  3:   FM:=findmatch(FormatSettings.ShortMonthNames);
+  4:   FM:=findmatch(FormatSettings.LongMonthNames);
   end;
 end;
 
@@ -2671,17 +2671,17 @@ Var
 begin
   i:=ScanPatternLength;
   case i of
-    1: matchpattern(ShortTimeFormat);
-    2: matchpattern(LongTimeFormat);
+    1: matchpattern(FormatSettings.ShortTimeFormat);
+    2: matchpattern(FormatSettings.LongTimeFormat);
   end;
 end;
 
 procedure TDateTimeScanner.DoDateTime;
 
 begin
-  MatchPattern(ShortDateFormat);
+  MatchPattern(FormatSettings.ShortDateFormat);
   MatchPattern(#9);
-  MatchPattern(LongTimeFormat);
+  MatchPattern(FormatSettings.LongTimeFormat);
   inc(FPatternPos);
 end;
 
@@ -2718,12 +2718,12 @@ begin
     end;
   2:
     begin
-    i:=FindIMatch([timeamstring,timepmstring],Copy(FText,FPos,5));
+    i:=FindIMatch([FormatSettings.TimeAMString,FormatSettings.TimePMString],Copy(FText,FPos,5));
     case i of
-    0: inc(FPos,length(timeamstring));
+    0: inc(FPos,length(FormatSettings.TimeAMString));
     1: begin
        FTimeval:=FTimeval+12*hrfactor;
-       inc(FPos,length(timepmstring));
+       inc(FPos,length(FormatSettings.TimePMString));
        end;
     else
       arraymatcherror
@@ -2786,9 +2786,9 @@ begin
         'S': FTimeval:=FTimeval+scanfixedint(2)* secfactor;
         'Z': FTimeval:=FTimeval+scanfixedint(3)* mssecfactor;
         'A': DoAMPM;
-        '/': MatchChar(DateSeparator);
+        '/': MatchChar(FormatSettings.DateSeparator);
         ':': begin
-             MatchChar(TimeSeparator);
+             MatchChar(FormatSettings.TimeSeparator);
              lch:=lasttoken;
              end;
         #39,'"' :

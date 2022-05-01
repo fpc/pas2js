@@ -141,15 +141,14 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
 
-  TJSNodeListCallBack = procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList);
-  TJSNodeListEvent = procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList) of object;
-  
+  TJSNodeListCallBack = reference to procedure (currentValue : TJSNode; currentIndex: NativeInt; list : TJSNodeList);
+  TJSNodeListEvent = TJSNodeListCallBack;
+
   TJSNodeList = class external name 'NodeList' (TJSObject)
   Private
     FLength : NativeInt; external name 'length';
   Public
     procedure forEach(const aCallBack : TJSNodeListCallBack);
-    procedure forEach(const aCallBack : TJSNodeListEvent);
     function item(aIndex : NativeInt) : TJSNode;
     Property length : NativeInt Read FLength;
     Property Nodes [aIndex : NativeInt] : TJSNode Read item; default;

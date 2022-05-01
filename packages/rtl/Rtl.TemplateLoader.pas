@@ -201,7 +201,7 @@ procedure TURLLoader.dofetch(resolve,reject : TJSPromiseResolver);
       );
   end;
 
-  function doFail(response : JSValue) : JSValue;
+  function doFail(respo : JSValue) : JSValue;
 
   Var
     F : TFailData;
@@ -367,7 +367,7 @@ end;
 procedure TCustomTemplateLoader.LoadTemplate(const aName, aURL: String; aOnSuccess: TTemplateNotifyEvent;
   AOnFail: TTemplateErrorNotifyEvent);
 
-  function doOK(aValue : JSValue) : JSValue;
+  function doOK(aValue{%H-} : JSValue) : JSValue;
 
   begin
     if Assigned(aOnSuccess) then

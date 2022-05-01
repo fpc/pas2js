@@ -38,7 +38,10 @@ Type
     FHeaderImage: String;
     FHideDelay: Integer;
     FMinWidth: Integer;
+    FOnHide: TNotifyEvent;
+    FShowing: Boolean;
     FSmallHeader: String;
+    FUnrenderOnHide: Boolean;
     procedure SetAnimate(AValue: Boolean);
     procedure SetAutoHide(AValue: Boolean);
     procedure SetBody(AValue: String);
@@ -49,15 +52,19 @@ Type
     procedure SetHideDelay(AValue: Integer);
     procedure SetMinWidth(AValue: Integer);
     procedure SetSmallHeader(AValue: String);
+    procedure SetUnrenderOnHide(AValue: Boolean);
   Protected
+    function BootstrapHide(aEvent: TJSEvent): Boolean; virtual;
     function BodyHTML: String; virtual;
     function CloseButtonHTML: String; virtual;
     function HeaderHTML: String; virtual;
     Function GetTemplateHTML: String; override;
     Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
+    procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
   Public
     Constructor Create(aOwner : TComponent); override;
     Procedure Hide;
+    Property Showing : Boolean Read FShowing;
   Published
     Property Header : String Read FHeader Write SetHeader;
     Property SmallHeader : String Read FSmallHeader Write SetSmallHeader;
@@ -69,7 +76,11 @@ Type
     Property AutoHide : Boolean Read FAutoHide Write SetAutoHide default True;
     Property Animate : Boolean Read FAnimate Write SetAnimate default False;
     Property MinWidth : Integer Read FMinWidth Write SetMinWidth default 200;
+    Property UnrenderOnHide : Boolean Read FUnrenderOnHide Write SetUnrenderOnHide;
+    Property OnHide : TNotifyEvent Read FOnHide Write FOnHide;
   end;
+
+  TBootstrapToastWidget = class (TSimpleToastWidget);
 
   // Encapsulates the global tag where the toasts are shown.
 
@@ -92,6 +103,7 @@ Type
     procedure SetMultiToast(AValue: Boolean);
    Protected
     Class Function DefaultParentElement : TJSHTMLElement; override;
+    Function BootstrapHide(Event : TJSEvent) : Boolean;
     Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
     Function GetContentElement: TJSHTMLELement; override;
     Procedure InvalidateElement; override;
@@ -209,6 +221,7 @@ Type
     Function BootstrapHide(Event : TJSEvent) : Boolean;
     Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
     Function GetTemplateHTML: String; override;
+    procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
     Procedure RefreshReferences; override;
     function GetTemplateManager: TCustomTemplateLoader; virtual;
     procedure DoShow; virtual;
@@ -241,6 +254,7 @@ Implementation
 
 Resourcestring
   SErrNoTemplateSet = '%s: No template set';
+  SErrCannotUnrenderFixedElementID = 'Cannot unrender when ElementID (%s) is set';
 
 function Toasts: TToastManager;
 begin
@@ -385,6 +399,11 @@ begin
   Result:=TJSHTMLElement(Document.body);
 end;
 
+function TToastManager.BootstrapHide(Event: TJSEvent): Boolean;
+begin
+
+end;
+
 function TToastManager.DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement;
 
 Var
@@ -467,15 +486,20 @@ begin
   S:=ContextualNames[Contextual];
   if S<>'' then
     S:='text-'+S;
-  Result:=Result+ '<button type="button" class="ml-2 mb-1 close '+S+'" data-dismiss="toast" aria-label="Close">';
-  Result:=Result+ '   <span aria-hidden="true">&times;</span>';
+  if BootStrapVersion=bv4 then
+    S:=S+' close'
+  else
+    S:=S+' btn-close';
+  Result:=Result+ '<button type="button" class="xml-2 xmb-1 close '+S+'" data-dismiss="toast" data-bs-dismiss="toast" aria-label="Close">';
+  if BootstrapVersion=bv4 then
+    Result:=Result+ '   <span aria-hidden="true">&times;</span>';
   Result:=Result+ '</button>';
 end;
 
 function TSimpleToastWidget.HeaderHTML: String;
 
 Var
-  S : String;
+  me,S : String;
 
 begin
   S:=ContextualNames[Contextual];
@@ -484,7 +508,11 @@ begin
   Result:='<div class="toast-header '+S+'">';
   if HeaderImage<>'' then
     Result:=Result+'<img src="'+HeaderImage+'" class="rounded mr-2">';
-  Result:=Result+'<div class="mr-auto">'+Header+'</div>';
+  if BootStrapVersion=bv4 then
+    me:='mr'
+  else
+    me:='me';
+  Result:=Result+'<div class="'+me+'-auto">'+Header+'</div>';
   if (SmallHeader<>'') then
     Result:=Result+'<small>'+SmallHeader+'</small>';
   if CloseButton then
@@ -562,6 +590,25 @@ begin
   if isRendered then Refresh;
 end;
 
+procedure TSimpleToastWidget.SetUnrenderOnHide(AValue: Boolean);
+begin
+  if FUnrenderOnHide=AValue then Exit;
+  if FixedElementID and aValue then
+    Raise EWidgets.CreateFmt(SErrCannotUnrenderFixedElementID,[ElementID]);
+  FUnrenderOnHide:=AValue;
+end;
+
+function TSimpleToastWidget.BootstrapHide(aEvent: TJSEvent) : Boolean;
+
+begin
+  FShowing:=False;
+    // Writeln('In bootstraphide callback ', assigned(onhide));
+  If Assigned(OnHide) then
+    OnHide(Self);
+  if UnrenderOnHide then
+    Unrender;
+end;
+
 function TSimpleToastWidget.BodyHTML: String;
 
 Var
@@ -591,8 +638,14 @@ end;
 function TSimpleToastWidget.DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement;
 begin
   Result:=inherited DoRenderHTML(aParent, aElement);
-  JQuery(Result).toast(New(['animation',FAnimate,'autohide',autohide,'delay',FHideDelay]));
-  JQuery(Result).ToastShow;
+end;
+
+procedure TSimpleToastWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
+begin
+  inherited ApplyWidgetSettings(aElement);
+  JQuery(aElement).toast(New(['animation',FAnimate,'autohide',autohide,'delay',FHideDelay]));
+  JQuery(aElement).ToastShow;
+  jQuery(aElement).on_('hidden.bs.toast',@BootstrapHide);
 end;
 
 constructor TSimpleToastWidget.Create(aOwner: TComponent);
@@ -738,6 +791,8 @@ Var
 begin
   Result:=False;
   FShowing:=False;
+  if FHideEl=Nil then
+    FHideEl:=TJSHTMLElement(Event.targetElement);
   // Writeln('In bootstraphide callback ', assigned(onhide));
   If Assigned(OnHide) then
     begin
@@ -763,13 +818,18 @@ function TBootstrapModal.DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTM
 begin
   FHideEl:=Nil;
   Result:=inherited DoRenderHTML(aParent, aElement);
-  JQuery(Result).modal(New([
+end;
+
+procedure TBootstrapModal.ApplyWidgetSettings(aElement: TJSHTMLElement);
+
+begin
+  JQuery(aElement).modal(New([
     'backdrop', BackDrop,
     'keyboard', keyboard,
     'focus',Focus,
     'show',ShowOnRender
   ]));
-  jQuery(Result).on_('hidden.bs.modal',@BootstrapHide);
+  jQuery(aElement).on_('hidden.bs.modal',@BootstrapHide);
 end;
 
 function TBootstrapModal.GetTemplateHTML: String;
@@ -841,7 +901,7 @@ procedure TBootstrapModal.Show;
   end;
 
 begin
-  if (Template<>'') Then
+  if (Template<>'') or (ElementID<>'') Then
     DoShow
   else if TemplateName<>'' then
     GetTemplateManager.IfTemplate(TemplateName,@DoShowTemplate)

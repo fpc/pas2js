@@ -82,7 +82,6 @@ Type
     procedure SetResourceName(AValue: String);
     procedure SetSQL(AValue: TStrings);
   Protected
-    Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; override;
     function DataPacketReceived(ARequest: TDataRequest): Boolean; override;
     function GetStringFieldLength(F: TJSObject; AName: String; AIndex: Integer): integer;virtual;
     function StringToFieldType(S: String): TFieldType; virtual;
@@ -91,6 +90,7 @@ Type
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; override;
   Published
     Property Connection: TSQLDBRestConnection Read FConnection Write SetConnection;
     Property ResourceName : String Read FResourceName Write SetResourceName;

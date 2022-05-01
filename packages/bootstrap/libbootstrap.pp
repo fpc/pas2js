@@ -25,7 +25,7 @@ uses
   JS, web, libjquery;
 
 Type
-
+  TBootstrapVersion = (bv4,bv5);
   { TBootstrap }
 
   TBootstrapModalOptions = Class external name 'Object' (TJSObject)
@@ -185,6 +185,9 @@ Type
     Procedure PopOverToggleEnabled;
     Procedure PopOverUpdate;
   end;
+
+Var
+  BootstrapVersion : TBootstrapVersion = bv4;
 
 implementation
 

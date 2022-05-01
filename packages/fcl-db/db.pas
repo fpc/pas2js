@@ -1341,6 +1341,7 @@ type
     procedure CheckBrowseMode;
     procedure ClearFields;
     procedure Close;
+    Function GetUpdateCount(UnresolvedOnly : Boolean) : Integer;
     Procedure ApplyUpdates;
     function  ControlsDisabled: Boolean;
     function CompareBookmarks(Bookmark1{%H-}, Bookmark2{%H-}: TBookmark): Longint; virtual;
@@ -1485,7 +1486,7 @@ type
   public
     constructor Create; reintroduce;
     destructor Destroy; override;
-    function  Edit: Boolean;
+    function  Edit: Boolean; virtual;
     procedure UpdateRecord;
     property Active: Boolean read FActive;
     property ActiveRecord: Integer read GetActiveRecord write SetActiveRecord;
@@ -3154,7 +3155,7 @@ end;
 
 procedure TDataSet.GetCalcFields(var Buffer: TDataRecord);
 var
-  i: Integer;
+
   OldState: TDatasetState;
 begin
   if (FCalcFieldsCount > 0) or FInternalCalcFields then
@@ -4156,6 +4157,23 @@ procedure TDataSet.Close;
 
 begin
   Active:=False;
+end;
+
+function TDataSet.GetUpdateCount(UnresolvedOnly: Boolean): Integer;
+
+Var
+  I : Integer;
+
+begin
+  Result:=0;
+  if Not Assigned(FChangeList) then
+    exit;
+  If Not UnresolvedOnly then
+    Result:=FChangeList.Count
+  else
+    For I:=0 to FChangeList.Count-1 do
+      if TRecordUpdateDescriptor(FChangeList[i]).ResolveStatus=rsUnresolved then
+        Inc(Result);
 end;
 
 procedure TDataSet.ApplyUpdates;
@@ -6992,8 +7010,8 @@ begin
       F:=FDisplayFormat
     else
       Case DataType of
-       ftTime : F:=LongTimeFormat;
-       ftDate : F:=ShortDateFormat;
+       ftTime : F:=FormatSettings.LongTimeFormat;
+       ftDate : F:=FormatSettings.ShortDateFormat;
       else
        F:='c'
       end;

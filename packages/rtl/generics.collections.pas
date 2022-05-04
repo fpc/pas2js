@@ -519,7 +519,7 @@ implementation
 class procedure TCustomArrayHelper<T>.Sort(var AValues: array of T;
   const AComparer: IComparer<T>);
 begin
-  QuickSort(AValues, 0, Length(AValues), AComparer);
+  Sort(AValues, AComparer, Low(AValues), Length(AValues));
 end;
 
 class procedure TCustomArrayHelper<T>.Sort(var AValues: array of T;

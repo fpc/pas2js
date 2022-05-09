@@ -40,7 +40,7 @@ Type
   TIgnoreClickHandler = reference to function (el : TJSHTMLELement) : Boolean;
   TDetailFormatHandler = reference to function (Index :Integer; Row : TJSObject; el : TJSHTMLElement) : String;
   TDetailFilterHandler = reference to function (Index :Integer; Row : TJSObject) : boolean;
-  TColFormatterHandler = reference to function (value : JSValue; row : TJSObject; Index : Integer; Field : String) : String;
+  TColFormatterHandler = reference to function (value : JSValue; row : TJSObject; Index : Integer; Field : String) : JSValue;
   TFooterFormatterHandler = reference to function (Rows : TJSValueDynArray) : String;
   TDetailFormatterHandler = reference to function (index : integer; row : TJSObject; el : TJSHTMLElement) : String;
 
@@ -80,8 +80,9 @@ Type
   end;
   TBootstrapTableColumnArray = array of TBootstrapTableColumn;
 
-  TFooterStyleHandler = Reference to function(col : TBootstrapTableColumn) :  TTableStyle;
-
+  TDatahandler = reference to procedure(Data : JSValue);
+  TVoidHandler = reference to procedure;
+  TElementHandler = reference to procedure(el : TJSHTMLElement);
 
   TBootstrapTableOptions = class external name 'Object' (TJSObject)
     ajax : TAjaxHandler;
@@ -109,7 +110,6 @@ Type
     detailViewIcon : Boolean;
     escape : Boolean;
     filterOptions : Boolean;
-    footerStyle : TFooterStyleHandler;
     height : Integer;
     html : TJSObject;
     icons : TJSObject;
@@ -182,12 +182,18 @@ Type
     totalRows : NativeInt;
     trimOnSearch : Boolean;
     undefinedText : String;
-    uniqueId : Boolean;
+    uniqueId : string;
     url : string;
     virtualScroll : Boolean;
     virtualScrollItemHeight : Integer;
     visibleSearch : Boolean;
+    onPreBody : TDataHandler;
+    onPostBody : TDataHandler;
+    onPostFooter : TElementhandler;
+    onPostHeader : TVoidhandler;
+
   end;
+
   { TJSBootstrapTable }
   TRefreshOptions = class external name 'Object' (TJSObject)
     silent : boolean;

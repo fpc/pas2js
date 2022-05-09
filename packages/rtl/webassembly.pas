@@ -44,7 +44,7 @@ Type
     constructor new(buffer : TJSArrayBuffer);
     Class Function customSections(module: TJSWebAssemblyModule; const SectionName : string) : TJSArrayBuffer;
     Class Function exports_(module: TJSWebAssemblyModule) : TJSModulesExports; external name 'exports';
-    Class Function imports(module: TJSWebAssemblyModule) : TJSModulesImports; external name 'exports';
+    Class Function imports(module: TJSWebAssemblyModule) : TJSModulesImports; external name 'imports';
   end;
 
   { TJSWebAssemblyInstance }

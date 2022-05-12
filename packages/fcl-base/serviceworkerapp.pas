@@ -59,6 +59,8 @@ var
   S,N : String;
   A,P : TStringDynArray;
 begin
+  if not jsvalue(Window) then exit;
+  if not jsvalue(Window.location) then exit;
   if Assigned(EnvNames) then
     FreeAndNil(EnvNames);
   EnvNames:=TJSObject.new;

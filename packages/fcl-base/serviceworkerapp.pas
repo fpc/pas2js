@@ -9,7 +9,7 @@ unit ServiceWorkerApp;
 interface
 
 uses
-  Classes, SysUtils, Types, JS, web, CustApp;
+  SysUtils, Types, JS, web, Classes, CustApp;
 
 type
 
@@ -36,7 +36,7 @@ type
     function GetConsoleApplication: boolean; override;
     function GetLocation: String; override;
   public
-    procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;
+    procedure GetEnvironmentList(List{%H-}: TStrings; NamesOnly{%H-}: Boolean); override;
     procedure ShowException(E: Exception); override;
     procedure HandleException(Sender: TObject); override;
 
@@ -45,61 +45,7 @@ type
     property Resources: TStringDynArray read FResources;
   end;
 
-procedure ReloadEnvironmentStrings;
-
 implementation
-
-var
-  EnvNames: TJSObject;
-
-procedure ReloadEnvironmentStrings;
-
-var
-  I : Integer;
-  S,N : String;
-  A,P : TStringDynArray;
-begin
-  if not jsvalue(Window) then exit;
-  if not jsvalue(Window.location) then exit;
-  if Assigned(EnvNames) then
-    FreeAndNil(EnvNames);
-  EnvNames:=TJSObject.new;
-  S:=Window.Location.search;
-  S:=Copy(S,2,Length(S)-1);
-  A:=TJSString(S).split('&');
-  for I:=0 to Length(A)-1 do
-    begin
-    P:=TJSString(A[i]).split('=');
-    N:=LowerCase(decodeURIComponent(P[0]));
-    if Length(P)=2 then
-      EnvNames[N]:=decodeURIComponent(P[1])
-    else if Length(P)=1 then
-      EnvNames[N]:=''
-    end;
-end;
-
-function MyGetEnvironmentVariable(Const EnvVar: String): String;
-
-Var
-  aName : String;
-
-begin
-  aName:=Lowercase(EnvVar);
-  if EnvNames.hasOwnProperty(aName) then
-    Result:=String(EnvNames[aName])
-  else
-    Result:='';
-end;
-
-function MyGetEnvironmentVariableCount: Integer;
-begin
-  Result:=length(TJSOBject.getOwnPropertyNames(envNames));
-end;
-
-function MyGetEnvironmentString(Index: Integer): String;
-begin
-  Result:=String(EnvNames[TJSOBject.getOwnPropertyNames(envNames)[Index]]);
-end;
 
 { TServiceWorkerApplication }
 
@@ -233,18 +179,8 @@ end;
 
 procedure TServiceWorkerApplication.GetEnvironmentList(List: TStrings;
   NamesOnly: Boolean);
-var
-  Names: TStringDynArray;
-  i: Integer;
 begin
-  Names:=TJSObject.getOwnPropertyNames(EnvNames);
-  for i:=0 to length(Names)-1 do
-  begin
-    if NamesOnly then
-      List.Add(Names[i])
-    else
-      List.Add(Names[i]+'='+String(EnvNames[Names[i]]));
-  end;
+
 end;
 
 procedure TServiceWorkerApplication.ShowException(E: Exception);
@@ -269,10 +205,6 @@ end;
 
 initialization
   IsConsole:=true;
-  ReloadEnvironmentStrings;
-  OnGetEnvironmentVariable:=@MyGetEnvironmentVariable;
-  OnGetEnvironmentVariableCount:=@MyGetEnvironmentVariableCount;
-  OnGetEnvironmentString:=@MyGetEnvironmentString;
 
 end.
 

@@ -61,7 +61,7 @@
       </SyntaxOptions>
     </Parsing>
     <CodeGeneration>
-      <TargetOS Value="browser"/>
+      <TargetOS Value="nodejs"/>
     </CodeGeneration>
     <Linking>
       <Debugging>

@@ -3,10 +3,10 @@ program ServiceWorker;
 {$mode objfpc}
 
 uses
-  Classes, ServiceWorkerApp;
+  SysUtils, Classes, ServiceWorkerApp;
 
 const
-  YourCacheName = 'v6'; // usually increased with every version
+  YourCacheName = 'v7'; // usually increased with every version
    // The cache is specific to your domain, so no need to include your app name.
 
 type

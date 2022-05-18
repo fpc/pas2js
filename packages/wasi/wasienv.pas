@@ -178,7 +178,7 @@ Const
   RIGHTS_BLOCK_DEVICE_BASE = RIGHTS_ALL;
   RIGHTS_BLOCK_DEVICE_INHERITING = RIGHTS_ALL;
 
-  RIGHTS_CHARACTER_DEVICE_BASE = RIGHTS_ALL;
+  RIGHTS_CHARaACTER_DEVICE_BASE = RIGHTS_ALL;
   RIGHTS_CHARACTER_DEVICE_INHERITING = RIGHTS_ALL;
 
   RIGHTS_REGULAR_FILE_BASE = WASI_RIGHT_FD_DATASYNC or WASI_RIGHT_FD_READ
@@ -427,7 +427,7 @@ type
 
 implementation
 
-uses web;
+uses weborworker;
 
 function TImportExtension.getModuleMemoryDataView : TJSDataView;  
 
@@ -809,7 +809,9 @@ var
   View : TJSDataView;
 begin
   arr:=TJSUint8Array.new(BufLen);
-  window.crypto.getRandomValues(arr);
+
+  crypto.getRandomValues(arr);
+
   view:=getModuleMemoryDataView;
   For I:=0 to arr.length-1 do
     view.setInt8(bufptr+i,arr[i]);

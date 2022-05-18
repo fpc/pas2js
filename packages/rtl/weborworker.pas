@@ -9,6 +9,8 @@ uses
   JS, types;
 
 type
+  TJSCryptoKey = Class;
+  TJSSubtleCrypto = Class;
   TJSEventTarget = class;
   TIDBDatabase = class;
   TJSIDBObjectStore = class;
@@ -658,10 +660,305 @@ type
     resizeQuality : String;
   end;
 
+  { ----------------------------------------------------------------------
+    Crypto
+    ----------------------------------------------------------------------}
 
+  TJSCryptoAlgorithmIdentifier = JSValue;
+  TJSCryptoNamedCurve = JSValue;
+  TJSCryptoBigInteger = TJSUint8Array;
+  TJSCryptoKeyUsage = string;
+  TJSCryptoKeyType = string;
+  TJSCryptoKeyFormat = string;
+
+    { --------------------------------------------------------------------
+      Algorithm
+      --------------------------------------------------------------------}
+
+  TJSCryptoAlgorithm = record
+    name : String;
+  end;
+
+    { --------------------------------------------------------------------
+      AesCbcParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoAesCbcParams = record
+      iv : TJSBufferSource;
+    end;
+
+    { --------------------------------------------------------------------
+      AesCtrParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoAesCtrParams = record
+      counter : TJSBufferSource;
+      length_ : Byte;external name 'length';
+    end;
+
+    { --------------------------------------------------------------------
+      AesGcmParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoAesGcmParams = record
+      iv : TJSBufferSource;
+      additionalData : TJSBufferSource;
+      tagLength : Byte;
+    end;
+
+    { --------------------------------------------------------------------
+      HmacImportParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoHmacImportParams = record
+      hash : TJSCryptoAlgorithmIdentifier;
+    end;
+
+    { --------------------------------------------------------------------
+      Pbkdf2Params
+      --------------------------------------------------------------------}
+
+    TJSCryptoPbkdf2Params = record
+      salt : TJSBufferSource;
+      iterations : NativeInt;
+      hash : TJSCryptoAlgorithmIdentifier;
+    end;
+
+    { --------------------------------------------------------------------
+      RsaHashedImportParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoRsaHashedImportParams = record
+      hash : TJSCryptoAlgorithmIdentifier;
+    end;
+
+    { --------------------------------------------------------------------
+      AesKeyGenParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoAesKeyGenParams = record
+      length_ : Integer;external name 'length';
+    end;
+
+    { --------------------------------------------------------------------
+      HmacKeyGenParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoHmacKeyGenParams = record
+      hash : TJSCryptoAlgorithmIdentifier;
+      length_ : Integer;external name 'length';
+    end;
+
+    { --------------------------------------------------------------------
+      RsaHashedKeyGenParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoRsaHashedKeyGenParams = record
+      modulusLength : Integer;
+      publicExponent : TJSCryptoBigInteger;
+      hash : TJSCryptoAlgorithmIdentifier;
+    end;
+
+    { --------------------------------------------------------------------
+      RsaOaepParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoRsaOaepParams = record
+      label_ : TJSBufferSource;external name 'label';
+    end;
+
+    { --------------------------------------------------------------------
+      RsaPssParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoRsaPssParams = record
+      saltLength : Integer;
+    end;
+
+    { --------------------------------------------------------------------
+      DhKeyGenParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoDhKeyGenParams = record
+      prime : TJSCryptoBigInteger;
+      generator : TJSCryptoBigInteger;
+    end;
+
+    { --------------------------------------------------------------------
+      EcKeyGenParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoEcKeyGenParams = record
+      _namedCurve : TJSCryptoNamedCurve;external name 'namedCurve';
+    end;
+
+    { --------------------------------------------------------------------
+      AesDerivedKeyParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoAesDerivedKeyParams = record
+      length_ : Integer;external name 'length';
+    end;
+
+    { --------------------------------------------------------------------
+      HmacDerivedKeyParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoHmacDerivedKeyParams = record
+      length_ : Integer;external name 'length';
+    end;
+
+    { --------------------------------------------------------------------
+      EcdhKeyDeriveParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoEcdhKeyDeriveParams = record
+      public_ : TJSCryptoKey; external name 'public';
+    end;
+
+    { --------------------------------------------------------------------
+      DhKeyDeriveParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoDhKeyDeriveParams = record
+      public_ : TJSCryptoKey;  external name 'public';
+    end;
+
+    { --------------------------------------------------------------------
+      DhImportKeyParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoDhImportKeyParams = record
+      prime : TJSCryptoBigInteger;
+      generator : TJSCryptoBigInteger;
+    end;
+
+    { --------------------------------------------------------------------
+      EcdsaParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoEcdsaParams = record
+      hash : TJSCryptoAlgorithmIdentifier;
+    end;
+
+    { --------------------------------------------------------------------
+      EcKeyImportParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoEcKeyImportParams = record
+      _namedCurve : TJSCryptoNamedCurve;external name 'namedCurve';
+    end;
+
+    { --------------------------------------------------------------------
+      HkdfParams
+      --------------------------------------------------------------------}
+
+    TJSCryptoHkdfParams = record
+      hash : TJSCryptoAlgorithmIdentifier;
+      salt : TJSBufferSource;
+      info : TJSBufferSource;
+    end;
+
+    { --------------------------------------------------------------------
+      RsaOtherPrimesInfo
+      --------------------------------------------------------------------}
+
+    TJSCryptoRsaOtherPrimesInfo = record
+      r : String;
+      d : String;
+      t : String;
+    end;
+
+    { --------------------------------------------------------------------
+      JsonWebKey
+      --------------------------------------------------------------------}
+
+    TJSCryptoRsaOtherPrimesInfoDynArray = Array of TJSCryptoRsaOtherPrimesInfo;
+    TJSCryptoJsonWebKey = record
+      kty : String;
+      use : String;
+      key_ops : TStringDynArray;
+      alg : String;
+      ext : boolean;
+      crv : String;
+      x : String;
+      y : String;
+      d : String;
+      n : String;
+      e : String;
+      p : String;
+      q : String;
+      dp : String;
+      dq : String;
+      qi : String;
+      oth : TJSCryptoRsaOtherPrimesInfoDynArray;
+      k : String;
+    end;
+
+    { --------------------------------------------------------------------
+      CryptoKeyPair
+      --------------------------------------------------------------------}
+
+    TJSCryptoKeyPair = record
+      publicKey : TJSCryptoKey;
+      privateKey : TJSCryptoKey;
+    end;
+
+    { --------------------------------------------------------------------
+      TJSCryptoKey
+      --------------------------------------------------------------------}
+
+    TJSCryptoKeyUsageDynArray = Array of TJSCryptoKeyUsage;
+    TJSCryptoKey = class external name 'CryptoKey'
+    Private
+      Ftype_ : TJSCryptoKeyType; external name 'type';
+      Fextractable : boolean; external name 'extractable';
+      Falgorithm : TJSObject; external name 'algorithm';
+      Fusages : TJSCryptoKeyUsageDynArray; external name 'usages';
+    Public
+      Property type_ : TJSCryptoKeyType Read Ftype_;
+      Property extractable : boolean Read Fextractable;
+      Property algorithm : TJSObject Read Falgorithm;
+      Property usages : TJSCryptoKeyUsageDynArray Read Fusages;
+    end;
+
+    { --------------------------------------------------------------------
+      TJSSubtleCrypto
+      --------------------------------------------------------------------}
+
+    TJSSubtleCrypto = class external name 'SubtleCrypto'
+    Private
+    Public
+      function encrypt(algorithm :  TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+      function decrypt(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+      function sign(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+      function verify(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; signature : TJSBufferSource; data : TJSBufferSource): TJSPromise;
+      function digest(algorithm : TJSCryptoAlgorithmIdentifier; data : TJSBufferSource): TJSPromise;
+      function generateKey(algorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+      function deriveKey(algorithm : TJSCryptoAlgorithmIdentifier; baseKey : TJSCryptoKey; derivedKeyType : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+      function deriveBits(algorithm : TJSCryptoAlgorithmIdentifier; baseKey : TJSCryptoKey; length_ : NativeInt): TJSPromise;
+      function importKey(format : TJSCryptoKeyFormat; keyData : TJSObject; algorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+      function exportKey(format : TJSCryptoKeyFormat; key : TJSCryptoKey): TJSPromise;
+      function wrapKey(format : TJSCryptoKeyFormat; key : TJSCryptoKey; wrappingKey : TJSCryptoKey; wrapAlgorithm : TJSCryptoAlgorithmIdentifier): TJSPromise;
+      function unwrapKey(format : TJSCryptoKeyFormat; wrappedKey : TJSBufferSource; unwrappingKey : TJSCryptoKey; unwrapAlgorithm : TJSCryptoAlgorithmIdentifier; unwrappedKeyAlgorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+    end;
+    { TJSCrypto }
+
+    TJSCrypto = class external name 'Crypto'  (TJSObject)
+    private
+      Fsubtle: TJSSubtleCrypto; external name 'subtle';
+    Public
+      procedure getRandomValues (anArray : TJSTypedArray);
+      property subtle : TJSSubtleCrypto Read Fsubtle;
+    end;
+
+
+
+  { TWindowOrWorkerGlobalScope }
 
   TWindowOrWorkerGlobalScope = Class external name 'Object' (TJSObject)
   Private
+    FCrypto: TJSCrypto; external name 'crypto';
     FisSecureContext : boolean; external name 'isSecureContext';
     FIDBFactory : TJSIDBFactory; external name 'IDBFactory';
     fcaches : TJSCacheStorage; external name 'caches';
@@ -685,20 +982,13 @@ type
     property isSecureContext : Boolean Read FisSecureContext;
     property IDBFactory : TJSIDBFactory Read FIDBFactory;
     property caches : TJSCacheStorage read fcaches;
+    property crypto : TJSCrypto Read FCrypto;
   end;
 
 
-
-
-(*
-
-
-// https://wicg.github.io/scheduling-apis/#ref-for-windoworworkerglobalscope-scheduler
-partial interface mixin WindowOrWorkerGlobalScope {
-  [Replaceable, Pref="dom.enable_web_task_scheduling", SameObject]
-  readonly attribute Scheduler scheduler;
-};
-*)
+var
+  Console : TJSConsole; external name 'console';
+  Crypto: TJSCrypto; external name 'crypto';
 
 implementation
 

@@ -994,298 +994,48 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 //  TJSTypedArray = class external name 'TypedArray' end;
 
   // Forward class definitions
-  TJSCryptoKey = Class;
-  TJSSubtleCrypto = Class;
-  KeyType = String;
-  KeyUsage = String;
-  NamedCurve = String;
-  BigInteger = TJSUint8Array;
-  KeyFormat = String;
-  // Union of object, DOMString
-  AlgorithmIdentifier = JSValue; 
-  
-  { --------------------------------------------------------------------
-    Algorithm
-    --------------------------------------------------------------------}
-  
-  Algorithm = record
-    name : String;
-  end;
-  
-  { --------------------------------------------------------------------
-    AesCbcParams
-    --------------------------------------------------------------------}
-  
-  AesCbcParams = record
-    iv : TJSBufferSource;
-  end;
-  
-  { --------------------------------------------------------------------
-    AesCtrParams
-    --------------------------------------------------------------------}
-  
-  AesCtrParams = record
-    counter : TJSBufferSource;
-    length_ : Byte;external name 'length';
-  end;
-  
-  { --------------------------------------------------------------------
-    AesGcmParams
-    --------------------------------------------------------------------}
-  
-  AesGcmParams = record
-    iv : TJSBufferSource;
-    additionalData : TJSBufferSource;
-    tagLength : Byte;
-  end;
-  
-  { --------------------------------------------------------------------
-    HmacImportParams
-    --------------------------------------------------------------------}
-  
-  HmacImportParams = record
-    hash : AlgorithmIdentifier;
-  end;
-  
-  { --------------------------------------------------------------------
-    Pbkdf2Params
-    --------------------------------------------------------------------}
-  
-  Pbkdf2Params = record
-    salt : TJSBufferSource;
-    iterations : NativeInt;
-    hash : AlgorithmIdentifier;
-  end;
-  
-  { --------------------------------------------------------------------
-    RsaHashedImportParams
-    --------------------------------------------------------------------}
-  
-  RsaHashedImportParams = record
-    hash : AlgorithmIdentifier;
-  end;
-  
-  { --------------------------------------------------------------------
-    AesKeyGenParams
-    --------------------------------------------------------------------}
-  
-  AesKeyGenParams = record
-    length_ : Integer;external name 'length';
-  end;
-  
-  { --------------------------------------------------------------------
-    HmacKeyGenParams
-    --------------------------------------------------------------------}
-  
-  HmacKeyGenParams = record
-    hash : AlgorithmIdentifier;
-    length_ : Integer;external name 'length';
-  end;
-  
-  { --------------------------------------------------------------------
-    RsaHashedKeyGenParams
-    --------------------------------------------------------------------}
-  
-  RsaHashedKeyGenParams = record
-    modulusLength : Integer;
-    publicExponent : BigInteger;
-    hash : AlgorithmIdentifier;
-  end;
-  
-  { --------------------------------------------------------------------
-    RsaOaepParams
-    --------------------------------------------------------------------}
-  
-  RsaOaepParams = record
-    label_ : TJSBufferSource;external name 'label';
-  end;
-  
-  { --------------------------------------------------------------------
-    RsaPssParams
-    --------------------------------------------------------------------}
-  
-  RsaPssParams = record
-    saltLength : Integer;
-  end;
-  
-  { --------------------------------------------------------------------
-    DhKeyGenParams
-    --------------------------------------------------------------------}
-  
-  DhKeyGenParams = record
-    prime : BigInteger;
-    generator : BigInteger;
-  end;
-  
-  { --------------------------------------------------------------------
-    EcKeyGenParams
-    --------------------------------------------------------------------}
-  
-  EcKeyGenParams = record
-    _namedCurve : NamedCurve;external name 'namedCurve';
-  end;
-  
-  { --------------------------------------------------------------------
-    AesDerivedKeyParams
-    --------------------------------------------------------------------}
-  
-  AesDerivedKeyParams = record
-    length_ : Integer;external name 'length';
-  end;
-  
-  { --------------------------------------------------------------------
-    HmacDerivedKeyParams
-    --------------------------------------------------------------------}
-  
-  HmacDerivedKeyParams = record
-    length_ : Integer;external name 'length';
-  end;
-  
-  { --------------------------------------------------------------------
-    EcdhKeyDeriveParams
-    --------------------------------------------------------------------}
-  
-  EcdhKeyDeriveParams = record
-    public_ : TJSCryptoKey; external name 'public';
-  end;
-  
-  { --------------------------------------------------------------------
-    DhKeyDeriveParams
-    --------------------------------------------------------------------}
-  
-  DhKeyDeriveParams = record
-    public_ : TJSCryptoKey;  external name 'public';
-  end;
-  
-  { --------------------------------------------------------------------
-    DhImportKeyParams
-    --------------------------------------------------------------------}
-  
-  DhImportKeyParams = record
-    prime : BigInteger;
-    generator : BigInteger;
-  end;
-  
-  { --------------------------------------------------------------------
-    EcdsaParams
-    --------------------------------------------------------------------}
-  
-  EcdsaParams = record
-    hash : AlgorithmIdentifier;
-  end;
-  
-  { --------------------------------------------------------------------
-    EcKeyImportParams
-    --------------------------------------------------------------------}
-  
-  EcKeyImportParams = record
-    _namedCurve : NamedCurve;external name 'namedCurve';
-  end;
-  
-  { --------------------------------------------------------------------
-    HkdfParams
-    --------------------------------------------------------------------}
-  
-  HkdfParams = record
-    hash : AlgorithmIdentifier;
-    salt : TJSBufferSource;
-    info : TJSBufferSource;
-  end;
-  
-  { --------------------------------------------------------------------
-    RsaOtherPrimesInfo
-    --------------------------------------------------------------------}
-  
-  RsaOtherPrimesInfo = record
-    r : String;
-    d : String;
-    t : String;
-  end;
-  
-  { --------------------------------------------------------------------
-    JsonWebKey
-    --------------------------------------------------------------------}
-  
-  TRsaOtherPrimesInfoDynArray = Array of RsaOtherPrimesInfo;
-  JsonWebKey = record
-    kty : String;
-    use : String;
-    key_ops : TStringDynArray;
-    alg : String;
-    ext : boolean;
-    crv : String;
-    x : String;
-    y : String;
-    d : String;
-    n : String;
-    e : String;
-    p : String;
-    q : String;
-    dp : String;
-    dq : String;
-    qi : String;
-    oth : TRsaOtherPrimesInfoDynArray;
-    k : String;
-  end;
-  
-  { --------------------------------------------------------------------
-    CryptoKeyPair
-    --------------------------------------------------------------------}
-  
-  CryptoKeyPair = record
-    publicKey : TJSCryptoKey;
-    privateKey : TJSCryptoKey;
-  end;
-  
-  { --------------------------------------------------------------------
-    TJSCryptoKey
-    --------------------------------------------------------------------}
-  
-  TKeyUsageDynArray = Array of KeyUsage;
-  TJSCryptoKey = class external name 'CryptoKey' 
-  Private
-    Ftype_ : KeyType; external name 'type'; 
-    Fextractable : boolean; external name 'extractable'; 
-    Falgorithm : TJSObject; external name 'algorithm'; 
-    Fusages : TKeyUsageDynArray; external name 'usages'; 
-  Public
-    
-    Property type_ : KeyType Read Ftype_; 
-    Property extractable : boolean Read Fextractable; 
-    Property algorithm : TJSObject Read Falgorithm; 
-    Property usages : TKeyUsageDynArray Read Fusages; 
-  end;
-  
-  { --------------------------------------------------------------------
-    TJSSubtleCrypto
-    --------------------------------------------------------------------}
-  
-  TJSSubtleCrypto = class external name 'SubtleCrypto' 
-  Private
-  Public
-    function encrypt(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
-    function decrypt(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
-    function sign(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
-    function verify(algorithm : AlgorithmIdentifier; key : TJSCryptoKey; signature : TJSBufferSource; data : TJSBufferSource): TJSPromise;
-    function digest(algorithm : AlgorithmIdentifier; data : TJSBufferSource): TJSPromise;
-    function generateKey(algorithm : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
-    function deriveKey(algorithm : AlgorithmIdentifier; baseKey : TJSCryptoKey; derivedKeyType : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
-    function deriveBits(algorithm : AlgorithmIdentifier; baseKey : TJSCryptoKey; length_ : NativeInt): TJSPromise;
-    function importKey(format : KeyFormat; keyData : TJSObject; algorithm : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
-    function exportKey(format : KeyFormat; key : TJSCryptoKey): TJSPromise;
-    function wrapKey(format : KeyFormat; key : TJSCryptoKey; wrappingKey : TJSCryptoKey; wrapAlgorithm : AlgorithmIdentifier): TJSPromise;
-    function unwrapKey(format : KeyFormat; wrappedKey : TJSBufferSource; unwrappingKey : TJSCryptoKey; unwrapAlgorithm : AlgorithmIdentifier; unwrappedKeyAlgorithm : AlgorithmIdentifier; extractable : boolean; keyUsages : TKeyUsageDynArray): TJSPromise;
-  end;
-  { TJSCrypto }
+  KeyType = weborworker.TJSCryptoKeyType;
+  KeyUsage = weborworker.TJSCryptoKeyUsage;
 
-  TJSCrypto = class external name 'Crypto'  (TJSObject)
-  private
-    Fsubtle: TJSSubtleCrypto; external name 'subtle';
-  Public
-    procedure getRandomValues (anArray : TJSTypedArray);
-    property subtle : TJSSubtleCrypto Read Fsubtle;
-  end;
-  
+  NamedCurve = weborworker.TJSCryptoNamedCurve;
+  BigInteger = weborworker.TJSCryptoBigInteger;
+
+  KeyFormat = weborworker.TJSCryptoKeyFormat;
+  // Union of object, DOMString
+
+
+  Algorithm = weborworker.TJSCryptoAlgorithm;
+  AesCbcParams = weborworker.TJSCryptoAesCbcParams;
+  AesCtrParams = weborworker.TJSCryptoAesCtrParams;
+  AesGcmParams = weborworker.TJSCryptoAesGcmParams;
+  HmacImportParams = weborworker.TJSCryptoHmacImportParams;
+  Pbkdf2Params = weborworker.TJSCryptoPbkdf2Params;
+  RsaHashedImportParams = weborworker.TJSCryptoRsaHashedImportParams;
+  AesKeyGenParams = weborworker.TJSCryptoAesKeyGenParams;
+  HmacKeyGenParams = weborworker.TJSCryptoHmacKeyGenParams;
+  RsaHashedKeyGenParams = weborworker.TJSCryptoRsaHashedKeyGenParams;
+  RsaOaepParams = weborworker.TJSCryptoRsaOaepParams;
+  RsaPssParams = weborworker.TJSCryptoRsaPssParams;
+  DhKeyGenParams = weborworker.TJSCryptoDhKeyGenParams;
+  EcKeyGenParams = weborworker.TJSCryptoEcKeyGenParams;
+  AesDerivedKeyParams = weborworker.TJSCryptoAesDerivedKeyParams;
+  HmacDerivedKeyParams = weborworker.TJSCryptoHmacDerivedKeyParams;
+  EcdhKeyDeriveParams = weborworker.TJSCryptoEcdhKeyDeriveParams;
+  DhKeyDeriveParams = weborworker.TJSCryptoDhKeyDeriveParams;
+  DhImportKeyParams = weborworker.TJSCryptoDhImportKeyParams;
+
+  EcdsaParams = weborworker.TJSCryptoEcdsaParams;
+  EcKeyImportParams = weborworker.TJSCryptoEcKeyImportParams;
+
+  CryptoKeyPair = weborworker.TJSCryptoKeyPair;
+  HkdfParams = weborworker.TJSCryptoHkdfParams;
+  RsaOtherPrimesInfo = weborworker.TJSCryptoRsaOtherPrimesInfo;
+  TRsaOtherPrimesInfoDynArray = weborworker.TJSCryptoRsaOtherPrimesInfoDynArray;
+  TKeyUsageDynArray = weborworker.TJSCryptoKeyUsageDynArray;
+  TJSCryptoKey = weborworker.TJSCryptoKey;
+  TJSSubtleCrypto = weborworker.TJSSubtleCrypto;
+  TJSCrypto = weborworker.TJSCrypto;
+
   { TJSHistory }
 
   TJSHistory = class external name 'History'  (TJSObject)

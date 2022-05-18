@@ -70,12 +70,36 @@ Type
     Property Self_ : TJSWorkerGlobalScope Read FSelf;
   end;
 
+  TJSClientsMatchAllOptions = class external name 'Object'
+    includeUncontrolled : Boolean;
+    type_ : string; external name 'type';
+  end;
+
+  TJSClients = class external name 'Clients' (TJSObject)
+    function claim : TJSPromise;
+    function get(ID : String) : TJSPromise;
+    function matchAll : TJSPromise;
+    function matchAll(Options : TJSClientsMatchAllOptions) : TJSPromise;
+    function matchAll(Options : TJSObject) : TJSPromise;
+    function openWindow(url : string) : TJSPromise;
+  end;
+
+  { TJSServiceworkerGlobalScope }
+
+  TJSServiceworkerGlobalScope = class external name 'ServiceWorkerGlobalScope' (TJSWorkerGlobalScope)
+  private
+    FClients: TJSClients; external name 'clients';
+    FRegistration: TJSServiceWorkerRegistration; external name 'registration';
+  Public
+    property registration : TJSServiceWorkerRegistration Read FRegistration;
+    property clients : TJSClients Read FClients;
+  end;
+
 Var
-  Self_ : TJSWorkerGlobalScope; external name 'self';
+  Self_ : TJSServiceWorkerGlobalScope; external name 'self';
   location : TJSWorkerLocation;
   console : TJSConsole;
   navigator : TJSWorkerNavigator;
-  serviceWorker : TJSServiceWorker;
   caches : TJSCacheStorage;
 
 function fetch(resource: String; init: TJSObject): TJSPromise; overload; external name 'fetch';

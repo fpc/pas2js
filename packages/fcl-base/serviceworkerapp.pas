@@ -162,9 +162,9 @@ end;
 function TServiceWorkerApplication.EnableNavigationPreload: jsvalue;
 begin
   Result:=nil;
-  if jsvalue(serviceWorker.registration.navigationPreload) then
+  if jsvalue(self_.registration.navigationPreload) then
     // Enable navigation preloads!
-    await(serviceWorker.registration.navigationPreload.enable());
+    await(self_.registration.navigationPreload.enable());
 end;
 
 procedure TServiceWorkerApplication.DeleteCache(key: string);
@@ -189,9 +189,9 @@ end;
 
 procedure TServiceWorkerApplication.DoRun;
 begin
-  ServiceWorker.addEventListener('activate', @Activate);
-  ServiceWorker.addEventListener('install', @Install);
-  ServiceWorker.addEventListener('fetch', @Fetch);
+  self_.addEventListener('activate', @Activate);
+  self_.addEventListener('install', @Install);
+  self_.addEventListener('fetch', @Fetch);
 end;
 
 procedure TServiceWorkerApplication.Activate(Event: TJSExtendableEvent);

@@ -956,7 +956,7 @@ type
 
   { TWindowOrWorkerGlobalScope }
 
-  TWindowOrWorkerGlobalScope = Class external name 'Object' (TJSObject)
+  TWindowOrWorkerGlobalScope = Class external name 'Object' (TJSEventTarget)
   Private
     FCrypto: TJSCrypto; external name 'crypto';
     FisSecureContext : boolean; external name 'isSecureContext';

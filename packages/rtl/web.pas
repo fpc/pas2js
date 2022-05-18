@@ -3414,7 +3414,7 @@ var
   window : TJSWindow; external name 'window';
   console : TJSConsole; external name 'window.console';
   caches : TJSCacheStorage; external name 'caches';
-  serviceWorker : TJSServiceWorker; external name 'self';
+  serviceWorker : TJSServiceWorker; external name 'window.navigator.serviceWorker';
 
 Function HasServiceWorker : Boolean;
 

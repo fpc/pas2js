@@ -303,6 +303,8 @@ type
   TWASIExports = Class External name 'Object' (TJSModulesExports)
   Public
      Procedure start; external name '_start';
+     function AllocMem(aSize : Integer) : Integer; external name 'wasiAlloc';
+     function freeMem(aLocation : Integer) : Integer; external name 'wasiFree';
   end;
 
   TGetConsoleInputBufferEvent = Reference to Procedure(Sender : TObject; Var AInput : TJSUint8Array);

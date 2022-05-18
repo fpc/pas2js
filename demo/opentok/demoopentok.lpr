@@ -3,7 +3,7 @@ program demoopentok;
 {$mode objfpc}
 
 uses
-  JS, Classes, SysUtils, Web, libopentok, browserapp;
+  JS, Classes, SysUtils, Web, weborworker, libopentok, browserapp;
 
 Type
 

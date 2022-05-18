@@ -9,7 +9,7 @@ unit ServiceWorkerApp;
 interface
 
 uses
-  SysUtils, Types, JS, web, Classes, CustApp;
+  Classes, SysUtils, Types, JS, weborworker, webworker, CustApp;
 
 type
 
@@ -47,6 +47,56 @@ type
 
 implementation
 
+var
+  EnvNames: TJSObject;
+
+procedure ReloadEnvironmentStrings;
+
+var
+  I : Integer;
+  S,N : String;
+  A,P : TStringDynArray;
+begin
+  if Assigned(EnvNames) then
+    FreeAndNil(EnvNames);
+  EnvNames:=TJSObject.new;
+  S:=self_.Location.search;
+  S:=Copy(S,2,Length(S)-1);
+  A:=TJSString(S).split('&');
+  for I:=0 to Length(A)-1 do
+    begin
+    P:=TJSString(A[i]).split('=');
+    N:=LowerCase(decodeURIComponent(P[0]));
+    if Length(P)=2 then
+      EnvNames[N]:=decodeURIComponent(P[1])
+    else if Length(P)=1 then
+      EnvNames[N]:=''
+    end;
+end;
+
+function MyGetEnvironmentVariable(Const EnvVar: String): String;
+
+Var
+  aName : String;
+
+begin
+  aName:=Lowercase(EnvVar);
+  if EnvNames.hasOwnProperty(aName) then
+    Result:=String(EnvNames[aName])
+  else
+    Result:='';
+end;
+
+function MyGetEnvironmentVariableCount: Integer;
+begin
+  Result:=length(TJSOBject.getOwnPropertyNames(envNames));
+end;
+
+function MyGetEnvironmentString(Index: Integer): String;
+begin
+  Result:=String(EnvNames[TJSOBject.getOwnPropertyNames(envNames)[Index]]);
+end;
+
 { TServiceWorkerApplication }
 
 procedure TServiceWorkerApplication.SetFallbackURL(const AValue: string);
@@ -60,7 +110,7 @@ procedure TServiceWorkerApplication.PutInCache(Request: TJSRequest;
 var
   Cache: TJSCache;
 begin
-  Cache := await(TJSCache,Caches.open(CacheName));
+  Cache := await(TJSCache,self_.Caches.open(CacheName));
   await(TJSCache,Cache.put(Request, Response));
 end;
 
@@ -72,7 +122,7 @@ begin
   Result:=nil;
 
   // First try to get the resource from the cache
-  ResponseFromCache := await(TJSResponse,caches.match(Request));
+  ResponseFromCache := await(TJSResponse,self_.caches.match(Request));
   if Assigned(ResponseFromCache) then
     exit(ResponseFromCache);
 
@@ -87,14 +137,14 @@ begin
 
   // Next try to get the resource from the network
   try
-    ResponseFromNetwork := await(TJSResponse,window.fetch(Request));
+    ResponseFromNetwork := await(TJSResponse,self_.fetch(Request));
     // response may be used only once
     // we need to save clone to put one copy in cache
     // and serve second one
     PutInCache(Request, ResponseFromNetwork.clone());
     exit(ResponseFromNetwork);
   except
-    FallbackResponse := await(TJSResponse,caches.match(FallbackUrl));
+    FallbackResponse := await(TJSResponse,self_.caches.match(FallbackUrl));
     if Assigned(FallbackResponse) then
       exit(FallbackResponse);
 
@@ -119,7 +169,7 @@ end;
 
 procedure TServiceWorkerApplication.DeleteCache(key: string);
 begin
-  await(boolean,caches.delete(key));
+  await(boolean,Self_.caches.delete(key));
 end;
 
 function TServiceWorkerApplication.DeleteOldCaches: jsvalue;
@@ -128,7 +178,7 @@ var
   CachesToDelete, KeyList: TJSArray;
 begin
   CacheKeepList := [CacheName];
-  KeyList := await(TJSArray,caches.keys());
+  KeyList := await(TJSArray,self_.caches.keys());
   CachesToDelete := keyList.filter(
     function (key: JSValue; index: NativeInt; anArray : TJSArray) : Boolean
     begin
@@ -153,7 +203,7 @@ end;
 procedure TServiceWorkerApplication.Install(Event: TJSExtendableEvent);
 begin
   Event.waitUntil(
-    Caches.Open(CacheName)._then(
+    self_.Caches.Open(CacheName)._then(
       TJSPromiseResolver(procedure(Cache: TJSCache)
       begin
         Cache.addAll(Resources);
@@ -204,7 +254,12 @@ begin
 end;
 
 initialization
+  
   IsConsole:=true;
-
+  ReloadEnvironmentStrings;
+  OnGetEnvironmentVariable:=@MyGetEnvironmentVariable;
+  OnGetEnvironmentVariableCount:=@MyGetEnvironmentVariableCount;
+  OnGetEnvironmentString:=@MyGetEnvironmentString;
+  
 end.
 

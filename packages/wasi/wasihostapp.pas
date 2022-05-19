@@ -8,12 +8,6 @@ uses
   Classes, SysUtils, browserapp,  webassembly, wasienv;
 
 Type
-  TStartDescriptor = record
-    Memory : TJSWebAssemblyMemory;
-    Table : TJSWebAssemblyTable;
-    Exported : TWASIExports;
-    Instance : TJSWebAssemblyInstance;
-  end;
 
   { TWASIHostApplication }
 

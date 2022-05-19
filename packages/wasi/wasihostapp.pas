@@ -5,7 +5,7 @@ unit wasihostapp;
 interface
 
 uses
-  Classes, SysUtils, JS, browserapp, web, webassembly, wasienv;
+  Classes, SysUtils, browserapp,  webassembly, wasienv;
 
 Type
   TStartDescriptor = record
@@ -16,30 +16,31 @@ Type
   end;
 
   { TWASIHostApplication }
-  TBeforeStartCallBack = Reference to Function (Sender : TObject; aDescriptor : TStartDescriptor) : Boolean;
-  TAfterStartCallBack = Reference to Procedure (Sender : TObject; aDescriptor : TStartDescriptor);
-
-  TBeforeStartEvent = Procedure (Sender : TObject; aDescriptor : TStartDescriptor; var aAllowRun : Boolean) of object;
-  TAfterStartEvent = Procedure (Sender : TObject; aDescriptor : TStartDescriptor) of object;
 
 
-  TWASIHostApplication = class(TBrowserApplication)
+
+  TBrowserWASIHostApplication = class(TBrowserApplication)
   private
-    FAfterStart: TAfterStartEvent;
-    FBeforeStart: TBeforeStartEvent;
-    FEnv: TPas2JSWASIEnvironment;
-    FExported: TWASIExports;
-    FMemoryDescriptor : TJSWebAssemblyMemoryDescriptor;
-    FRunEntryFunction: String;
-    FTableDescriptor : TJSWebAssemblyTableDescriptor;
-    procedure DoStdRead(Sender: TObject; var AInput: string);
+    FHost : TWASIHost;
+    FOnConsoleRead: TConsoleReadEvent;
+    FOnConsoleWrite: TConsoleWriteEvent;
+    FPredefinedConsoleInput: TStrings;
+    function GetAfterStart: TAfterStartEvent;
+    function GetBeforeStart: TBeforeStartEvent;
+    function GetEnv: TPas2JSWASIEnvironment;
+    function GetExported: TWASIExports;
+    function GetMemoryDescriptor: TJSWebAssemblyMemoryDescriptor;
+    function GetRunEntryFunction: String;
+    function GetTableDescriptor: TJSWebAssemblyTableDescriptor;
+    procedure SetAfterStart(AValue: TAfterStartEvent);
+    procedure SetBeforeStart(AValue: TBeforeStartEvent);
+    procedure SetMemoryDescriptor(AValue: TJSWebAssemblyMemoryDescriptor);
+    procedure SetPredefinedConsoleInput(AValue: TStrings);
+    procedure SetRunEntryFunction(AValue: String);
+    procedure SetTableDescriptor(AValue: TJSWebAssemblyTableDescriptor);
   protected
-    procedure DoStdWrite(Sender: TObject; const aOutput: String); virtual;
-    function CreateWebAssembly(aPath: string; aImportObject: TJSObject): TJSPromise; virtual;
-    Function CreateWasiEnvironment : TPas2JSWASIEnvironment; virtual;
-    function GetTable: TJSWebAssemblyTable; virtual;
-    function GetMemory: TJSWebAssemblyMemory; virtual;
- public
+    function CreateHost: TWASIHost; virtual;
+  public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     // Load and start webassembly. If DoRun is true, then Webassembly entry point is called.
@@ -47,140 +48,126 @@ Type
     // If aAfterStart is specified, then it is called after calling run. It is not called is running was disabled.
     Procedure StartWebAssembly(aPath: string; DoRun : Boolean = True;  aBeforeStart : TBeforeStartCallback = Nil; aAfterStart : TAfterStartCallback = Nil);
     // Initial memory descriptor
-    Property MemoryDescriptor : TJSWebAssemblyMemoryDescriptor Read FMemoryDescriptor Write FMemoryDescriptor;
+    Property MemoryDescriptor : TJSWebAssemblyMemoryDescriptor Read GetMemoryDescriptor Write SetMemoryDescriptor;
     // Import/export table descriptor
-    Property TableDescriptor : TJSWebAssemblyTableDescriptor Read FTableDescriptor Write FTableDescriptor;
+    Property TableDescriptor : TJSWebAssemblyTableDescriptor Read GetTableDescriptor Write SetTableDescriptor;
     // Environment to be used
-    Property WasiEnvironment : TPas2JSWASIEnvironment Read FEnv;
+    Property WasiEnvironment : TPas2JSWASIEnvironment Read GetEnv;
     // Exported functions. Also available in start descriptor.
-    Property Exported : TWASIExports Read FExported;
-    Property RunEntryFunction : String Read FRunEntryFunction Write FRunEntryFunction;
+    Property Exported : TWASIExports Read GetExported;
+    // Name of function to run, if empty default _start symbol is used.
+    Property RunEntryFunction : String Read GetRunEntryFunction Write SetRunEntryFunction;
     // Called after webassembly start was run. Not called if webassembly was not run.
-    Property AfterStart : TAfterStartEvent Read FAfterStart Write FAfterStart;
+    Property AfterStart : TAfterStartEvent Read GetAfterStart Write SetAfterStart;
     // Called before running webassembly. If aAllowRun is false, running is disabled
-    Property BeforeStart : TBeforeStartEvent Read FBeforeStart Write FBeforeStart;
+    Property BeforeStart : TBeforeStartEvent Read GetBeforeStart Write SetBeforeStart;
+    // Default console input
+    Property PredefinedConsoleInput : TStrings Read FPredefinedConsoleInput Write SetPredefinedConsoleInput;
+    // Called when reading from console (stdin). If not set, PredefinedConsoleinput is used.
+    property OnConsoleRead : TConsoleReadEvent Read FOnConsoleRead Write FOnConsoleRead;
+    // Called when writing to console (stdout). If not set, console.log is used.
+    property OnConsoleWrite : TConsoleWriteEvent Read FOnConsoleWrite Write FOnConsoleWrite;
   end;
+
+  // For backwards compatibility
+
+  TWASIHostApplication = TBrowserWASIHostApplication;
 
 implementation
 
-{ TWASIHostApplication }
+{ TBrowserWASIHostApplication }
 
-function TWASIHostApplication.CreateWasiEnvironment: TPas2JSWASIEnvironment;
+function TBrowserWASIHostApplication.GetAfterStart: TAfterStartEvent;
 begin
-  Result:=TPas2JSWASIEnvironment.Create;
+  Result:=FHost.AfterStart;
 end;
 
-constructor TWASIHostApplication.Create(aOwner: TComponent);
+function TBrowserWASIHostApplication.GetBeforeStart: TBeforeStartEvent;
+begin
+  Result:=FHost.BeforeStart;
+end;
+
+function TBrowserWASIHostApplication.GetEnv: TPas2JSWASIEnvironment;
+begin
+  Result:=FHost.WasiEnvironment;
+end;
+
+function TBrowserWASIHostApplication.GetExported: TWASIExports;
+begin
+  Result:=FHost.Exported;
+end;
+
+function TBrowserWASIHostApplication.GetMemoryDescriptor: TJSWebAssemblyMemoryDescriptor;
+begin
+  Result:=FHost.MemoryDescriptor;
+end;
+
+function TBrowserWASIHostApplication.GetRunEntryFunction: String;
+begin
+  Result:=FHost.RunEntryFunction;
+end;
+
+function TBrowserWASIHostApplication.GetTableDescriptor: TJSWebAssemblyTableDescriptor;
+begin
+  Result:=FHost.TableDescriptor;
+end;
+
+procedure TBrowserWASIHostApplication.SetAfterStart(AValue: TAfterStartEvent);
+begin
+  FHost.AfterStart:=aValue;
+end;
+
+procedure TBrowserWASIHostApplication.SetBeforeStart(AValue: TBeforeStartEvent);
+begin
+  FHost.BeforeStart:=aValue;
+end;
+
+procedure TBrowserWASIHostApplication.SetMemoryDescriptor(
+  AValue: TJSWebAssemblyMemoryDescriptor);
+begin
+  FHost.MemoryDescriptor:=aValue;
+end;
+
+procedure TBrowserWASIHostApplication.SetPredefinedConsoleInput(AValue: TStrings);
+begin
+  FHost.PredefinedConsoleInput:=aValue;
+end;
+
+procedure TBrowserWASIHostApplication.SetRunEntryFunction(AValue: String);
+begin
+  FHost.RunEntryFunction:=aValue;
+end;
+
+procedure TBrowserWASIHostApplication.SetTableDescriptor(
+  AValue: TJSWebAssemblyTableDescriptor);
+begin
+  FHost.TableDescriptor:=aValue;
+end;
+
+function TBrowserWASIHostApplication.CreateHost : TWASIHost;
+
+begin
+  Result:=TWASIHost.Create(Nil);
+end;
+
+constructor TBrowserWASIHostApplication.Create(aOwner: TComponent);
 begin
   inherited Create(aOwner);
-  FEnv:=CreateWasiEnvironment;
-  FEnv.OnStdErrorWrite:=@DoStdWrite;
-  FEnv.OnStdOutputWrite:=@DoStdWrite;
-  Fenv.OnGetConsoleInputString:=@DoStdRead;
-  FMemoryDescriptor.initial:=256;
-  FMemoryDescriptor.maximum:=256;
-  FTableDescriptor.initial:=0;
-  FTableDescriptor.maximum:=0;
-  FTableDescriptor.element:='anyfunc';
+  FHost:=CreateHost;
 end;
 
-destructor TWASIHostApplication.Destroy;
+destructor TBrowserWASIHostApplication.Destroy;
 begin
-  FreeAndNil(FEnv);
+  FreeAndNil(FHost);
   inherited Destroy;
 end;
 
-function TWASIHostApplication.GetTable : TJSWebAssemblyTable;
-
-begin
-  Result:=TJSWebAssemblyTable.New(FTableDescriptor);
-end;
-
-function TWASIHostApplication.GetMemory : TJSWebAssemblyMemory;
-
-begin
-  Result:=TJSWebAssemblyMemory.New(FMemoryDescriptor);
-end;
-
-
-procedure TWASIHostApplication.StartWebAssembly(aPath: string; DoRun: Boolean;
+procedure TBrowserWASIHostApplication.StartWebAssembly(aPath: string; DoRun: Boolean;
   aBeforeStart: TBeforeStartCallback = nil; aAfterStart: TAfterStartCallback = nil);
 
-Var
-  ImportObj : TJSObject;
-  Res : TStartDescriptor;
-
-  function InitEnv(aValue: JSValue): JSValue;
-
-  Var
-    Module : TJSInstantiateResult absolute aValue;
-
-  begin
-    Result:=True;
-    Res.Instance:=Module.Instance;
-    Res.Exported:=TWASIExports(TJSObject(Module.Instance.exports_));
-    // These 2 prevent running different instances simultaneously.
-    FExported:=Res.Exported;
-    WasiEnvironment.Instance:=Module.Instance;
-    if Assigned(aBeforeStart) then
-      DoRun:=aBeforeStart(Self,Res) and DoRun;
-    if Assigned(FBeforeStart) then
-      FBeforeStart(Self,Res,DoRun);
-    if DoRun then
-      begin
-      if FRunEntryFunction='' then
-        Res.Exported.Start
-      else
-        TProcedure(Res.Exported[RunEntryFunction])();
-      if Assigned(aAfterStart) then
-        aAfterStart(Self,Res);
-      if Assigned(FAfterStart) then
-        FAfterStart(Self,Res)
-      end;
-  end;
-
-
 begin
-  Res.Memory:=GetMemory;
-  Res.Table:=GetTable;
-  ImportObj:=new([
-    'js', new([
-      'mem', Res.Memory,
-      'tbl', Res.Table
-    ])
-  ]);
-  FEnv.AddImports(ImportObj);
-  CreateWebAssembly(aPath,ImportObj)._then(@initEnv)
+  FHost.StartWebAssembly(aPath,DoRun,aBeforeStart,aAfterStart);
 end;
-
-procedure TWASIHostApplication.DoStdRead(Sender: TObject; var AInput: string);
-begin
-  aInput:=Window.prompt('Please enter the input for the running webassembly program.');
-end;
-
-procedure TWASIHostApplication.DoStdWrite(Sender: TObject; const aOutput: String
-  );
-begin
-  Console.log('Webassembly output: ', aOutput);
-end;
-
-function TWASIHostApplication.CreateWebAssembly(aPath: string; aImportObject: TJSObject): TJSPromise;
-
-  Function ArrayOK(res2 : jsValue) : JSValue;
-
-  begin
-     Result:=TJSWebAssembly.instantiate(TJSArrayBuffer(res2),aImportObject);
-  end;
-
-  function fetchOK(res : jsValue) : JSValue;
-  begin
-    Result:=TJSResponse(Res).arrayBuffer._then(@ArrayOK,Nil)
-  end;
-
-begin
-  Result:=window.fetch(aPath)._then(@fetchOK,Nil);
-end;
-
 
 end.
 

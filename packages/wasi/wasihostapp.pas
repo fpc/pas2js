@@ -16,10 +16,17 @@ Type
   end;
 
   { TWASIHostApplication }
-  TStartCallBack = Reference to Function (Sender : TObject; aDescriptor : TStartDescriptor) : Boolean;
+  TBeforeStartCallBack = Reference to Function (Sender : TObject; aDescriptor : TStartDescriptor) : Boolean;
+  TAfterStartCallBack = Reference to Procedure (Sender : TObject; aDescriptor : TStartDescriptor);
+
+  TBeforeStartEvent = Procedure (Sender : TObject; aDescriptor : TStartDescriptor; var aAllowRun : Boolean) of object;
+  TAfterStartEvent = Procedure (Sender : TObject; aDescriptor : TStartDescriptor) of object;
+
 
   TWASIHostApplication = class(TBrowserApplication)
   private
+    FAfterStart: TAfterStartEvent;
+    FBeforeStart: TBeforeStartEvent;
     FEnv: TPas2JSWASIEnvironment;
     FExported: TWASIExports;
     FMemoryDescriptor : TJSWebAssemblyMemoryDescriptor;
@@ -36,8 +43,9 @@ Type
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     // Load and start webassembly. If DoRun is true, then Webassembly entry point is called.
-    // If aCallback is specified, then it is called prior to calling run.
-    Procedure StartWebAssembly(aPath: string; DoRun : Boolean = True;  aCallBack : TStartCallback = Nil);
+    // If aBeforeStart is specified, then it is called prior to calling run, and can disable running.
+    // If aAfterStart is specified, then it is called after calling run. It is not called is running was disabled.
+    Procedure StartWebAssembly(aPath: string; DoRun : Boolean = True;  aBeforeStart : TBeforeStartCallback = Nil; aAfterStart : TAfterStartCallback = Nil);
     // Initial memory descriptor
     Property MemoryDescriptor : TJSWebAssemblyMemoryDescriptor Read FMemoryDescriptor Write FMemoryDescriptor;
     // Import/export table descriptor
@@ -47,6 +55,10 @@ Type
     // Exported functions. Also available in start descriptor.
     Property Exported : TWASIExports Read FExported;
     Property RunEntryFunction : String Read FRunEntryFunction Write FRunEntryFunction;
+    // Called after webassembly start was run. Not called if webassembly was not run.
+    Property AfterStart : TAfterStartEvent Read FAfterStart Write FAfterStart;
+    // Called before running webassembly. If aAllowRun is false, running is disabled
+    Property BeforeStart : TBeforeStartEvent Read FBeforeStart Write FBeforeStart;
   end;
 
 implementation
@@ -91,7 +103,8 @@ begin
 end;
 
 
-procedure TWASIHostApplication.StartWebAssembly(aPath: string; DoRun : Boolean = True;  ACallBack: TStartCallback = Nil);
+procedure TWASIHostApplication.StartWebAssembly(aPath: string; DoRun: Boolean;
+  aBeforeStart: TBeforeStartCallback = nil; aAfterStart: TAfterStartCallback = nil);
 
 Var
   ImportObj : TJSObject;
@@ -109,13 +122,21 @@ Var
     // These 2 prevent running different instances simultaneously.
     FExported:=Res.Exported;
     WasiEnvironment.Instance:=Module.Instance;
-    if Assigned(aCallBack) then
-      DoRun:=aCallBack(Self,Res) and DoRun;
+    if Assigned(aBeforeStart) then
+      DoRun:=aBeforeStart(Self,Res) and DoRun;
+    if Assigned(FBeforeStart) then
+      FBeforeStart(Self,Res,DoRun);
     if DoRun then
+      begin
       if FRunEntryFunction='' then
         Res.Exported.Start
       else
         TProcedure(Res.Exported[RunEntryFunction])();
+      if Assigned(aAfterStart) then
+        aAfterStart(Self,Res);
+      if Assigned(FAfterStart) then
+        FAfterStart(Self,Res)
+      end;
   end;
 
 

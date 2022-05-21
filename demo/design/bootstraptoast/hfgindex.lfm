@@ -1,0 +1,30 @@
+object frgmIndex: TfrgmIndex
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  Height = 222
+  HorizontalOffset = 754
+  VerticalOffset = 353
+  Width = 380
+  object btwDemo: TBootstrapToastWidget
+    ParentID = 'toast-parent'
+    Styles = <>
+    StyleRefresh = srOnElementID
+    Header = 'Oh my Pas2JS!'
+    SmallHeader = '<span>Isn''t it great?</span>'
+    Body = 'This must be a pas2js generated Toast !'
+    CloseButton = True
+    Contextual = cDanger
+    HideDelay = 5000
+    Left = 168
+    Top = 32
+  end
+  object alIndex: THTMLElementActionList
+    Left = 64
+    Top = 25
+    object actShowToast: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnShowToast'
+      OnExecute = actShowToastExecute
+    end
+  end
+end

@@ -16,6 +16,7 @@
 unit htmlwidgets;
 
 {$mode objfpc}
+{$h+}
 
 interface
 

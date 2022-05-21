@@ -17,26 +17,64 @@ unit dbwebwidget;
 
 
 {$mode objfpc}
+{$h+}
+
+{$define NESTEDCLASSBUG}
 
 interface
 
 uses
-  Classes, webwidget, db;
+  SysUtils, Classes, webwidget, db;
 
 Type
+  TCustomDBLoopTemplateWidget = class;
 
-  { TCustomDBLoopTemplateWidget }
   TDBFieldValueData = Class(TLoopTemplateValue)
     Field : TField;
   end;
   TGetFieldValueEvent = Procedure (Sender : TObject; aData : TDBFieldValueData) of object;
 
+  { TDBLoopTemplateGroup }
+
+  TDBLoopTemplateGroup = Class(TLoopTemplateGroup)
+  private
+    FFieldList: String;
+    FFields : TFPList;
+  Public
+    Destructor Destroy; override;
+    Procedure Assign(Source : TPersistent); override;
+    procedure PopulateFields(aDataset: TDataset);
+    Function CalcGroupValue(aDataset : TDataset) : String;
+    Property Fields : TFPList Read FFields;
+  Published
+    Property FieldList : String Read FFieldList Write FFieldList;
+  end;
+
+
+  TDBLoopTemplateValueEvent = Procedure (Sender : TObject; aDataset : TDataset; aValue : TLoopTemplateValue) of object;
+
+  { TLoopDatalink }
+
+  TLoopDatalink = class(TDataLink)
+  private
+    FWidget: TCustomDBLoopTemplateWidget;
+  Protected
+    procedure ActiveChanged; override;
+  Public
+    Constructor Create(aWidget :TCustomDBLoopTemplateWidget);
+    Property Widget :TCustomDBLoopTemplateWidget Read FWidget;
+  end;
+
+  { TCustomDBLoopTemplateWidget }
+
   TCustomDBLoopTemplateWidget = Class(TCustomLoopTemplateWidget)
   private
-    FDatasource: TDatasource;
+    FLink : TLoopDatalink;
     FOnFormatField: TGetFieldValueEvent;
+    FOnGetGroupValue: TDBLoopTemplateValueEvent;
     function GetDataset: TDataset;
     procedure SetDatasource(AValue: TDatasource);
+    Function GetDatasource: TDatasource;
   Protected
     Type
       TDBLoopEnumerator = Class(TLoopEnumerator)
@@ -50,16 +88,23 @@ Type
         Property Dataset : TDataset Read FDataset;
       end;
   Protected
+    procedure ActiveChanged; virtual;
     function FormatField(aEnum : TDBLoopEnumerator; aField: TField): String;
     Function CreateLoopEnumerator (aCurrValues : TLoopTemplateValue) : TLoopEnumerator; override;
+    function GetGroupValue(aEnum: TLoopEnumerator; aGroupIndex: Integer; aGroup: TLoopTemplateGroup): String; override;
+    Class Function CreateGroups(aOwner : TComponent) : TLoopTemplateGroupList; override;
     class Function CreateCurrValues: TLoopTemplateValue; override;
   Protected
-    Procedure Notification(AComponent: TComponent; Operation: TOperation); override;
-    Property Datasource : TDatasource Read FDatasource Write SetDatasource;
+    Property Datasource : TDatasource Read GetDatasource Write SetDatasource;
     Property OnFormatField : TGetFieldValueEvent Read FOnFormatField Write FOnFormatField;
+    Property OnGetGroupValue : TDBLoopTemplateValueEvent Read FOnGetGroupValue Write FOnGetGroupValue;
   Public
+    constructor Create(aOwner : TComponent); override;
+    destructor Destroy; override;
     Property Dataset : TDataset Read GetDataset;
   end;
+
+  { TDBLoopTemplateWidget }
 
   TDBLoopTemplateWidget = Class(TCustomDBLoopTemplateWidget)
   Published
@@ -70,9 +115,72 @@ Type
     Property References;
     Property Datasource;
     Property OnFormatField;
+    Property Groups;
+    Property OnGetGroupValue;
   end;
 
 implementation
+
+{ TLoopDatalink }
+
+procedure TLoopDatalink.ActiveChanged;
+begin
+  inherited ActiveChanged;
+  Widget.ActiveChanged;
+end;
+
+constructor TLoopDatalink.Create(aWidget: TCustomDBLoopTemplateWidget);
+begin
+  Inherited;
+  FWidget:=aWidget;
+end;
+
+{ TDBLoopTemplateGroup }
+
+procedure TDBLoopTemplateGroup.PopulateFields(aDataset : TDataset);
+
+begin
+  if not assigned(aDataset) then
+    exit;
+  if not assigned(FFields) then
+    FFields:=TFPList.Create;
+  aDataset.GetFieldList(FFields,FieldList);
+end;
+
+function TDBLoopTemplateGroup.CalcGroupValue(aDataset : TDataset): String;
+
+Var
+  I : Integer;
+
+begin
+  Result:='';
+  if Not Assigned(FFields) then
+    PopulateFields(aDataset);
+  If Assigned(FFields) then
+    begin
+    For I:=0 to FFields.Count-1 do
+      Result:=Result+'|'+TField(FFields[i]).AsString;
+    Result:=Result+'|';
+    end;
+end;
+
+destructor TDBLoopTemplateGroup.Destroy;
+
+begin
+  FreeAndNil(FFields);
+  inherited Destroy;
+end;
+
+procedure TDBLoopTemplateGroup.Assign(Source: TPersistent);
+
+Var
+  G : TDBLoopTemplateGroup absolute Source;
+
+begin
+  if Source is TDBLoopTemplateGroup then
+    FieldList:=G.FieldList;
+  inherited Assign(Source);
+end;
 
 { TCustomDBLoopTemplateWidget.TDBLoopEnumerator }
 
@@ -123,27 +231,30 @@ begin
     Dataset.Next;
   Result:=Not Dataset.EOF;
   if Result then
+    begin
+{$IFDEF NESTEDCLASSBUG}
+    asm
+    Result = pas.webwidget.TCustomLoopTemplateWidget.TLoopEnumerator.MoveNext.call(this);
+    end;
+{$ELSE}
     Result:=inherited MoveNext; // Update index;
+{$ENDIF}
+    end;
 end;
 
 { TCustomDBLoopTemplateWidget }
 
 function TCustomDBLoopTemplateWidget.GetDataset: TDataset;
 begin
-  if Assigned(FDatasource) then
-    Result:=FDatasource.Dataset
+  if Assigned(Flink.Datasource) then
+    Result:=Flink.Datasource.Dataset
   else
     Result:=Nil;
 end;
 
 procedure TCustomDBLoopTemplateWidget.SetDatasource(AValue: TDatasource);
 begin
-  if FDatasource=AValue then Exit;
-  if Assigned(FDatasource) then
-    FDatasource.RemoveFreeNotification(Self);
-  FDatasource:=AValue;
-  if Assigned(FDatasource) then
-    FDatasource.FreeNotification(Self);
+  Flink.Datasource:=aValue;
 end;
 
 function TCustomDBLoopTemplateWidget.CreateLoopEnumerator(aCurrValues: TLoopTemplateValue): TLoopEnumerator;
@@ -157,16 +268,56 @@ begin
   Result:=DBL;
 end;
 
-Class function TCustomDBLoopTemplateWidget.CreateCurrValues: TLoopTemplateValue;
+function TCustomDBLoopTemplateWidget.GetGroupValue(aEnum: TLoopEnumerator;
+  aGroupIndex: Integer; aGroup: TLoopTemplateGroup): String;
+begin
+  if aGroup is TDBLoopTemplateGroup then
+    Result:=TDBLoopTemplateGroup(aGroup).CalcGroupValue(Dataset)
+  else
+    Result:=Inherited GetGroupValue(aEnum,aGroupIndex,aGroup);
+  if Assigned(OnGetGroupValue) then
+    begin
+    aEnum.CurrValues.Name:=aGroup.Name;
+    aEnum.CurrValues.Value:=Result;
+    OnGetGroupValue(Self,Dataset,aEnum.CurrValues);
+    Result:=aEnum.CurrValues.Value;
+    end;
+end;
+
+class function TCustomDBLoopTemplateWidget.CreateGroups(aOwner: TComponent
+  ): TLoopTemplateGroupList;
+begin
+  Result:=TLoopTemplateGroupList.Create(aOwner,TDBLoopTemplateGroup);
+end;
+
+class function TCustomDBLoopTemplateWidget.CreateCurrValues: TLoopTemplateValue;
 begin
   Result:=TDBFieldValueData.Create;
 end;
 
-procedure TCustomDBLoopTemplateWidget.Notification(AComponent: TComponent; Operation: TOperation);
+constructor TCustomDBLoopTemplateWidget.Create(aOwner: TComponent);
 begin
-  inherited Notification(AComponent, Operation);
-  if (Operation=opRemove) and (AComponent=FDatasource) then
-    FDataSource:=Nil;
+  inherited Create(aOwner);
+  FLink:=TLoopDatalink.Create(Self);
+end;
+
+destructor TCustomDBLoopTemplateWidget.Destroy;
+begin
+  FreeAndNil(FLink);
+  inherited destroy;
+end;
+
+function TCustomDBLoopTemplateWidget.GetDatasource: TDatasource;
+begin
+  Result:=FLink.DataSource;
+end;
+
+procedure TCustomDBLoopTemplateWidget.ActiveChanged;
+begin
+  if FLink.Active then
+    Refresh
+  else
+    UnRender;
 end;
 
 end.

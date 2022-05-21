@@ -16,7 +16,8 @@
 unit dbhtmlwidgets;
 
 {$mode objfpc}
-
+{$h+}
+{$define NESTEDCLASSBUG}
 interface
 
 uses
@@ -113,19 +114,36 @@ Type
 
   // Select that gets the values from a dataset.
 
+  TCustomDBSelectWidget = class;
+  
   { TCustomDBSelectWidget }
 
+  { TSelectLink }
+
+  TSelectLink = class(TDatalink)
+  Private
+    FWidget : TCustomDBSelectWidget;
+  Protected
+    Procedure ActiveChanged; override;
+  Public
+    Constructor Create(aWidget : TCustomDBSelectWidget);
+    Property Widget: TCustomDBSelectWidget Read FWidget;
+  end;
+  
   TCustomDBSelectWidget = class(TCustomSelectWidget)
   Private
-    FDatasource : TDatasource;
+    FLink : TSelectLink;
     FItemField: String;
     FNullIsNotValue: Boolean;
     FValueField: String;
+    FValue : string;
     function GetDataset: TDataset;
     function GetValue: String;
     procedure SetDatasource(AValue: TDatasource);
+    function GetDatasource: TDatasource;
     procedure SetItemField(AValue: String);
     procedure SetNullIsNotValue(AValue: Boolean);
+    procedure SetValue(AValue: String);
     procedure SetValueField(AValue: String);
   Protected
     Type
@@ -144,14 +162,18 @@ Type
       Property Dataset : TDataset Read FDS;
     end;
     Function CreateOptionEnumerator: TSelectOptionEnumerator; override;
-    Procedure Notification(AComponent: TComponent; Operation: TOperation); override;
+    procedure ActiveChanged; virtual;
+    Procedure DoUnRender(aParent : TJSHTMLElement) ; override;
   Protected
-    Property Datasource : TDatasource Read FDatasource write SetDatasource;
+    // properties that can be published in descendents
+    Property Datasource : TDatasource Read GetDatasource write SetDatasource;
     Property ItemField : String Read FItemField Write SetItemField;
     Property ValueField : String Read FValueField Write SetValueField;
     Property NullIsNotValue : Boolean Read FNullIsNotValue Write SetNullIsNotValue;
-    Property Value : String Read GetValue;
+    Property Value : String Read GetValue Write SetValue;
   Public
+    constructor Create(aOwner : TComponent); override;
+    destructor destroy; override;
     Property Dataset : TDataset Read GetDataset;
   end;
 
@@ -176,7 +198,23 @@ Type
     Property Multiple;
   end;
 
+
 implementation
+
+{ TSelectLink }
+
+procedure TSelectLink.ActiveChanged;
+begin
+  Widget.ActiveChanged;
+end;
+
+constructor TSelectLink.Create(aWidget: TCustomDBSelectWidget);
+
+begin
+  FWidget:=aWidget;
+  Inherited create;
+end;
+
 
 { TCustomDBSelectWidget.TDBSelectOptionEnumerator }
 
@@ -186,7 +224,13 @@ Var
   S : TCustomDBSelectWidget;
 
 begin
+{$IFDEF NESTEDCLASSBUG}
+  asm
+  pas.htmlwidgets.TCustomSelectWidget.TSelectOptionEnumerator.Create.call(this,ASelect);
+  end;
+{$ELSE}
   inherited Create(ASelect);
+{$ENDIF}
   FBOF:=True;
   S:=aSelect as TCustomDBSelectWidget;
   FDS:=S.Dataset;
@@ -231,25 +275,25 @@ end;
 
 function TCustomDBSelectWidget.GetDataset: TDataset;
 begin
-  if Assigned(Datasource) then
-    Result:=Datasource.Dataset
-  else
-    Result:=nil;
+  Result:=FLink.Dataset;
 end;
 
-function TCustomDBSelectWidget.GetValue: String;
+function TCustomDBSelectWidget.GetDatasource: TDatasource;
 begin
-  Result:=TJSHTMLSelectElement(Element).Value;
+  Result:=FLink.Datasource;
 end;
 
 procedure TCustomDBSelectWidget.SetDatasource(AValue: TDatasource);
 begin
-  if FDatasource=AValue then Exit;
-  if Assigned(FDatasource) then
-    FDatasource.RemoveFreeNotification(Self);
-  FDatasource:=AValue;
-  if Assigned(FDatasource) then
-    FDatasource.FreeNotification(Self);
+  FLink.Datasource:=aValue;
+end;
+
+function TCustomDBSelectWidget.GetValue: String;
+begin
+  if IsRendered then
+    Result:=TJSHTMLSelectElement(Element).Value
+  else
+    Result:=FValue;
 end;
 
 procedure TCustomDBSelectWidget.SetItemField(AValue: String);
@@ -264,6 +308,14 @@ begin
   FNullIsNotValue:=AValue;
 end;
 
+procedure TCustomDBSelectWidget.SetValue(AValue: String);
+begin
+  if IsRendered then
+    TJSHTMLSelectElement(Element).Value:=aValue
+  else
+    FValue:=aValue;
+end;
+
 procedure TCustomDBSelectWidget.SetValueField(AValue: String);
 begin
   if FValueField=AValue then Exit;
@@ -275,11 +327,31 @@ begin
   Result:=TDBSelectOptionEnumerator.Create(Self);
 end;
 
-procedure TCustomDBSelectWidget.Notification(AComponent: TComponent; Operation: TOperation);
+procedure TCustomDBSelectWidget.ActiveChanged;
 begin
-  inherited Notification(AComponent, Operation);
-  if (Operation=opRemove) and (AComponent=FDatasource) then
-    FDataSource:=Nil;
+  if FLink.Active then
+    Refresh
+  else
+    UnRender;
+end;
+
+procedure TCustomDBSelectWidget.DoUnRender(aParent: TJSHTMLElement);
+begin
+  if ExternalElement then
+    Element.innerHTML:='';
+  inherited DoUnRender(aParent);
+end;
+
+constructor TCustomDBSelectWidget.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  FLink:=TSelectLink.Create(Self);
+end;
+
+destructor TCustomDBSelectWidget.destroy;
+begin
+  FreeAndNil(FLink);
+  inherited destroy;
 end;
 
 { TDBTableColumn }

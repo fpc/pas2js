@@ -20,7 +20,7 @@ unit webwidget;
 interface
 
 uses
-  Types, Classes, SysUtils, JS, Web;
+  Types, Classes, SysUtils, JS, Web, weborworker;
 
 Const
 
@@ -791,6 +791,7 @@ Type
     procedure SetHeaderTemplate(AValue: String);
     procedure SetName(AValue: string);
   Public
+    function GetDisplayName: string; override;
     Procedure Assign(Source: TPersistent); override;
   Published
     Property Name : string Read FName Write SetName;
@@ -1093,6 +1094,13 @@ begin
     if TLoopTemplateGroupList(Collection).IndexOfGroup(aValue)<>-1 then
       raise EWidgets.CreateFmt(SErrDuplicateTemplateGroup, [aValue]);
   FName:=AValue;
+end;
+
+function TLoopTemplateGroup.GetDisplayName: string;
+begin
+  Result:=Name;
+  if Result='' then
+    Result:=Inherited GetDisplayName;
 end;
 
 procedure TLoopTemplateGroup.Assign(Source: TPersistent);
@@ -1411,11 +1419,9 @@ begin
     aEnum.FGroup:=Grp;
     V:=GetGroupValue(aEnum,GrpIdx,Grp);
     if Not StartGroups then
-      begin
       StartGroups:=(aEnum.Index=0) or (V<>Grp.FGroupValue);
-      if StartGroups and (aEnum.Index>0) then
-        Result:=Result+RenderGroupFooters(grpIdx,aEnum);
-      end;
+    if StartGroups and (aEnum.Index>0) then
+      Result:=Result+RenderGroupFooters(grpIdx,aEnum);
     Grp.FGroupValue:=V;
     if StartGroups then
       begin

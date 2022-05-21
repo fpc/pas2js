@@ -1,0 +1,143 @@
+object IndexFragment: TIndexFragment
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  OnRendered = DataModuleRendered
+  Height = 243
+  HorizontalOffset = 745
+  VerticalOffset = 331
+  Width = 376
+  object jdsCountries: TLocalJSONDataset
+    FieldDefs = <    
+      item
+        Name = 'ISO2'
+        DataType = ftString
+        Size = 2
+      end    
+      item
+        Name = 'ISO3'
+        DataType = ftString
+        Size = 3
+      end    
+      item
+        Name = 'Continent'
+        DataType = ftString
+        Size = 2
+      end    
+      item
+        Name = 'Name'
+        DataType = ftString
+        Size = 50
+      end    
+      item
+        Name = 'Prefix'
+        DataType = ftInteger
+      end>
+    OnCalcFields = jdsCountriesCalcFields
+    Options = []
+    StorageKind = skLocal
+    StorageKey = 'ldsCountries'
+    Left = 64
+    Top = 128
+    object jdsCountriesISO2: TStringField
+      FieldKind = fkData
+      FieldName = 'ISO2'
+      Index = 0
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesISO3: TStringField
+      FieldKind = fkData
+      FieldName = 'ISO3'
+      Index = 1
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 3
+    end
+    object jdsCountriesContinent: TStringField
+      FieldKind = fkData
+      FieldName = 'Continent'
+      Index = 2
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesName: TStringField
+      FieldKind = fkData
+      FieldName = 'Name'
+      Index = 3
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 50
+    end
+    object jdsCountriesPrefix: TIntegerField
+      FieldKind = fkData
+      FieldName = 'Prefix'
+      Index = 4
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+    end
+    object jdsCountriesFlagCode: TStringField
+      FieldKind = fkCalculated
+      FieldName = 'FlagCode'
+      Index = 5
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesContinentFull: TStringField
+      FieldKind = fkCalculated
+      FieldName = 'ContinentFull'
+      Index = 6
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 50
+    end
+  end
+  object DSCountries: TDataSource
+    DataSet = jdsCountries
+    Left = 168
+    Top = 128
+  end
+  object alIndex: THTMLElementActionList
+    Left = 168
+    Top = 40
+    object alShowHide: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnShow'
+      OnExecute = alShowHideExecute
+    end
+    object actSelectCountry: THTMLElementAction
+      Events = [heChange]
+      ElementID = 'selCountry'
+      OnExecute = actSelectCountryExecute
+    end
+  end
+  object selCountry: TDBSelectWidget
+    ElementID = 'selCountry'
+    Styles = <>
+    StyleRefresh = srOnElementID
+    Datasource = DSCountries
+    ItemField = 'Name'
+    ValueField = 'ISO2'
+    NullIsNotValue = False
+    SelectedIndex = -1
+    Multiple = False
+    Left = 72
+    Top = 51
+  end
+end

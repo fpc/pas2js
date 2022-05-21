@@ -1,0 +1,144 @@
+object IndexFragment: TIndexFragment
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  OnRendered = DataModuleRendered
+  Height = 243
+  HorizontalOffset = 745
+  VerticalOffset = 331
+  Width = 376
+  object ltwFlags: TDBLoopTemplateWidget
+    ParentID = 'flagbox'
+    Styles = <>
+    StyleRefresh = srOnElementID
+    Groups = <    
+      item
+        Name = 'Row'
+        HeaderTemplate = '<div class="columns">'
+        FooterTemplate = '</div>'
+      end>
+    HeaderTemplate = '<div>'
+    ItemTemplate = '<div class="column is-3">'#10'  <div class="card">'#10'    <div class="card-image">'#10'      <figure class="image is-4by3">'#10'        <img src="flags/{{flagcode}}.svg" alt="Flag of {{Name}}" width="480" height="360">'#10'      </figure>'#10'    </div>'#10'    <div class="card-content">'#10'      <div class="media">'#10'        <div class="media-left">'#10'          <figure class="image is-48x48">'#10'            <img src="flags/{{flagcode}}.svg" width="48" height="48" alt="Placeholder image">'#10'          </figure>'#10'        </div>'#10'        <div class="media-content">'#10'          <p class="title is-4">{{Name}}</p>'#10'          <p class="subtitle is-6">ISO : {{ISO2}}</p>'#10'        </div>'#10'      </div>'#10'      <div class="content">'#10'        <p>The ISO3 code of {{Name}} is {{ISO3}}, the telephone prefix {{Prefix}}.</p>'#10'        <p>{{Name}} is located on {{ContinentFull}}</p>'#10'      </div>'#10'    </div>'#10'  </div>'#10'</div>'#10#10
+    FooterTemplate = '</div>'
+    References = <>
+    Datasource = DSCountries
+    OnGetGroupValue = ltwFlagsGetGroupValue
+    Left = 64
+    Top = 40
+  end
+  object jdsCountries: TLocalJSONDataset
+    FieldDefs = <    
+      item
+        Name = 'ISO2'
+        DataType = ftString
+        Size = 2
+      end    
+      item
+        Name = 'ISO3'
+        DataType = ftString
+        Size = 3
+      end    
+      item
+        Name = 'Continent'
+        DataType = ftString
+        Size = 2
+      end    
+      item
+        Name = 'Name'
+        DataType = ftString
+        Size = 50
+      end    
+      item
+        Name = 'Prefix'
+        DataType = ftInteger
+      end>
+    OnCalcFields = jdsCountriesCalcFields
+    Options = []
+    StorageKind = skLocal
+    StorageKey = 'ldsCountries'
+    Left = 64
+    Top = 128
+    object jdsCountriesISO2: TStringField
+      FieldKind = fkData
+      FieldName = 'ISO2'
+      Index = 0
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesISO3: TStringField
+      FieldKind = fkData
+      FieldName = 'ISO3'
+      Index = 1
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 3
+    end
+    object jdsCountriesContinent: TStringField
+      FieldKind = fkData
+      FieldName = 'Continent'
+      Index = 2
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesName: TStringField
+      FieldKind = fkData
+      FieldName = 'Name'
+      Index = 3
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 50
+    end
+    object jdsCountriesPrefix: TIntegerField
+      FieldKind = fkData
+      FieldName = 'Prefix'
+      Index = 4
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+    end
+    object jdsCountriesFlagCode: TStringField
+      FieldKind = fkCalculated
+      FieldName = 'FlagCode'
+      Index = 5
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesContinentFull: TStringField
+      FieldKind = fkCalculated
+      FieldName = 'ContinentFull'
+      Index = 6
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 50
+    end
+  end
+  object DSCountries: TDataSource
+    DataSet = jdsCountries
+    Left = 168
+    Top = 128
+  end
+  object alIndex: THTMLElementActionList
+    Left = 168
+    Top = 40
+    object alShowHide: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnShow'
+      OnExecute = alShowHideExecute
+    end
+  end
+end

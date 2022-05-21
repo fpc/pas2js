@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bulma.min.css">
+  <title>HTML Element actions demo</title>
+  <script src="elementactions.js"></script>
+</head>
+<body>
+  <section class="section">
+    <h1 class="title is-3">Element actions demo</h1>
+    <div class="columns">
+      <div class="column is-one-quarter">
+        <div class="box">
+          <form action="#">
+            <div class="field">
+              <label class="label" for="edtFirstName">First name</label>
+              <div class="control">
+                <input id="edtFirstName" class="input is-one-quarter" type="text" placeholder="Text input">
+              </div>
+              <p class="help">Enter your first name here</p>
+            </div>
+            <div class="field">
+              <label class="label" for="edtLastName">Last name</label>
+              <div class="control">
+                <input id="edtLastName" class="input is-one-quarter" type="text" placeholder="Text input">
+              </div>
+              <p class="help">Enter your last name here</p>
+            </div>
+            <div class="control">
+              <button id="btnHello" class="button is-primary">Say hello</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </section>
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

@@ -1,0 +1,25 @@
+object IndexFragment: TIndexFragment
+  OldCreateOrder = False
+  OnRendered = DataModuleRendered
+  Height = 241
+  HorizontalOffset = 773
+  VerticalOffset = 456
+  Width = 352
+  object alIndex: THTMLElementActionList
+    Left = 72
+    Top = 32
+    object actedtFirstName: THTMLElementAction
+      Events = []
+      ElementID = 'edtFirstName'
+    end
+    object actedtLastName: THTMLElementAction
+      Events = []
+      ElementID = 'edtLastName'
+    end
+    object actbtnHello: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnHello'
+      OnExecute = actbtnHelloExecute
+    end
+  end
+end

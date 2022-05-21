@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>DB Loop widget demo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bulma.min.css">
+  <script src="countries.js"></script>
+  <script src="dbloopwidget.js"></script>
+</head>
+<body>
+  <div class="navbar">
+    <div class="navbar-start">
+      <div class="navbar-item">
+        <button id="btnShow" class="button is-primary">Show flags</button>
+      </div>
+    </div>
+    <div class="navbar-end">
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link">
+        Sources
+        </a>
+        <div class="navbar-dropdown">
+          <div class="navbar-item">
+            <a href="dbloopwidget.lpr">Program source</a>
+          </div>
+          <div class="navbar-item">
+            <a href="frmindex.pas">Form source</a>
+          </div>
+          <div class="navbar-item">
+            <a href="frmindex.lfm">Form file</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="flagbox" class="box">
+  </div>
+  <script>
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

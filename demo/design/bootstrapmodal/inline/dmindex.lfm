@@ -1,0 +1,36 @@
+object hfHello: ThfHello
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  OnHTMLLoaded = DataModuleHTMLLoaded
+  Height = 206
+  HorizontalOffset = 837
+  VerticalOffset = 356
+  Width = 424
+  object bmHello: TBootstrapModal
+    ElementID = 'mdlDialog'
+    Styles = <>
+    StyleRefresh = srOnElementID
+    ShowOnRender = False
+    BackDrop = True
+    KeyBoard = False
+    Focus = False
+    OnHide = bmHelloHide
+    References = <    
+      item
+        Selector = '#btnSave'
+        Name = 'btnSave'
+        Kind = mikClose
+      end>
+    Left = 64
+    Top = 40
+  end
+  object alMain: THTMLElementActionList
+    Left = 160
+    Top = 40
+    object actShowModal: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnShowModal'
+      OnExecute = actShowModalExecute
+    end
+  end
+end

@@ -1,0 +1,121 @@
+object hfgmIndex: ThfgmIndex
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  OnRendered = DataModuleRendered
+  Height = 362
+  HorizontalOffset = 936
+  VerticalOffset = 331
+  Width = 505
+  object alIndex: THTMLElementActionList
+    Left = 80
+    Top = 48
+    object actbtnFirst: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnFirst'
+      Datasource = dsCountries
+      ButtonAction = baFirst
+    end
+    object actbtnPrevious: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnPrevious'
+      Datasource = dsCountries
+      ButtonAction = baPrior
+    end
+    object actbtnNext: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnNext'
+      Datasource = dsCountries
+      ButtonAction = baNext
+    end
+    object actbtnLast: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnLast'
+      Datasource = dsCountries
+      ButtonAction = baLast
+    end
+    object actbtnPost: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnPost'
+      Datasource = dsCountries
+    end
+    object actbtnEdit: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnEdit'
+      Datasource = dsCountries
+      ButtonAction = baEdit
+    end
+    object actbtnCancel: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnCancel'
+      Datasource = dsCountries
+      ButtonAction = baCancel
+    end
+    object actedtName: TDBHTMLInputElementAction
+      Events = []
+      ElementID = 'edtName'
+      Datasource = dsCountries
+      FieldName = 'Name'
+    end
+    object actedtCode: TDBHTMLInputElementAction
+      Events = []
+      ElementID = 'edtCode'
+      Datasource = dsCountries
+      FieldName = 'Code'
+    end
+    object actBtnAppend: TDBHTMLButtonElementAction
+      Events = []
+      ElementID = 'btnAppend'
+      Datasource = dsCountries
+      ButtonAction = baAppend
+    end
+    object HTMLElementAction1: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'cbAutoEdit'
+      OnExecute = DoAutoEdit
+    end
+  end
+  object jdsCountries: TLocalJSONDataset
+    FieldDefs = <    
+      item
+        Name = 'code'
+        DataType = ftString
+        Size = 2
+      end    
+      item
+        Name = 'name'
+        DataType = ftString
+        Size = 50
+      end>
+    Options = []
+    StorageKind = skLocal
+    Left = 80
+    Top = 120
+    object jdsCountriescode: TStringField
+      FieldKind = fkData
+      FieldName = 'code'
+      Index = 0
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 2
+    end
+    object jdsCountriesName: TStringField
+      DisplayLabel = 'Name'
+      FieldKind = fkData
+      FieldName = 'name'
+      Index = 1
+      LookupCache = False
+      ProviderFlags = [pfInUpdate, pfInWhere]
+      ReadOnly = False
+      Required = False
+      Size = 50
+    end
+  end
+  object dsCountries: TDataSource
+    AutoEdit = False
+    DataSet = jdsCountries
+    Left = 215
+    Top = 131
+  end
+end

@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="bulma.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+  <title>Data-aware Element Actions demo</title>
+  <script src="countrycodes.js"></script>
+  <script src="dbelementactions.js"></script>
+</head>
+<body>
+  <section class="section">
+    <h1 class="title is-3">Data-aware HTML Actions demo</h1>
+    <div class="box">
+      <div class="columns is-vcentered" >
+        <div class="column is-3">
+          <div class="field has-addons is-horizontal">
+            <div class="field-body">
+              <p class="control">
+                <button id="btnFirst" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-chevron-double-left"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnPrevious" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-chevron-left"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnNext" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-chevron-right"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnLast" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-chevron-double-right"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnEdit" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-pencil-square"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnAppend" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-plus-circle"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnPost" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-check"></i>
+                  </span>
+                </button>
+              </p>
+              <p class="control">
+                <button id="btnCancel" class="button">
+                  <span class="icon is-small">
+                    <i class="bi bi-x-circle"></i>
+                  </span>
+                </button>
+              </p>
+
+            </div>  <!-- .field-body -->
+          </div> <!-- .field -->
+        </div> <!-- .column -->
+        <div class="column is-2">
+          <div class="field "> <!--has-addons is-horizontal-->
+            <p class="control ml-4 is-pulled-right">
+              <label class="checkbox" for="cbAutoEdit">
+                <input id="cbAutoEdit" type="checkbox" class="checkbox">
+                Auto-edit
+              </label>
+            </p>
+          </div>
+        </div> <!-- .column -->
+      </div> <!-- .columns -->
+    </div> <!-- .box -->
+    <div class="box">
+      <h5 class="title is-5">Country data</h5>
+      <div class="field">
+        <label class="label" for="edtName">Country name</label>
+        <p class="control">
+          <input class="input" type="text" id="edtName" placeholder="Full name of country">
+        </p>
+      </div>
+      <div class="field">
+        <label class="label" for="edtName">Country ISO code</label>
+        <p class="control">
+          <input class="input" type="text" id="edtCode" placeholder="2-character ISO code">
+        </p>
+      </div>
+    </div> <!-- .box -->
+  </section>
+
+
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

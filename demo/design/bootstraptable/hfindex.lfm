@@ -1,0 +1,120 @@
+object frmIndex: TfrmIndex
+  OnCreate = DataModuleCreate
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  Height = 351
+  HorizontalOffset = 597
+  VerticalOffset = 314
+  Width = 469
+  object jdsCountries: TLocalJSONDataset
+    FieldDefs = <    
+      item
+        Name = 'Continent'
+        DataType = ftString
+        Size = 2
+      end    
+      item
+        Name = 'Name'
+        DataType = ftString
+        Size = 50
+      end    
+      item
+        Name = 'ISO2'
+        DataType = ftUnknown
+        Size = 2
+      end    
+      item
+        Name = 'ISO3'
+        DataType = ftString
+        Size = 3
+      end    
+      item
+        Name = 'Prefix'
+        DataType = ftInteger
+      end>
+    Options = []
+    StorageKind = skLocal
+    StorageKey = 'Countries'
+    Left = 88
+    Top = 40
+  end
+  object dsCountries: TDataSource
+    DataSet = jdsCountries
+    Left = 171
+    Top = 40
+  end
+  object tbCountries: TDBBootstrapTableWidget
+    ElementID = 'tblCountries'
+    Styles = <>
+    StyleRefresh = srOnElementID
+    StylingClasses.CheckBoxClass = 'form-check-input'
+    StylingClasses.ButtonClass = 'btn btn-secondary btn-sm btn-outline'
+    StylingClasses.InfoClass = 'bi bi-info-circle'
+    StylingClasses.EditClass = 'bi bi-pencil'
+    StylingClasses.DeleteClass = 'bi bi-trash'
+    Columns = <    
+      item
+        FieldName = 'ISO2'
+        Title = 'ISO2'
+        RenderMode = crmText
+        ButtonType = cbtInfo
+        Width = 0
+        Visible = True
+        Searchable = True
+        Sortable = True
+        Selectable = False
+      end    
+      item
+        FieldName = 'ISO3'
+        Title = 'ISO3'
+        RenderMode = crmText
+        ButtonType = cbtInfo
+        Width = 0
+        Visible = True
+        Searchable = True
+        Sortable = True
+        Selectable = False
+      end    
+      item
+        FieldName = 'Name'
+        Title = 'Name'
+        RenderMode = crmText
+        ButtonType = cbtInfo
+        Width = 0
+        Visible = True
+        Searchable = True
+        Sortable = True
+        Selectable = False
+      end    
+      item
+        FieldName = 'Prefix'
+        Title = 'Prefix'
+        RenderMode = crmText
+        ButtonType = cbtInfo
+        Width = 0
+        Visible = True
+        Searchable = True
+        Sortable = True
+        Selectable = False
+      end    
+      item
+        FieldName = 'Continent'
+        Title = 'Continent'
+        RenderMode = crmText
+        ButtonType = cbtInfo
+        Width = 0
+        Visible = True
+        Searchable = True
+        Sortable = True
+        Selectable = False
+      end>
+    DataSource = dsCountries
+    Options = [btoClickToSelect, btoEscapeHTML, btoSingleSelect, btoMultipleSelectRow, btoRememberOrder, btoResizable, btoDetailViewByClick]
+    ViewOptions = [bvoShowButtonIcons, bvoShowColumns, bvoShowColumnsToggleAll, bvoShowToggle, bvoShowHeader, bvoShowRefresh, bvoShowSearchButton, bvoShowClearButton]
+    PaginationOptions = [bpoPagination, bpoShowSwitch]
+    SearchOptions = [bsoSearch, bsoSearchOnEnterKey]
+    DisplayReadOnly = False
+    Left = 110
+    Top = 150
+  end
+end

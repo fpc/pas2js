@@ -496,6 +496,8 @@ type
     property MinValue: Longint read FMinValue write SetMinValue default 0;
   end;
 
+  TLongintField = TIntegerField; // IDE creates TLongintField;
+
 { TLargeintField }
 
   TLargeintField = class(TNumericField)
@@ -5456,6 +5458,7 @@ procedure TField.DefineProperties(Filer: TFiler);
 
   procedure IgnoreWrite(Writer: TWriter);
   begin
+    if writer=Nil then;
   end;
 
 begin
@@ -8905,6 +8908,7 @@ begin
   else
     Result:=FValue;
 end;
+
 Function TParam.GetDisplayName: string;
 begin
   if (FName<>'') then
@@ -9208,4 +9212,6 @@ begin
   inherited;
 end;
 
+Initialization
+  RegisterClass(TLongintField);
 end.

@@ -68,20 +68,49 @@ Type
 
   { TSQLDBRestDataset }
 
+  { TQueryParam }
+
+  TQueryParam = class(TParam)
+  private
+    FEnabled: Boolean;
+  Public
+    Procedure Assign(Source : TPersistent); override;
+    function AsQuery : String;
+  Published
+    Property Enabled : Boolean Read FEnabled Write FEnabled;
+  end;
+
+  { TQueryParams }
+
+  TQueryParams = Class(TParams)
+  private
+    function GetP(aIndex : Integer): TQueryParam;
+    procedure SetP(aIndex : Integer; AValue: TQueryParam);
+  Public
+    Property Params[aIndex : Integer] : TQueryParam Read GetP Write SetP; default;
+  end;
+
+  TGetQueryParamsEvent = Procedure (Sender : TDataset; IsReadURL : Boolean; var QueryString : String) of object;
+
   TSQLDBRestDataset = Class(TJSONDataset)
   private
     FConnection: TSQLDBRestConnection;
     FDatabaseConnection: String;
+    FOnGetQueryParams: TGetQueryParamsEvent;
+    FParams: TQueryParams;
     FResourceName: String;
     FSQL: TStrings;
     function CleanSQL: String;
     function CustomViewResourceName: String;
     procedure DoSQLChange(Sender: TObject);
-    function MyURL: String;
     procedure SetConnection(AValue: TSQLDBRestConnection);
+    procedure SetParams(AValue: TQueryParams);
     procedure SetResourceName(AValue: String);
     procedure SetSQL(AValue: TStrings);
   Protected
+    function MyURL(isRead : Boolean): String; virtual;
+    Function CreateQueryParams : TQueryParams; virtual;
+    function GetURLQueryParams(IsRead : Boolean): string; virtual;
     function DataPacketReceived(ARequest: TDataRequest): Boolean; override;
     function GetStringFieldLength(F: TJSObject; AName: String; AIndex: Integer): integer;virtual;
     function StringToFieldType(S: String): TFieldType; virtual;
@@ -91,11 +120,14 @@ Type
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; override;
+    Function ParamByName(const aName : String) : TQueryParam;
   Published
     Property Connection: TSQLDBRestConnection Read FConnection Write SetConnection;
     Property ResourceName : String Read FResourceName Write SetResourceName;
     Property SQL : TStrings Read FSQL Write SetSQL;
     property DatabaseConnection : String Read FDatabaseConnection Write FDatabaseConnection;
+    Property Params : TQueryParams Read FParams Write SetParams;
+    Property OnGetQueryParams : TGetQueryParamsEvent Read FOnGetQueryParams Write FOnGetQueryParams;
   end;
 
 implementation
@@ -121,6 +153,40 @@ Type
     Property OnDone : TNotifyEvent Read FOnDone;
     Property StatusCode : Integer Read GetStatusCode;
   end;
+
+{ TQueryParam }
+
+procedure TQueryParam.Assign(Source: TPersistent);
+
+Var
+  P : TQueryParam absolute Source;
+
+begin
+  if Source is TQueryParam then
+    begin
+    FEnabled:=P.Enabled;
+    end;
+  inherited Assign(Source);
+end;
+
+function TQueryParam.AsQuery: String;
+begin
+  Result:='';
+  if Enabled then
+    Result:=Name+'='+encodeURIComponent(AsString);
+end;
+
+{ TQueryParams }
+
+function TQueryParams.GetP(aIndex : Integer): TQueryParam;
+begin
+  Result:=Items[aIndex] as TQueryParam
+end;
+
+procedure TQueryParams.SetP(aIndex : Integer; AValue: TQueryParam);
+begin
+  Items[aIndex]:=aValue;
+end;
 
 { TServiceRequest }
 
@@ -153,7 +219,7 @@ end;
 function TServiceRequest.GetResultJSON: TJSObject;
 begin
   if SameText(FXHR.getResponseHeader('Content-Type'),'application/json') then
-    Result:=TJSJSON.parseObject(GetResult)
+    Result:=TJSJSON.parseObject(RequestResult)
   else
     Result:=nil;
 end;
@@ -167,6 +233,7 @@ function TServiceRequest.onLoad(Event: TEventListenerEvent): boolean;
 begin
   if Assigned(FOnMyDone) then
     FOnMyDone(Self);
+  Result:=False;
 end;
 
 
@@ -194,9 +261,13 @@ begin
 end;
 
 function TSQLDBRestConnection.GetUpdateBaseURL(aRequest: TRecordUpdateDescriptor): String;
+
+Var
+  DS : TSQLDBRestDataset;
 begin
   Result:=inherited GetUpdateBaseURL(aRequest);
-  Result:=IncludeTrailingPathDelimiter(Result)+TSQLDBRestDataset(aRequest.Dataset).ResourceName;
+  DS:=TSQLDBRestDataset(aRequest.Dataset);
+  Result:=IncludeTrailingPathDelimiter(Result)+DS.MyURL(False);
 end;
 
 function TSQLDBRestConnection.GetReadBaseURL(aRequest: TDataRequest): String;
@@ -207,7 +278,7 @@ Var
 begin
   Result:=inherited GetReadBaseURL(aRequest);
   DS:=TSQLDBRestDataset(aRequest.Dataset);
-  Result:=IncludeTrailingPathDelimiter(Result)+DS.MyURL;
+  Result:=IncludeTrailingPathDelimiter(Result)+DS.MyURL(True);
 end;
 
 procedure TSQLDBRestConnection.DoResources(Sender: TObject);
@@ -283,15 +354,53 @@ begin
     FConnection.FreeNotification(Self);
 end;
 
-function TSQLDBRestDataset.MyURL: String;
+procedure TSQLDBRestDataset.SetParams(AValue: TQueryParams);
+begin
+  if FParams=AValue then Exit;
+  FParams.Assign(AValue);
+end;
+
+function TSQLDBRestDataset.GetURLQueryParams(IsRead :Boolean) : string;
+
+  Procedure AddToResult(aQuery : string);
+
+  begin
+    if aQuery='' then
+      exit;
+    If Result<>'' then
+      Result:=Result+'&';
+    Result:=Result+aQuery;
+  end;
+
+Var
+  I : Integer;
+
+begin
+  Result:='';
+  if IsRead then
+    begin
+    if SameText(ResourceName,CustomViewResourceName) then
+      AddToResult('SQL'+EncodeURIComponent(CleanSQL));
+    For I:=0 to Params.Count-1 do
+      AddToResult(Params[I].AsQuery);
+    end;
+  if Assigned(FOnGetQueryParams) then
+    FOnGetQueryParams(Self,IsRead,Result);
+end;
+
+function TSQLDBRestDataset.MyURL(isRead: Boolean): String;
+
+Var
+  Qry : String;
 
 begin
   Result:=DatabaseConnection;
   if (Result<>'') and (Result[Length(Result)]<>'/') then
     Result:=Result+'/';
   Result:=Result+ResourceName;
-  if SameText(ResourceName,CustomViewResourceName) then
-    Result:=Result+'?SQL='+ EncodeURIComponent(CleanSQL);
+  Qry:=GetURLQueryParams(IsRead);
+  if Qry<>'' then
+    Result:=Result+'?'+Qry;
 end;
 
 procedure TSQLDBRestDataset.DoSQLChange(Sender: TObject);
@@ -332,11 +441,21 @@ begin
   FSQL.Assign(AValue);
 end;
 
+function TSQLDBRestDataset.CreateQueryParams: TQueryParams;
+begin
+  Result:=TQueryParams.Create(Self,TQueryParam);
+end;
+
 
 
 class function TSQLDBRestDataset.DefaultBlobDataToBytes(aValue: JSValue): TBytes;
 begin
   Result:=BytesOf(Window.atob(String(aValue)));
+end;
+
+function TSQLDBRestDataset.ParamByName(const aName: String): TQueryParam;
+begin
+  Result:=TQueryParam(Params.ParamByName(aName));
 end;
 
 function TSQLDBRestDataset.DoGetDataProxy: TDataProxy;
@@ -453,11 +572,13 @@ begin
   inherited Create(aOwner);
   FSQL:=TStringList.Create;
   TStringList(FSQL).OnChange:=@DoSQLChange;
+  FParams:=CreateQueryParams;
 end;
 
 destructor TSQLDBRestDataset.Destroy;
 begin
   FreeAndNil(FSQL);
+  FreeAndnil(FParams);
   inherited Destroy;
 end;
 

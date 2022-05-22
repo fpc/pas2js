@@ -302,9 +302,9 @@ type
   // Standard FPC exports.
   TWASIExports = Class External name 'Object' (TJSModulesExports)
   Public
-     Procedure start; external name '_start';
-     function AllocMem(aSize : Integer) : Integer; external name 'wasiAlloc';
-     function freeMem(aLocation : Integer) : Integer; external name 'wasiFree';
+    Procedure start; external name '_start';
+    function AllocMem(aSize : Integer) : Integer; external name 'wasiAlloc';
+    function freeMem(aLocation : Integer) : Integer; external name 'wasiFree';
   end;
 
   TGetConsoleInputBufferEvent = Reference to Procedure(Sender : TObject; Var AInput : TJSUint8Array);
@@ -342,10 +342,9 @@ type
     function getModuleMemoryDataView : TJSDataView;
     procedure AddExtension(aExtension : TImportExtension); virtual;
     procedure RemoveExtension(aExtension : TImportExtension); virtual;
+
     // IWASI calls
     // !! Please keep these sorted !!
-
-
 
     function args_get(argv, argvBuf : NativeInt) : NativeInt; virtual;
     function args_sizes_get(argc, argvBufSize : NativeInt) : NativeInt; virtual;
@@ -357,7 +356,6 @@ type
     function fd_allocate (fd, offset, len : NativeInt) : NativeInt; virtual;
     function fd_close(fd : NativeInt) : NativeInt; virtual;
     function fd_datasync (fd : NativeInt) : NativeInt; virtual;
-
     function fd_fdstat_get(fd,bufPtr : NativeInt) : NativeInt; virtual;
     function fd_fdstat_set_flags (fd, flags: NativeInt) : NativeInt; virtual;
     function fd_fdstat_set_rights (fd, fsRightsBase, fsRightsInheriting: NativeInt) : NativeInt; virtual;
@@ -467,12 +465,12 @@ type
     Function CreateWasiEnvironment : TPas2JSWASIEnvironment; virtual;
     function GetTable: TJSWebAssemblyTable; virtual;
     function GetMemory: TJSWebAssemblyMemory; virtual;
- public
+  public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     // Load and start webassembly. If DoRun is true, then Webassembly entry point is called.
     // If aBeforeStart is specified, then it is called prior to calling run, and can disable running.
-    // If aAfterStart is specified, then it is called after calling run. It is not called is running was disabled.
+    // If aAfterStart is specified, then it is called after calling run. It is not called if running was disabled.
     Procedure StartWebAssembly(aPath: string; DoRun : Boolean = True;  aBeforeStart : TBeforeStartCallback = Nil; aAfterStart : TAfterStartCallback = Nil);
     // Initial memory descriptor
     Property MemoryDescriptor : TJSWebAssemblyMemoryDescriptor Read FMemoryDescriptor Write FMemoryDescriptor;

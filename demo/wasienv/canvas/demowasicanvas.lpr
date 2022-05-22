@@ -96,7 +96,6 @@ begin
   CreateWebAssembly('canvasdraw.wasm',ImportObj)._then(@initEnv)
 end;
 
-
 destructor TMyApplication.Destroy;
 begin
   FreeAndNil(FWasiEnv);

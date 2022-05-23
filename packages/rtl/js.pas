@@ -849,6 +849,36 @@ type
     function _finally(value : TJSPromiseFinallyHandler): TJSPromise; external name 'finally';
   end;
 
+  generic TGPromise<T> = class external name 'Promise'
+  Type
+    TResolve = reference to function (aValue : T) : JSValue;
+    TReject = reference to function (aValue : JSValue) : JSValue;
+    TExecute = reference to procedure (resolve: TResolve; reject : TReject);
+    TFinallyHandler = reference to procedure;
+  Public
+    constructor new(Executor : TExecute);
+    function then_ (onAccepted : TResolve) : TJSPromise; external name 'then';
+    function then_ (onAccepted : TResolve; onRejected : TReject) : TJSPromise; external name 'then';
+    function finally_(value : TFinallyHandler): TJSPromise; external name 'finally';
+    function catch (onRejected : TReject) : TJSPromise;
+  end;
+
+  generic TGPromiseEx<T,E> = class external name 'Promise'
+  Type
+    TResolve = reference to function (aValue : T) : JSValue;
+    TReject = reference to function (aValue : E) : JSValue;
+    TExecute = reference to procedure (resolve: TResolve; reject : TReject);
+    TFinallyHandler = reference to procedure;
+  Public
+    constructor new(Executor : TExecute);
+    function then_ (onAccepted : TResolve) : TJSPromise; external name 'then';
+    function then_ (onAccepted : TResolve; onRejected : TReject) : TJSPromise; external name 'then';
+    function catch (onRejected : TReject) : TJSPromise;
+    function finally_(value : TFinallyHandler): TJSPromise; external name 'finally';
+  end;
+
+
+
 
   TJSFunctionArguments = class external name 'arguments'
   private

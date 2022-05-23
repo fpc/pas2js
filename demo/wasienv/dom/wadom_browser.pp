@@ -15,11 +15,14 @@ Type
   Private
     FGlobalObjects: TJSArray;
     FLocalObjects: TJSArray;
+    FFreeLocalIds: TJSArray; // free positions in FLocalObjects
   Protected
     function FindObject(ObjId: TWasiDomObjectID): TJSObject; virtual;
     function Invoke_JSResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP: NativeInt; out JSResult: JSValue): TWasiDomResult; virtual;
+    function Invoke_NoResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP: NativeInt): TWasiDomResult; virtual;
     function Invoke_BooleanResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
     function Invoke_DoubleResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
+    function Invoke_ObjectResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
     function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
     function GetWasiDomResult(const v: jsvalue): TWasiDomResult;
   Public
@@ -44,17 +47,19 @@ begin
   FGlobalObjects[-WasiObjIdConsole]:=console;
   FGlobalObjects[-WasiObjIdCaches]:=caches;
   FLocalObjects:=TJSArray.new;
+  FFreeLocalIds:=TJSArray.new;
 end;
 
 function TWADomBridge.ImportName: String;
 begin
-  Result:=WasiDomExtName;
+  Result:=WasiDomExportName;
 end;
 
 procedure TWADomBridge.FillImportObject(aObject: TJSObject);
 begin
-  aObject[WasiDomInvokeBooleanResult]:=@invoke_booleanresult;
-  aObject[WasiDomInvokeDoubleResult]:=@invoke_doubleresult;
+  aObject[WasiDomInvokeNoResult]:=@Invoke_NoResult;
+  aObject[WasiDomInvokeBooleanResult]:=@Invoke_BooleanResult;
+  aObject[WasiDomInvokeDoubleResult]:=@Invoke_DoubleResult;
 end;
 
 function TWADomBridge.FindObject(ObjId: TWasiDomObjectID): TJSObject;
@@ -100,7 +105,16 @@ begin
     JSResult:=TJSFunction(fn).apply(Obj,Args);
   end;
 
-  exit(WasiDomResult_Success);
+  Result:=WasiDomResult_Success;
+end;
+
+function TWADomBridge.Invoke_NoResult(ObjId: TWasiDomObjectID; FuncNameP,
+  FuncNameLen, ArgsP: NativeInt): TWasiDomResult;
+var
+  JSResult: JSValue;
+begin
+  // invoke
+  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
 end;
 
 function TWADomBridge.Invoke_BooleanResult(ObjId: TWasiDomObjectID; FuncNameP,
@@ -122,7 +136,7 @@ begin
     b:=0;
   // set result
   getModuleMemoryDataView().setUint8(ResultP, b);
-  Result:=WasiDomResult_Success;
+  Result:=WasiDomResult_Boolean;
 end;
 
 function TWADomBridge.Invoke_DoubleResult(ObjId: TWasiDomObjectID; FuncNameP,
@@ -139,7 +153,36 @@ begin
     exit(GetWasiDomResult(JSResult));
   // set result
   getModuleMemoryDataView().setFloat64(ResultP, double(JSResult), env.IsLittleEndian);
-  Result:=WasiDomResult_Success;
+  Result:=WasiDomResult_Double;
+end;
+
+function TWADomBridge.Invoke_ObjectResult(ObjId: TWasiDomObjectID; FuncNameP,
+  FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult;
+var
+  t: String;
+  JSResult, NewId: JSValue;
+begin
+  // invoke
+  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  if Result<>WasiDomResult_Success then
+    exit;
+  // check result type
+  t:=jstypeof(JSResult);
+  if (t<>'object') and (t<>'function') then
+    exit(GetWasiDomResult(JSResult));
+  if JSResult=nil then
+    exit(WasiDomResult_Null);
+
+  // create Id
+  NewId:=FFreeLocalIds.pop;
+  if isUndefined(NewId) then
+    NewId:=FLocalObjects.push(JSResult)-1
+  else
+    FLocalObjects[longword(NewId)]:=JSResult;
+
+  // set result
+  getModuleMemoryDataView().setUint32(ResultP, longword(NewId), env.IsLittleEndian);
+  Result:=WasiDomResult_Object;
 end;
 
 function TWADomBridge.GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt

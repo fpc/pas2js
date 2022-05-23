@@ -26,8 +26,10 @@ Type
     FuncName: string;
   end;
 
+  PWasiDomObjectID = ^TWasiDomObjectID;
+
   TJSObject = class;
-  //TJSObjectClass = class of TJSObject;
+  TJSObjectClass = class of TJSObject;
 
   { TJSObject }
 
@@ -39,15 +41,24 @@ Type
     procedure WasiInvokeRaiseResultMismatch(const aName: string; Expected, Actual: TWasiDomResult); virtual;
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
   public
-    constructor CreateFromID(aID: TWasiDomObjectID); reintroduce;
+    constructor CreateFromID(aID: TWasiDomObjectID); virtual;
     destructor Destroy; override;
     property ObjectID: TWasiDomObjectID read FObjectID;
+    procedure InvokeJSNoResult(const aName: string; Const args: Array of const);
     function InvokeJSBooleanResult(const aName: string; Const args: Array of const): Boolean;
     function InvokeJSDoubleResult(const aName: string; Const Args: Array of const): Double;
     //function InvokeJSUnicodeStringResult(const aName: string; Const args: Array of const): UnicodeString;
+    function InvokeJSObjResult(const aName: string; aResultClass: TJSObjectClass; Const args: Array of const): TJSObject;
+    // ToDo: InvokeJSVarRecResult
     //function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const): String;
-    //function InvokeJSObjResult(const aName: string; aResultClass: TJSObjectClass; Const args: Array of const): TJSObject;
   end;
+
+function __wasidom_invoke_noresult(
+  ObjID: TWasiDomObjectID;
+  FuncNameP: PChar;
+  FuncNameLen: longint;
+  ArgP: PByte
+): TWasiDomResult; external WasiDomExportName name WasiDomInvokeBooleanResult;
 
 function __wasidom_invoke_boolresult(
   ObjID: TWasiDomObjectID;
@@ -55,7 +66,7 @@ function __wasidom_invoke_boolresult(
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByteBool
-): TWasiDomResult; external WasiDomExtName name WasiDomInvokeBooleanResult;
+): TWasiDomResult; external WasiDomExportName name WasiDomInvokeBooleanResult;
 
 function __wasidom_invoke_doubleresult(
   ObjID: TWasiDomObjectID;
@@ -63,7 +74,15 @@ function __wasidom_invoke_doubleresult(
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PDouble
-): TWasiDomResult; external WasiDomExtName name WasiDomInvokeDoubleResult;
+): TWasiDomResult; external WasiDomExportName name WasiDomInvokeDoubleResult;
+
+function __wasidom_invoke_objectresult(
+  ObjID: TWasiDomObjectID;
+  FuncNameP: PChar;
+  FuncNameLen: longint;
+  ArgP: PByte;
+  ResultP: PWasiDomObjectID
+): TWasiDomResult; external WasiDomExportName name WasiDomInvokeDoubleResult;
 
 implementation
 
@@ -376,6 +395,27 @@ begin
   inherited Destroy;
 end;
 
+procedure TJSObject.InvokeJSNoResult(const aName: string;
+  const args: array of const);
+var
+  aError: TWasiDomResult;
+  InvokeArgs: PByte;
+begin
+  if length(Args)=0 then
+    aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),nil)
+  else begin
+    InvokeArgs:=CreateInvokeJSArgs(Args);
+    try
+      aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs);
+    finally
+      if InvokeArgs<>nil then
+        FreeMem(InvokeArgs);
+    end;
+  end;
+  if aError<>WasiDomResult_Success then
+    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Boolean,aError);
+end;
+
 function TJSObject.InvokeJSBooleanResult(const aName: string;
   const args: array of const): Boolean;
 var
@@ -422,6 +462,35 @@ begin
   end;
   if aError<>WasiDomResult_Double then
     WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Double,aError);
+end;
+
+function TJSObject.InvokeJSObjResult(const aName: string;
+  aResultClass: TJSObjectClass; const args: array of const): TJSObject;
+var
+  aError: TWasiDomResult;
+  InvokeArgs: PByte;
+  NewObjId: TWasiDomObjectID;
+begin
+  Result:=nil;
+  NewObjId:=-1;
+  if length(Args)=0 then
+    aError:=__wasidom_invoke_objectresult(ObjectID,PChar(aName),length(aName),nil,@NewObjId)
+  else begin
+    InvokeArgs:=CreateInvokeJSArgs(Args);
+    try
+      aError:=__wasidom_invoke_objectresult(ObjectID,PChar(aName),length(aName),
+                                               InvokeArgs,@NewObjId);
+    finally
+      if InvokeArgs<>nil then
+        FreeMem(InvokeArgs);
+    end;
+  end;
+  if aError=WasiDomResult_Null then
+    exit;
+  if aError<>WasiDomResult_Object then
+    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Object,aError);
+
+  Result:=aResultClass.CreateFromID(NewObjId);
 end;
 
 end.

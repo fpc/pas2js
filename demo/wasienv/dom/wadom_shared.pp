@@ -17,16 +17,17 @@ const
   WasiDomResult_UnknownObjId = 2;
   WasiDomResult_NotAFunction = 3;
   WasiDomResult_Undefined = 4;
-  WasiDomResult_Boolean = 5;
-  WasiDomResult_Number = 6;
-  WasiDomResult_Double = 7;
-  WasiDomResult_String = 8;
-  WasiDomResult_Function = 9;
-  WasiDomResult_Object = 10;
-  WasiDomResult_BigInt = 11;
-  WasiDomResult_Symbol = 12;
+  WasiDomResult_Null = 5;
+  WasiDomResult_Boolean = 6;
+  WasiDomResult_Number = 7;
+  WasiDomResult_Double = 8;
+  WasiDomResult_String = 9;
+  WasiDomResult_Function = 10;
+  WasiDomResult_Object = 11;
+  WasiDomResult_BigInt = 12;
+  WasiDomResult_Symbol = 13;
 
-  WasiDomResultLast = 12;
+  WasiDomResultLast = 13;
 
   WasiDomResult_Names: array[0..WasiDomResultLast] of string = (
     'None',
@@ -36,6 +37,7 @@ const
     'Undefined',
     'Null',
     'Boolean',
+    'Number',
     'Double',
     'String',
     'Function',
@@ -44,7 +46,8 @@ const
     'Symbol'
     );
 
-  WasiDomExtName = 'wasi_dom';
+  WasiDomExportName = 'wasi_dom';
+  WasiDomInvokeNoResult = 'invoke_noresult';
   WasiDomInvokeBooleanResult = 'invoke_boolresult';
   WasiDomInvokeDoubleResult = 'invoke_doubleresult';
 

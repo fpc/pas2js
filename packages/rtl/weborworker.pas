@@ -9,6 +9,8 @@ uses
   JS, types;
 
 type
+  // Forward declarations
+
   TJSCryptoKey = Class;
   TJSSubtleCrypto = Class;
   TJSEventTarget = class;
@@ -17,11 +19,9 @@ type
   TJSIDBRequest = class;
   TJSServiceWorker = class;
 
-  TJSStorageManager = class external name 'StorageManager' (TJSObject)
-    function estimate : TJSPromise;
-    function persist : TJSPromise;
-    function persisted : TJSPromise;
-  end;
+{ ----------------------------------------------------------------------
+  Console
+  ----------------------------------------------------------------------}
 
 
   TJSConsole = class external name 'Console'  (TJSObject)
@@ -48,6 +48,11 @@ type
     procedure trace;
     procedure warn(Obj1 : JSValue); varargs of JSValue;
   end;
+
+{ ----------------------------------------------------------------------
+  Events
+  ----------------------------------------------------------------------}
+
 
   TJSTimerCallBack = reference to procedure; safecall;
 
@@ -87,11 +92,9 @@ type
     Property cancelable : Boolean Read FCancelable;
     Property composed : Boolean Read FComposed;
     property currentTarget : TJSEventTarget Read FCurrentTarget;
-//    property currentTargetElement : TJSElement Read FCurrentTargetElement;
     property defaultPrevented : Boolean Read FdefaultPrevented;
     property eventPhase : NativeInt Read FEventPhase;
     property target : TJSEventTarget Read FTarget;
-//    property targetElement : TJSElement Read FTargetElement;
     Property timestamp : NativeInt Read FTimeStamp;
     property _type : string read FType;
     property isTrusted : Boolean Read FIsTrusted;
@@ -114,6 +117,11 @@ type
     procedure removeEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure removeEventListener(aname : string; aListener : JSValue);
   end;
+
+
+{ ----------------------------------------------------------------------
+  Fetch & Streams
+  ----------------------------------------------------------------------}
 
 
   TJSStructuredSerializeOptions = class external name 'Object' (TJSObject)
@@ -161,7 +169,7 @@ type
     property body: TJSReadableStream read fbody;
     property bodyUsed: Boolean read fbodyUsed;
     function arrayBuffer(): TJSPromise; // resolves to TJSArrayBuffer
-    //function blob(): TJSPromise; // resolves to TJSBlob
+    function blobPromise(): TJSPromise; // resolves to TJSBlob
     function blob: TJSBlob; {$IFNDEF SkipAsync}async;{$ENDIF}
     function json(): TJSPromise; // resolves to JSON / TJSValue
     //function text(): TJSPromise; // resolves to USVString, always decoded using UTF-8
@@ -195,7 +203,87 @@ type
     function redirect(url: String; Status: NativeInt): TJSResponse;
   end;
 
+  TJSFormData = class external name 'FormData' (TJSObject)
+  public
+    procedure append(const aName, aValue: string); overload;
+    procedure append(const aName: string; const aValue: TJSBlob); overload;
+    procedure append(const aName: string; const aValue: TJSBlob; const aFileName: string); overload;
+    procedure delete(const aName: string);
+    function entries : TJSIterator;
+    function get(const aName : string): JSValue; //string or TJSFile
+    function getAll: TJSArray; // of FormDataEntryValue(string or TJSFile)
+    function has(const aName : string): Boolean;
+    function keys: TJSIterator; reintroduce;
+    procedure set_(const aName, aValue: string); overload; external name 'set';
+    procedure set_(const aName, aValue, aFileName: string); overload; external name 'set';
+    procedure set_(const aName: string; const aValue: TJSBlob); overload; external name 'set';
+    procedure set_(const aName: string; const aValue: TJSBlob; const aFileName: string); overload; external name 'set';
+    function values: TJSIterator; reintroduce;
+  end;
 
+  { TJSRequest }
+
+  TJSRequest = class external name 'Request' (TJSObject)
+  private
+    FBody: TJSReadableStream; external name 'body';
+    FBodyUsed: Boolean; external name 'bodyUsed';
+    FCache: String; external name 'cache';
+    FCredentials: TJSObject; external name 'credentials';
+    FDestination: String; external name 'destination';
+    FHeaders: TJSObject; external name 'headers';
+    FIntegrity: String; external name 'integrity';
+    FMethod: String; external name 'method';
+    FMode: String; external name 'mode';
+    FReferrer: string; external name 'referrer';
+    FReferrerPolicy: string; external name 'referrerPolicy';
+    FURL: String;external name 'url';
+  Public
+    constructor new(aInput: string); overload;
+    constructor new(aInput: string; aOptions: TJSObject); overload;
+    function arrayBuffer: TJSPromise; // TJSArrayBuffer
+    function blob: TJSPromise; // TJSBlob
+    function clone: TJSRequest;
+    function formData: TJSPromise; // TJSFormData
+    function json: TJSPromise; // TJSJSON
+    function text: TJSPromise; // string
+    Property body : TJSReadableStream Read FBody;
+    property bodyUsed : Boolean Read FBodyUsed;
+    Property Cache : String Read FCache;
+    Property Credentials : TJSObject Read FCredentials;
+    Property Destination : String Read FDestination;
+    // TODO : actually Headers object
+    Property Headers : TJSObject Read FHeaders;
+    Property Integrity : String Read FIntegrity;
+    Property Method : String Read FMethod;
+    Property Mode : String Read FMode;
+    Property Referrer : string Read FReferrer;
+    Property ReferrerPolicy : string Read FReferrerPolicy;
+    Property URL : String Read FURL;
+  end;
+  TJSRequestDynArray = array of TJSRequest;
+
+  { TJSFetchEvent }
+
+  TJSFetchEvent = class external name 'FetchEvent' (TJSExtendableEvent)
+  private
+    FClientID: String; external name 'clientId';
+    FReplacesClientID: String; external name 'replacesClientId';
+    FRequest: TJSRequest; external name 'request';
+    FResultingClientID: String; external name 'resultingClientId';
+    FPreloadResponse: TJSPromise; external name 'preloadResponse';
+  Public
+    Procedure respondWith(aPromise : TJSPromise);
+    Procedure respondWith(aResponse : TJSResponse);
+    Property ClientId : String Read FClientID;
+    Property PreloadResponse : TJSPromise Read FPreloadResponse;
+    Property ReplacesClientID : String Read FReplacesClientID;
+    Property ResultingClientID : String Read FResultingClientID;
+    Property request : TJSRequest Read FRequest;
+  end;
+
+{ ----------------------------------------------------------------------
+  IndexedDB
+  ----------------------------------------------------------------------}
 
 
   TJSIDBTransactionMode = class
@@ -447,38 +535,10 @@ type
     function cmp (a,b : jsValue) : NativeInt;
   end;
 
-  { TJSRequest }
+{ ----------------------------------------------------------------------
+  Cache
+  ----------------------------------------------------------------------}
 
-  TJSRequest = class external name 'Request' (TJSObject)
-  private
-    FBody: TJSReadableStream; external name 'body';
-    FBodyUsed: Boolean; external name 'bodyUsed';
-    FCache: String; external name 'cache';
-    FCredentials: TJSObject; external name 'credentials';
-    FDestination: String; external name 'destination';
-    FHeaders: TJSObject; external name 'headers';
-    FIntegrity: String; external name 'integrity';
-    FMethod: String; external name 'method';
-    FMode: String; external name 'mode';
-    FReferrer: string; external name 'referrer';
-    FReferrerPolicy: string; external name 'referrerPolicy';
-    FURL: String;external name 'url';
-  Public
-    Property body : TJSReadableStream Read FBody;
-    property bodyUsed : Boolean Read FBodyUsed;
-    Property Cache : String Read FCache;
-    Property Credentials : TJSObject Read FCredentials;
-    Property Destination : String Read FDestination;
-    // TODO : actually Headers object
-    Property Headers : TJSObject Read FHeaders;
-    Property Integrity : String Read FIntegrity;
-    Property Method : String Read FMethod;
-    Property Mode : String Read FMode;
-    Property Referrer : string Read FReferrer;
-    Property ReferrerPolicy : string Read FReferrerPolicy;
-    Property URL : String Read FURL;
-  end;
-  TJSRequestDynArray = array of TJSRequest;
 
   TJSCacheDeleteOptions = class external name 'Object' (TJSObject)
     ignoreSearch : Boolean;
@@ -533,68 +593,16 @@ type
   TJSURLDynArray = array of TJSURL;
 
 
-    { TJSNavigationPreloadState }
+  { TJSNavigationPreloadState }
 
-    TJSNavigationPreloadState = class external name 'navigationPreloadState'
-    public
-      enabled: boolean;
-      headerValue: string;
-    end;
-
-    { TJSNavigationPreload }
-
-    TJSNavigationPreload = class external name 'navigationPreload' (TJSObject)
-    public
-      function enable: boolean; async;
-      function disable: boolean; async;
-      function setHeaderValue(Value: string): TJSPromise;
-      function getState: TJSNavigationPreloadState; async;
-    end;
-
-
-  TJSWorker = class external name 'Worker' (TJSEventTarget)
+  TJSNavigationPreloadState = class external name 'navigationPreloadState'
   public
-    constructor new(aURL : string);
-    procedure postMessage(aValue : JSValue);
-    procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
+    enabled: boolean;
+    headerValue: string;
   end;
 
 
-
-  { TJSServiceWorkerRegistration }
-
-  TJSServiceWorkerRegistration = class external name 'ServiceWorkerRegistration'  (TJSObject)
-  private
-    FActive: TJSServiceWorker; external name 'active';
-    FInstalling: TJSServiceWorker; external name 'installing';
-    FScope: string; external name 'scope';
-    FWaiting: TJSServiceWorker; external name 'waiting';
-    FNavigationPreload: TJSNavigationPreload; external name 'navigationPreload';
-  public
-    function unregister : TJSPromise;
-    procedure update;
-    property Active : TJSServiceWorker read FActive;
-    property Scope : string read FScope;
-    property Waiting : TJSServiceWorker read FWaiting;
-    property Installing : TJSServiceWorker read FInstalling;
-    property NavigationPreload: TJSNavigationPreload read FNavigationPreload;
-  end;
-
-  { TJSServiceWorker }
-
-  TJSServiceWorker = class external name 'ServiceWorker' (TJSWorker)
-  private
-    FRegistration: TJSServiceWorkerRegistration; external name 'registration';
-    FScriptURL: String;  external name 'scriptURL';
-    FState: string;  external name 'state';
-  Public
-    property State : string read FState;
-    property ScriptURL : String Read FscriptURL;
-    property Registration: TJSServiceWorkerRegistration read FRegistration;
-  end;
-
-
-  { TJSRequest }
+  { TJSCache }
 
   TJSCache = class external name 'Cache' (TJSObject)
   Public
@@ -629,25 +637,309 @@ type
     function open(aName : string) : TJSPromise;
   end;
 
-  { TJSFetchEvent }
 
-  TJSFetchEvent = class external name 'FetchEvent' (TJSExtendableEvent)
-  private
-    FClientID: String; external name 'clientId';
-    FReplacesClientID: String; external name 'replacesClientId';
-    FRequest: TJSRequest; external name 'request';
-    FResultingClientID: String; external name 'resultingClientId';
-    FPreloadResponse: TJSPromise; external name 'preloadResponse';
-  Public
-    Procedure respondWith(aPromise : TJSPromise);
-    Procedure respondWith(aResponse : TJSResponse);
-    Property ClientId : String Read FClientID;
-    Property PreloadResponse : TJSPromise Read FPreloadResponse;
-    Property ReplacesClientID : String Read FReplacesClientID;
-    Property ResultingClientID : String Read FResultingClientID;
-    Property request : TJSRequest Read FRequest;
+{ ----------------------------------------------------------------------
+  Crypto
+  ----------------------------------------------------------------------}
+
+  { Basic types }
+
+  TJSCryptoAlgorithmIdentifier = JSValue;
+  TJSCryptoNamedCurve = JSValue;
+  TJSCryptoBigInteger = TJSUint8Array;
+  TJSCryptoKeyUsage = string;
+  TJSCryptoKeyType = string;
+  TJSCryptoKeyFormat = string;
+
+  { Algorithm }
+
+  TJSCryptoAlgorithm = record
+    name : String;
   end;
 
+  { AesCbcParams }
+
+  TJSCryptoAesCbcParams = record
+    iv : TJSBufferSource;
+  end;
+
+  { AesCtrParams }
+
+  TJSCryptoAesCtrParams = record
+    counter : TJSBufferSource;
+    length_ : Byte;external name 'length';
+  end;
+
+  { AesGcmParams }
+
+  TJSCryptoAesGcmParams = record
+    iv : TJSBufferSource;
+    additionalData : TJSBufferSource;
+    tagLength : Byte;
+  end;
+
+  { HmacImportParams }
+
+  TJSCryptoHmacImportParams = record
+    hash : TJSCryptoAlgorithmIdentifier;
+  end;
+
+  { Pbkdf2Params }
+
+  TJSCryptoPbkdf2Params = record
+    salt : TJSBufferSource;
+    iterations : NativeInt;
+    hash : TJSCryptoAlgorithmIdentifier;
+  end;
+
+  { RsaHashedImportParams }
+
+  TJSCryptoRsaHashedImportParams = record
+    hash : TJSCryptoAlgorithmIdentifier;
+  end;
+
+  { AesKeyGenParams }
+
+  TJSCryptoAesKeyGenParams = record
+    length_ : Integer;external name 'length';
+  end;
+
+  { HmacKeyGenParams }
+
+  TJSCryptoHmacKeyGenParams = record
+    hash : TJSCryptoAlgorithmIdentifier;
+    length_ : Integer;external name 'length';
+  end;
+
+  { RsaHashedKeyGenParams }
+
+  TJSCryptoRsaHashedKeyGenParams = record
+    modulusLength : Integer;
+    publicExponent : TJSCryptoBigInteger;
+    hash : TJSCryptoAlgorithmIdentifier;
+  end;
+
+  { RsaOaepParams }
+
+  TJSCryptoRsaOaepParams = record
+    label_ : TJSBufferSource;external name 'label';
+  end;
+
+  { RsaPssParams }
+
+  TJSCryptoRsaPssParams = record
+    saltLength : Integer;
+  end;
+
+  { DhKeyGenParams }
+
+  TJSCryptoDhKeyGenParams = record
+    prime : TJSCryptoBigInteger;
+    generator : TJSCryptoBigInteger;
+  end;
+
+  { EcKeyGenParams }
+
+  TJSCryptoEcKeyGenParams = record
+    _namedCurve : TJSCryptoNamedCurve;external name 'namedCurve';
+  end;
+
+  { AesDerivedKeyParams }
+
+  TJSCryptoAesDerivedKeyParams = record
+    length_ : Integer;external name 'length';
+  end;
+
+  { HmacDerivedKeyParams }
+
+  TJSCryptoHmacDerivedKeyParams = record
+    length_ : Integer;external name 'length';
+  end;
+
+  { EcdhKeyDeriveParams }
+
+  TJSCryptoEcdhKeyDeriveParams = record
+    public_ : TJSCryptoKey; external name 'public';
+  end;
+
+  { DhKeyDeriveParams }
+
+  TJSCryptoDhKeyDeriveParams = record
+    public_ : TJSCryptoKey;  external name 'public';
+  end;
+
+  { DhImportKeyParams }
+
+  TJSCryptoDhImportKeyParams = record
+    prime : TJSCryptoBigInteger;
+    generator : TJSCryptoBigInteger;
+  end;
+
+  { EcdsaParams }
+
+  TJSCryptoEcdsaParams = record
+    hash : TJSCryptoAlgorithmIdentifier;
+  end;
+
+  { EcKeyImportParams }
+
+  TJSCryptoEcKeyImportParams = record
+    _namedCurve : TJSCryptoNamedCurve;external name 'namedCurve';
+  end;
+
+  { HkdfParams  }
+
+  TJSCryptoHkdfParams = record
+    hash : TJSCryptoAlgorithmIdentifier;
+    salt : TJSBufferSource;
+    info : TJSBufferSource;
+  end;
+
+  { RsaOtherPrimesInfo }
+
+  TJSCryptoRsaOtherPrimesInfo = record
+    r : String;
+    d : String;
+    t : String;
+  end;
+
+  { JsonWebKey }
+
+  TJSCryptoRsaOtherPrimesInfoDynArray = Array of TJSCryptoRsaOtherPrimesInfo;
+  TJSCryptoJsonWebKey = record
+    kty : String;
+    use : String;
+    key_ops : TStringDynArray;
+    alg : String;
+    ext : boolean;
+    crv : String;
+    x : String;
+    y : String;
+    d : String;
+    n : String;
+    e : String;
+    p : String;
+    q : String;
+    dp : String;
+    dq : String;
+    qi : String;
+    oth : TJSCryptoRsaOtherPrimesInfoDynArray;
+    k : String;
+  end;
+
+  { CryptoKeyPair }
+
+  TJSCryptoKeyPair = record
+    publicKey : TJSCryptoKey;
+    privateKey : TJSCryptoKey;
+  end;
+
+  { TJSCryptoKey }
+
+  TJSCryptoKeyUsageDynArray = Array of TJSCryptoKeyUsage;
+  TJSCryptoKey = class external name 'CryptoKey'
+  Private
+    Ftype_ : TJSCryptoKeyType; external name 'type';
+    Fextractable : boolean; external name 'extractable';
+    Falgorithm : TJSObject; external name 'algorithm';
+    Fusages : TJSCryptoKeyUsageDynArray; external name 'usages';
+  Public
+    Property type_ : TJSCryptoKeyType Read Ftype_;
+    Property extractable : boolean Read Fextractable;
+    Property algorithm : TJSObject Read Falgorithm;
+    Property usages : TJSCryptoKeyUsageDynArray Read Fusages;
+  end;
+
+  { TJSSubtleCrypto }
+
+  TJSSubtleCrypto = class external name 'SubtleCrypto'
+  Private
+  Public
+    function encrypt(algorithm :  TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+    function decrypt(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+    function sign(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
+    function verify(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; signature : TJSBufferSource; data : TJSBufferSource): TJSPromise;
+    function digest(algorithm : TJSCryptoAlgorithmIdentifier; data : TJSBufferSource): TJSPromise;
+    function generateKey(algorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+    function deriveKey(algorithm : TJSCryptoAlgorithmIdentifier; baseKey : TJSCryptoKey; derivedKeyType : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+    function deriveBits(algorithm : TJSCryptoAlgorithmIdentifier; baseKey : TJSCryptoKey; length_ : NativeInt): TJSPromise;
+    function importKey(format : TJSCryptoKeyFormat; keyData : TJSObject; algorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+    function exportKey(format : TJSCryptoKeyFormat; key : TJSCryptoKey): TJSPromise;
+    function wrapKey(format : TJSCryptoKeyFormat; key : TJSCryptoKey; wrappingKey : TJSCryptoKey; wrapAlgorithm : TJSCryptoAlgorithmIdentifier): TJSPromise;
+    function unwrapKey(format : TJSCryptoKeyFormat; wrappedKey : TJSBufferSource; unwrappingKey : TJSCryptoKey; unwrapAlgorithm : TJSCryptoAlgorithmIdentifier; unwrappedKeyAlgorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
+  end;
+
+  { TJSCrypto }
+
+  TJSCrypto = class external name 'Crypto'  (TJSObject)
+  private
+    Fsubtle: TJSSubtleCrypto; external name 'subtle';
+  Public
+    procedure getRandomValues (anArray : TJSTypedArray);
+    property subtle : TJSSubtleCrypto Read Fsubtle;
+  end;
+
+
+  { ----------------------------------------------------------------------
+    Service Worker
+    ----------------------------------------------------------------------}
+
+  { TJSNavigationPreload }
+
+  TJSNavigationPreload = class external name 'navigationPreload' (TJSObject)
+  public
+    function enable: boolean; async;
+    function disable: boolean; async;
+    function setHeaderValue(Value: string): TJSPromise;
+    function getState: TJSNavigationPreloadState; async;
+  end;
+
+
+  TJSWorker = class external name 'Worker' (TJSEventTarget)
+  public
+    constructor new(aURL : string);
+    procedure postMessage(aValue : JSValue);
+    procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
+  end;
+
+
+  { TJSServiceWorkerRegistration }
+
+  TJSServiceWorkerRegistration = class external name 'ServiceWorkerRegistration'  (TJSObject)
+  private
+    FActive: TJSServiceWorker; external name 'active';
+    FInstalling: TJSServiceWorker; external name 'installing';
+    FScope: string; external name 'scope';
+    FWaiting: TJSServiceWorker; external name 'waiting';
+    FNavigationPreload: TJSNavigationPreload; external name 'navigationPreload';
+  public
+    function unregister : TJSPromise;
+    procedure update;
+    property Active : TJSServiceWorker read FActive;
+    property Scope : string read FScope;
+    property Waiting : TJSServiceWorker read FWaiting;
+    property Installing : TJSServiceWorker read FInstalling;
+    property NavigationPreload: TJSNavigationPreload read FNavigationPreload;
+  end;
+
+  { TJSServiceWorker }
+
+  TJSServiceWorker = class external name 'ServiceWorker' (TJSWorker)
+  private
+    FRegistration: TJSServiceWorkerRegistration; external name 'registration';
+    FScriptURL: String;  external name 'scriptURL';
+    FState: string;  external name 'state';
+  Public
+    property State : string read FState;
+    property ScriptURL : String Read FscriptURL;
+    property Registration: TJSServiceWorkerRegistration read FRegistration;
+  end;
+
+  TJSStorageManager = class external name 'StorageManager' (TJSObject)
+    function estimate : TJSPromise;
+    function persist : TJSPromise;
+    function persisted : TJSPromise;
+  end;
 
   TJSMicrotaskProcedure = reference to Procedure;
 
@@ -659,300 +951,6 @@ type
     resizeHeight : NativeInt;
     resizeQuality : String;
   end;
-
-  { ----------------------------------------------------------------------
-    Crypto
-    ----------------------------------------------------------------------}
-
-  TJSCryptoAlgorithmIdentifier = JSValue;
-  TJSCryptoNamedCurve = JSValue;
-  TJSCryptoBigInteger = TJSUint8Array;
-  TJSCryptoKeyUsage = string;
-  TJSCryptoKeyType = string;
-  TJSCryptoKeyFormat = string;
-
-    { --------------------------------------------------------------------
-      Algorithm
-      --------------------------------------------------------------------}
-
-  TJSCryptoAlgorithm = record
-    name : String;
-  end;
-
-    { --------------------------------------------------------------------
-      AesCbcParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoAesCbcParams = record
-      iv : TJSBufferSource;
-    end;
-
-    { --------------------------------------------------------------------
-      AesCtrParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoAesCtrParams = record
-      counter : TJSBufferSource;
-      length_ : Byte;external name 'length';
-    end;
-
-    { --------------------------------------------------------------------
-      AesGcmParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoAesGcmParams = record
-      iv : TJSBufferSource;
-      additionalData : TJSBufferSource;
-      tagLength : Byte;
-    end;
-
-    { --------------------------------------------------------------------
-      HmacImportParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoHmacImportParams = record
-      hash : TJSCryptoAlgorithmIdentifier;
-    end;
-
-    { --------------------------------------------------------------------
-      Pbkdf2Params
-      --------------------------------------------------------------------}
-
-    TJSCryptoPbkdf2Params = record
-      salt : TJSBufferSource;
-      iterations : NativeInt;
-      hash : TJSCryptoAlgorithmIdentifier;
-    end;
-
-    { --------------------------------------------------------------------
-      RsaHashedImportParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoRsaHashedImportParams = record
-      hash : TJSCryptoAlgorithmIdentifier;
-    end;
-
-    { --------------------------------------------------------------------
-      AesKeyGenParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoAesKeyGenParams = record
-      length_ : Integer;external name 'length';
-    end;
-
-    { --------------------------------------------------------------------
-      HmacKeyGenParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoHmacKeyGenParams = record
-      hash : TJSCryptoAlgorithmIdentifier;
-      length_ : Integer;external name 'length';
-    end;
-
-    { --------------------------------------------------------------------
-      RsaHashedKeyGenParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoRsaHashedKeyGenParams = record
-      modulusLength : Integer;
-      publicExponent : TJSCryptoBigInteger;
-      hash : TJSCryptoAlgorithmIdentifier;
-    end;
-
-    { --------------------------------------------------------------------
-      RsaOaepParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoRsaOaepParams = record
-      label_ : TJSBufferSource;external name 'label';
-    end;
-
-    { --------------------------------------------------------------------
-      RsaPssParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoRsaPssParams = record
-      saltLength : Integer;
-    end;
-
-    { --------------------------------------------------------------------
-      DhKeyGenParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoDhKeyGenParams = record
-      prime : TJSCryptoBigInteger;
-      generator : TJSCryptoBigInteger;
-    end;
-
-    { --------------------------------------------------------------------
-      EcKeyGenParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoEcKeyGenParams = record
-      _namedCurve : TJSCryptoNamedCurve;external name 'namedCurve';
-    end;
-
-    { --------------------------------------------------------------------
-      AesDerivedKeyParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoAesDerivedKeyParams = record
-      length_ : Integer;external name 'length';
-    end;
-
-    { --------------------------------------------------------------------
-      HmacDerivedKeyParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoHmacDerivedKeyParams = record
-      length_ : Integer;external name 'length';
-    end;
-
-    { --------------------------------------------------------------------
-      EcdhKeyDeriveParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoEcdhKeyDeriveParams = record
-      public_ : TJSCryptoKey; external name 'public';
-    end;
-
-    { --------------------------------------------------------------------
-      DhKeyDeriveParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoDhKeyDeriveParams = record
-      public_ : TJSCryptoKey;  external name 'public';
-    end;
-
-    { --------------------------------------------------------------------
-      DhImportKeyParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoDhImportKeyParams = record
-      prime : TJSCryptoBigInteger;
-      generator : TJSCryptoBigInteger;
-    end;
-
-    { --------------------------------------------------------------------
-      EcdsaParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoEcdsaParams = record
-      hash : TJSCryptoAlgorithmIdentifier;
-    end;
-
-    { --------------------------------------------------------------------
-      EcKeyImportParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoEcKeyImportParams = record
-      _namedCurve : TJSCryptoNamedCurve;external name 'namedCurve';
-    end;
-
-    { --------------------------------------------------------------------
-      HkdfParams
-      --------------------------------------------------------------------}
-
-    TJSCryptoHkdfParams = record
-      hash : TJSCryptoAlgorithmIdentifier;
-      salt : TJSBufferSource;
-      info : TJSBufferSource;
-    end;
-
-    { --------------------------------------------------------------------
-      RsaOtherPrimesInfo
-      --------------------------------------------------------------------}
-
-    TJSCryptoRsaOtherPrimesInfo = record
-      r : String;
-      d : String;
-      t : String;
-    end;
-
-    { --------------------------------------------------------------------
-      JsonWebKey
-      --------------------------------------------------------------------}
-
-    TJSCryptoRsaOtherPrimesInfoDynArray = Array of TJSCryptoRsaOtherPrimesInfo;
-    TJSCryptoJsonWebKey = record
-      kty : String;
-      use : String;
-      key_ops : TStringDynArray;
-      alg : String;
-      ext : boolean;
-      crv : String;
-      x : String;
-      y : String;
-      d : String;
-      n : String;
-      e : String;
-      p : String;
-      q : String;
-      dp : String;
-      dq : String;
-      qi : String;
-      oth : TJSCryptoRsaOtherPrimesInfoDynArray;
-      k : String;
-    end;
-
-    { --------------------------------------------------------------------
-      CryptoKeyPair
-      --------------------------------------------------------------------}
-
-    TJSCryptoKeyPair = record
-      publicKey : TJSCryptoKey;
-      privateKey : TJSCryptoKey;
-    end;
-
-    { --------------------------------------------------------------------
-      TJSCryptoKey
-      --------------------------------------------------------------------}
-
-    TJSCryptoKeyUsageDynArray = Array of TJSCryptoKeyUsage;
-    TJSCryptoKey = class external name 'CryptoKey'
-    Private
-      Ftype_ : TJSCryptoKeyType; external name 'type';
-      Fextractable : boolean; external name 'extractable';
-      Falgorithm : TJSObject; external name 'algorithm';
-      Fusages : TJSCryptoKeyUsageDynArray; external name 'usages';
-    Public
-      Property type_ : TJSCryptoKeyType Read Ftype_;
-      Property extractable : boolean Read Fextractable;
-      Property algorithm : TJSObject Read Falgorithm;
-      Property usages : TJSCryptoKeyUsageDynArray Read Fusages;
-    end;
-
-    { --------------------------------------------------------------------
-      TJSSubtleCrypto
-      --------------------------------------------------------------------}
-
-    TJSSubtleCrypto = class external name 'SubtleCrypto'
-    Private
-    Public
-      function encrypt(algorithm :  TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
-      function decrypt(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
-      function sign(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; data : TJSBufferSource): TJSPromise;
-      function verify(algorithm : TJSCryptoAlgorithmIdentifier; key : TJSCryptoKey; signature : TJSBufferSource; data : TJSBufferSource): TJSPromise;
-      function digest(algorithm : TJSCryptoAlgorithmIdentifier; data : TJSBufferSource): TJSPromise;
-      function generateKey(algorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
-      function deriveKey(algorithm : TJSCryptoAlgorithmIdentifier; baseKey : TJSCryptoKey; derivedKeyType : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
-      function deriveBits(algorithm : TJSCryptoAlgorithmIdentifier; baseKey : TJSCryptoKey; length_ : NativeInt): TJSPromise;
-      function importKey(format : TJSCryptoKeyFormat; keyData : TJSObject; algorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
-      function exportKey(format : TJSCryptoKeyFormat; key : TJSCryptoKey): TJSPromise;
-      function wrapKey(format : TJSCryptoKeyFormat; key : TJSCryptoKey; wrappingKey : TJSCryptoKey; wrapAlgorithm : TJSCryptoAlgorithmIdentifier): TJSPromise;
-      function unwrapKey(format : TJSCryptoKeyFormat; wrappedKey : TJSBufferSource; unwrappingKey : TJSCryptoKey; unwrapAlgorithm : TJSCryptoAlgorithmIdentifier; unwrappedKeyAlgorithm : TJSCryptoAlgorithmIdentifier; extractable : boolean; keyUsages : TJSCryptoKeyUsageDynArray): TJSPromise;
-    end;
-    { TJSCrypto }
-
-    TJSCrypto = class external name 'Crypto'  (TJSObject)
-    private
-      Fsubtle: TJSSubtleCrypto; external name 'subtle';
-    Public
-      procedure getRandomValues (anArray : TJSTypedArray);
-      property subtle : TJSSubtleCrypto Read Fsubtle;
-    end;
-
-
 
   { TWindowOrWorkerGlobalScope }
 

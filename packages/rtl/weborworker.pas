@@ -145,6 +145,17 @@ type
     function tee(): TJSArray; // array containing two TJSReadableStream instances
   end;
 
+  TJSWritableStream = class external name 'WritableStream' (TJSObject)
+  private
+    FLocked: Boolean; external name 'locked';
+  public
+    function abort(reason: String): TJSPromise;
+    function close: TJSPromise;
+    function getWriter: TJSObject;
+    property locked: Boolean read FLocked;
+  end;
+
+
   TJSBlob = class external name 'Blob' (TJSEventTarget)
   private
     FSize: NativeInt; external name 'size';
@@ -176,10 +187,33 @@ type
     function text(): string; {$IFNDEF SkipAsync}async;{$ENDIF}
   end;
 
+  Theader = Array [0..1] of String;
+  THeaderArray = Array of Theader;
+
+  TJSHTMLHeaders = Class external name 'Headers' (TJSObject)
+  Public
+    constructor new(values : THeaderArray); overload;
+    procedure append(aName, aValue : String);
+    procedure delete(aName : String);
+    function entries : TJSIterator;
+    Function get(aName: String): string;
+    Function has(aName: String): Boolean;
+    function keys : TJSIterator; reintroduce;
+    function values : TJSIterator; reintroduce;
+    procedure set_(aName, aValue : String);
+    Property Headers[aName : string] : string Read Get Write Set_;
+  end;
+
+  TJSResponseInit = class external name 'Object' (TJSObject)
+    status : Integer;
+    statusText : String;
+    headersObj : TJSObject;
+    headers : TJSHTMLHeaders;
+  end;
 
   TJSResponse = class external name 'Response' (TJSBody)
   private
-    fheaders: TJSObject;external name 'headers';
+    fheaders: TJSHTMLHeaders;external name 'headers';
     fok: Boolean; external name 'ok';
     fredirected: Boolean; external name 'redirected';
     fstatus: NativeInt; external name 'status';
@@ -188,7 +222,16 @@ type
     furl: String; external name 'url';
     fuseFinalUrl: Boolean; external name 'useFinalUrl';
   public
-    property headers: TJSObject read fheaders; //
+    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new'; deprecated;
+    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';   deprecated;
+    constructor new(body: TJSObject); overload; varargs; external name 'new';
+    constructor new(Msg: string); overload; varargs; external name 'new';
+    constructor new(body: TJSObject; init: TJSResponseInit); overload; varargs; external name 'new';
+    constructor new(Msg: string; init: TJSResponseInit); overload; varargs; external name 'new';
+    function clone(): TJSResponse;
+    function error(): TJSResponse;
+    function redirect(url: String; Status: NativeInt): TJSResponse;
+    property headers: TJSHTMLHeaders read fheaders; //
     property ok: Boolean read fok;
     property redirected: Boolean read fredirected;
     property status: NativeInt read fstatus;
@@ -196,11 +239,6 @@ type
     property type_: String read ftype; //
     property url: String read furl; //
     property useFinalUrl: Boolean read fuseFinalUrl write fuseFinalUrl;
-    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new';
-    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';
-    function clone(): TJSResponse;
-    function error(): TJSResponse;
-    function redirect(url: String; Status: NativeInt): TJSResponse;
   end;
 
   TJSFormData = class external name 'FormData' (TJSObject)

@@ -47,7 +47,6 @@ Type
   TJSShowOpenFilePickerOptions = class;
   TJSShowSaveFilePickerOptions = class;
   TJSClient = class;
-  TJSResponse = Class;
 
   TJSServiceWorker = weborworker.TJSServiceWorker;
   TJSServiceWorkerRegistration = weborworker.TJSServiceWorkerRegistration;
@@ -1372,22 +1371,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
 
   TJSTimerCallBack = weborworker.TJSTimerCallBack;
-  Theader = Array [0..1] of String;
-  THeaderArray = Array of Theader;
-
-  TJSHTMLHeaders = Class external name 'Headers' (TJSObject)
-  Public
-    constructor new(values : THeaderArray); overload;
-    procedure append(aName, aValue : String);
-    procedure delete(aName : String);
-    function entries : TJSIterator;
-    Function get(aName: String): string;
-    Function has(aName: String): Boolean;
-    function keys : TJSIterator; reintroduce;
-    function values : TJSIterator; reintroduce;
-    procedure set_(aName, aValue : String);
-    Property Headers[aName : string] : string Read Get Write Set_;
-  end;
 
 
   { TJSMediaQueryList }
@@ -1401,73 +1384,11 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property media : String Read FMedia;
   end;
 
-  TJSReadableStream = class external name 'ReadableStream' (TJSObject)
-  private
-    flocked: Boolean; external name 'locked';
-  public
-    property locked: Boolean read flocked;
-    constructor new(underlyingSource: TJSObject);
-    constructor new(underlyingSource, queueingStrategy: TJSObject);
-    function cancel(reason: TJSDOMString): TJSPromise;
-    function getReader(): TJSObject; overload;
-    function getReader(mode: TJSObject): TJSObject; overload;
-    function pipeThrough(transformStream: TJSObject): TJSReadableStream; overload;
-    function pipeThrough(transformStream, options: TJSObject): TJSReadableStream; overload;
-    function pipeTo(destination: TJSObject): TJSPromise; overload;
-    function pipeTo(destination, options: TJSObject): TJSPromise; overload;
-    function tee(): TJSArray; // array containing two TJSReadableStream instances
-  end;
+  TJSReadableStream = weborworker.TJSReadableStream;
+  TJSWritableStream = weborworker.TJSWritableStream;
+  TJSBody = weborworker.TJSBody;
 
-  TJSWritableStream = class external name 'WritableStream' (TJSObject)
-  private
-    FLocked: Boolean; external name 'locked';
-  public
-    function abort(reason: String): TJSPromise;
-    function close: TJSPromise;
-    function getWriter: TJSObject;
-    property locked: Boolean read FLocked;
-  end;
-
-  TJSBody = class external name 'Body' (TJSObject)
-  private
-    fbody: TJSReadableStream; external name 'body';
-    fbodyUsed: Boolean; external name 'bodyUsed';
-  public
-    property body: TJSReadableStream read fbody;
-    property bodyUsed: Boolean read fbodyUsed;
-    function arrayBuffer(): TJSPromise; // resolves to TJSArrayBuffer
-    //function blob(): TJSPromise; // resolves to TJSBlob
-    function blob: TJSBlob; {$IFNDEF SkipAsync}async;{$ENDIF}
-    function json(): TJSPromise; // resolves to JSON / TJSValue
-    //function text(): TJSPromise; // resolves to USVString, always decoded using UTF-8
-    function text(): string; {$IFNDEF SkipAsync}async;{$ENDIF}
-  end;
-
-  TJSResponse = class external name 'Response' (TJSBody)
-  private
-    fheaders: TJSObject;external name 'headers';
-    fok: Boolean; external name 'ok';
-    fredirected: Boolean; external name 'redirected';
-    fstatus: NativeInt; external name 'status';
-    fstatusText: String; external name 'statusText';
-    ftype: String; external name 'type';
-    furl: String; external name 'url';
-    fuseFinalUrl: Boolean; external name 'useFinalUrl';
-  public
-    property headers: TJSObject read fheaders; //
-    property ok: Boolean read fok;
-    property redirected: Boolean read fredirected;
-    property status: NativeInt read fstatus;
-    property statusText: String read fstatusText; //
-    property type_: String read ftype; //
-    property url: String read furl; //
-    property useFinalUrl: Boolean read fuseFinalUrl write fuseFinalUrl;
-    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new';
-    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';
-    function clone(): TJSResponse;
-    function error(): TJSResponse;
-    function redirect(url: String; Status: NativeInt): TJSResponse;
-  end;
+  TJSResponse = weborworker.TJSResponse;
 
   TJSDOMHighResTimeStamp = Double;
   TFrameRequestCallback = reference to procedure (aTime: TJSDOMHighResTimeStamp);

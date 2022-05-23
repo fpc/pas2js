@@ -22,7 +22,8 @@ uses
 
 type
   // We cannot use EConvertError or Exception, this would result in a circular dependency.
-
+  TJSArray = class;
+  TJSMap = class;
   { EJS }
 
   EJS = class(TObject)
@@ -62,6 +63,9 @@ type
     {$IFDEF FIREFOX}
     class function _is(const value1, value2: JSValue): boolean;
     {$ENDIF}
+    class function fromEntries(const obj: TJSObject): TJSObject;
+    class function fromEntries(const obj: TJSArray): TJSObject;
+    class function fromEntries(const obj: TJSMap): TJSObject;
     class function isExtensible(const obj: TJSObject): boolean;
     class function isFrozen(const obj: TJSObject): boolean;
     class function isSealed(const obj: TJSObject): boolean;
@@ -364,7 +368,6 @@ type
     function valueOf : string;
   end;
 
-  TJSArray = Class;
   
   TJSArrayEventProc = reference to procedure(element : JSValue; index: NativeInt; anArray : TJSArray);
   TJSArrayEvent = reference to function (element : JSValue; index: NativeInt; anArray : TJSArray) : Boolean;

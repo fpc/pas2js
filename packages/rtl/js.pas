@@ -329,6 +329,16 @@ type
     function replace(Regexp : TJSRegexp; aCallback : TReplaceCallBack1) : String; overload;
     function replace(Regexp : String; aCallback : TReplaceCallBack2) : String; overload;
     function replace(Regexp : TJSRegexp; aCallback : TReplaceCallBack2) : String; overload;
+    function replaceAll(aRegexp : String; NewString : String) : String; overload;
+    function replaceAll(aRegexp : TJSRegexp; NewString : String) : String; overload;
+    function replaceAll(Regexp : String; aCallback : TReplaceCallBack) : String; overload;
+    function replaceAll(Regexp : TJSRegexp; aCallback : TReplaceCallBack) : String; overload;
+    function replaceAll(Regexp : String; aCallback : TReplaceCallBack0) : String; overload;
+    function replaceAll(Regexp : TJSRegexp; aCallback : TReplaceCallBack0) : String; overload;
+    function replaceAll(Regexp : String; aCallback : TReplaceCallBack1) : String; overload;
+    function replaceAll(Regexp : TJSRegexp; aCallback : TReplaceCallBack1) : String; overload;
+    function replaceAll(Regexp : String; aCallback : TReplaceCallBack2) : String; overload;
+    function replaceAll(Regexp : TJSRegexp; aCallback : TReplaceCallBack2) : String; overload;
     function search(Regexp : TJSRegexp) : NativeInt; overload;
     function search(Regexp : JSValue) : NativeInt; overload;
     function slice(aBeginIndex : NativeInt) : String; overload;

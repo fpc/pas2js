@@ -60,6 +60,7 @@ begin
   aObject[WasiDomInvokeNoResult]:=@Invoke_NoResult;
   aObject[WasiDomInvokeBooleanResult]:=@Invoke_BooleanResult;
   aObject[WasiDomInvokeDoubleResult]:=@Invoke_DoubleResult;
+  aObject[WasiDomInvokeObjectResult]:=@Invoke_ObjectResult;
 end;
 
 function TWADomBridge.FindObject(ObjId: TWasiDomObjectID): TJSObject;

@@ -50,6 +50,7 @@ const
   WasiDomInvokeNoResult = 'invoke_noresult';
   WasiDomInvokeBooleanResult = 'invoke_boolresult';
   WasiDomInvokeDoubleResult = 'invoke_doubleresult';
+  WasiDomInvokeObjectResult = 'invoke_objectresult';
 
   WasiArgNone = 0;
   WasiArgLongint = 1;

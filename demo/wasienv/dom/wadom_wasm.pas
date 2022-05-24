@@ -94,7 +94,7 @@ function __wasibridgefn_invoke_stringresult(
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
-  ResultLenP: PNativeInt // length
+  ResultLenP: PByte // length
 ): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeStringResult;
 
 function __wasibridgefn_getstringresult(
@@ -497,20 +497,9 @@ function TJSObject.InvokeJSUnicodeStringResult(const aName: string;
 var
   ResultLen: NativeInt;
   aError: TWasiDomResult;
-  InvokeArgs: PByte;
 begin
   ResultLen:=0;
-  if length(Args)=0 then
-    aError:=__wasibridgefn_invoke_stringresult(ObjectID,PChar(aName),length(aName),nil,@ResultLen)
-  else begin
-    InvokeArgs:=CreateInvokeJSArgs(Args);
-    try
-      aError:=__wasibridgefn_invoke_stringresult(ObjectID,PChar(aName),length(aName),InvokeArgs,@ResultLen);
-    finally
-      if InvokeArgs<>nil then
-        FreeMem(InvokeArgs);
-    end;
-  end;
+  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_stringresult,@ResultLen);
   if aError<>WasiDomResult_String then
     WasiInvokeRaiseResultMismatch(aName,WasiDomResult_String,aError);
   if ResultLen=0 then
@@ -524,7 +513,6 @@ begin
       __wasibridgefn_releasestringresult();
   end;
   __wasibridgefn_getstringresult(PByte(Result));
-  writeln('TJSObject.InvokeJSUnicodeStringResult Result="',Result,'"');
 end;
 
 function TJSObject.InvokeJSObjResult(const aName: string;

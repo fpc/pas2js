@@ -1,7 +1,6 @@
 unit wadom_browser;
 
 {$mode objfpc}
-{$h+}
 
 interface
 
@@ -30,7 +29,7 @@ Type
     function GetStringResult(ResultP: NativeInt): TWasiDomResult; virtual;
     function ReleaseStringResult: TWasiDomResult; virtual;
     function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
-    function GetWasiDomResult(const v: jsvalue): TWasiDomResult;
+    function GetWasiDomResult(v: jsvalue): TWasiDomResult;
   Public
     Constructor Create(aEnv: TPas2JSWASIEnvironment); override;
     Procedure FillImportObject(aObject: TJSObject); override;
@@ -322,7 +321,7 @@ begin
   end;
 end;
 
-function TWADomBridge.GetWasiDomResult(const v: jsvalue): TWasiDomResult;
+function TWADomBridge.GetWasiDomResult(v: jsvalue): TWasiDomResult;
 begin
   case jstypeof(v) of
   'undefined': Result:=WasiDomResult_Undefined;
@@ -332,7 +331,7 @@ begin
   'symbol': Result:=WasiDomResult_Symbol;
   'bigint': Result:=WasiDomResult_BigInt;
   'function': Result:=WasiDomResult_Function;
-  'object': Result:=WasiDomResult_Object;
+  'object': if v=nil then Result:=WasiDomResult_Null else Result:=WasiDomResult_Object;
   else Result:=WasiDomResult_None;
   end;
 end;

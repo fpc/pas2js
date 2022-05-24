@@ -210,7 +210,8 @@ type
     procedure append(aName, aValue : String);
     procedure delete(aName : String);
     function entries : TJSIterator;
-    Function get(aName: String): string;
+    Function get(aName: String): string;  // string, but can be Null. Only use after Has returned true.
+    function getRaw(const aName : string): JSValue; external name 'get'; // can return null
     Function has(aName: String): Boolean;
     function keys : TJSIterator; reintroduce;
     function values : TJSIterator; reintroduce;
@@ -227,7 +228,7 @@ type
 
   TJSResponse = class external name 'Response' (TJSBody)
   private
-    fheaders: TJSHTMLHeaders;external name 'headers';
+    fheaders: TJSHTMLHeaders; external name 'headers';
     fok: Boolean; external name 'ok';
     fredirected: Boolean; external name 'redirected';
     fstatus: NativeInt; external name 'status';
@@ -282,7 +283,7 @@ type
     FCache: String; external name 'cache';
     FCredentials: TJSObject; external name 'credentials';
     FDestination: String; external name 'destination';
-    FHeaders: TJSObject; external name 'headers';
+    FHeaders: TJSHTMLHeaders; external name 'headers';
     FIntegrity: String; external name 'integrity';
     FMethod: String; external name 'method';
     FMode: String; external name 'mode';
@@ -303,8 +304,7 @@ type
     Property Cache : String Read FCache;
     Property Credentials : TJSObject Read FCredentials;
     Property Destination : String Read FDestination;
-    // TODO : actually Headers object
-    Property Headers : TJSObject Read FHeaders;
+    Property Headers : TJSHTMLHeaders Read FHeaders;
     Property Integrity : String Read FIntegrity;
     Property Method : String Read FMethod;
     Property Mode : String Read FMode;

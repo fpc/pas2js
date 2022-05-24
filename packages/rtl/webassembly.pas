@@ -6,7 +6,7 @@ unit webassembly;
 interface
 
 uses
-  js, Web;
+  js, Weborworker;
 
 Type
   { TJSWebAssemblyMemory }

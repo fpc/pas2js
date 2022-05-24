@@ -18,6 +18,7 @@ type
   TJSIDBObjectStore = class;
   TJSIDBRequest = class;
   TJSServiceWorker = class;
+  TJSReadableStream = class;
 
 { ----------------------------------------------------------------------
   Console
@@ -128,6 +129,19 @@ type
     transfer : TJSValueDynArray;
   end;
 
+  TJSReadableStreamDefaultReader = class external name 'ReadableStreamDefaultReader' (TJSObject)
+   private
+     fclosed: TJSPromise; external name 'closed';
+   public
+     property closed: TJSPromise read fclosed;
+     constructor new(stream: TJSReadableStream);
+     function cancel(): TJSPromise; overload;
+     function cancel(reason: string): TJSPromise; overload;
+     function read(): TJSPromise;
+     function releaseLock(): TJSPromise;
+   end;
+
+
   TJSReadableStream = class external name 'ReadableStream' (TJSObject)
   private
     flocked: Boolean; external name 'locked';
@@ -136,8 +150,8 @@ type
     constructor new(underlyingSource: TJSObject);
     constructor new(underlyingSource, queueingStrategy: TJSObject);
     function cancel(reason: String): TJSPromise;
-    function getReader(): TJSObject; overload;
-    function getReader(mode: TJSObject): TJSObject; overload;
+    function getReader(): TJSReadableStreamDefaultReader; overload;
+    function getReader(mode: TJSObject): TJSReadableStreamDefaultReader; overload;
     function pipeThrough(transformStream: TJSObject): TJSReadableStream; overload;
     function pipeThrough(transformStream, options: TJSObject): TJSReadableStream; overload;
     function pipeTo(destination: TJSObject): TJSPromise; overload;
@@ -204,7 +218,7 @@ type
     Property Headers[aName : string] : string Read Get Write Set_;
   end;
 
-  TJSResponseInit = class external name 'Object' (TJSObject)
+  TJSResponseInit = class external name 'Object'
     status : Integer;
     statusText : String;
     headersObj : TJSObject;
@@ -222,11 +236,11 @@ type
     furl: String; external name 'url';
     fuseFinalUrl: Boolean; external name 'useFinalUrl';
   public
-    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new'; deprecated;
-    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';   deprecated;
     constructor new(body: TJSObject); overload; varargs; external name 'new';
-    constructor new(Msg: string); overload; varargs; external name 'new';
+    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new'; deprecated;
     constructor new(body: TJSObject; init: TJSResponseInit); overload; varargs; external name 'new';
+    constructor new(Msg: string); overload; varargs; external name 'new';
+    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';   deprecated;
     constructor new(Msg: string; init: TJSResponseInit); overload; varargs; external name 'new';
     function clone(): TJSResponse;
     function error(): TJSResponse;

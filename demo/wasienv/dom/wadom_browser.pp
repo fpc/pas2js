@@ -19,7 +19,7 @@ Type
   Protected
     function FindObject(ObjId: TWasiDomObjectID): TJSObject; virtual;
     function Invoke_JSResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP: NativeInt; out JSResult: JSValue): TWasiDomResult; virtual;
-    function Invoke_NoResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP: NativeInt): TWasiDomResult; virtual;
+    function Invoke_NoResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, Dummy: NativeInt): TWasiDomResult; virtual;
     function Invoke_BooleanResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
     function Invoke_DoubleResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
     function Invoke_ObjectResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
@@ -29,6 +29,7 @@ Type
     Constructor Create(aEnv: TPas2JSWASIEnvironment); override;
     Procedure FillImportObject(aObject: TJSObject); override;
     Function ImportName: String; override;
+    Function RegisterGlobalObject(Obj: TJSObject): TWasiDomObjectID; virtual;
   end;
 
 Implementation
@@ -53,6 +54,11 @@ end;
 function TWADomBridge.ImportName: String;
 begin
   Result:=WasiDomExportName;
+end;
+
+function TWADomBridge.RegisterGlobalObject(Obj: TJSObject): TWasiDomObjectID;
+begin
+  Result:=-(FGlobalObjects.push(Obj)-1);
 end;
 
 procedure TWADomBridge.FillImportObject(aObject: TJSObject);
@@ -110,7 +116,7 @@ begin
 end;
 
 function TWADomBridge.Invoke_NoResult(ObjId: TWasiDomObjectID; FuncNameP,
-  FuncNameLen, ArgsP: NativeInt): TWasiDomResult;
+  FuncNameLen, ArgsP, Dummy: NativeInt): TWasiDomResult;
 var
   JSResult: JSValue;
 begin

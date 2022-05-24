@@ -69,8 +69,9 @@ function __wasidom_invoke_noresult(
   ObjID: TWasiDomObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
-  ArgP: PByte
-): TWasiDomResult; external WasiDomExportName name WasiDomInvokeBooleanResult;
+  ArgP: PByte;
+  Dummy: PByte
+): TWasiDomResult; external WasiDomExportName name WasiDomInvokeNoResult;
 
 function __wasidom_invoke_boolresult(
   ObjID: TWasiDomObjectID;
@@ -432,18 +433,18 @@ var
   InvokeArgs: PByte;
 begin
   if length(Args)=0 then
-    aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),nil)
+    aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),nil,nil)
   else begin
     InvokeArgs:=CreateInvokeJSArgs(Args);
     try
-      aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs);
+      aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs,nil);
     finally
       if InvokeArgs<>nil then
         FreeMem(InvokeArgs);
     end;
   end;
   if aError<>WasiDomResult_Success then
-    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Boolean,aError);
+    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Success,aError);
 end;
 
 function TJSObject.InvokeJSBooleanResult(const aName: string;

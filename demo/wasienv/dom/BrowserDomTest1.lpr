@@ -4,9 +4,23 @@ program BrowserDomTest1;
 
 uses
   BrowserConsole, BrowserApp, JS, Classes, SysUtils, Web, WebAssembly, Types,
-  wasienv, wadom_browser;
+  wasienv, wadom_browser, wadom_shared;
 
 Type
+
+  { TBird }
+
+  TBird = class
+  public
+    Name: string;
+    constructor Create(const aName: string); reintroduce;
+    procedure Proc;
+    function GetBoolean: boolean;
+    function GetDouble: double;
+    function GetString: string;
+    function CreateChick(const aName: string): TBird;
+    function ArgsToStr(Args: TJSFunctionArguments): string;
+  end;
 
   { TMyApplication }
 
@@ -27,6 +41,73 @@ Type
     procedure DoRun; override;
   end;
 
+{ TBird }
+
+constructor TBird.Create(const aName: string);
+begin
+  Name:=aName;
+
+  if false then begin
+    // use, so pas2js includes them
+    Proc;
+    GetBoolean;
+    GetDouble;
+    GetString;
+    CreateChick('');
+  end;
+end;
+
+procedure TBird.Proc;
+begin
+  writeln('TBird.Proc [',Name,'] ',ArgsToStr(JSArguments));
+end;
+
+function TBird.GetBoolean: boolean;
+begin
+  writeln('TBird.GetBoolean [',Name,'] ',ArgsToStr(JSArguments));
+  Result:=JSArguments.Length mod 1 = 0;
+end;
+
+function TBird.GetDouble: double;
+begin
+  writeln('TBird.GetDouble [',Name,'] ',ArgsToStr(JSArguments));
+  Result:=0.3+JSArguments.Length;
+end;
+
+function TBird.GetString: string;
+begin
+  writeln('TBird.GetString [',Name,'] ',ArgsToStr(JSArguments));
+  Result:='TBird.GetString:'+str(JSArguments.Length);
+  if JSArguments.Length>0 then
+    Result:=Result+String(JSArguments[0]);
+end;
+
+function TBird.CreateChick(const aName: string): TBird;
+begin
+  writeln('TBird.CreateChick [',Name,'] ',ArgsToStr(JSArguments));
+  Result:=TBird.Create(Name+'.'+aName);
+end;
+
+function TBird.ArgsToStr(Args: TJSFunctionArguments): string;
+var
+  i: Integer;
+  t: String;
+  a: JSValue;
+begin
+  Result:='[';
+  for i:=0 to Args.Length-1 do
+  begin
+    if i>0 then Result:=Result+',';
+    a:=Args[i];
+    t:=jstypeof(a);
+    if t='string' then
+      Result:=Result+'"'+String(a)+'"'
+    else
+      Result:=Result+String(a);
+  end;
+  Result:=Result+']';
+end;
+
 function TMyApplication.InitEnv(aValue: JSValue): JSValue;
 Var
   Module : TJSInstantiateResult absolute aValue;
@@ -38,6 +119,8 @@ begin
   //  console.info('got exports', exps);
   Exps.Start;
 end;
+
+{ TMyApplication }
 
 procedure TMyApplication.DoWrite(Sender: TObject; const aOutput: String);
 begin
@@ -51,6 +134,9 @@ begin
   FWasiEnv.OnStdErrorWrite:=@DoWrite;
   FWasiEnv.OnStdOutputWrite:=@DoWrite;
   FWADomBridge:=TWADomBridge.Create(FWasiEnv);
+
+  if FWADomBridge.RegisterGlobalObject(TJSObject(TBird.Create('Root')))<>WasiObjIdBird then
+    raise Exception.Create('Root TBird wrong number');
 end;
 
 function TMyApplication.CreateWebAssembly(Path: string; ImportObject: TJSObject): TJSPromise;

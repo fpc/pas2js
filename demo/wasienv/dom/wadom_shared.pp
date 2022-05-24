@@ -67,6 +67,8 @@ const
   WasiObjIdConsole = -3;
   WasiObjIdCaches = -4;
 
+  WasiObjIdBird = -5;
+
 implementation
 
 end.

@@ -5,18 +5,21 @@ program WasiDomTest1;
 {$codepage UTF8}
 
 uses
-  SysUtils, wadom_wasm;
+  SysUtils, wadom_wasm, wadom_shared;
 
 var
   obj: TJSObject;
   d: Double;
   u: UnicodeString;
 begin
-  obj:=TJSObject.CreateFromID(-1);
-  d:=obj.InvokeJSDoubleResult('fly',[]);
-  writeln('AAA1 ',d);
+  obj:=TJSObject.CreateFromID(WasiObjIdBird);
+  writeln('AAA1 ');
+  obj.InvokeJSNoResult('Proc',[]);
+  writeln('AAA2 ');
+  exit;
+
   u:='äbc';
-  d:=obj.InvokeJSDoubleResult('fly',[u,12345678901]);
-  writeln('AAA2 ',d);
+  d:=obj.InvokeJSDoubleResult('GetDouble',[u,12345678901]);
+  writeln('AAA3 ',d);
 end.
 

@@ -1,18 +1,20 @@
 {
+  JOB - JS Object Bridge for Webassembly
+
   Webassembly unit giving access to the browser DOM.
 
   see https://wiki.freepascal.org/WebAssembly/DOM
 }
-unit wadom_wasm;
+unit JOB_WAsm;
 
 {$mode ObjFPC}{$H+}
 
-{$define VerboseWasiDom}
+{$define VerboseJOB}
 
 interface
 
 uses
-  SysUtils, Types, Math, Classes, wadom_shared;
+  SysUtils, Types, Math, Classes, JOB_Shared;
 
 const
   MinSafeIntDouble = -$1fffffffffffff; // -9007199254740991 54 bits (52 plus signed bit plus implicit highest bit)
@@ -22,18 +24,18 @@ Type
   EJSObject = class(Exception);
   EJSInvoke = class(EJSObject)
   public
-    ObjectID: TWasiDomObjectID;
+    ObjectID: TJOBObjectID;
     FuncName: string;
   end;
 
-  PWasiDomObjectID = ^TWasiDomObjectID;
-  TWasiDomInvokeOneResultFunc = function(
-      ObjID: TWasiDomObjectID;
+  PJOBObjectID = ^TJOBObjectID;
+  TJOBInvokeOneResultFunc = function(
+      ObjID: TJOBObjectID;
       FuncNameP: PChar;
       FuncNameLen: longint;
       ArgP: PByte;
       ResultP: PByte
-    ): TWasiDomResult;
+    ): TJOBResult;
 
   TJSObject = class;
   TJSObjectClass = class of TJSObject;
@@ -42,17 +44,17 @@ Type
 
   TJSObject = class(TInterfacedObject)
   private
-    FObjectID: TWasiDomObjectID;
+    FObjectID: TJOBObjectID;
   protected
     function InvokeJSOneResult(const aName: string; Const Args: Array of const;
-      const InvokeFunc: TWasiDomInvokeOneResultFunc; ResultP: PByte): TWasiDomResult;
-    procedure WasiInvokeRaise(const aName, Msg: string); virtual;
-    procedure WasiInvokeRaiseResultMismatch(const aName: string; Expected, Actual: TWasiDomResult); virtual;
+      const InvokeFunc: TJOBInvokeOneResultFunc; ResultP: PByte): TJOBResult;
+    procedure InvokeRaise(const aName, Msg: string); virtual;
+    procedure InvokeRaiseResultMismatch(const aName: string; Expected, Actual: TJOBResult); virtual;
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
   public
-    constructor CreateFromID(aID: TWasiDomObjectID); virtual;
+    constructor CreateFromID(aID: TJOBObjectID); virtual;
     destructor Destroy; override;
-    property ObjectID: TWasiDomObjectID read FObjectID;
+    property ObjectID: TJOBObjectID read FObjectID;
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const);
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const): Boolean;
     function InvokeJSDoubleResult(const aName: string; Const Args: Array of const): Double;
@@ -65,60 +67,60 @@ Type
 var
   JSDocument: TJSObject; // ToDo
 
-function __wasibridgefn_invoke_noresult(
-  ObjID: TWasiDomObjectID;
+function __job_invoke_noresult(
+  ObjID: TJOBObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   Dummy: PByte
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeNoResult;
+): TJOBResult; external JOBExportName name JOBFn_InvokeNoResult;
 
-function __wasibridgefn_invoke_boolresult(
-  ObjID: TWasiDomObjectID;
+function __job_invoke_boolresult(
+  ObjID: TJOBObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByte // bytebool
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeBooleanResult;
+): TJOBResult; external JOBExportName name JOBFn_InvokeBooleanResult;
 
-function __wasibridgefn_invoke_doubleresult(
-  ObjID: TWasiDomObjectID;
+function __job_invoke_doubleresult(
+  ObjID: TJOBObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByte // double
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeDoubleResult;
+): TJOBResult; external JOBExportName name JOBFn_InvokeDoubleResult;
 
-function __wasibridgefn_invoke_stringresult(
-  ObjID: TWasiDomObjectID;
+function __job_invoke_stringresult(
+  ObjID: TJOBObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultLenP: PByte // length
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeStringResult;
+): TJOBResult; external JOBExportName name JOBFn_InvokeStringResult;
 
-function __wasibridgefn_getstringresult(
+function __job_getstringresult(
   ResultP: PByte
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_GetStringResult;
+): TJOBResult; external JOBExportName name JOBFn_GetStringResult;
 
-function __wasibridgefn_releasestringresult(
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_ReleaseStringResult;
+function __job_releasestringresult(
+): TJOBResult; external JOBExportName name JOBFn_ReleaseStringResult;
 
-function __wasibridgefn_invoke_objectresult(
-  ObjID: TWasiDomObjectID;
+function __job_invoke_objectresult(
+  ObjID: TJOBObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByte // nativeint
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeObjectResult;
+): TJOBResult; external JOBExportName name JOBFn_InvokeObjectResult;
 
-function __wasibridgefn_release_object(
-  ObjID: TWasiDomObjectID
-): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_ReleaseObject;
+function __job_release_object(
+  ObjID: TJOBObjectID
+): TJOBResult; external JOBExportName name JOBFn_ReleaseObject;
 
 implementation
 
-{$IFDEF VerboseWasiDom}
+{$IFDEF VerboseJOB}
 function GetVarRecName(vt: word): string;
 begin
   case vt of
@@ -152,7 +154,7 @@ end;
 { TJSObject }
 
 function TJSObject.InvokeJSOneResult(const aName: string; const Args: array of const;
-  const InvokeFunc: TWasiDomInvokeOneResultFunc; ResultP: PByte): TWasiDomResult;
+  const InvokeFunc: TJOBInvokeOneResultFunc; ResultP: PByte): TJOBResult;
 var
   InvokeArgs: PByte;
 begin
@@ -169,7 +171,7 @@ begin
   end;
 end;
 
-procedure TJSObject.WasiInvokeRaise(const aName, Msg: string);
+procedure TJSObject.InvokeRaise(const aName, Msg: string);
 var
   E: EJSInvoke;
 begin
@@ -179,14 +181,14 @@ begin
   raise E;
 end;
 
-procedure TJSObject.WasiInvokeRaiseResultMismatch(const aName: string;
-  Expected, Actual: TWasiDomResult);
+procedure TJSObject.InvokeRaiseResultMismatch(const aName: string;
+  Expected, Actual: TJOBResult);
 begin
   case Actual of
-  WasiDomResult_UnknownObjId: WasiInvokeRaise(aName,'unknown object id '+IntToStr(ObjectID));
-  WasiDomResult_NotAFunction: WasiInvokeRaise(aName,'object '+IntToStr(ObjectID)+' does not have a function "'+aName+'"');
+  JOBResult_UnknownObjId: InvokeRaise(aName,'unknown object id '+IntToStr(ObjectID));
+  JOBResult_NotAFunction: InvokeRaise(aName,'object '+IntToStr(ObjectID)+' does not have a function "'+aName+'"');
   else
-    WasiInvokeRaise(aName,'expected '+WasiDomResult_Names[Expected]+', but got '+WasiDomResult_Names[Actual]+' from object '+IntToStr(ObjectID)+' function "'+aName+'"');
+    InvokeRaise(aName,'expected '+JOBResult_Names[Expected]+', but got '+JOBResult_Names[Actual]+' from object '+IntToStr(ObjectID)+' function "'+aName+'"');
   end;
 end;
 
@@ -282,7 +284,7 @@ begin
     case Args[i].VType of
     vtInteger       :
       begin
-        p^:=WasiArgLongint;
+        p^:=JOBArgLongint;
         inc(p);
         PLongint(p)^:=Args[i].VInteger;
         inc(p,4);
@@ -290,15 +292,15 @@ begin
     vtBoolean       :
       begin
         if Args[i].VBoolean then
-          p^:=WasiArgTrue
+          p^:=JOBArgTrue
         else
-          p^:=WasiArgFalse;
+          p^:=JOBArgFalse;
         inc(p);
       end;
     {$ifndef FPUNONE}
     vtExtended      :
       begin
-        p^:=WasiArgDouble;
+        p^:=JOBArgDouble;
         inc(p);
         PDouble(p)^:=double(Args[i].VExtended^);
         inc(p,8);
@@ -306,14 +308,14 @@ begin
     {$endif}
     vtChar:
       begin
-        p^:=WasiArgChar;
+        p^:=JOBArgChar;
         inc(p);
         PWord(p)^:=ord(Args[i].VChar);
         inc(p,2);
       end;
     vtWideChar      :
       begin
-        p^:=WasiArgChar;
+        p^:=JOBArgChar;
         inc(p);
         PWord(p)^:=ord(Args[i].VWideChar);
         inc(p,2);
@@ -321,7 +323,7 @@ begin
     vtString        :
       begin
         // shortstring
-        p^:=WasiArgUTF8String;
+        p^:=JOBArgUTF8String;
         inc(p);
         h:=PByte(Args[i].VString);
         PNativeInt(p)^:=h^;
@@ -332,14 +334,14 @@ begin
       end;
     vtPointer:
       begin
-        p^:=WasiArgPointer;
+        p^:=JOBArgPointer;
         inc(p);
         PPointer(p)^:=Args[i].VPointer;
         inc(p,sizeof(Pointer));
       end;
     vtPChar         :
       begin
-        p^:=WasiArgUTF8String;
+        p^:=JOBArgUTF8String;
         inc(p);
         h:=PByte(Args[i].VPChar);
         PNativeInt(p)^:=strlen(PChar(h));
@@ -352,7 +354,7 @@ begin
     vtPWideChar     : ;
     vtAnsiString    :
       begin
-        p^:=WasiArgUTF8String;
+        p^:=JOBArgUTF8String;
         inc(p);
         h:=Args[i].VAnsiString;
         s:=AnsiString(h);
@@ -368,7 +370,7 @@ begin
     vtInterface     : ;
     vtWideString    :
       begin
-        p^:=WasiArgUnicodeString;
+        p^:=JOBArgUnicodeString;
         inc(p);
         h:=Args[i].VWideString;
         ws:=WideString(h);
@@ -382,12 +384,12 @@ begin
         i64:=Args[i].VInt64^;
         if (i64>=low(longint)) and (i64<=high(longint)) then
         begin
-          p^:=WasiArgLongint;
+          p^:=JOBArgLongint;
           inc(p);
           PLongint(p)^:=i64;
           inc(p,4);
         end else begin
-          p^:=WasiArgDouble;
+          p^:=JOBArgDouble;
           inc(p);
           PDouble(p)^:=i64;
           inc(p,8);
@@ -395,7 +397,7 @@ begin
       end;
     vtUnicodeString :
       begin
-        p^:=WasiArgUnicodeString;
+        p^:=JOBArgUnicodeString;
         inc(p);
         h:=Args[i].VUnicodeString;
         us:=UnicodeString(h);
@@ -409,12 +411,12 @@ begin
         qw:=Args[i].VQWord^;
         if (qw<=high(longint)) then
         begin
-          p^:=WasiArgLongint;
+          p^:=JOBArgLongint;
           inc(p);
           PLongint(p)^:=qw;
           inc(p,4);
         end else begin
-          p^:=WasiArgDouble;
+          p^:=JOBArgDouble;
           inc(p);
           PDouble(p)^:=qw;
           inc(p,8);
@@ -435,7 +437,7 @@ begin
   {$ENDIF}
 end;
 
-constructor TJSObject.CreateFromID(aID: TWasiDomObjectID);
+constructor TJSObject.CreateFromID(aID: TJOBObjectID);
 begin
   FObjectID:=aID;
 end;
@@ -443,97 +445,97 @@ end;
 destructor TJSObject.Destroy;
 begin
   if ObjectID>=0 then
-    __wasibridgefn_release_object(ObjectID);
+    __job_release_object(ObjectID);
   inherited Destroy;
 end;
 
 procedure TJSObject.InvokeJSNoResult(const aName: string;
   const Args: array of const);
 var
-  aError: TWasiDomResult;
+  aError: TJOBResult;
   InvokeArgs: PByte;
 begin
   if length(Args)=0 then
-    aError:=__wasibridgefn_invoke_noresult(ObjectID,PChar(aName),length(aName),nil,nil)
+    aError:=__job_invoke_noresult(ObjectID,PChar(aName),length(aName),nil,nil)
   else begin
     InvokeArgs:=CreateInvokeJSArgs(Args);
     try
-      aError:=__wasibridgefn_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs,nil);
+      aError:=__job_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs,nil);
     finally
       if InvokeArgs<>nil then
         FreeMem(InvokeArgs);
     end;
   end;
-  if aError<>WasiDomResult_Success then
-    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Success,aError);
+  if aError<>JOBResult_Success then
+    InvokeRaiseResultMismatch(aName,JOBResult_Success,aError);
 end;
 
 function TJSObject.InvokeJSBooleanResult(const aName: string;
   const Args: array of const): Boolean;
 var
-  aError: TWasiDomResult;
+  aError: TJOBResult;
   b: bytebool;
 begin
   b:=false;
-  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_boolresult,@b);
-  if aError<>WasiDomResult_Boolean then
-    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Boolean,aError);
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_boolresult,@b);
+  if aError<>JOBResult_Boolean then
+    InvokeRaiseResultMismatch(aName,JOBResult_Boolean,aError);
   Result:=b;
 end;
 
 function TJSObject.InvokeJSDoubleResult(const aName: string;
   const Args: array of const): Double;
 var
-  aError: TWasiDomResult;
+  aError: TJOBResult;
 begin
   Result:=NaN;
-  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_doubleresult,@Result);
-  if aError<>WasiDomResult_Double then
-    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Double,aError);
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_doubleresult,@Result);
+  if aError<>JOBResult_Double then
+    InvokeRaiseResultMismatch(aName,JOBResult_Double,aError);
 end;
 
 function TJSObject.InvokeJSUnicodeStringResult(const aName: string;
   const args: array of const): UnicodeString;
 var
   ResultLen: NativeInt;
-  aError: TWasiDomResult;
+  aError: TJOBResult;
 begin
   ResultLen:=0;
-  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_stringresult,@ResultLen);
-  if aError<>WasiDomResult_String then
-    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_String,aError);
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_stringresult,@ResultLen);
+  if aError<>JOBResult_String then
+    InvokeRaiseResultMismatch(aName,JOBResult_String,aError);
   if ResultLen=0 then
     exit('');
   try
     // try to allocate the memory
     SetLength(Result,ResultLen);
-    aError:=WasiDomResult_Success;
+    aError:=JOBResult_Success;
   finally
-    if aError<>WasiDomResult_Success then
-      __wasibridgefn_releasestringresult();
+    if aError<>JOBResult_Success then
+      __job_releasestringresult();
   end;
-  __wasibridgefn_getstringresult(PByte(Result));
+  __job_getstringresult(PByte(Result));
 end;
 
 function TJSObject.InvokeJSObjResult(const aName: string;
   aResultClass: TJSObjectClass; const args: array of const): TJSObject;
 var
-  aError: TWasiDomResult;
-  NewObjId: TWasiDomObjectID;
+  aError: TJOBResult;
+  NewObjId: TJOBObjectID;
 begin
   Result:=nil;
   NewObjId:=-1;
-  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_objectresult,@NewObjId);
-  if aError=WasiDomResult_Null then
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_objectresult,@NewObjId);
+  if aError=JOBResult_Null then
     exit;
-  if aError<>WasiDomResult_Object then
-    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Object,aError);
+  if aError<>JOBResult_Object then
+    InvokeRaiseResultMismatch(aName,JOBResult_Object,aError);
 
   Result:=aResultClass.CreateFromID(NewObjId);
 end;
 
 initialization
-  JSDocument:=TJSObject.CreateFromID(WasiObjIdDocument);
+  JSDocument:=TJSObject.CreateFromID(JOBObjIdDocument);
 
 end.
 

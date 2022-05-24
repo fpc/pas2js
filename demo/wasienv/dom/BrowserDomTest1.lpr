@@ -4,7 +4,7 @@ program BrowserDomTest1;
 
 uses
   BrowserConsole, BrowserApp, JS, Classes, SysUtils, Web, WebAssembly, Types,
-  wasienv, wadom_browser, wadom_shared;
+  wasienv, job_browser, job_shared;
 
 Type
 
@@ -29,7 +29,7 @@ Type
     FWasiEnv: TPas2JSWASIEnvironment;
     FMemory : TJSWebAssemblyMemory; // Memory of webassembly
     FTable : TJSWebAssemblyTable; // Table of exported functions
-    FWADomBridge : TWADomBridge;
+    FWADomBridge : TJOBBridge;
     function CreateWebAssembly(Path: string; ImportObject: TJSObject
       ): TJSPromise;
     procedure DoWrite(Sender: TObject; const aOutput: String);
@@ -133,7 +133,7 @@ begin
   FWasiEnv:=TPas2JSWASIEnvironment.Create;
   FWasiEnv.OnStdErrorWrite:=@DoWrite;
   FWasiEnv.OnStdOutputWrite:=@DoWrite;
-  FWADomBridge:=TWADomBridge.Create(FWasiEnv);
+  FWADomBridge:=TJOBBridge.Create(FWasiEnv);
 
   if FWADomBridge.RegisterGlobalObject(TJSObject(TBird.Create('Root')))<>WasiObjIdBird then
     raise Exception.Create('Root TBird wrong number');

@@ -5,7 +5,7 @@ program WasiDomTest1;
 {$codepage UTF8}
 
 uses
-  SysUtils, wadom_wasm, wadom_shared;
+  SysUtils, JOB_WAsm, JOB_Shared;
 
 type
 

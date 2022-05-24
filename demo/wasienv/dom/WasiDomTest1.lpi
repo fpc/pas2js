@@ -29,7 +29,7 @@
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
-        <Filename Value="wadom_wasm.pas"/>
+        <Filename Value="job_wasm.pas"/>
         <IsPartOfProject Value="True"/>
       </Unit>
     </Units>

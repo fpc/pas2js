@@ -41,7 +41,7 @@
         </CustomData>
       </Unit>
       <Unit>
-        <Filename Value="wadom_browser.pp"/>
+        <Filename Value="job_browser.pp"/>
         <IsPartOfProject Value="True"/>
       </Unit>
     </Units>

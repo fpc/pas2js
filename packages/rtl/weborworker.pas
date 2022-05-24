@@ -237,10 +237,13 @@ type
     furl: String; external name 'url';
     fuseFinalUrl: Boolean; external name 'useFinalUrl';
   public
-    constructor new(body: TJSObject); overload; varargs; external name 'new';
-    constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new'; deprecated;
-    constructor new(Msg: string); overload; varargs; external name 'new';
-    constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';   deprecated;
+    constructor new(body: TJSObject); overload; external name 'new';
+    constructor new(body: TJSObject; init: TJSObject); overload; external name 'new'; deprecated;
+    constructor new(body: TJSObject; init: TJSResponseInit); overload; external name 'new';
+    constructor new(Msg: string); overload; external name 'new';
+    constructor new(Msg: string; init: TJSObject); overload; external name 'new';   deprecated;
+    constructor new(Msg: string; init: TJSResponseInit); overload; external name 'new';
+
     function clone(): TJSResponse;
     function error(): TJSResponse;
     function redirect(url: String; Status: NativeInt): TJSResponse;

@@ -19,6 +19,7 @@ type
   TJSIDBRequest = class;
   TJSServiceWorker = class;
   TJSReadableStream = class;
+  TJSClient = class;
 
 { ----------------------------------------------------------------------
   Console
@@ -105,6 +106,7 @@ type
     Procedure waitUntil(aPromise : TJSPromise);
   end;
 
+
   TJSEventHandler = reference to function(Event: TJSEvent): boolean; safecall;
   TJSRawEventHandler = reference to Procedure(Event: TJSEvent); safecall;
 
@@ -117,6 +119,58 @@ type
     procedure removeEventListener(aname : string; aListener : TJSEventHandler);
     procedure removeEventListener(aname : string; aListener : TJSRawEventHandler);
     procedure removeEventListener(aname : string; aListener : JSValue);
+  end;
+
+
+  TJSMessagePort = class external name 'MessagePort' (TJSEventTarget)
+  Public
+    procedure close;
+    procedure postMessage(aValue : JSValue);
+    procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
+    procedure start;
+  end;
+  TJSMessagePortDynArray = Array of TJSMessagePort;
+
+  { TJSExtendableMessageEvent }
+
+  TJSExtendableMessageEvent = class external name 'ExtendableMessageEvent' (TJSExtendableEvent)
+  private
+    FData: JSValue; external name 'data';
+    FLastEventID: String; external name 'lastEventId';
+    FOrigin: String; external name 'origin';
+    FPorts: TJSMessagePortDynArray; external name 'ports';
+    FSource: TJSObject; external name 'source';
+    FSourceClient: TJSClient; external name 'source';
+    FSourcePort: TJSMessagePort; external name 'source';
+    FSourceServiceWorker: TJSServiceWorker; external name 'source';
+  Public
+    Property Data : JSValue Read FData;
+    Property LastEventID : String Read FLastEventID;
+    Property Origin : String Read FOrigin;
+    Property Ports : TJSMessagePortDynArray Read FPorts;
+    Property Source : TJSObject Read FSource;
+    // Possible types for Source
+    Property SourceServiceWorker : TJSServiceWorker Read FSourceServiceWorker;
+    Property SourcePort : TJSMessagePort Read FSourcePort;
+    Property SourceClient : TJSClient Read FSourceClient;
+  end;
+
+
+  { TJSClient }
+
+  TJSClient = class external name 'Client' (TJSObject)
+  private
+    FFrameType: String; external name 'frameType';
+    FID: String; external name 'id';
+    FType: String; external name 'type';
+    FURL: String; external name 'url';
+  Public
+    procedure postMessage(aValue : JSValue);
+    procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
+    Property Id : String Read FID;
+    Property Type_ : String Read FType;
+    Property FrameType : String Read FFrameType;
+    Property URL : String Read FURL;
   end;
 
 
@@ -1011,7 +1065,7 @@ type
   Private
     FCrypto: TJSCrypto; external name 'crypto';
     FisSecureContext : boolean; external name 'isSecureContext';
-    FIDBFactory : TJSIDBFactory; external name 'IDBFactory';
+    FIDBFactory : TJSIDBFactory; external name 'indexedDB';
     fcaches : TJSCacheStorage; external name 'caches';
   Public
     Function setInterval(ahandler : TJSTimerCallBack; aInterval : NativeUInt) : NativeInt; varargs;
@@ -1040,6 +1094,7 @@ type
 var
   Console : TJSConsole; external name 'console';
   Crypto: TJSCrypto; external name 'crypto';
+  indexedDB : TJSIDBFactory; external name 'indexedDB';
 
   function fetch(resource: String; init: TJSObject): TJSPromise; overload; external name 'fetch';
   //function fetch(resource: String): TJSPromise; overload; external name 'fetch';

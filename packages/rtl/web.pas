@@ -46,7 +46,6 @@ Type
   TJSFileSystemDirectoryHandleArray = array of TJSFileSystemDirectoryHandle;
   TJSShowOpenFilePickerOptions = class;
   TJSShowSaveFilePickerOptions = class;
-  TJSClient = class;
 
   TJSServiceWorker = weborworker.TJSServiceWorker;
   TJSServiceWorkerRegistration = weborworker.TJSServiceWorkerRegistration;
@@ -202,6 +201,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     constructor New;
     {$ENDIF}
   end;
+
   TJSClientRect = record
     left,top,right,bottom : double;
     {$IFDEF FIREFOX}
@@ -1155,14 +1155,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSWorker = weborworker.TJSWorker;
 
-  TJSMessagePort = class external name 'MessagePort' (TJSEventTarget)
-  Public
-    procedure close;
-    procedure postMessage(aValue : JSValue);
-    procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
-    procedure start;
-  end;
-  TJSMessagePortDynArray = Array of TJSMessagePort;
 
   { TJSSharedWorker }
 
@@ -1176,50 +1168,8 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSExtendableEvent = weborworker.TJSExtendableEvent;
-
-  { TJSExtendableMessageEvent }
-
-  TJSExtendableMessageEvent = class external name 'ExtendableMessageEvent' (TJSExtendableEvent)
-  private
-    FData: JSValue; external name 'data';
-    FLastEventID: String; external name 'lastEventId';
-    FOrigin: String; external name 'origin';
-    FPorts: TJSMessagePortDynArray; external name 'ports';
-    FSource: TJSObject; external name 'source';
-    FSourceClient: TJSClient; external name 'source';
-    FSourcePort: TJSMessagePort; external name 'source';
-    FSourceServiceWorker: TJSServiceWorker; external name 'source';
-  Public
-    Property Data : JSValue Read FData;
-    Property LastEventID : String Read FLastEventID;
-    Property Origin : String Read FOrigin;
-    Property Ports : TJSMessagePortDynArray Read FPorts;
-    Property Source : TJSObject Read FSource;
-    // Possible types for Source
-    Property SourceServiceWorker : TJSServiceWorker Read FSourceServiceWorker;
-    Property SourcePort : TJSMessagePort Read FSourcePort;
-    Property SourceClient : TJSClient Read FSourceClient;
-  end;
-
-
-  { TJSClient }
-
-  TJSClient = class external name 'Client' (TJSObject)
-  private
-    FFrameType: String; external name 'frameType';
-    FID: String; external name 'id';
-    FType: String; external name 'type';
-    FURL: String; external name 'url';
-  Public
-    procedure postMessage(aValue : JSValue);
-    procedure postMessage(aValue : JSValue; aList : TJSValueDynArray);
-    Property Id : String Read FID;
-    Property Type_ : String Read FType;
-    Property FrameType : String Read FFrameType;
-    Property URL : String Read FURL;
-  end;
-
-
+  TJSClient = weborworker.TJSClient;
+  TJSExtendableMessageEvent = weborworker.TJSExtendableMessageEvent;
 
   TJSServiceWorkerContainerOptions = record
     scope : string;

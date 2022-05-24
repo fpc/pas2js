@@ -91,6 +91,7 @@ Type
     FClients: TJSClients; external name 'clients';
     FRegistration: TJSServiceWorkerRegistration; external name 'registration';
   Public
+    Function SkipWaiting : TJSPromise; external name 'skipWaiting';
     property registration : TJSServiceWorkerRegistration Read FRegistration;
     property clients : TJSClients Read FClients;
   end;

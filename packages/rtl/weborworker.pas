@@ -239,10 +239,8 @@ type
   public
     constructor new(body: TJSObject); overload; varargs; external name 'new';
     constructor new(body: TJSObject; init: TJSObject); overload; varargs; external name 'new'; deprecated;
-    constructor new(body: TJSObject; init: TJSResponseInit); overload; varargs; external name 'new';
     constructor new(Msg: string); overload; varargs; external name 'new';
     constructor new(Msg: string; init: TJSObject); overload; varargs; external name 'new';   deprecated;
-    constructor new(Msg: string; init: TJSResponseInit); overload; varargs; external name 'new';
     function clone(): TJSResponse;
     function error(): TJSResponse;
     function redirect(url: String; Status: NativeInt): TJSResponse;

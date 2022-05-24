@@ -56,7 +56,7 @@ Type
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const);
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const): Boolean;
     function InvokeJSDoubleResult(const aName: string; Const Args: Array of const): Double;
-    //function InvokeJSUnicodeStringResult(const aName: string; Const args: Array of const): UnicodeString;
+    function InvokeJSUnicodeStringResult(const aName: string; Const args: Array of const): UnicodeString;
     function InvokeJSObjResult(const aName: string; aResultClass: TJSObjectClass; Const args: Array of const): TJSObject;
     // ToDo: InvokeJSVarRecResult
     //function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const): String;
@@ -65,37 +65,56 @@ Type
 var
   JSDocument: TJSObject; // ToDo
 
-function __wasidom_invoke_noresult(
+function __wasibridgefn_invoke_noresult(
   ObjID: TWasiDomObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   Dummy: PByte
-): TWasiDomResult; external WasiDomExportName name WasiDomInvokeNoResult;
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeNoResult;
 
-function __wasidom_invoke_boolresult(
+function __wasibridgefn_invoke_boolresult(
   ObjID: TWasiDomObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByte // bytebool
-): TWasiDomResult; external WasiDomExportName name WasiDomInvokeBooleanResult;
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeBooleanResult;
 
-function __wasidom_invoke_doubleresult(
+function __wasibridgefn_invoke_doubleresult(
   ObjID: TWasiDomObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByte // double
-): TWasiDomResult; external WasiDomExportName name WasiDomInvokeDoubleResult;
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeDoubleResult;
 
-function __wasidom_invoke_objectresult(
+function __wasibridgefn_invoke_stringresult(
+  ObjID: TWasiDomObjectID;
+  FuncNameP: PChar;
+  FuncNameLen: longint;
+  ArgP: PByte;
+  ResultLenP: PNativeInt // length
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeStringResult;
+
+function __wasibridgefn_getstringresult(
+  ResultP: PByte
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_GetStringResult;
+
+function __wasibridgefn_releasestringresult(
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_ReleaseStringResult;
+
+function __wasibridgefn_invoke_objectresult(
   ObjID: TWasiDomObjectID;
   FuncNameP: PChar;
   FuncNameLen: longint;
   ArgP: PByte;
   ResultP: PByte // nativeint
-): TWasiDomResult; external WasiDomExportName name WasiDomInvokeObjectResult;
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_InvokeObjectResult;
+
+function __wasibridgefn_release_object(
+  ObjID: TWasiDomObjectID
+): TWasiDomResult; external WasiDomExportName name WasiBridgeFn_ReleaseObject;
 
 implementation
 
@@ -423,6 +442,8 @@ end;
 
 destructor TJSObject.Destroy;
 begin
+  if ObjectID>=0 then
+    __wasibridgefn_release_object(ObjectID);
   inherited Destroy;
 end;
 
@@ -433,11 +454,11 @@ var
   InvokeArgs: PByte;
 begin
   if length(Args)=0 then
-    aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),nil,nil)
+    aError:=__wasibridgefn_invoke_noresult(ObjectID,PChar(aName),length(aName),nil,nil)
   else begin
     InvokeArgs:=CreateInvokeJSArgs(Args);
     try
-      aError:=__wasidom_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs,nil);
+      aError:=__wasibridgefn_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs,nil);
     finally
       if InvokeArgs<>nil then
         FreeMem(InvokeArgs);
@@ -454,7 +475,7 @@ var
   b: bytebool;
 begin
   b:=false;
-  aError:=InvokeJSOneResult(aName,Args,@__wasidom_invoke_boolresult,@b);
+  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_boolresult,@b);
   if aError<>WasiDomResult_Boolean then
     WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Boolean,aError);
   Result:=b;
@@ -466,9 +487,44 @@ var
   aError: TWasiDomResult;
 begin
   Result:=NaN;
-  aError:=InvokeJSOneResult(aName,Args,@__wasidom_invoke_doubleresult,@Result);
+  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_doubleresult,@Result);
   if aError<>WasiDomResult_Double then
     WasiInvokeRaiseResultMismatch(aName,WasiDomResult_Double,aError);
+end;
+
+function TJSObject.InvokeJSUnicodeStringResult(const aName: string;
+  const args: array of const): UnicodeString;
+var
+  ResultLen: NativeInt;
+  aError: TWasiDomResult;
+  InvokeArgs: PByte;
+begin
+  ResultLen:=0;
+  if length(Args)=0 then
+    aError:=__wasibridgefn_invoke_stringresult(ObjectID,PChar(aName),length(aName),nil,@ResultLen)
+  else begin
+    InvokeArgs:=CreateInvokeJSArgs(Args);
+    try
+      aError:=__wasibridgefn_invoke_stringresult(ObjectID,PChar(aName),length(aName),InvokeArgs,@ResultLen);
+    finally
+      if InvokeArgs<>nil then
+        FreeMem(InvokeArgs);
+    end;
+  end;
+  if aError<>WasiDomResult_String then
+    WasiInvokeRaiseResultMismatch(aName,WasiDomResult_String,aError);
+  if ResultLen=0 then
+    exit('');
+  try
+    // try to allocate the memory
+    SetLength(Result,ResultLen);
+    aError:=WasiDomResult_Success;
+  finally
+    if aError<>WasiDomResult_Success then
+      __wasibridgefn_releasestringresult();
+  end;
+  __wasibridgefn_getstringresult(PByte(Result));
+  writeln('TJSObject.InvokeJSUnicodeStringResult Result="',Result,'"');
 end;
 
 function TJSObject.InvokeJSObjResult(const aName: string;
@@ -479,7 +535,7 @@ var
 begin
   Result:=nil;
   NewObjId:=-1;
-  aError:=InvokeJSOneResult(aName,Args,@__wasidom_invoke_objectresult,@NewObjId);
+  aError:=InvokeJSOneResult(aName,Args,@__wasibridgefn_invoke_objectresult,@NewObjId);
   if aError=WasiDomResult_Null then
     exit;
   if aError<>WasiDomResult_Object then

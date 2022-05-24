@@ -8,6 +8,7 @@ interface
 uses sysutils, types, js, web, wasienv, wadom_shared;
 
 Type
+  EWABridge = class(Exception);
 
   { TWADomBridge }
 
@@ -16,13 +17,18 @@ Type
     FGlobalObjects: TJSArray;
     FLocalObjects: TJSArray;
     FFreeLocalIds: TJSArray; // free positions in FLocalObjects
+    FStringResult: string;
   Protected
     function FindObject(ObjId: TWasiDomObjectID): TJSObject; virtual;
     function Invoke_JSResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP: NativeInt; out JSResult: JSValue): TWasiDomResult; virtual;
     function Invoke_NoResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, Dummy: NativeInt): TWasiDomResult; virtual;
     function Invoke_BooleanResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
     function Invoke_DoubleResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
+    function Invoke_StringResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
     function Invoke_ObjectResult(ObjId: TWasiDomObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult; virtual;
+    function ReleaseObject(ObjId: TWasiDomObjectID): TWasiDomResult; virtual;
+    function GetStringResult(ResultP: NativeInt): TWasiDomResult; virtual;
+    function ReleaseStringResult: TWasiDomResult; virtual;
     function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
     function GetWasiDomResult(const v: jsvalue): TWasiDomResult;
   Public
@@ -63,10 +69,14 @@ end;
 
 procedure TWADomBridge.FillImportObject(aObject: TJSObject);
 begin
-  aObject[WasiDomInvokeNoResult]:=@Invoke_NoResult;
-  aObject[WasiDomInvokeBooleanResult]:=@Invoke_BooleanResult;
-  aObject[WasiDomInvokeDoubleResult]:=@Invoke_DoubleResult;
-  aObject[WasiDomInvokeObjectResult]:=@Invoke_ObjectResult;
+  aObject[WasiBridgeFn_InvokeNoResult]:=@Invoke_NoResult;
+  aObject[WasiBridgeFn_InvokeBooleanResult]:=@Invoke_BooleanResult;
+  aObject[WasiBridgeFn_InvokeDoubleResult]:=@Invoke_DoubleResult;
+  aObject[WasiBridgeFn_InvokeStringResult]:=@Invoke_StringResult;
+  aObject[WasiBridgeFn_GetStringResult]:=@GetStringResult;
+  aObject[WasiBridgeFn_ReleaseStringResult]:=@ReleaseStringResult;
+  aObject[WasiBridgeFn_InvokeObjectResult]:=@Invoke_ObjectResult;
+  aObject[WasiBridgeFn_ReleaseObject]:=@ReleaseObject;
 end;
 
 function TWADomBridge.FindObject(ObjId: TWasiDomObjectID): TJSObject;
@@ -163,6 +173,25 @@ begin
   Result:=WasiDomResult_Double;
 end;
 
+function TWADomBridge.Invoke_StringResult(ObjId: TWasiDomObjectID; FuncNameP,
+  FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult;
+var
+  JSResult: JSValue;
+begin
+  // invoke
+  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  if Result<>WasiDomResult_Success then
+    exit;
+  // check result type
+  if jstypeof(JSResult)<>'string' then
+    exit(GetWasiDomResult(JSResult));
+  Result:=WasiDomResult_String;
+  FStringResult:=String(JSResult);
+
+  // set result length
+  getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
+end;
+
 function TWADomBridge.Invoke_ObjectResult(ObjId: TWasiDomObjectID; FuncNameP,
   FuncNameLen, ArgsP, ResultP: NativeInt): TWasiDomResult;
 var
@@ -190,6 +219,40 @@ begin
   // set result
   getModuleMemoryDataView().setUint32(ResultP, longword(NewId), env.IsLittleEndian);
   Result:=WasiDomResult_Object;
+end;
+
+function TWADomBridge.ReleaseObject(ObjId: TWasiDomObjectID): TWasiDomResult;
+begin
+  writeln('TWADomBridge.ReleaseObject ',ObjId);
+  if ObjId<0 then
+    raise EWABridge.Create('cannot release a global object');
+  if ObjId>=FLocalObjects.Length then
+    raise EWABridge.Create('cannot release unknown object');
+  if FLocalObjects[ObjId]=nil then
+    raise EWABridge.Create('object already released');
+  FLocalObjects[ObjId]:=nil;
+  FFreeLocalIds.push(ObjId);
+  Result:=WasiDomResult_Success;
+end;
+
+function TWADomBridge.GetStringResult(ResultP: NativeInt): TWasiDomResult;
+var
+  View: TJSDataView;
+  l, i: SizeInt;
+begin
+  Result:=WasiDomResult_Success;
+  l:=length(FStringResult);
+  if l=0 then exit;
+  View:=getModuleMemoryDataView();
+  for i:=0 to l-1 do
+    View.setUint16(ResultP+2*i,ord(FStringResult[i]),env.IsLittleEndian);
+  FStringResult:='';
+end;
+
+function TWADomBridge.ReleaseStringResult: TWasiDomResult;
+begin
+  Result:=WasiDomResult_Success;
+  FStringResult:='';
 end;
 
 function TWADomBridge.GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt

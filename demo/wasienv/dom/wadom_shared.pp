@@ -47,10 +47,14 @@ const
     );
 
   WasiDomExportName = 'wasi_dom';
-  WasiDomInvokeNoResult = 'invoke_noresult';
-  WasiDomInvokeBooleanResult = 'invoke_boolresult';
-  WasiDomInvokeDoubleResult = 'invoke_doubleresult';
-  WasiDomInvokeObjectResult = 'invoke_objectresult';
+  WasiBridgeFn_InvokeNoResult = 'invoke_noresult';
+  WasiBridgeFn_InvokeBooleanResult = 'invoke_boolresult';
+  WasiBridgeFn_InvokeDoubleResult = 'invoke_doubleresult';
+  WasiBridgeFn_InvokeStringResult = 'invoke_stringresult';
+  WasiBridgeFn_GetStringResult = 'get_stringresult';
+  WasiBridgeFn_ReleaseStringResult = 'release_stringresult';
+  WasiBridgeFn_InvokeObjectResult = 'invoke_objectresult';
+  WasiBridgeFn_ReleaseObject = 'release_object';
 
   WasiArgNone = 0;
   WasiArgLongint = 1;

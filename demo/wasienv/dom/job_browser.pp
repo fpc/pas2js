@@ -103,7 +103,7 @@ var
   Obj: TJSObject;
   fn: JSValue;
 begin
-  writeln('TWADomBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',FuncNameP,' FuncNameLen=',FuncNameLen,' ArgsP=',ArgsP);
+  //writeln('TJOBBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',FuncNameP,' FuncNameLen=',FuncNameLen,' ArgsP=',ArgsP);
 
   Obj:=FindObject(ObjId);
   if Obj=nil then
@@ -111,9 +111,9 @@ begin
 
   View:=getModuleMemoryDataView();
   aBytes:=TJSUint8Array.New(View.buffer, FuncNameP, FuncNameLen);
-  writeln('TWADomBridge.Invoke_JSResult aBytes=',aBytes);
+  //writeln('TJOBBridge.Invoke_JSResult aBytes=',aBytes);
   FuncName:=TypedArrayToString(aBytes);
-  writeln('TWADomBridge.Invoke_JSResult FuncName="',FuncName,'"');
+  //writeln('TJOBBridge.Invoke_JSResult FuncName="',FuncName,'"');
 
   fn:=Obj[FuncName];
   if jstypeof(fn)<>'function' then
@@ -227,7 +227,7 @@ end;
 
 function TJOBBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
 begin
-  writeln('TWADomBridge.ReleaseObject ',ObjId);
+  //writeln('TJOBBridge.ReleaseObject ',ObjId);
   if ObjId<0 then
     raise EJOBBridge.Create('cannot release a global object');
   if ObjId>=FLocalObjects.Length then
@@ -322,7 +322,7 @@ begin
     else
       raise Exception.Create('unknown arg type '+IntToStr(aType));
     end;
-    writeln('TWADomBridge.GetInvokeArguments ',i,'/',Cnt,' = ',Result[i]);
+    //writeln('TJOBBridge.GetInvokeArguments ',i,'/',Cnt,' = ',Result[i]);
   end;
 end;
 

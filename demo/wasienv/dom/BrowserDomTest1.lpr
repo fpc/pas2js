@@ -15,11 +15,13 @@ Type
     Name: string;
     constructor Create(const aName: string); reintroduce;
     procedure Proc;
+    function ArgsToStr(Args: TJSFunctionArguments): string;
+  published
     function GetBoolean: boolean;
     function GetDouble: double;
     function GetString: string;
+    function GetInteger: integer;
     function CreateChick(const aName: string): TBird;
-    function ArgsToStr(Args: TJSFunctionArguments): string;
   end;
 
   { TMyApplication }
@@ -52,6 +54,7 @@ begin
     Proc;
     GetBoolean;
     GetDouble;
+    GetInteger;
     GetString;
     CreateChick('');
   end;
@@ -80,6 +83,12 @@ begin
   Result:='TBird.GetString:'+str(JSArguments.Length);
   if JSArguments.Length>0 then
     Result:=Result+String(JSArguments[0]);
+end;
+
+function TBird.GetInteger: integer;
+begin
+  writeln('TBird.GetInteger [',Name,'] ',ArgsToStr(JSArguments));
+  Result:=3000+JSArguments.Length;
 end;
 
 function TBird.CreateChick(const aName: string): TBird;

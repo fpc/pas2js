@@ -31,6 +31,7 @@
       <Unit>
         <Filename Value="job_wasm.pas"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_WAsm"/>
       </Unit>
     </Units>
   </ProjectOptions>

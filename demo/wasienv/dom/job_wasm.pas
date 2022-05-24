@@ -50,18 +50,20 @@ Type
       const InvokeFunc: TJOBInvokeOneResultFunc; ResultP: PByte): TJOBResult;
     procedure InvokeRaise(const aName, Msg: string); virtual;
     procedure InvokeRaiseResultMismatch(const aName: string; Expected, Actual: TJOBResult); virtual;
+    procedure InvokeRaiseResultMismatchStr(const aName: string; const Expected, Actual: string); virtual;
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
   public
     constructor CreateFromID(aID: TJOBObjectID); virtual;
     destructor Destroy; override;
     property ObjectID: TJOBObjectID read FObjectID;
-    procedure InvokeJSNoResult(const aName: string; Const Args: Array of const);
-    function InvokeJSBooleanResult(const aName: string; Const Args: Array of const): Boolean;
-    function InvokeJSDoubleResult(const aName: string; Const Args: Array of const): Double;
-    function InvokeJSUnicodeStringResult(const aName: string; Const args: Array of const): UnicodeString;
-    function InvokeJSObjResult(const aName: string; aResultClass: TJSObjectClass; Const args: Array of const): TJSObject;
+    procedure InvokeJSNoResult(const aName: string; Const Args: Array of const); virtual;
+    function InvokeJSBooleanResult(const aName: string; Const Args: Array of const): Boolean; virtual;
+    function InvokeJSDoubleResult(const aName: string; Const Args: Array of const): Double; virtual;
+    function InvokeJSUnicodeStringResult(const aName: string; Const Args: Array of const): UnicodeString; virtual;
+    function InvokeJSObjResult(const aName: string; aResultClass: TJSObjectClass; Const Args: Array of const): TJSObject; virtual;
     // ToDo: InvokeJSVarRecResult
-    //function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const): String;
+    function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const): String; virtual;
+    function InvokeJSLongIntResult(const aName: string; Const args: Array of const): LongInt; virtual;
   end;
 
 var
@@ -188,8 +190,14 @@ begin
   JOBResult_UnknownObjId: InvokeRaise(aName,'unknown object id '+IntToStr(ObjectID));
   JOBResult_NotAFunction: InvokeRaise(aName,'object '+IntToStr(ObjectID)+' does not have a function "'+aName+'"');
   else
-    InvokeRaise(aName,'expected '+JOBResult_Names[Expected]+', but got '+JOBResult_Names[Actual]+' from object '+IntToStr(ObjectID)+' function "'+aName+'"');
+    InvokeRaiseResultMismatchStr(aName,JOBResult_Names[Expected],JOBResult_Names[Actual]);
   end;
+end;
+
+procedure TJSObject.InvokeRaiseResultMismatchStr(const aName: string;
+  const Expected, Actual: string);
+begin
+  InvokeRaise(aName,'expected '+Expected+', but got '+Actual+' from object '+IntToStr(ObjectID)+' function "'+aName+'"');
 end;
 
 function TJSObject.CreateInvokeJSArgs(const Args: array of const): PByte;
@@ -495,7 +503,7 @@ begin
 end;
 
 function TJSObject.InvokeJSUnicodeStringResult(const aName: string;
-  const args: array of const): UnicodeString;
+  const Args: array of const): UnicodeString;
 var
   ResultLen: NativeInt;
   aError: TJOBResult;
@@ -518,7 +526,7 @@ begin
 end;
 
 function TJSObject.InvokeJSObjResult(const aName: string;
-  aResultClass: TJSObjectClass; const args: array of const): TJSObject;
+  aResultClass: TJSObjectClass; const Args: array of const): TJSObject;
 var
   aError: TJOBResult;
   NewObjId: TJOBObjectID;
@@ -532,6 +540,26 @@ begin
     InvokeRaiseResultMismatch(aName,JOBResult_Object,aError);
 
   Result:=aResultClass.CreateFromID(NewObjId);
+end;
+
+function TJSObject.InvokeJSUtf8StringResult(const aName: string;
+  const args: array of const): String;
+begin
+  Result:=String(InvokeJSUnicodeStringResult(aName,Args));
+end;
+
+function TJSObject.InvokeJSLongIntResult(const aName: string;
+  const args: array of const): LongInt;
+var
+  d: Double;
+begin
+  d:=InvokeJSDoubleResult(aName,Args);
+  if Frac(d)<>0 then
+    InvokeRaiseResultMismatchStr(aName,'longint','double')
+  else if (d<low(longint)) or (d>high(longint)) then
+    InvokeRaiseResultMismatchStr(aName,'longint','double')
+  else
+    Result:=Trunc(d);
 end;
 
 initialization

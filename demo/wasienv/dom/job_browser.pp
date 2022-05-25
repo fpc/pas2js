@@ -25,7 +25,8 @@ Type
   Protected
     function FindObject(ObjId: TJOBObjectID): TJSObject; virtual;
     function Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
-    function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt): TJOBResult; virtual;
+    function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, ArgsP: NativeInt): TJOBResult; virtual;
+    function Set_JSProperty(ObjId: TJOBObjectID; NameP, NameLen, ArgsP: NativeInt): TJOBResult; virtual;
     function Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
@@ -74,6 +75,7 @@ end;
 procedure TJOBBridge.FillImportObject(aObject: TJSObject);
 begin
   aObject[JOBFn_InvokeNoResult]:=@Invoke_NoResult;
+  aObject[JOBFn_SetProperty]:=@Set_JSProperty;
   aObject[JOBFn_InvokeBooleanResult]:=@Invoke_BooleanResult;
   aObject[JOBFn_InvokeDoubleResult]:=@Invoke_DoubleResult;
   aObject[JOBFn_InvokeStringResult]:=@Invoke_StringResult;
@@ -153,12 +155,19 @@ begin
 end;
 
 function TJOBBridge.Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen,
-  Invoke, ArgsP: NativeInt): TJOBResult;
+  ArgsP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
 begin
-  // invoke
-  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,JOBInvokeCall,ArgsP,JSResult);
+end;
+
+function TJOBBridge.Set_JSProperty(ObjId: TJOBObjectID; NameP, NameLen,
+  ArgsP: NativeInt): TJOBResult;
+var
+  JSResult: JSValue;
+begin
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,JOBInvokeSetter,ArgsP,JSResult);
 end;
 
 function TJOBBridge.Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen,

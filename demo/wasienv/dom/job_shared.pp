@@ -52,6 +52,7 @@ const
 
   JOBExportName = 'job';
   JOBFn_InvokeNoResult = 'invoke_noresult';
+  JOBFn_SetProperty = 'setproperty';
   JOBFn_InvokeBooleanResult = 'invoke_boolresult';
   JOBFn_InvokeDoubleResult = 'invoke_doubleresult';
   JOBFn_InvokeStringResult = 'invoke_stringresult';

@@ -24,12 +24,12 @@ Type
     FStringResult: string;
   Protected
     function FindObject(ObjId: TJOBObjectID): TJSObject; virtual;
-    function Invoke_JSResult(ObjId: TJOBObjectID; FuncNameP, FuncNameLen, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
-    function Invoke_NoResult(ObjId: TJOBObjectID; FuncNameP, FuncNameLen, ArgsP, Dummy: NativeInt): TJOBResult; virtual;
-    function Invoke_BooleanResult(ObjId: TJOBObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
-    function Invoke_DoubleResult(ObjId: TJOBObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
-    function Invoke_StringResult(ObjId: TJOBObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
-    function Invoke_ObjectResult(ObjId: TJOBObjectID; FuncNameP, FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
+    function Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
+    function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt): TJOBResult; virtual;
+    function Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
+    function Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
+    function Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
+    function Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function ReleaseObject(ObjId: TJOBObjectID): TJOBResult; virtual;
     function GetStringResult(ResultP: NativeInt): TJOBResult; virtual;
     function ReleaseStringResult: TJOBResult; virtual;
@@ -93,59 +93,82 @@ begin
     Result:=nil;
 end;
 
-function TJOBBridge.Invoke_JSResult(ObjId: TJOBObjectID; FuncNameP,
-  FuncNameLen, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult;
+function TJOBBridge.Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult;
 var
   View: TJSDataView;
   aBytes: TJSUint8Array;
-  FuncName: String;
+  PropName: String;
   Args: TJSValueDynArray;
   Obj: TJSObject;
   fn: JSValue;
 begin
-  //writeln('TJOBBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',FuncNameP,' FuncNameLen=',FuncNameLen,' ArgsP=',ArgsP);
+  writeln('TJOBBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',NameP,' FuncNameLen=',NameLen,' ArgsP=',ArgsP,' Invoke=',Invoke);
 
   Obj:=FindObject(ObjId);
   if Obj=nil then
     exit(JOBResult_UnknownObjId);
 
   View:=getModuleMemoryDataView();
-  aBytes:=TJSUint8Array.New(View.buffer, FuncNameP, FuncNameLen);
+  aBytes:=TJSUint8Array.New(View.buffer, NameP, NameLen);
   //writeln('TJOBBridge.Invoke_JSResult aBytes=',aBytes);
-  FuncName:=TypedArrayToString(aBytes);
-  //writeln('TJOBBridge.Invoke_JSResult FuncName="',FuncName,'"');
+  PropName:=TypedArrayToString(aBytes);
+  writeln('TJOBBridge.Invoke_JSResult PropName="',PropName,'"');
 
-  fn:=Obj[FuncName];
-  if jstypeof(fn)<>'function' then
+  case Invoke of
+  JOBInvokeCall:
+    begin
+      fn:=Obj[PropName];
+      if jstypeof(fn)<>'function' then
+        exit(JOBResult_NotAFunction);
+
+      if ArgsP=0 then
+        JSResult:=TJSFunction(fn).call(Obj)
+      else begin
+        Args:=GetInvokeArguments(View,ArgsP);
+        JSResult:=TJSFunction(fn).apply(Obj,Args);
+      end;
+    end;
+  JOBInvokeGetter:
+    begin
+      if ArgsP>0 then
+        exit(JOBResult_WrongArgs);
+      JSResult:=Obj[PropName];
+    end;
+  JOBInvokeSetter:
+    begin
+      JSResult:=Undefined;
+      if ArgsP=0 then
+        exit(JOBResult_WrongArgs);
+      Args:=GetInvokeArguments(View,ArgsP);
+      if length(Args)<>1 then
+        exit(JOBResult_WrongArgs);
+      Obj[PropName]:=Args[0];
+    end
+  else
     exit(JOBResult_NotAFunction);
-
-  if ArgsP=0 then
-    JSResult:=TJSFunction(fn).call(Obj)
-  else begin
-    Args:=GetInvokeArguments(View,ArgsP);
-    JSResult:=TJSFunction(fn).apply(Obj,Args);
   end;
 
   Result:=JOBResult_Success;
 end;
 
-function TJOBBridge.Invoke_NoResult(ObjId: TJOBObjectID; FuncNameP,
-  FuncNameLen, ArgsP, Dummy: NativeInt): TJOBResult;
+function TJOBBridge.Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
 begin
   // invoke
-  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
 end;
 
-function TJOBBridge.Invoke_BooleanResult(ObjId: TJOBObjectID; FuncNameP,
-  FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult;
+function TJOBBridge.Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
   b: byte;
 begin
   // invoke
-  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
   if Result<>JOBResult_Success then
     exit;
   // check result type
@@ -160,13 +183,13 @@ begin
   Result:=JOBResult_Boolean;
 end;
 
-function TJOBBridge.Invoke_DoubleResult(ObjId: TJOBObjectID; FuncNameP,
-  FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult;
+function TJOBBridge.Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
 begin
   // invoke
-  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
   if Result<>JOBResult_Success then
     exit;
   // check result type
@@ -177,13 +200,13 @@ begin
   Result:=JOBResult_Double;
 end;
 
-function TJOBBridge.Invoke_StringResult(ObjId: TJOBObjectID; FuncNameP,
-  FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult;
+function TJOBBridge.Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
 begin
   // invoke
-  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
   if Result<>JOBResult_Success then
     exit;
   // check result type
@@ -196,14 +219,15 @@ begin
   getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
 end;
 
-function TJOBBridge.Invoke_ObjectResult(ObjId: TJOBObjectID; FuncNameP,
-  FuncNameLen, ArgsP, ResultP: NativeInt): TJOBResult;
+function TJOBBridge.Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   t: String;
   JSResult, NewId: JSValue;
 begin
   // invoke
-  Result:=Invoke_JSResult(ObjId,FuncNameP,FuncNameLen,ArgsP,JSResult);
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
+  writeln('BBB1 TJOBBridge.Invoke_ObjectResult ',Result,' JSResult=',JSResult);
   if Result<>JOBResult_Success then
     exit;
   // check result type

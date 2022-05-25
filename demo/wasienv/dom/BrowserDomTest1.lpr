@@ -17,6 +17,8 @@ Type
     procedure Proc;
     function ArgsToStr(Args: TJSFunctionArguments): string;
   published
+    Size: integer;
+    Caption: string;
     function GetBoolean: boolean;
     function GetDouble: double;
     function GetString: string;

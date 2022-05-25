@@ -43,6 +43,7 @@
       <Unit>
         <Filename Value="job_browser.pp"/>
         <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Browser"/>
       </Unit>
     </Units>
   </ProjectOptions>

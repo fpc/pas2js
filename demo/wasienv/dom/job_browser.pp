@@ -214,6 +214,7 @@ begin
     exit(GetJOBResult(JSResult));
   Result:=JOBResult_String;
   FStringResult:=String(JSResult);
+  //writeln('TJOBBridge.Invoke_StringResult FStringResult="',FStringResult,'"');
 
   // set result length
   getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
@@ -273,7 +274,7 @@ begin
   if l=0 then exit;
   View:=getModuleMemoryDataView();
   for i:=0 to l-1 do
-    View.setUint16(ResultP+2*i,ord(FStringResult[i]),env.IsLittleEndian);
+    View.setUint16(ResultP+2*i,ord(FStringResult[i+1]),env.IsLittleEndian);
   FStringResult:='';
 end;
 
@@ -292,6 +293,8 @@ var
   Len, Ptr: LongWord;
   aBytes: TJSUint8Array;
   aWords: TJSUint16Array;
+  ObjID: LongInt;
+  Obj: TJSObject;
 begin
   p:=ArgsP;
   Cnt:=View.getUInt8(p);
@@ -328,6 +331,7 @@ begin
         inc(p,4);
         aBytes:=TJSUint8Array.New(View.buffer, Ptr,Len);
         Result[i]:=TypedArrayToString(aBytes);
+        //writeln('TJOBBridge.GetInvokeArguments UTF8String="',Result[i],'"');
       end;
     JOBArgUnicodeString:
       begin
@@ -338,11 +342,22 @@ begin
         aWords:=TJSUint16Array.New(View.buffer, Ptr,Len);
         Result[i]:=TypedArrayToString(aWords);
       end;
+    JOBArgNil:
+      Result[i]:=nil;
     JOBArgPointer:
       begin
         Result[i]:=View.getUint32(p,env.IsLittleEndian);
         inc(p,4);
-      end
+      end;
+    JOBArgObject:
+      begin
+        ObjID:=View.getInt32(p,env.IsLittleEndian);
+        inc(p,4);
+        Obj:=FindObject(ObjID);
+        if Obj=nil then
+          raise Exception.Create('invalid JSObject'+IntToStr(ObjID));
+        Result[i]:=Obj;
+      end;
     else
       raise Exception.Create('unknown arg type '+IntToStr(aType));
     end;

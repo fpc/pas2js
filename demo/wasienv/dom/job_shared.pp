@@ -68,7 +68,9 @@ const
   JOBArgChar = 5; // followed by a word
   JOBArgUTF8String = 6; // followed by length and pointer
   JOBArgUnicodeString = 7; // followed by length and pointer
-  JOBArgPointer = 8;
+  JOBArgNil = 8;
+  JOBArgPointer = 9;
+  JOBArgObject = 10; // followed by ObjectID
 
   JOBInvokeCall = 0;
   JOBInvokeGetter = 1;

@@ -85,7 +85,7 @@ Type
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
     procedure WriteJSPropertyUnicodeString(const aName: string; const Value: UnicodeString); virtual;
     procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
-    // ToDo: procedure WriteJSPropertyObject(const aName: string; AnObjectID: TJOBObjectID); virtual;
+    procedure WriteJSPropertyObject(const aName: string; Value: TJSObject); virtual;
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
   end;
 
@@ -259,6 +259,7 @@ var
   ws: WideString;
   us: UnicodeString;
   d: Double;
+  Obj: TObject;
 begin
   Result:=nil;
   if length(Args)>255 then
@@ -289,7 +290,13 @@ begin
       end;
     vtObject        :
       begin
-        RaiseNotSupported('object');
+        Obj:=Args[i].VObject;
+        if Obj=nil then
+          inc(Len,1)
+        else if Obj is TJSObject then
+          inc(Len,1+sizeof(TJOBObjectID))
+        else
+          RaiseNotSupported('object');
       end;
     vtClass         : RaiseNotSupported('class');
     vtPWideChar     : RaiseNotSupported('pwidechar');
@@ -398,7 +405,20 @@ begin
         PPointer(p)^:=h;
         inc(p,sizeof(Pointer));
       end;
-    vtObject        : ;
+    vtObject        :
+      begin
+        Obj:=Args[i].VObject;
+        if Obj=nil then
+        begin
+          p^:=JOBArgNil;
+          inc(p);
+        end else begin
+          p^:=JOBArgObject;
+          inc(p);
+          PNativeInt(p)^:=TJSObject(Args[i].VObject).ObjectID;
+          inc(p,sizeof(NativeInt));
+        end;
+      end;
     vtClass         : ;
     vtPWideChar     : ;
     vtAnsiString    :
@@ -558,12 +578,14 @@ begin
   try
     // try to allocate the memory
     SetLength(Result,ResultLen);
+    //writeln('TJSObject.InvokeJSUnicodeStringResult ResultLen=',ResultLen);
     aError:=JOBResult_Success;
   finally
     if aError<>JOBResult_Success then
       __job_releasestringresult();
   end;
   __job_getstringresult(PByte(Result));
+  //writeln('TJSObject.InvokeJSUnicodeStringResult Result="',Result,'"');
 end;
 
 function TJSObject.InvokeJSObjResult(const aName: string;
@@ -652,6 +674,12 @@ end;
 
 procedure TJSObject.WriteJSPropertyUtf8String(const aName: string;
   const Value: String);
+begin
+  InvokeJSNoResult(aName,[Value],jisSetter);
+end;
+
+procedure TJSObject.WriteJSPropertyObject(const aName: string; Value: TJSObject
+  );
 begin
   InvokeJSNoResult(aName,[Value],jisSetter);
 end;

@@ -13,19 +13,45 @@ type
 
   TBird = class(TJSObject)
   private
+    function GetName: string;
+    function GetChild: TBird;
     function GetSize: integer;
+    procedure SetName(const AValue: string);
+    procedure SetChild(const AValue: TBird);
     procedure SetSize(const AValue: integer);
   public
     function GetDouble: double;
     function GetInteger: integer;
+    property Name: string read GetName write SetName;
     property Size: integer read GetSize write SetSize;
+    property Child: TBird read GetChild write SetChild;
   end;
 
 { TBird }
 
+function TBird.GetName: string;
+begin
+  Result:=ReadJSPropertyUtf8String('Name');
+end;
+
+function TBird.GetChild: TBird;
+begin
+  Result:=ReadJSPropertyObject('Child',TBird) as TBird;
+end;
+
 function TBird.GetSize: integer;
 begin
   Result:=ReadJSPropertyLongInt('Size');
+end;
+
+procedure TBird.SetName(const AValue: string);
+begin
+  WriteJSPropertyUtf8String('Name',AValue);
+end;
+
+procedure TBird.SetChild(const AValue: TBird);
+begin
+  WriteJSPropertyObject('Child',AValue);
 end;
 
 procedure TBird.SetSize(const AValue: integer);
@@ -47,22 +73,30 @@ var
   obj: TJSObject;
   d: Double;
   u: UnicodeString;
-  Freddy: TBird;
+  Freddy, Alice, aBird: TBird;
   i: Integer;
 begin
   obj:=TJSObject.CreateFromID(WasiObjIdBird);
+  obj.WriteJSPropertyUnicodeString('Caption','Root');
   writeln('AAA1 ');
   u:='äbc';
 
   //obj.InvokeJSNoResult('Proc',[]);
   //d:=obj.InvokeJSDoubleResult('GetDouble',[u,12345678901]);
+  writeln('Create Freddy...');
   Freddy:=obj.InvokeJSObjResult('CreateChick',['Freddy'],TBird) as TBird;
-  writeln('AAA3 ');
-  Freddy.Size:=81;
-  writeln('AAA4 ');
-  i:=Freddy.Size;
-  writeln('AAA5 ',i);
+  writeln('AAA5 ',Freddy.Name);
+  writeln('Create Alice...');
+  Alice:=obj.InvokeJSObjResult('CreateChick',['Alice'],TBird) as TBird;
+  writeln('Freddy.Child:=Alice...');
+  Freddy.Child:=Alice;
+  aBird:=Freddy.Child;
+  writeln('Freddy.Child=',aBird.Name);
+
+
+  writeln('Freeing Freddy...');
   Freddy.Free;
-  writeln('AAA6 ');
+  writeln('Freeing Alice...');
+  Alice.Free;
 end.
 

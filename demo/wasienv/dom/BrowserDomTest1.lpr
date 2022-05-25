@@ -12,13 +12,13 @@ Type
 
   TBird = class
   public
-    Name: string;
     constructor Create(const aName: string); reintroduce;
     procedure Proc;
     function ArgsToStr(Args: TJSFunctionArguments): string;
   published
     Size: integer;
-    Caption: string;
+    Name: string;
+    Child: TBird;
     function GetBoolean: boolean;
     function GetDouble: double;
     function GetString: string;

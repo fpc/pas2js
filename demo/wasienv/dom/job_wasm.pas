@@ -42,6 +42,10 @@ Type
     jigCall,  // call function
     jigGetter // read property
     );
+  TJOBInvokeSetType = (
+    jisCall,  // call function
+    jisSetter // write property
+    );
 
   TJSObject = class;
   TJSObjectClass = class of TJSObject;
@@ -58,12 +62,11 @@ Type
     procedure InvokeJS_RaiseResultMismatch(const aName: string; Expected, Actual: TJOBResult); virtual;
     procedure InvokeJS_RaiseResultMismatchStr(const aName: string; const Expected, Actual: string); virtual;
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
-    procedure SetJSProperty(const aName: string; Const Args: Array of const); virtual;
   public
     constructor CreateFromID(aID: TJOBObjectID); virtual;
     destructor Destroy; override;
     property ObjectID: TJOBObjectID read FObjectID;
-    procedure InvokeJSNoResult(const aName: string; Const Args: Array of const); virtual;
+    procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeSetType = jisCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Boolean; virtual;
     function InvokeJSDoubleResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Double; virtual;
     function InvokeJSUnicodeStringResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): UnicodeString; virtual;
@@ -93,15 +96,9 @@ function __job_invoke_noresult(
   ObjID: TJOBObjectID;
   NameP: PChar;
   NameLen: longint;
+  Invoke: longint;
   ArgP: PByte
 ): TJOBResult; external JOBExportName name JOBFn_InvokeNoResult;
-
-function __job_setproperty(
-  ObjID: TJOBObjectID;
-  NameP: PChar;
-  NameLen: longint;
-  ArgP: PByte
-): TJOBResult; external JOBExportName name JOBFn_SetProperty;
 
 function __job_invoke_boolresult(
   ObjID: TJOBObjectID;
@@ -156,6 +153,10 @@ const
   InvokeGetToInt: array[TJOBInvokeGetType] of integer = (
     JOBInvokeCall,
     JOBInvokeGetter
+    );
+  InvokeSetToInt: array[TJOBInvokeSetType] of integer = (
+    JOBInvokeCall,
+    JOBInvokeSetter
     );
 
 {$IFDEF VerboseJOB}
@@ -505,21 +506,6 @@ begin
   {$ENDIF}
 end;
 
-procedure TJSObject.SetJSProperty(const aName: string;
-  const Args: array of const);
-var
-  InvokeArgs: PByte;
-begin
-  if length(Args)<>1 then
-    InvokeJS_Raise(aName,'wrong arg count');
-  InvokeArgs:=CreateInvokeJSArgs(Args);
-  try
-    __job_setproperty(ObjectID,PChar(aName),length(aName),InvokeArgs);
-  finally
-    FreeMem(InvokeArgs);
-  end;
-end;
-
 constructor TJSObject.CreateFromID(aID: TJOBObjectID);
 begin
   FObjectID:=aID;
@@ -533,17 +519,17 @@ begin
 end;
 
 procedure TJSObject.InvokeJSNoResult(const aName: string;
-  const Args: array of const);
+  const Args: array of const; Invoke: TJOBInvokeSetType);
 var
   aError: TJOBResult;
   InvokeArgs: PByte;
 begin
   if length(Args)=0 then
-    aError:=__job_invoke_noresult(ObjectID,PChar(aName),length(aName),nil)
+    aError:=__job_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeSetToInt[Invoke],nil)
   else begin
     InvokeArgs:=CreateInvokeJSArgs(Args);
     try
-      aError:=__job_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeArgs);
+      aError:=__job_invoke_noresult(ObjectID,PChar(aName),length(aName),InvokeSetToInt[Invoke],InvokeArgs);
     finally
       if InvokeArgs<>nil then
         FreeMem(InvokeArgs);
@@ -672,35 +658,35 @@ end;
 
 procedure TJSObject.WriteJSPropertyBoolean(const aName: string; Value: Boolean);
 begin
-  SetJSProperty(aName,[Value]);
+  InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
 procedure TJSObject.WriteJSPropertyDouble(const aName: string; Value: Double);
 begin
-  SetJSProperty(aName,[Value]);
+  InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
 procedure TJSObject.WriteJSPropertyUnicodeString(const aName: string;
   const Value: UnicodeString);
 begin
-  SetJSProperty(aName,[Value]);
+  InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
 procedure TJSObject.WriteJSPropertyUtf8String(const aName: string;
   const Value: String);
 begin
-  SetJSProperty(aName,[Value]);
+  InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
 procedure TJSObject.WriteJSPropertyObject(const aName: string; Value: TJSObject
   );
 begin
-  SetJSProperty(aName,[Value]);
+  InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
 procedure TJSObject.WriteJSPropertyLongInt(const aName: string; Value: LongInt);
 begin
-  SetJSProperty(aName,[Value]);
+  InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
 initialization

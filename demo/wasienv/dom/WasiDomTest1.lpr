@@ -75,6 +75,7 @@ var
   u: UnicodeString;
   Freddy, Alice, aBird: TBird;
   i: Integer;
+  JSValue: TJOB_JSValue;
 begin
   obj:=TJSObject.CreateFromID(WasiObjIdBird);
   obj.WriteJSPropertyUnicodeString('Caption','Root');
@@ -84,15 +85,20 @@ begin
   //obj.InvokeJSNoResult('Proc',[]);
   //d:=obj.InvokeJSDoubleResult('GetDouble',[u,12345678901]);
   writeln('Create Freddy...');
-  Freddy:=obj.InvokeJSObjResult('CreateChick',['Freddy'],TBird) as TBird;
+  Freddy:=obj.InvokeJSObjectResult('CreateChick',['Freddy'],TBird) as TBird;
   writeln('AAA5 ',Freddy.Name);
+
   writeln('Create Alice...');
-  Alice:=obj.InvokeJSObjResult('CreateChick',['Alice'],TBird) as TBird;
+  Alice:=obj.InvokeJSObjectResult('CreateChick',['Alice'],TBird) as TBird;
   writeln('Freddy.Child:=Alice...');
   Freddy.Child:=Alice;
   aBird:=Freddy.Child;
   writeln('Freddy.Child=',aBird.Name);
 
+  //Freddy.Size:=123;
+  //writeln('Freddy.Size=',Freddy.Size);
+  JSValue:=Freddy.ReadJSPropertyValue('Child');
+  writeln('JSValue: ',JSValue.Kind,' ',JSValue.AsString);
 
   writeln('Freeing Freddy...');
   Freddy.Free;

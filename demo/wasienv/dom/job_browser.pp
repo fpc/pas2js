@@ -23,23 +23,26 @@ Type
     FFreeLocalIds: TJSArray; // free positions in FLocalObjects
     FStringResult: string;
   Protected
-    function FindObject(ObjId: TJOBObjectID): TJSObject; virtual;
     function Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
+    function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
+    // exports
     function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt): TJOBResult; virtual;
     function Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
+    function Invoke_JSValueResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function ReleaseObject(ObjId: TJOBObjectID): TJOBResult; virtual;
     function GetStringResult(ResultP: NativeInt): TJOBResult; virtual;
     function ReleaseStringResult: TJOBResult; virtual;
-    function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
-    function GetJOBResult(v: jsvalue): TJOBResult;
   Public
     Constructor Create(aEnv: TPas2JSWASIEnvironment); override;
     Procedure FillImportObject(aObject: TJSObject); override;
     Function ImportName: String; override;
+    function FindObject(ObjId: TJOBObjectID): TJSObject; virtual;
+    function RegisterLocalObject(Obj: TJSObject): TJOBObjectID; virtual;
     Function RegisterGlobalObject(Obj: TJSObject): TJOBObjectID; virtual;
+    Function GetJOBResult(v: jsvalue): TJOBResult;
   end;
 
 Implementation
@@ -81,6 +84,7 @@ begin
   aObject[JOBFn_ReleaseStringResult]:=@ReleaseStringResult;
   aObject[JOBFn_InvokeObjectResult]:=@Invoke_ObjectResult;
   aObject[JOBFn_ReleaseObject]:=@ReleaseObject;
+  aObject[JOBFn_InvokeJSValueResult]:=@Invoke_JSValueResult;
 end;
 
 function TJOBBridge.FindObject(ObjId: TJOBObjectID): TJSObject;
@@ -91,6 +95,22 @@ begin
     Result:=TJSObject(FLocalObjects[ObjId]);
   if isUndefined(Result) then
     Result:=nil;
+end;
+
+function TJOBBridge.RegisterLocalObject(Obj: TJSObject): TJOBObjectID;
+var
+  NewId: JSValue;
+begin
+  NewId:=FFreeLocalIds.pop;
+  if isUndefined(NewId) then
+  begin
+    NewId:=FLocalObjects.push(Obj)-1;
+    Result:=TJOBObjectID(NewId);
+  end
+  else begin
+    Result:=TJOBObjectID(NewId);
+    FLocalObjects[Result]:=Obj;
+  end;
 end;
 
 function TJOBBridge.Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen,
@@ -224,11 +244,11 @@ function TJOBBridge.Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   t: String;
-  JSResult, NewId: JSValue;
+  JSResult: JSValue;
+  NewId: TJOBObjectID;
 begin
   // invoke
   Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
-  writeln('BBB1 TJOBBridge.Invoke_ObjectResult ',Result,' JSResult=',JSResult);
   if Result<>JOBResult_Success then
     exit;
   // check result type
@@ -238,16 +258,51 @@ begin
   if JSResult=nil then
     exit(JOBResult_Null);
 
-  // create Id
-  NewId:=FFreeLocalIds.pop;
-  if isUndefined(NewId) then
-    NewId:=FLocalObjects.push(JSResult)-1
-  else
-    FLocalObjects[longword(NewId)]:=JSResult;
-
   // set result
+  NewId:=RegisterLocalObject(TJSObject(JSResult));
   getModuleMemoryDataView().setUint32(ResultP, longword(NewId), env.IsLittleEndian);
   Result:=JOBResult_Object;
+end;
+
+function TJOBBridge.Invoke_JSValueResult(ObjId: TJOBObjectID; NameP, NameLen,
+  Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
+var
+  JSResult: JSValue;
+  b: byte;
+  NewId: TJOBObjectID;
+begin
+  writeln('TJOBBridge.Invoke_JSValueResult START');
+  // invoke
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
+  writeln('TJOBBridge.Invoke_JSValueResult JSResult=',JSResult);
+  if Result<>JOBResult_Success then
+    exit;
+  Result:=GetJOBResult(JSResult);
+  writeln('TJOBBridge.Invoke_JSValueResult Type=',Result);
+  // set result
+  case Result of
+  JOBResult_Boolean:
+    begin
+      if JSResult then
+        b:=1
+      else
+        b:=0;
+      getModuleMemoryDataView().setUint8(ResultP, b);
+    end;
+  JOBResult_Double:
+    getModuleMemoryDataView().setFloat64(ResultP, double(JSResult), env.IsLittleEndian);
+  JOBResult_String:
+    begin
+      FStringResult:=String(JSResult);
+    getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
+    end;
+  JOBResult_Function,
+  JOBResult_Object:
+    begin
+      NewId:=RegisterLocalObject(TJSObject(JSResult));
+      getModuleMemoryDataView().setUint32(ResultP, longword(NewId), env.IsLittleEndian);
+    end;
+  end;
 end;
 
 function TJOBBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
@@ -370,7 +425,7 @@ begin
   case jstypeof(v) of
   'undefined': Result:=JOBResult_Undefined;
   'boolean': Result:=JOBResult_Boolean;
-  'number': Result:=JOBResult_Number;
+  'number': Result:=JOBResult_Double;
   'string': Result:=JOBResult_String;
   'symbol': Result:=JOBResult_Symbol;
   'bigint': Result:=JOBResult_BigInt;

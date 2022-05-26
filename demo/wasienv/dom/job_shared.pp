@@ -22,15 +22,14 @@ const
   JOBResult_Undefined = 5;
   JOBResult_Null = 6;
   JOBResult_Boolean = 7;
-  JOBResult_Number = 8;
-  JOBResult_Double = 9;
-  JOBResult_String = 10;
-  JOBResult_Function = 11;
-  JOBResult_Object = 12;
-  JOBResult_BigInt = 13;
-  JOBResult_Symbol = 14;
+  JOBResult_Double = 8;
+  JOBResult_String = 9;
+  JOBResult_Function = 10;
+  JOBResult_Object = 11;
+  JOBResult_BigInt = 12;
+  JOBResult_Symbol = 13;
 
-  JOBResultLast = 14;
+  JOBResultLast = 13;
 
   JOBResult_Names: array[0..JOBResultLast] of string = (
     'None',
@@ -41,7 +40,6 @@ const
     'Undefined',
     'Null',
     'Boolean',
-    'Number',
     'Double',
     'String',
     'Function',
@@ -59,6 +57,7 @@ const
   JOBFn_ReleaseStringResult = 'release_stringresult';
   JOBFn_InvokeObjectResult = 'invoke_objectresult';
   JOBFn_ReleaseObject = 'release_object';
+  JOBFn_InvokeJSValueResult = 'invoke_jsvalueresult';
 
   JOBArgNone = 0;
   JOBArgLongint = 1;

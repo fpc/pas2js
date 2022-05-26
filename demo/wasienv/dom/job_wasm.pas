@@ -28,6 +28,62 @@ Type
     FuncName: string;
   end;
 
+  TJOB_JSValueKind = (
+    jjvkUndefined,
+    jjvkBoolean,
+    jjvkDouble,
+    jjvkString,
+    jjvkObject
+    );
+  TJOB_JSValueKinds = set of TJOB_JSValueKind;
+
+const
+  JOB_JSValueKindNames: array[TJOB_JSValueKind] of string = (
+    'Undefined',
+    'Boolean',
+    'Double',
+    'String',
+    'Object'
+    );
+
+type
+
+  { TJOB_JSValue }
+
+  TJOB_JSValue = class
+  public
+    Kind: TJOB_JSValueKind;
+    constructor Create(aKind: TJOB_JSValueKind);
+    function AsString: string; virtual;
+  end;
+
+  { TJOB_JSValueBoolean }
+
+  TJOB_JSValueBoolean = class(TJOB_JSValue)
+  public
+    Value: Boolean;
+    constructor Create(aValue: Boolean);
+    function AsString: string; override;
+  end;
+
+  { TJOB_JSValueDouble }
+
+  TJOB_JSValueDouble = class(TJOB_JSValue)
+  public
+    Value: Double;
+    constructor Create(const aValue: Double);
+    function AsString: string; override;
+  end;
+
+  { TJOB_JSValueString }
+
+  TJOB_JSValueString = class(TJOB_JSValue)
+  public
+    Value: UnicodeString;
+    constructor Create(const aValue: UnicodeString);
+    function AsString: string; override;
+  end;
+
   PJOBObjectID = ^TJOBObjectID;
   TJOBInvokeOneResultFunc = function(
       ObjID: TJOBObjectID;
@@ -50,12 +106,31 @@ Type
   TJSObject = class;
   TJSObjectClass = class of TJSObject;
 
+  IJSObject = interface
+    function GetObjectID: TJOBObjectID;
+    function GetClassName: string;
+    property ObjectID: TJOBObjectID read GetObjectID;
+    property ClassName: string read GetClassName;
+  end;
+
+  { TJOB_JSValueObject }
+
+  TJOB_JSValueObject = class(TJOB_JSValue)
+  public
+    Value: IJSObject;
+    constructor Create(aValue: IJSObject);
+    function AsString: string; override;
+  end;
+
   { TJSObject }
 
-  TJSObject = class(TInterfacedObject)
+  TJSObject = class(TInterfacedObject,IJSObject)
   private
     FObjectID: TJOBObjectID;
   protected
+    function GetObjectID: TJOBObjectID;
+    function GetClassName: string;
+    function FetchString(Len: NativeInt): UnicodeString;
     function InvokeJSOneResult(const aName: string; Const Args: Array of const;
       const InvokeFunc: TJOBInvokeOneResultFunc; ResultP: PByte; Invoke: TJOBInvokeGetType): TJOBResult;
     procedure InvokeJS_Raise(const aName, Msg: string); virtual;
@@ -70,8 +145,8 @@ Type
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Boolean; virtual;
     function InvokeJSDoubleResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Double; virtual;
     function InvokeJSUnicodeStringResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): UnicodeString; virtual;
-    function InvokeJSObjResult(const aName: string; Const Args: Array of const; aResultClass: TJSObjectClass; Invoke: TJOBInvokeGetType = jigCall): TJSObject; virtual;
-    // ToDo: InvokeJSValueResult
+    function InvokeJSObjectResult(const aName: string; Const Args: Array of const; aResultClass: TJSObjectClass; Invoke: TJOBInvokeGetType = jigCall): TJSObject; virtual;
+    function InvokeJSValueResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): TJOB_JSValue; virtual;
     function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeGetType = jigCall): String; virtual;
     function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeGetType = jigCall): LongInt; virtual;
     function ReadJSPropertyBoolean(const aName: string): boolean; virtual;
@@ -80,6 +155,7 @@ Type
     function ReadJSPropertyObject(const aName: string; aResultClass: TJSObjectClass): TJSObject; virtual;
     function ReadJSPropertyUtf8String(const aName: string): string; virtual;
     function ReadJSPropertyLongInt(const aName: string): LongInt; virtual;
+    function ReadJSPropertyValue(const aName: string): TJOB_JSValue; virtual;
     // ToDo: get JSValue property
     procedure WriteJSPropertyBoolean(const aName: string; Value: Boolean); virtual;
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
@@ -147,6 +223,15 @@ function __job_release_object(
   ObjID: TJOBObjectID
 ): TJOBResult; external JOBExportName name JOBFn_ReleaseObject;
 
+function __job_invoke_jsvalueresult(
+  ObjID: TJOBObjectID;
+  NameP: PChar;
+  NameLen: longint;
+  Invoke: longint;
+  ArgP: PByte;
+  ResultP: PByte
+): TJOBResult; external JOBExportName name JOBFn_InvokeJSValueResult;
+
 implementation
 
 const
@@ -190,7 +275,107 @@ begin
 end;
 {$ENDIF}
 
+{ TJOB_JSValue }
+
+constructor TJOB_JSValue.Create(aKind: TJOB_JSValueKind);
+begin
+  Kind:=aKind;
+end;
+
+function TJOB_JSValue.AsString: string;
+begin
+  case Kind of
+    jjvkUndefined: Result:='undefined';
+    jjvkBoolean: ;
+    jjvkDouble: ;
+    jjvkString: ;
+    jjvkObject: ;
+  end;
+end;
+
+{ TJOB_JSValueBoolean }
+
+constructor TJOB_JSValueBoolean.Create(aValue: Boolean);
+begin
+  Kind:=jjvkBoolean;
+  Value:=aValue;
+end;
+
+function TJOB_JSValueBoolean.AsString: string;
+begin
+  str(Value,Result);
+end;
+
+{ TJOB_JSValueDouble }
+
+constructor TJOB_JSValueDouble.Create(const aValue: Double);
+begin
+  Kind:=jjvkDouble;
+  Value:=aValue;
+end;
+
+function TJOB_JSValueDouble.AsString: string;
+begin
+  str(Value,Result);
+end;
+
+{ TJOB_JSValueString }
+
+constructor TJOB_JSValueString.Create(const aValue: UnicodeString);
+begin
+  Kind:=jjvkString;
+  Value:=aValue;
+end;
+
+function TJOB_JSValueString.AsString: string;
+begin
+  Result:=AnsiQuotedStr(String(Value),'"');
+end;
+
+{ TJOB_JSValueObject }
+
+constructor TJOB_JSValueObject.Create(aValue: IJSObject);
+begin
+  Kind:=jjvkObject;
+  Value:=aValue;
+end;
+
+function TJOB_JSValueObject.AsString: string;
+begin
+  if Value=nil then
+    Result:='nil'
+  else
+    Result:='['+IntToStr(Value.ObjectID)+']:'+Value.ClassName;
+end;
+
 { TJSObject }
+
+function TJSObject.GetObjectID: TJOBObjectID;
+begin
+  Result:=FObjectID;
+end;
+
+function TJSObject.GetClassName: string;
+begin
+  Result:=ClassName;
+end;
+
+function TJSObject.FetchString(Len: NativeInt): UnicodeString;
+var
+  ok: Boolean;
+begin
+  if Len=0 then exit('');
+  ok:=false;
+  try
+    // try to allocate the memory
+    SetLength(Result,Len);
+    ok:=true;
+  finally
+    if not ok then
+      __job_releasestringresult();
+  end;
+  __job_getstringresult(PByte(Result));
+end;
 
 function TJSObject.InvokeJSOneResult(const aName: string;
   const Args: array of const; const InvokeFunc: TJOBInvokeOneResultFunc;
@@ -573,22 +758,11 @@ begin
   aError:=InvokeJSOneResult(aName,Args,@__job_invoke_stringresult,@ResultLen,Invoke);
   if aError<>JOBResult_String then
     InvokeJS_RaiseResultMismatch(aName,JOBResult_String,aError);
-  if ResultLen=0 then
-    exit('');
-  try
-    // try to allocate the memory
-    SetLength(Result,ResultLen);
-    //writeln('TJSObject.InvokeJSUnicodeStringResult ResultLen=',ResultLen);
-    aError:=JOBResult_Success;
-  finally
-    if aError<>JOBResult_Success then
-      __job_releasestringresult();
-  end;
-  __job_getstringresult(PByte(Result));
+  Result:=FetchString(ResultLen);
   //writeln('TJSObject.InvokeJSUnicodeStringResult Result="',Result,'"');
 end;
 
-function TJSObject.InvokeJSObjResult(const aName: string;
+function TJSObject.InvokeJSObjectResult(const aName: string;
   const Args: array of const; aResultClass: TJSObjectClass;
   Invoke: TJOBInvokeGetType): TJSObject;
 var
@@ -604,6 +778,40 @@ begin
     InvokeJS_RaiseResultMismatch(aName,JOBResult_Object,aError);
 
   Result:=aResultClass.CreateFromID(NewObjId);
+end;
+
+function TJSObject.InvokeJSValueResult(const aName: string;
+  const Args: array of const; Invoke: TJOBInvokeGetType): TJOB_JSValue;
+var
+  Buf: array[0..7] of byte;
+  p: PByte;
+  aError: TJOBResult;
+  Obj: TJSObject;
+begin
+  Result:=nil;
+  FillByte(Buf[0],length(Buf),0);
+  p:=@Buf[0];
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_jsvalueresult,p,Invoke);
+  case aError of
+  JOBResult_Undefined:
+    Result:=TJOB_JSValue.Create(jjvkUndefined);
+  JOBResult_Null:
+    Result:=TJOB_JSValueObject.Create(nil);
+  JOBResult_Boolean:
+    Result:=TJOB_JSValueBoolean.Create(p^<>0);
+  JOBResult_Double:
+    Result:=TJOB_JSValueDouble.Create(PDouble(p)^);
+  JOBResult_String:
+    Result:=TJOB_JSValueString.Create(FetchString(PNativeInt(p)^));
+  JOBResult_Function,
+  JOBResult_Object:
+    begin
+    Obj:=TJSObject.CreateFromID(PJOBObjectID(p)^);
+    Result:=TJOB_JSValueObject.Create(Obj);
+    end;
+  else
+    InvokeJS_RaiseResultMismatchStr(aName,'jsvalue',JOBResult_Names[aError]);
+  end;
 end;
 
 function TJSObject.InvokeJSUtf8StringResult(const aName: string;
@@ -643,7 +851,7 @@ end;
 function TJSObject.ReadJSPropertyObject(const aName: string;
   aResultClass: TJSObjectClass): TJSObject;
 begin
-  Result:=InvokeJSObjResult(aName,[],aResultClass,jigGetter);
+  Result:=InvokeJSObjectResult(aName,[],aResultClass,jigGetter);
 end;
 
 function TJSObject.ReadJSPropertyUtf8String(const aName: string): string;
@@ -654,6 +862,11 @@ end;
 function TJSObject.ReadJSPropertyLongInt(const aName: string): LongInt;
 begin
   Result:=InvokeJSLongIntResult(aName,[],jigGetter);
+end;
+
+function TJSObject.ReadJSPropertyValue(const aName: string): TJOB_JSValue;
+begin
+  Result:=InvokeJSValueResult(aName,[],jigGetter);
 end;
 
 procedure TJSObject.WriteJSPropertyBoolean(const aName: string; Value: Boolean);

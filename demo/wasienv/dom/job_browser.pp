@@ -52,6 +52,39 @@ asm
   return String.fromCharCode.apply(null,a);
 end;
 
+function NewObj(const fn: TJSFunction; const Args: TJSValueDynArray): TJSFunction; assembler;
+asm
+  if (Args == null){
+    return new fn();
+  }
+  var l = Args.length;
+  if (l==0){
+    return new fn();
+  } else if (l==1){
+    return new fn(Args[0]);
+  } else if (l==2){
+    return new fn(Args[0],Args[1]);
+  } else if (l==3){
+    return new fn(Args[0],Args[1],Args[2]);
+  } else if (l==4){
+    return new fn(Args[0],Args[1],Args[2],Args[3]);
+  } else if (l==5){
+    return new fn(Args[0],Args[1],Args[2],Args[3],Args[4]);
+  } else if (l==6){
+    return new fn(Args[0],Args[1],Args[2],Args[3],Args[4],Args[5]);
+  } else if (l==7){
+    return new fn(Args[0],Args[1],Args[2],Args[3],Args[4],Args[5],Args[6]);
+  } else if (l==8){
+    return new fn(Args[0],Args[1],Args[2],Args[3],Args[4],Args[5],Args[6],Args[7]);
+  } else if (l==9){
+    return new fn(Args[0],Args[1],Args[2],Args[3],Args[4],Args[5],Args[6],Args[7],Args[8]);
+  } else if (l==10){
+    return new fn(Args[0],Args[1],Args[2],Args[3],Args[4],Args[5],Args[6],Args[7],Args[8],Args[9]);
+  } else {
+    return null;
+  }
+end;
+
 constructor TJOBBridge.Create(aEnv: TPas2JSWASIEnvironment);
 begin
   Inherited Create(aEnv);
@@ -60,6 +93,22 @@ begin
   FGlobalObjects[-JOBObjIdWindow]:=window;
   FGlobalObjects[-JOBObjIdConsole]:=console;
   FGlobalObjects[-JOBObjIdCaches]:=caches;
+  FGlobalObjects[-JOBObjIdObject]:=TJSObject;
+  FGlobalObjects[-JOBObjIdFunction]:=TJSFunction;
+  FGlobalObjects[-JOBObjIdDate]:=TJSDate;
+  FGlobalObjects[-JOBObjIdString]:=TJSString;
+  FGlobalObjects[-JOBObjIdArray]:=TJSArray;
+  FGlobalObjects[-JOBObjIdArrayBuffer]:=TJSArrayBuffer;
+  FGlobalObjects[-JOBObjIdInt8Array]:=TJSInt8Array;
+  FGlobalObjects[-JOBObjIdUint8Array]:=TJSUint8Array;
+  FGlobalObjects[-JOBObjIdUint8ClampedArray]:=TJSUint8ClampedArray;
+  FGlobalObjects[-JOBObjIdInt16Array]:=TJSInt16Array;
+  FGlobalObjects[-JOBObjIdUint16Array]:=TJSUint16Array;
+  FGlobalObjects[-JOBObjIdInt32Array]:=TJSUint32Array;
+  FGlobalObjects[-JOBObjIdFloat32Array]:=TJSFloat32Array;
+  FGlobalObjects[-JOBObjIdFloat64Array]:=TJSFloat64Array;
+  FGlobalObjects[-JOBObjIdJSON]:=TJSJSON;
+  FGlobalObjects[-JOBObjIdPromise]:=TJSPromise;
   FLocalObjects:=TJSArray.new;
   FFreeLocalIds:=TJSArray.new;
 end;
@@ -149,13 +198,29 @@ begin
         JSResult:=TJSFunction(fn).apply(Obj,Args);
       end;
     end;
-  JOBInvokeGetter:
+  JOBInvokeNew:
+    begin
+      if PropName<>'' then
+        fn:=Obj[PropName]
+      else
+        fn:=Obj;
+      if jstypeof(fn)<>'function' then
+        exit(JOBResult_NotAFunction);
+
+      if ArgsP=0 then
+        JSResult:=NewObj(TJSFunction(fn),nil)
+      else begin
+        Args:=GetInvokeArguments(View,ArgsP);
+        JSResult:=NewObj(TJSFunction(fn),Args)
+      end;
+    end;
+  JOBInvokeGet:
     begin
       if ArgsP>0 then
         exit(JOBResult_WrongArgs);
       JSResult:=Obj[PropName];
     end;
-  JOBInvokeSetter:
+  JOBInvokeSet:
     begin
       JSResult:=Undefined;
       if ArgsP=0 then
@@ -359,6 +424,8 @@ begin
     aType:=View.getUInt8(p);
     inc(p);
     case aType of
+    JOBArgNone:
+      Result[i]:=Undefined;
     JOBArgLongint:
       begin
         Result[i]:=View.getInt32(p,env.IsLittleEndian);

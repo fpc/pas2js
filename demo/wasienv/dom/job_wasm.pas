@@ -46,6 +46,8 @@ const
     'Object'
     );
 
+  JOB_Undefined = Pointer(1);
+
 type
 
   { TJOB_JSValue }
@@ -96,7 +98,8 @@ type
 
   TJOBInvokeGetType = (
     jigCall,  // call function
-    jigGetter // read property
+    jigGetter, // read property
+    jigNew // new operator
     );
   TJOBInvokeSetType = (
     jisCall,  // call function
@@ -106,11 +109,34 @@ type
   TJSObject = class;
   TJSObjectClass = class of TJSObject;
 
+  { IJSObject }
+
   IJSObject = interface
-    function GetObjectID: TJOBObjectID;
-    function GetClassName: string;
-    property ObjectID: TJOBObjectID read GetObjectID;
-    property ClassName: string read GetClassName;
+    ['{BE5CDE03-D471-4AB3-8F27-A5EA637416F7}']
+    function GetJSObjectID: TJOBObjectID;
+    function GetPascalClassName: string;
+    procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeSetType = jisCall); virtual;
+    function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Boolean; virtual;
+    function InvokeJSDoubleResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Double; virtual;
+    function InvokeJSUnicodeStringResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): UnicodeString; virtual;
+    function InvokeJSObjectResult(const aName: string; Const Args: Array of const; aResultClass: TJSObjectClass; Invoke: TJOBInvokeGetType = jigCall): TJSObject; virtual;
+    function InvokeJSValueResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): TJOB_JSValue; virtual;
+    function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeGetType = jigCall): String; virtual;
+    function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeGetType = jigCall): LongInt; virtual;
+    function ReadJSPropertyBoolean(const aName: string): boolean; virtual;
+    function ReadJSPropertyDouble(const aName: string): double; virtual;
+    function ReadJSPropertyUnicodeString(const aName: string): UnicodeString; virtual;
+    function ReadJSPropertyObject(const aName: string; aResultClass: TJSObjectClass): TJSObject; virtual;
+    function ReadJSPropertyUtf8String(const aName: string): string; virtual;
+    function ReadJSPropertyLongInt(const aName: string): LongInt; virtual;
+    function ReadJSPropertyValue(const aName: string): TJOB_JSValue; virtual;
+    procedure WriteJSPropertyBoolean(const aName: string; Value: Boolean); virtual;
+    procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
+    procedure WriteJSPropertyUnicodeString(const aName: string; const Value: UnicodeString); virtual;
+    procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
+    procedure WriteJSPropertyObject(const aName: string; Value: TJSObject); virtual;
+    procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
+    function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
   end;
 
   { TJOB_JSValueObject }
@@ -128,8 +154,8 @@ type
   private
     FObjectID: TJOBObjectID;
   protected
-    function GetObjectID: TJOBObjectID;
-    function GetClassName: string;
+    function GetJSObjectID: TJOBObjectID;
+    function GetPascalClassName: string;
     function FetchString(Len: NativeInt): UnicodeString;
     function InvokeJSOneResult(const aName: string; Const Args: Array of const;
       const InvokeFunc: TJOBInvokeOneResultFunc; ResultP: PByte; Invoke: TJOBInvokeGetType): TJOBResult;
@@ -156,18 +182,19 @@ type
     function ReadJSPropertyUtf8String(const aName: string): string; virtual;
     function ReadJSPropertyLongInt(const aName: string): LongInt; virtual;
     function ReadJSPropertyValue(const aName: string): TJOB_JSValue; virtual;
-    // ToDo: get JSValue property
     procedure WriteJSPropertyBoolean(const aName: string; Value: Boolean); virtual;
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
     procedure WriteJSPropertyUnicodeString(const aName: string; const Value: UnicodeString); virtual;
     procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
     procedure WriteJSPropertyObject(const aName: string; Value: TJSObject); virtual;
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
+    function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
   end;
 
 var
-  JSDocument: TJSObject; // ToDo
+  JSObject: TJSObject;
 
+// imported functions from browser
 function __job_invoke_noresult(
   ObjID: TJOBObjectID;
   NameP: PChar;
@@ -182,7 +209,7 @@ function __job_invoke_boolresult(
   NameLen: longint;
   Invoke: longint;
   ArgP: PByte;
-  ResultP: PByte // bytebool
+  ResultByteBoolP: PByte
 ): TJOBResult; external JOBExportName name JOBFn_InvokeBooleanResult;
 
 function __job_invoke_doubleresult(
@@ -191,7 +218,7 @@ function __job_invoke_doubleresult(
   NameLen: longint;
   Invoke: longint;
   ArgP: PByte;
-  ResultP: PByte // double
+  ResultDoubleP: PByte
 ): TJOBResult; external JOBExportName name JOBFn_InvokeDoubleResult;
 
 function __job_invoke_stringresult(
@@ -200,7 +227,7 @@ function __job_invoke_stringresult(
   NameLen: longint;
   Invoke: longint;
   ArgP: PByte;
-  ResultLenP: PByte // length
+  ResultLenP: PByte // nativeint
 ): TJOBResult; external JOBExportName name JOBFn_InvokeStringResult;
 
 function __job_getstringresult(
@@ -216,7 +243,7 @@ function __job_invoke_objectresult(
   NameLen: longint;
   Invoke: longint;
   ArgP: PByte;
-  ResultP: PByte // nativeint
+  ResultObjIDP: PByte // nativeint
 ): TJOBResult; external JOBExportName name JOBFn_InvokeObjectResult;
 
 function __job_release_object(
@@ -229,7 +256,7 @@ function __job_invoke_jsvalueresult(
   NameLen: longint;
   Invoke: longint;
   ArgP: PByte;
-  ResultP: PByte
+  ResultP: PByte  // various
 ): TJOBResult; external JOBExportName name JOBFn_InvokeJSValueResult;
 
 implementation
@@ -237,11 +264,12 @@ implementation
 const
   InvokeGetToInt: array[TJOBInvokeGetType] of integer = (
     JOBInvokeCall,
-    JOBInvokeGetter
+    JOBInvokeGet,
+    JOBInvokeNew
     );
   InvokeSetToInt: array[TJOBInvokeSetType] of integer = (
     JOBInvokeCall,
-    JOBInvokeSetter
+    JOBInvokeSet
     );
 
 {$IFDEF VerboseJOB}
@@ -273,6 +301,13 @@ begin
     Result:='vt?';
   end;
 end;
+
+function __job_callback(w: NativeInt): boolean;
+begin
+  writeln('__job_callback w=',w);
+  Result:=true;
+end;
+
 {$ENDIF}
 
 { TJOB_JSValue }
@@ -345,17 +380,17 @@ begin
   if Value=nil then
     Result:='nil'
   else
-    Result:='['+IntToStr(Value.ObjectID)+']:'+Value.ClassName;
+    Result:='['+IntToStr(Value.GetJSObjectID)+']:'+Value.GetPascalClassName;
 end;
 
 { TJSObject }
 
-function TJSObject.GetObjectID: TJOBObjectID;
+function TJSObject.GetJSObjectID: TJOBObjectID;
 begin
   Result:=FObjectID;
 end;
 
-function TJSObject.GetClassName: string;
+function TJSObject.GetPascalClassName: string;
 begin
   Result:=ClassName;
 end;
@@ -467,7 +502,14 @@ begin
       end;
     {$endif}
     vtString        : inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtPointer,
+    vtPointer:
+      begin
+        p:=Args[i].VPointer;
+        if p=JOB_Undefined then
+          inc(Len)
+        else
+          inc(Len,1+SizeOf(PByte));
+      end;
     vtPChar         :
       begin
         strlen(Args[i].VPChar);
@@ -485,14 +527,25 @@ begin
       end;
     vtClass         : RaiseNotSupported('class');
     vtPWideChar     : RaiseNotSupported('pwidechar');
-    vtAnsiString    : inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
+    vtAnsiString:
+      inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
     vtCurrency      : RaiseNotSupported('currency');
     {$ifdef FPC_HAS_FEATURE_VARIANTS}
     vtVariant       : RaiseNotSupported('variant');
     {$endif FPC_HAS_FEATURE_VARIANTS}
-    vtInterface     : RaiseNotSupported('interface');
-    vtWideString    : inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtInt64         :
+    vtInterface:
+      begin
+        p:=Args[i].VInterface;
+        if p=nil then
+          inc(Len,1)
+        else if IInterface(p) is IJSObject then
+          inc(Len,1+sizeof(TJOBObjectID))
+        else
+          RaiseNotSupported('interface');
+      end;
+    vtWideString:
+      inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
+    vtInt64:
       begin
         i64:=Args[i].VInt64^;
         if (i64<MinSafeIntDouble) or (i64>MaxSafeIntDouble) then
@@ -503,7 +556,7 @@ begin
           inc(Len,9);
       end;
     vtUnicodeString : inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtQWord         :
+    vtQWord:
       begin
         qw:=Args[i].VQWord^;
         if (qw>MaxSafeIntDouble) then
@@ -523,14 +576,14 @@ begin
   for i:=0 to high(Args) do
   begin
     case Args[i].VType of
-    vtInteger       :
+    vtInteger:
       begin
         p^:=JOBArgLongint;
         inc(p);
         PLongint(p)^:=Args[i].VInteger;
         inc(p,4);
       end;
-    vtBoolean       :
+    vtBoolean:
       begin
         if Args[i].VBoolean then
           p^:=JOBArgTrue
@@ -539,7 +592,7 @@ begin
         inc(p);
       end;
     {$ifndef FPUNONE}
-    vtExtended      :
+    vtExtended:
       begin
         p^:=JOBArgDouble;
         inc(p);
@@ -554,14 +607,14 @@ begin
         PWord(p)^:=ord(Args[i].VChar);
         inc(p,2);
       end;
-    vtWideChar      :
+    vtWideChar:
       begin
         p^:=JOBArgChar;
         inc(p);
         PWord(p)^:=ord(Args[i].VWideChar);
         inc(p,2);
       end;
-    vtString        :
+    vtString:
       begin
         // shortstring
         p^:=JOBArgUTF8String;
@@ -575,12 +628,20 @@ begin
       end;
     vtPointer:
       begin
-        p^:=JOBArgPointer;
-        inc(p);
-        PPointer(p)^:=Args[i].VPointer;
-        inc(p,sizeof(Pointer));
+        h:=Args[i].VPointer;
+        if h=JOB_Undefined then
+        begin
+          p^:=JOBArgNone;
+          inc(p);
+        end
+        else begin
+          p^:=JOBArgPointer;
+          inc(p);
+          PPointer(p)^:=h;
+          inc(p,sizeof(Pointer));
+        end;
       end;
-    vtPChar         :
+    vtPChar:
       begin
         p^:=JOBArgUTF8String;
         inc(p);
@@ -590,7 +651,7 @@ begin
         PPointer(p)^:=h;
         inc(p,sizeof(Pointer));
       end;
-    vtObject        :
+    vtObject:
       begin
         Obj:=Args[i].VObject;
         if Obj=nil then
@@ -600,7 +661,7 @@ begin
         end else begin
           p^:=JOBArgObject;
           inc(p);
-          PNativeInt(p)^:=TJSObject(Args[i].VObject).ObjectID;
+          PNativeInt(p)^:=TJSObject(Obj).ObjectID;
           inc(p,sizeof(NativeInt));
         end;
       end;
@@ -621,8 +682,21 @@ begin
     {$ifdef FPC_HAS_FEATURE_VARIANTS}
     vtVariant       : ;
     {$endif FPC_HAS_FEATURE_VARIANTS}
-    vtInterface     : ;
-    vtWideString    :
+    vtInterface:
+      begin
+        h:=Args[i].VInterface;
+        if h=nil then
+        begin
+          p^:=JOBArgNil;
+          inc(p);
+        end else begin
+          p^:=JOBArgObject;
+          inc(p);
+          PNativeInt(p)^:=IJSObject(h).GetJSObjectID;
+          inc(p,sizeof(NativeInt));
+        end;
+      end;
+    vtWideString:
       begin
         p^:=JOBArgUnicodeString;
         inc(p);
@@ -633,7 +707,7 @@ begin
         PPointer(p)^:=h;
         inc(p,sizeof(Pointer));
       end;
-    vtInt64         :
+    vtInt64:
       begin
         i64:=Args[i].VInt64^;
         if (i64>=low(longint)) and (i64<=high(longint)) then
@@ -649,7 +723,7 @@ begin
           inc(p,8);
         end;
       end;
-    vtUnicodeString :
+    vtUnicodeString:
       begin
         p^:=JOBArgUnicodeString;
         inc(p);
@@ -660,7 +734,7 @@ begin
         PPointer(p)^:=h;
         inc(p,sizeof(Pointer));
       end;
-    vtQWord         :
+    vtQWord:
       begin
         qw:=Args[i].VQWord^;
         if (qw<=high(longint)) then
@@ -902,8 +976,14 @@ begin
   InvokeJSNoResult(aName,[Value],jisSetter);
 end;
 
+function TJSObject.NewJSObject(const Args: array of const;
+  aResultClass: TJSObjectClass): TJSObject;
+begin
+  Result:=InvokeJSObjectResult('',Args,aResultClass,jigNew);
+end;
+
 initialization
-  JSDocument:=TJSObject.CreateFromID(JOBObjIdDocument);
+  JSObject:=TJSObject.CreateFromID(JOBObjIdObject);
 
 end.
 

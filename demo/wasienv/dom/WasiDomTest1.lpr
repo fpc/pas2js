@@ -5,7 +5,7 @@ program WasiDomTest1;
 {$codepage UTF8}
 
 uses
-  SysUtils, JOB_WAsm, JOB_Shared;
+  SysUtils, JOB_WAsm, JOB_Shared, JOB_Web, JOB_JS;
 
 type
 
@@ -76,8 +76,19 @@ var
   Freddy, Alice, aBird: TBird;
   i: Integer;
   JSValue: TJOB_JSValue;
+  JSElem: IJSElement;
+  aDate: IJSDate;
 begin
-  obj:=TJSObject.CreateFromID(WasiObjIdBird);
+  JSElem:=JSDocument.getElementById('playground');
+  writeln('Class=',JSElem._ClassName);
+
+  aDate:=JSDate.Create(2003,2,5,8,47,30,777);
+  u:=aDate.toLocaleDateString;
+  writeln('toLocaleDateString=',u);
+
+  exit;
+
+  obj:=TJSObject.CreateFromID(JObjIdBird);
   obj.WriteJSPropertyUnicodeString('Caption','Root');
   writeln('AAA1 ');
   u:='äbc';

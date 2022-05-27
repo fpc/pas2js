@@ -33,6 +33,16 @@
         <IsPartOfProject Value="True"/>
         <UnitName Value="JOB_WAsm"/>
       </Unit>
+      <Unit>
+        <Filename Value="job_web.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Web"/>
+      </Unit>
+      <Unit>
+        <Filename Value="job_js.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_JS"/>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>

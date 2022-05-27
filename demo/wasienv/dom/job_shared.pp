@@ -71,16 +71,40 @@ const
   JOBArgPointer = 9;
   JOBArgObject = 10; // followed by ObjectID
 
-  JOBInvokeCall = 0;
-  JOBInvokeGetter = 1;
-  JOBInvokeSetter = 2;
+  JOBInvokeCall = 0; // call function
+  JOBInvokeGet = 1; // read property
+  JOBInvokeSet = 2; // set property
+  JOBInvokeNew = 3; // new operator
+
+  JOBInvokeNames: array[0..3] of string = (
+    'Call',
+    'Get',
+    'Set',
+    'New'
+    );
 
   JOBObjIdDocument = -1;
   JOBObjIdWindow = -2;
   JOBObjIdConsole = -3;
   JOBObjIdCaches = -4;
+  JOBObjIdObject = -5;
+  JOBObjIdFunction = -6;
+  JOBObjIdDate = -7;
+  JOBObjIdString = -8;
+  JOBObjIdArray = -9;
+  JOBObjIdArrayBuffer = -10;
+  JOBObjIdInt8Array = -11;
+  JOBObjIdUint8Array = -12;
+  JOBObjIdUint8ClampedArray = -13;
+  JOBObjIdInt16Array = -13;
+  JOBObjIdUint16Array = -14;
+  JOBObjIdInt32Array = -16;
+  JOBObjIdFloat32Array = -17;
+  JOBObjIdFloat64Array = -18;
+  JOBObjIdJSON = -19;
+  JOBObjIdPromise = -20;
 
-  WasiObjIdBird = -5;
+  JObjIdBird = -21;
 
 implementation
 

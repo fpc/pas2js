@@ -146,7 +146,7 @@ begin
   FWasiEnv.OnStdOutputWrite:=@DoWrite;
   FWADomBridge:=TJOBBridge.Create(FWasiEnv);
 
-  if FWADomBridge.RegisterGlobalObject(TJSObject(TBird.Create('Root')))<>WasiObjIdBird then
+  if FWADomBridge.RegisterGlobalObject(TJSObject(TBird.Create('Root')))<>JObjIdBird then
     raise Exception.Create('Root TBird wrong number');
 end;
 

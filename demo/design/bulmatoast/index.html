@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Bulma Toast demo</title>
+  <link href="bulma.min.css" rel="stylesheet">
+  <script  src="bulma-toast.min.js"></script>
+  <script  src="bulmatoast.js"></script>
+  <style>
+    #toast-parent {
+      position: fixed;
+      top: 20px;
+      z-index: 99;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-body ">
+      <h2 class="title is-4">TBulmaToastWidget demo</h2>
+      <p class="subtitle">This is simple demo where a <em>TBulmaToastWidget</em> class is used to show a message toast
+      </p>
+    </div>
+  </div>
+  <hr class="my-4">
+  <div id="toast-parent" >
+  </div>
+  <div class="block">
+    <div class="is-flex is-justify-content-center">
+      <button id="btnShowToast" class="button is-primary">Show toast</button>
+    </div>
+  </div>
+
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

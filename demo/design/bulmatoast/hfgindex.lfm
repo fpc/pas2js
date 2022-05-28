@@ -1,0 +1,29 @@
+object frgmIndex: TfrgmIndex
+  OldCreateOrder = False
+  UseProjectHTMLFile = True
+  Height = 222
+  HorizontalOffset = 699
+  VerticalOffset = 336
+  Width = 380
+  object btwDemo: TBulmaToastWidget
+    ParentID = 'toast-parent'
+    Header = 'Oh my Pas2JS!'
+    Body = '<p><strong>This must be a pas2js generated Toast!</strong></p><small>And it will disappear in 5 seconds...</small> '
+    CloseButton = True
+    Contextual = cDanger
+    HideDelay = 5000
+    Single = False
+    Position = tpTopCenter
+    Left = 168
+    Top = 32
+  end
+  object alIndex: THTMLElementActionList
+    Left = 64
+    Top = 25
+    object actShowToast: THTMLElementAction
+      Events = [heClick]
+      ElementID = 'btnShowToast'
+      OnExecute = actShowToastExecute
+    end
+  end
+end

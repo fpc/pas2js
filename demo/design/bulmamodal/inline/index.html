@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bulma Modal demo (inline)</title>
+  <link href="bulma.min.css" rel="stylesheet"/>
+  <script  src="modaldemo3.js"></script>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-body">
+      <h2 class="title is-4">TBulmaModal demo</h2>
+      <p class="">This is simple demo where a <em>TBulmaModal</em> class is used to show a modal dialog.
+      The modal HTML is present in HTML page iself, and the property <em>ElementID</em> refers to it.</p>
+    </div>
+  </div>
+  <hr class="my-4">
+  <div id="modals-parent">
+    <div id="mdlDialog" class="modal" tabindex="-1">
+      <div class="modal-background"></div>
+      <div class="modal-card">
+        <div class="modal-card-head">
+          <p class="modal-card-title">Bulma modal demo</p>
+          <button type="button" class="delete" aria-label="Close"></button>
+        </div>
+        <div class="modal-card-body">
+           <h5 class="title is-5">Hello, World!</h5>
+           <p>Brought to you inline by <em>TBulmaModal</em>...</p>
+        </div>
+        <div class="modal-card-foot">
+          <button type="button" class="button" id="btnClose">Close</button>
+          <button type="button" class="button is-success" id="btnSave">Save changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="box py-5">
+    <div class="is-flex is-justify-content-center">
+      <button id="btnShowModal" class="button is-primary">Show modal dialog</button>
+    </div>
+   </div>
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+
+  
+</body>
+</html>

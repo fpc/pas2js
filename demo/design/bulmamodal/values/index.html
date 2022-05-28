@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bulma Modal demo</title>
+  <link href="bulma.min.css" rel="stylesheet"/>
+  <script  src="bumodaldemo2.js"></script>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero-body">
+      <h2 class="title is-4">TBulmaModal demo</h2>
+      <p class="">This is simple demo where a <em>TBulmaModal</em> class is used to show a modal
+      dialog.<br />
+      The modal HTML is loaded using a template loader.</p>
+      <p>The modal dialog contains some input elements, the values of these can be retrieved by defining the elements
+      through the <var>References</var> collection: all values for references with <em>Kind=mikValue</em> will be collected and passed on in the <em>OnHide</em> event.
+      </p>
+    </div>
+  </div>
+  <hr class="my-4">
+  <div id="modals-parent">
+  </div>
+  <div class="box py-5">
+    <div class="is-flex is-justify-content-center">
+      <button id="btnShowModal" class="button is-primary">Show modal dialog</button>
+    </div>
+   </div>
+  <script>
+    rtl.showUncaughtExceptions=true;
+    window.addEventListener("load", rtl.run);
+  </script>
+
+  
+</body>
+</html>

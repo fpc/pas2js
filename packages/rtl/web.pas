@@ -2634,7 +2634,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   { TJSMouseEvent }
 
-  TJSMouseEvent = class external name 'MouseEvent' (TJSUIevent)
+  TJSMouseEvent = class external name 'MouseEvent' (TJSUIEvent)
   private
     FAltKey: Boolean; external name 'altKey';
     FBUtton: NativeInt; external name 'button';

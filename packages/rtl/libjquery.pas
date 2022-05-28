@@ -332,8 +332,8 @@ Type
     Function On_(events : String; selector : String; aHandler : TJSEventHandler) : TJQuery; external name 'on'; overload;
     Function On_(events : String; selector : String; data : JSValue; aHandler : TJSEventHandler) : TJQuery; external name 'on'; overload;
     Function On_(events : TJSObject; selector : String; data : JSValue) : TJQuery; external name 'on'; overload;
-    Function On_(events : TJSObject; data : JSValue) : TJQuery; overload;
-    Function On_(events : TJSObject) : TJQuery; overload;
+    Function On_(events : TJSObject; data : JSValue) : TJQuery; external name 'on'; overload;
+    Function On_(events : TJSObject) : TJQuery; external name 'on'; overload;
     function outerHeight(IncludeMargin : Boolean): Integer;overload;
     function outerHeight: Integer;overload;
     function outerHeight(aValue: Integer) : TJQuery;overload;

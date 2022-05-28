@@ -1,4 +1,4 @@
-program WasiDomTest1;
+library WasiDomTest1;
 
 {$mode objfpc}
 {$h+}
@@ -26,6 +26,69 @@ type
     property Size: integer read GetSize write SetSize;
     property Child: TBird read GetChild write SetChild;
   end;
+
+  { TWasmApp }
+
+  TWasmApp = class
+  private
+    function OnPlaygroundClick(Event: IEventListenerEvent): boolean;
+  public
+    procedure Run;
+  end;
+
+{ TApplication }
+
+function TWasmApp.OnPlaygroundClick(Event: IEventListenerEvent): boolean;
+begin
+  writeln('TWasmApp.OnPlaygroundClick ');
+  Result:=true;
+end;
+
+procedure TWasmApp.Run;
+var
+  obj: TJSObject;
+  Freddy, Alice, aBird: TBird;
+  JSValue: TJOB_JSValue;
+  JSElem: IJSElement;
+begin
+  JSElem:=JSDocument.getElementById('playground');
+  writeln('TWasmApp.Run playground classname=',JSElem._ClassName);
+
+  writeln('TWasmApp.Run addEventListener click...');
+  JSElem.addEventListener('click',@OnPlaygroundClick);
+  writeln('TWasmApp.Run ');
+
+  exit;
+
+  obj:=TJSObject.CreateFromID(JObjIdBird);
+  obj.WriteJSPropertyUnicodeString('Caption','Root');
+  writeln('AAA1 ');
+  //u:='äbc';
+
+  //obj.InvokeJSNoResult('Proc',[]);
+  //d:=obj.InvokeJSDoubleResult('GetDouble',[u,12345678901]);
+  writeln('Create Freddy...');
+  Freddy:=obj.InvokeJSObjectResult('CreateChick',['Freddy'],TBird) as TBird;
+  writeln('AAA5 ',Freddy.Name);
+
+  writeln('Create Alice...');
+  Alice:=obj.InvokeJSObjectResult('CreateChick',['Alice'],TBird) as TBird;
+  writeln('Freddy.Child:=Alice...');
+  Freddy.Child:=Alice;
+  aBird:=Freddy.Child;
+  writeln('Freddy.Child=',aBird.Name);
+
+  //Freddy.Size:=123;
+  //writeln('Freddy.Size=',Freddy.Size);
+  JSValue:=Freddy.ReadJSPropertyValue('Child');
+  writeln('JSValue: ',JSValue.Kind,' ',JSValue.AsString);
+
+  writeln('Freeing Freddy...');
+  Freddy.Free;
+  writeln('Freeing Alice...');
+  Alice.Free;
+
+end;
 
 { TBird }
 
@@ -69,51 +132,19 @@ begin
   Result:=InvokeJSLongIntResult('GetInteger',[]);
 end;
 
-var
-  obj: TJSObject;
-  d: Double;
-  u: UnicodeString;
-  Freddy, Alice, aBird: TBird;
-  i: Integer;
-  JSValue: TJOB_JSValue;
-  JSElem: IJSElement;
-  aDate: IJSDate;
+function JOBCallback(Func, Data, Code, Args: NativeInt): word;
 begin
-  JSElem:=JSDocument.getElementById('playground');
-  writeln('Class=',JSElem._ClassName);
+  writeln('MyCallBack2 Func=',Func,' Data=',Data,' Code=',Code,' Args=',Args);
+  Result:=Func+123;
+end;
 
-  aDate:=JSDate.Create(2003,2,5,8,47,30,777);
-  u:=aDate.toLocaleDateString;
-  writeln('toLocaleDateString=',u);
+exports
+  JOBCallback;
 
-  exit;
-
-  obj:=TJSObject.CreateFromID(JObjIdBird);
-  obj.WriteJSPropertyUnicodeString('Caption','Root');
-  writeln('AAA1 ');
-  u:='äbc';
-
-  //obj.InvokeJSNoResult('Proc',[]);
-  //d:=obj.InvokeJSDoubleResult('GetDouble',[u,12345678901]);
-  writeln('Create Freddy...');
-  Freddy:=obj.InvokeJSObjectResult('CreateChick',['Freddy'],TBird) as TBird;
-  writeln('AAA5 ',Freddy.Name);
-
-  writeln('Create Alice...');
-  Alice:=obj.InvokeJSObjectResult('CreateChick',['Alice'],TBird) as TBird;
-  writeln('Freddy.Child:=Alice...');
-  Freddy.Child:=Alice;
-  aBird:=Freddy.Child;
-  writeln('Freddy.Child=',aBird.Name);
-
-  //Freddy.Size:=123;
-  //writeln('Freddy.Size=',Freddy.Size);
-  JSValue:=Freddy.ReadJSPropertyValue('Child');
-  writeln('JSValue: ',JSValue.Kind,' ',JSValue.AsString);
-
-  writeln('Freeing Freddy...');
-  Freddy.Free;
-  writeln('Freeing Alice...');
-  Alice.Free;
+var
+  Application: TWasmApp;
+begin
+  Application:=TWasmApp.Create;
+  Application.Run;
 end.
 

@@ -9,10 +9,26 @@ uses
   Classes, SysUtils, JOB_Shared, JOB_WAsm;
 
 type
+  IJSEvent = interface;
+
+  IEventListenerEvent = IJSEvent;
+
+  TJSEventHandler = function(Event: IEventListenerEvent): boolean of object;
+
+  IJSEventTarget = interface
+    ['{1883145B-C826-47D1-9C63-47546BA536BD}']
+    procedure addEventListener(const aName: UnicodeString; const aListener: TJSEventHandler);
+  end;
+
+  { TJSEventTarget }
+
+  TJSEventTarget = class(TJSObject,IJSEventTarget)
+    procedure addEventListener(const aName: UnicodeString; const aListener: TJSEventHandler);
+  end;
 
   { IJSNode }
 
-  IJSNode = interface(IJSObject)
+  IJSNode = interface(IJSEventTarget)
     ['{D7A751A8-73AD-4620-B2EE-03165A9D65D7}']
     function GetInnerText: UnicodeString;
     procedure SetInnerText(const AValue: UnicodeString);
@@ -21,8 +37,7 @@ type
 
   { TJSNode }
 
-  TJSNode = class(TJSObject,IJSNode)
-  public
+  TJSNode = class(TJSEventTarget,IJSNode)
     function GetInnerText: UnicodeString;
     procedure SetInnerText(const AValue: UnicodeString);
   end;
@@ -57,17 +72,7 @@ type
     procedure Set_ClassName(const AValue: UnicodeString);
   end;
 
-  IJSDocument = interface(IJSNode)
-    ['{CC3FB7C1-C4ED-4BBC-80AB-7B6C2989E026}']
-    function getElementById(const aID : UnicodeString) : IJSElement;
-  end;
-
-  { TJSDocument }
-
-  TJSDocument = class(TJSNode,IJSDocument)
-  public
-    function getElementById(const aID : UnicodeString) : IJSElement;
-  end;
+  { IJSEvent }
 
   IJSEvent = interface(IJSObject)
     ['{8B752F08-21F6-4F0D-B7A0-5A6616E752AD}']
@@ -78,26 +83,60 @@ type
   { TJSEvent }
 
   TJSEvent = class(TJSObject,IJSEvent)
-  public
     function CurrentTargetElement: IJSElement;
     function TargetElement: IJSElement;
   end;
 
-  TEventListenerEvent = TJSEvent;
+  IJSUIEvent = interface(IJSEvent)
+    ['{A1234998-5180-4905-B820-10FAB9B2DD12}']
+  end;
+  TJSUIEvent = class(TJSEvent,IJSUIEvent)
+  end;
 
-  TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean;
+  IJSMouseEvent = interface(IJSUIEvent)
+    ['{B91DC727-1164-43AE-8481-55421D3148C4}']
+  end;
+  TJSMouseEvent = class(TJSUIEvent,IJSMouseEvent)
+  end;
+
+  THTMLClickEventHandler = function(aEvent: IJSMouseEvent) : boolean of object;
+
+  { IJSHTMLElement }
+
+  IJSHTMLElement = interface(IJSElement)
+    ['{D50E53E1-5B3B-4DA4-ACB0-1FD0DE32B711}']
+    procedure set_onclick(const h: THTMLClickEventHandler);
+  end;
+
+  { TJSHTMLElement }
+
+  TJSHTMLElement = class(TJSElement,IJSHTMLElement)
+    procedure set_onclick(const h: THTMLClickEventHandler);
+  end;
+
+  IJSDocument = interface(IJSNode)
+    ['{CC3FB7C1-C4ED-4BBC-80AB-7B6C2989E026}']
+    function getElementById(const aID : UnicodeString) : IJSElement;
+  end;
+
+  { TJSDocument }
+
+  TJSDocument = class(TJSNode,IJSDocument)
+    function getElementById(const aID : UnicodeString) : IJSElement;
+  end;
+
+  { IJSWindow }
 
   IJSWindow = interface(IJSObject)
     ['{7DEBCDE5-2C6C-4758-9EE3-CF153AF2AFA0}']
-    procedure AddEventListener(const aName: UnicodeString; const aListener: TJSEventHandler);
+    procedure addEventListener(const aName: UnicodeString; const aListener: TJSEventHandler);
     procedure Alert(Const Msg: UnicodeString);
   end;
 
   { TJSWindow }
 
   TJSWindow = class(TJSObject,IJSWindow)
-  public
-    procedure AddEventListener(const aName: UnicodeString; const aListener: TJSEventHandler);
+    procedure addEventListener(const aName: UnicodeString; const aListener: TJSEventHandler);
     procedure Alert(Const Msg: UnicodeString);
   end;
 
@@ -105,7 +144,57 @@ var
   JSDocument: TJSDocument;
   JSWindow: TJSWindow;
 
+function JOBCallTHTMLClickEventHandler(const aMethod: TMethod; Args: NativeInt): TJOB_JSValue;
+function JOBCallTJSEventHandler(const aMethod: TMethod; Args: NativeInt): TJOB_JSValue;
+
 implementation
+
+function JOBCallTHTMLClickEventHandler(const aMethod: TMethod; Args: NativeInt
+  ): TJOB_JSValue;
+begin
+  writeln('InvokeTHTMLClickEventHandler ');
+  Result:=nil;
+  if aMethod.Code=nil then ;
+  if Args=0 then ;
+end;
+
+function JOBCallTJSEventHandler(const aMethod: TMethod; Args: NativeInt
+  ): TJOB_JSValue;
+begin
+  writeln('InvokeTJSEventHandler ');
+  Result:=nil;
+  if aMethod.Code=nil then ;
+  if Args=0 then ;
+end;
+
+{ TJSEventTarget }
+
+procedure TJSEventTarget.addEventListener(const aName: UnicodeString;
+  const aListener: TJSEventHandler);
+var
+  cb1: TJOB_JSValueMethod;
+begin
+  cb1:=TJOB_JSValueMethod.Create(TMethod(aListener),@JOBCallTJSEventHandler);
+  try
+    InvokeJSNoResult('addEventListener',[aName,cb1]);
+  finally
+    cb1.Free;
+  end;
+end;
+
+{ TJSHTMLElement }
+
+procedure TJSHTMLElement.set_onclick(const h: THTMLClickEventHandler);
+var
+  cb1: TJOB_JSValueMethod;
+begin
+  cb1:=TJOB_JSValueMethod.Create(TMethod(h),@JOBCallTHTMLClickEventHandler);
+  try
+    WriteJSPropertyValue('onclick',cb1);
+  finally
+    cb1.Free;
+  end;
+end;
 
 { TJSEvent }
 
@@ -182,10 +271,17 @@ end;
 
 { TJSWindow }
 
-procedure TJSWindow.AddEventListener(const aName: UnicodeString;
+procedure TJSWindow.addEventListener(const aName: UnicodeString;
   const aListener: TJSEventHandler);
+var
+  cb1: TJOB_JSValueMethod;
 begin
-  InvokeJSNoResult('addEventListener',[{Todo}]);
+  cb1:=TJOB_JSValueMethod.Create(TMethod(aListener),@JOBCallTJSEventHandler);
+  try
+    InvokeJSNoResult('addEventListener',[aName,cb1]);
+  finally
+    cb1.Free;
+  end;
 end;
 
 procedure TJSWindow.Alert(const Msg: UnicodeString);

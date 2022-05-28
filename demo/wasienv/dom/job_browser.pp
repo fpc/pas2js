@@ -13,18 +13,24 @@ uses sysutils, types, js, web, wasienv, JOB_Shared;
 
 Type
   EJOBBridge = class(Exception);
+  TWasmNativeInt = Longword;
+  TJOBCallback = function(aCall, aData, aCode, Args: TWasmNativeInt): jsvalue;
 
-  { TJOBBridge }
+  { TJSObjectBridge }
 
-  TJOBBridge = class(TImportExtension)
+  TJSObjectBridge = class(TImportExtension)
   Private
+    FCallbackHandler: TJOBCallback;
     FGlobalObjects: TJSArray;
     FLocalObjects: TJSArray;
     FFreeLocalIds: TJSArray; // free positions in FLocalObjects
     FStringResult: string;
+    FWasiExports: TWASIExports;
+    procedure SetWasiExports(const AValue: TWASIExports);
   Protected
     function Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
     function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
+    function CreateCallbackArgs(View: TJSDataView; const Args: TJSFunctionArguments): TWasmNativeInt; virtual;
     // exports
     function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt): TJOBResult; virtual;
     function Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
@@ -43,6 +49,8 @@ Type
     function RegisterLocalObject(Obj: TJSObject): TJOBObjectID; virtual;
     Function RegisterGlobalObject(Obj: TJSObject): TJOBObjectID; virtual;
     Function GetJOBResult(v: jsvalue): TJOBResult;
+    property CallbackHandler: TJOBCallback read FCallbackHandler write FCallbackHandler;
+    property WasiExports: TWASIExports read FWasiExports write SetWasiExports;
   end;
 
 Implementation
@@ -85,7 +93,7 @@ asm
   }
 end;
 
-constructor TJOBBridge.Create(aEnv: TPas2JSWASIEnvironment);
+constructor TJSObjectBridge.Create(aEnv: TPas2JSWASIEnvironment);
 begin
   Inherited Create(aEnv);
   FGlobalObjects:=TJSArray.new;
@@ -113,17 +121,17 @@ begin
   FFreeLocalIds:=TJSArray.new;
 end;
 
-function TJOBBridge.ImportName: String;
+function TJSObjectBridge.ImportName: String;
 begin
   Result:=JOBExportName;
 end;
 
-function TJOBBridge.RegisterGlobalObject(Obj: TJSObject): TJOBObjectID;
+function TJSObjectBridge.RegisterGlobalObject(Obj: TJSObject): TJOBObjectID;
 begin
   Result:=-(FGlobalObjects.push(Obj)-1);
 end;
 
-procedure TJOBBridge.FillImportObject(aObject: TJSObject);
+procedure TJSObjectBridge.FillImportObject(aObject: TJSObject);
 begin
   aObject[JOBFn_InvokeNoResult]:=@Invoke_NoResult;
   aObject[JOBFn_InvokeBooleanResult]:=@Invoke_BooleanResult;
@@ -136,7 +144,7 @@ begin
   aObject[JOBFn_InvokeJSValueResult]:=@Invoke_JSValueResult;
 end;
 
-function TJOBBridge.FindObject(ObjId: TJOBObjectID): TJSObject;
+function TJSObjectBridge.FindObject(ObjId: TJOBObjectID): TJSObject;
 begin
   if ObjId<0 then
     Result:=TJSObject(FGlobalObjects[-ObjId])
@@ -146,7 +154,7 @@ begin
     Result:=nil;
 end;
 
-function TJOBBridge.RegisterLocalObject(Obj: TJSObject): TJOBObjectID;
+function TJSObjectBridge.RegisterLocalObject(Obj: TJSObject): TJOBObjectID;
 var
   NewId: JSValue;
 begin
@@ -162,7 +170,17 @@ begin
   end;
 end;
 
-function TJOBBridge.Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen,
+procedure TJSObjectBridge.SetWasiExports(const AValue: TWASIExports);
+begin
+  if FWasiExports=AValue then Exit;
+  FWasiExports:=AValue;
+  if FWasiExports<>nil then
+    CallbackHandler:=TJOBCallback(FWasiExports.functions[JOBFn_CallbackHandler])
+  else
+    CallbackHandler:=nil;
+end;
+
+function TJSObjectBridge.Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult;
 var
   View: TJSDataView;
@@ -237,7 +255,7 @@ begin
   Result:=JOBResult_Success;
 end;
 
-function TJOBBridge.Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen,
+function TJSObjectBridge.Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
@@ -246,7 +264,7 @@ begin
   Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
 end;
 
-function TJOBBridge.Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen,
+function TJSObjectBridge.Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
@@ -268,7 +286,7 @@ begin
   Result:=JOBResult_Boolean;
 end;
 
-function TJOBBridge.Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen,
+function TJSObjectBridge.Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
@@ -285,7 +303,7 @@ begin
   Result:=JOBResult_Double;
 end;
 
-function TJOBBridge.Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen,
+function TJSObjectBridge.Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
@@ -305,7 +323,7 @@ begin
   getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
 end;
 
-function TJOBBridge.Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen,
+function TJSObjectBridge.Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   t: String;
@@ -329,7 +347,7 @@ begin
   Result:=JOBResult_Object;
 end;
 
-function TJOBBridge.Invoke_JSValueResult(ObjId: TJOBObjectID; NameP, NameLen,
+function TJSObjectBridge.Invoke_JSValueResult(ObjId: TJOBObjectID; NameP, NameLen,
   Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
 var
   JSResult: JSValue;
@@ -367,10 +385,12 @@ begin
       NewId:=RegisterLocalObject(TJSObject(JSResult));
       getModuleMemoryDataView().setUint32(ResultP, longword(NewId), env.IsLittleEndian);
     end;
+  else
+    // no args
   end;
 end;
 
-function TJOBBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
+function TJSObjectBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
 begin
   //writeln('TJOBBridge.ReleaseObject ',ObjId);
   if ObjId<0 then
@@ -384,7 +404,7 @@ begin
   Result:=JOBResult_Success;
 end;
 
-function TJOBBridge.GetStringResult(ResultP: NativeInt): TJOBResult;
+function TJSObjectBridge.GetStringResult(ResultP: NativeInt): TJOBResult;
 var
   View: TJSDataView;
   l, i: SizeInt;
@@ -398,19 +418,45 @@ begin
   FStringResult:='';
 end;
 
-function TJOBBridge.ReleaseStringResult: TJOBResult;
+function TJSObjectBridge.ReleaseStringResult: TJOBResult;
 begin
   Result:=JOBResult_Success;
   FStringResult:='';
 end;
 
-function TJOBBridge.GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt
+function TJSObjectBridge.GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt
   ): TJSValueDynArray;
+type
+  TProxyFunc = reference to function: jsvalue;
+var
+  p: NativeInt;
+
+  function ReadWasmNativeInt: TWasmNativeInt;
+  begin
+    Result:=View.getUint32(p,env.IsLittleEndian);
+    inc(p,4);
+  end;
+
+  function GetArgMethod: TProxyFunc;
+  var
+    aCall, aData, aCode: TWasmNativeInt;
+  begin
+    aCall:=ReadWasmNativeInt;
+    aData:=ReadWasmNativeInt;
+    aCode:=ReadWasmNativeInt;
+    Result:=function: jsvalue
+      var Args: TWasmNativeInt;
+      begin
+        writeln('TJSObjectBridge called Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length);
+        Args:=CreateCallbackArgs(View,JSArguments);
+        Result:=CallbackHandler(aCall,aData,aCode,Args);
+      end;
+  end;
+
 var
   Cnt, aType: Byte;
   i: Integer;
-  p: NativeInt;
-  Len, Ptr: LongWord;
+  Len, Ptr: TWasmNativeInt;
   aBytes: TJSUint8Array;
   aWords: TJSUint16Array;
   ObjID: LongInt;
@@ -424,7 +470,7 @@ begin
     aType:=View.getUInt8(p);
     inc(p);
     case aType of
-    JOBArgNone:
+    JOBArgUndefined:
       Result[i]:=Undefined;
     JOBArgLongint:
       begin
@@ -447,39 +493,33 @@ begin
       end;
     JOBArgUTF8String:
       begin
-        Len:=View.getUint32(p,env.IsLittleEndian);
-        inc(p,4);
-        Ptr:=View.getUint32(p,env.IsLittleEndian);
-        inc(p,4);
+        Len:=ReadWasmNativeInt;
+        Ptr:=ReadWasmNativeInt;
         aBytes:=TJSUint8Array.New(View.buffer, Ptr,Len);
         Result[i]:=TypedArrayToString(aBytes);
         //writeln('TJOBBridge.GetInvokeArguments UTF8String="',Result[i],'"');
       end;
     JOBArgUnicodeString:
       begin
-        Len:=View.getUint32(p,env.IsLittleEndian);
-        inc(p,4);
-        Ptr:=View.getUint32(p,env.IsLittleEndian);
-        inc(p,4);
+        Len:=ReadWasmNativeInt;
+        Ptr:=ReadWasmNativeInt;
         aWords:=TJSUint16Array.New(View.buffer, Ptr,Len);
         Result[i]:=TypedArrayToString(aWords);
       end;
     JOBArgNil:
       Result[i]:=nil;
     JOBArgPointer:
-      begin
-        Result[i]:=View.getUint32(p,env.IsLittleEndian);
-        inc(p,4);
-      end;
+      Result[i]:=ReadWasmNativeInt;
     JOBArgObject:
       begin
-        ObjID:=View.getInt32(p,env.IsLittleEndian);
-        inc(p,4);
+        ObjID:=ReadWasmNativeInt;
         Obj:=FindObject(ObjID);
         if Obj=nil then
           raise Exception.Create('invalid JSObject'+IntToStr(ObjID));
         Result[i]:=Obj;
       end;
+    JOBArgMethod:
+      Result[i]:=GetArgMethod;
     else
       raise Exception.Create('unknown arg type '+IntToStr(aType));
     end;
@@ -487,7 +527,87 @@ begin
   end;
 end;
 
-function TJOBBridge.GetJOBResult(v: jsvalue): TJOBResult;
+function TJSObjectBridge.CreateCallbackArgs(View: TJSDataView;
+  const Args: TJSFunctionArguments): TWasmNativeInt;
+var
+  i, Len, j: Integer;
+  Arg: JSValue;
+  r: TJOBResult;
+  s: String;
+  NewId: TJOBObjectID;
+  p: LongWord;
+begin
+  Result:=0;
+  if Args.Length=0 then exit;
+  if Args.Length>255 then
+    raise Exception.Create('too many arguments');
+
+  // compute needed wasm memory
+  Len:=1;
+  for i:=0 to Args.Length-1 do
+  begin
+    Arg:=Args[i];
+    r:=GetJOBResult(Arg);
+    inc(Len);
+    case r of
+    JOBResult_Boolean: inc(Len);
+    JOBResult_Double: inc(Len,8);
+    JOBResult_String: inc(Len,4+2*TJSString(Arg).length);
+    JOBResult_Function,
+    JOBResult_Object: inc(Len,4);
+    end;
+  end;
+
+  // allocate wasm memory
+  Result:=WasiExports.AllocMem(Len);
+
+  // write
+  p:=Result;
+  View.setUint8(p,Args.Length);
+  inc(p);
+  for i:=0 to Args.Length-1 do
+  begin
+    Arg:=Args[i];
+    r:=GetJOBResult(Arg);
+    View.setUint8(p,r);
+    inc(p);
+    case r of
+    JOBResult_Boolean:
+      begin
+      if Arg then
+        View.setUint8(p,1)
+      else
+        View.setUint8(p,0);
+      inc(p);
+      end;
+    JOBResult_Double:
+      begin
+        View.setFloat64(p,double(Arg),env.IsLittleEndian);
+        inc(p,8);
+      end;
+    JOBResult_String:
+      begin
+        s:=String(Arg);
+        View.setUint32(p,length(s));
+        inc(p,4);
+        for j:=0 to length(s)-1 do
+        begin
+          View.setUint16(p,ord(s[j+1]),env.IsLittleEndian);
+          inc(p,2);
+        end;
+      end;
+    JOBResult_Function,
+    JOBResult_Object:
+      begin
+        NewId:=RegisterLocalObject(TJSObject(Arg));
+        View.setUint32(p, longword(NewId), env.IsLittleEndian);
+        inc(p,4);
+      end;
+    end;
+  end;
+end;
+
+function TJSObjectBridge.GetJOBResult(v: jsvalue): TJOBResult;
 begin
   case jstypeof(v) of
   'undefined': Result:=JOBResult_Undefined;

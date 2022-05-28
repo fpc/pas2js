@@ -33,11 +33,11 @@ Type
     FWasiEnv: TPas2JSWASIEnvironment;
     FMemory : TJSWebAssemblyMemory; // Memory of webassembly
     FTable : TJSWebAssemblyTable; // Table of exported functions
-    FWADomBridge : TJOBBridge;
+    FWADomBridge : TJSObjectBridge;
     function CreateWebAssembly(Path: string; ImportObject: TJSObject
       ): TJSPromise;
     procedure DoWrite(Sender: TObject; const aOutput: String);
-    function initEnv(aValue: JSValue): JSValue;
+    function InitEnv(aValue: JSValue): JSValue;
     procedure InitWebAssembly;
   Public
     Constructor Create(aOwner : TComponent); override;
@@ -123,12 +123,17 @@ function TMyApplication.InitEnv(aValue: JSValue): JSValue;
 Var
   Module : TJSInstantiateResult absolute aValue;
   Exps : TWASIExports;
+  InitFunc: TProc;
 begin
   Result:=True;
-  Exps := TWASIExports(TJSObject(Module.Instance.exports_));
   FWasiEnv.Instance:=Module.Instance;
-  //  console.info('got exports', exps);
-  Exps.Start;
+  Exps := TWASIExports(TJSObject(Module.Instance.exports_));
+  //writeln('TMyApplication.InitEnv wasm exports=',TJSObject.keys(Exps));
+  FWADomBridge.WasiExports:=Exps;
+
+  // init the library
+  InitFunc:=TProc(Exps.functions['_initialize']);
+  InitFunc();
 end;
 
 { TMyApplication }
@@ -144,7 +149,7 @@ begin
   FWasiEnv:=TPas2JSWASIEnvironment.Create;
   FWasiEnv.OnStdErrorWrite:=@DoWrite;
   FWasiEnv.OnStdOutputWrite:=@DoWrite;
-  FWADomBridge:=TJOBBridge.Create(FWasiEnv);
+  FWADomBridge:=TJSObjectBridge.Create(FWasiEnv);
 
   if FWADomBridge.RegisterGlobalObject(TJSObject(TBird.Create('Root')))<>JObjIdBird then
     raise Exception.Create('Root TBird wrong number');
@@ -187,7 +192,7 @@ begin
     ])
  ]);
   FWasiEnv.AddImports(ImportObj);
-  CreateWebAssembly('WasiDomTest1.wasm',ImportObj)._then(@initEnv);
+  CreateWebAssembly('WasiDomTest1.wasm',ImportObj)._then(@InitEnv);
 end;
 
 destructor TMyApplication.Destroy;

@@ -58,8 +58,9 @@ const
   JOBFn_InvokeObjectResult = 'invoke_objectresult';
   JOBFn_ReleaseObject = 'release_object';
   JOBFn_InvokeJSValueResult = 'invoke_jsvalueresult';
+  JOBFn_CallbackHandler = 'JOBCallback';
 
-  JOBArgNone = 0;
+  JOBArgUndefined = 0;
   JOBArgLongint = 1;
   JOBArgDouble = 2;
   JOBArgTrue = 3;
@@ -70,6 +71,22 @@ const
   JOBArgNil = 8;
   JOBArgPointer = 9;
   JOBArgObject = 10; // followed by ObjectID
+  JOBArgMethod = 11; // followed by Callback, Data, Code
+
+  JOBArgNames: array[0..11] of string = (
+    'Undefined',
+    'Longint',
+    'Double',
+    'True',
+    'False',
+    'Char',
+    'UTF8String',
+    'UnicodeString',
+    'Nil',
+    'Pointer',
+    'Object',
+    'Method'
+    );
 
   JOBInvokeCall = 0; // call function
   JOBInvokeGet = 1; // read property

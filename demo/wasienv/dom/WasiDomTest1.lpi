@@ -62,6 +62,9 @@
       <Debugging>
         <GenerateDebugInfo Value="False"/>
       </Debugging>
+      <Options>
+        <ExecutableType Value="Library"/>
+      </Options>
     </Linking>
     <Other>
       <CompilerPath Value="/usr/lib/fpc/3.3.1/ppcrosswasm32"/>

@@ -539,7 +539,7 @@ function TWASIHost.CreateWebAssembly(aPath: string; aImportObject: TJSObject
   Function ArrayOK(res2 : jsValue) : JSValue;
 
   begin
-     Result:=TJSWebAssembly.instantiate(TJSArrayBuffer(res2),aImportObject);
+    Result:=TJSWebAssembly.instantiate(TJSArrayBuffer(res2),aImportObject);
   end;
 
   function fetchOK(res : jsValue) : JSValue;
@@ -547,8 +547,15 @@ function TWASIHost.CreateWebAssembly(aPath: string; aImportObject: TJSObject
     Result:=TJSResponse(Res).arrayBuffer._then(@ArrayOK,Nil)
   end;
 
+  function DoFail(Res : jsValue) : JSValue;
+
+  begin
+    Console.Log('Failed to fetch webassembly '+aPath+' : ');
+    Console.Debug(res);
+  end;
+
 begin
-  Result:=fetch(aPath)._then(@fetchOK,Nil);
+  Result:=fetch(aPath)._then(@fetchOK);
 end;
 
 function TWASIHost.CreateWasiEnvironment: TPas2JSWASIEnvironment;
@@ -623,6 +630,12 @@ Var
       end;
   end;
 
+  function DoFail(aValue: JSValue): JSValue;
+
+  begin
+    Console.Log('Failed to create webassembly. Reason:');
+    Console.Debug(aValue);
+  end;
 
 begin
   FReadLineCount:=0;
@@ -635,7 +648,7 @@ begin
     ])
   ]);
   FEnv.AddImports(ImportObj);
-  CreateWebAssembly(aPath,ImportObj)._then(@initEnv)
+  CreateWebAssembly(aPath,ImportObj)._then(@initEnv,@DoFail)
 end;
 
 function TImportExtension.getModuleMemoryDataView : TJSDataView;  

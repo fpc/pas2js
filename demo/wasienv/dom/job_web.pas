@@ -154,24 +154,23 @@ implementation
 function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod; Args: PByte
   ): PByte;
 var
-  p: TJOBCallbackHelper;
+  h: TJOBCallbackHelper;
   Event: IJSMouseEvent;
 begin
-  writeln('JOBCallTHTMLClickEventHandler ');
-  p.Init(Args);
-  Event:=p.GetObject(TJSMouseEvent) as IJSMouseEvent;
-  Result:=p.AllocBool(TJSHTMLClickEventHandler(aMethod)(Event));
+  h.Init(Args);
+  Event:=h.GetObject(TJSMouseEvent) as IJSMouseEvent;
+  Result:=h.AllocBool(TJSHTMLClickEventHandler(aMethod)(Event));
 end;
 
 function JOBCallTJSEventHandler(const aMethod: TMethod; Args: PByte
   ): PByte;
 var
-  p: TJOBCallbackHelper;
+  h: TJOBCallbackHelper;
   Event: IJSEventListenerEvent;
 begin
-  p.Init(Args);
-  Event:=p.GetObject(TJSEventListenerEvent) as IJSEventListenerEvent;
-  Result:=p.AllocBool(TJSEventHandler(aMethod)(Event));
+  h.Init(Args);
+  Event:=h.GetObject(TJSEventListenerEvent) as IJSEventListenerEvent;
+  Result:=h.AllocBool(TJSEventHandler(aMethod)(Event));
 end;
 
 { TJSEventTarget }
@@ -179,13 +178,13 @@ end;
 procedure TJSEventTarget.addEventListener(const aName: UnicodeString;
   const aListener: TJSEventHandler);
 var
-  cb1: TJOB_JSValueMethod;
+  m: TJOB_JSValueMethod;
 begin
-  cb1:=TJOB_JSValueMethod.Create(TMethod(aListener),@JOBCallTJSEventHandler);
+  m:=TJOB_JSValueMethod.Create(TMethod(aListener),@JOBCallTJSEventHandler);
   try
-    InvokeJSNoResult('addEventListener',[aName,cb1]);
+    InvokeJSNoResult('addEventListener',[aName,m]);
   finally
-    cb1.Free;
+    m.Free;
   end;
 end;
 

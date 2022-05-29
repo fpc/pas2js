@@ -31,14 +31,14 @@ type
 
   TWasmApp = class
   private
-    function OnPlaygroundClick(Event: IEventListenerEvent): boolean;
+    function OnPlaygroundClick(Event: IJSEventListenerEvent): boolean;
   public
     procedure Run;
   end;
 
 { TApplication }
 
-function TWasmApp.OnPlaygroundClick(Event: IEventListenerEvent): boolean;
+function TWasmApp.OnPlaygroundClick(Event: IJSEventListenerEvent): boolean;
 begin
   writeln('TWasmApp.OnPlaygroundClick ');
   Result:=true;
@@ -132,10 +132,10 @@ begin
   Result:=InvokeJSLongIntResult('GetInteger',[]);
 end;
 
-function JOBCallback(Func, Data, Code, Args: NativeInt): word;
+// workaround: fpc wasm does not yet support exporting functions from units
+function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
 begin
-  writeln('MyCallBack2 Func=',Func,' Data=',Data,' Code=',Code,' Args=',Args);
-  Result:=Func+123;
+  Result:=JOB_WAsm.JOBCallback(Func,Data,Code,Args);
 end;
 
 exports

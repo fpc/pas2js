@@ -10,10 +10,12 @@ uses
 
 type
   IJSEvent = interface;
+  TJSEvent = class;
 
-  IEventListenerEvent = IJSEvent;
+  IJSEventListenerEvent = IJSEvent;
+  TJSEventListenerEvent = TJSEvent;
 
-  TJSEventHandler = function(Event: IEventListenerEvent): boolean of object;
+  TJSEventHandler = function(Event: IJSEventListenerEvent): boolean of object;
 
   IJSEventTarget = interface
     ['{1883145B-C826-47D1-9C63-47546BA536BD}']
@@ -99,19 +101,19 @@ type
   TJSMouseEvent = class(TJSUIEvent,IJSMouseEvent)
   end;
 
-  THTMLClickEventHandler = function(aEvent: IJSMouseEvent) : boolean of object;
+  TJSHTMLClickEventHandler = function(aEvent: IJSMouseEvent) : boolean of object;
 
   { IJSHTMLElement }
 
   IJSHTMLElement = interface(IJSElement)
     ['{D50E53E1-5B3B-4DA4-ACB0-1FD0DE32B711}']
-    procedure set_onclick(const h: THTMLClickEventHandler);
+    procedure set_onclick(const h: TJSHTMLClickEventHandler);
   end;
 
   { TJSHTMLElement }
 
   TJSHTMLElement = class(TJSElement,IJSHTMLElement)
-    procedure set_onclick(const h: THTMLClickEventHandler);
+    procedure set_onclick(const h: TJSHTMLClickEventHandler);
   end;
 
   IJSDocument = interface(IJSNode)
@@ -144,27 +146,32 @@ var
   JSDocument: TJSDocument;
   JSWindow: TJSWindow;
 
-function JOBCallTHTMLClickEventHandler(const aMethod: TMethod; Args: NativeInt): TJOB_JSValue;
-function JOBCallTJSEventHandler(const aMethod: TMethod; Args: NativeInt): TJOB_JSValue;
+function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod; Args: PByte): PByte;
+function JOBCallTJSEventHandler(const aMethod: TMethod; Args: PByte): PByte;
 
 implementation
 
-function JOBCallTHTMLClickEventHandler(const aMethod: TMethod; Args: NativeInt
-  ): TJOB_JSValue;
+function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod; Args: PByte
+  ): PByte;
+var
+  p: TJOBCallbackHelper;
+  Event: IJSMouseEvent;
 begin
-  writeln('InvokeTHTMLClickEventHandler ');
-  Result:=nil;
-  if aMethod.Code=nil then ;
-  if Args=0 then ;
+  writeln('JOBCallTHTMLClickEventHandler ');
+  p.Init(Args);
+  Event:=p.GetObject(TJSMouseEvent) as IJSMouseEvent;
+  Result:=p.AllocBool(TJSHTMLClickEventHandler(aMethod)(Event));
 end;
 
-function JOBCallTJSEventHandler(const aMethod: TMethod; Args: NativeInt
-  ): TJOB_JSValue;
+function JOBCallTJSEventHandler(const aMethod: TMethod; Args: PByte
+  ): PByte;
+var
+  p: TJOBCallbackHelper;
+  Event: IJSEventListenerEvent;
 begin
-  writeln('InvokeTJSEventHandler ');
-  Result:=nil;
-  if aMethod.Code=nil then ;
-  if Args=0 then ;
+  p.Init(Args);
+  Event:=p.GetObject(TJSEventListenerEvent) as IJSEventListenerEvent;
+  Result:=p.AllocBool(TJSEventHandler(aMethod)(Event));
 end;
 
 { TJSEventTarget }
@@ -184,11 +191,11 @@ end;
 
 { TJSHTMLElement }
 
-procedure TJSHTMLElement.set_onclick(const h: THTMLClickEventHandler);
+procedure TJSHTMLElement.set_onclick(const h: TJSHTMLClickEventHandler);
 var
   cb1: TJOB_JSValueMethod;
 begin
-  cb1:=TJOB_JSValueMethod.Create(TMethod(h),@JOBCallTHTMLClickEventHandler);
+  cb1:=TJOB_JSValueMethod.Create(TMethod(h),@JOBCallTJSHTMLClickEventHandler);
   try
     WriteJSPropertyValue('onclick',cb1);
   finally

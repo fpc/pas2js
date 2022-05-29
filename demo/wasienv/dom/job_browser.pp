@@ -14,7 +14,7 @@ uses sysutils, types, js, web, wasienv, JOB_Shared;
 Type
   EJOBBridge = class(Exception);
   TWasmNativeInt = Longword;
-  TJOBCallback = function(aCall, aData, aCode, Args: TWasmNativeInt): jsvalue;
+  TJOBCallback = function(aCall, aData, aCode, Args: TWasmNativeInt): TWasmNativeInt;
 
   { TJSObjectBridge }
 
@@ -31,6 +31,7 @@ Type
     function Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
     function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
     function CreateCallbackArgs(View: TJSDataView; const Args: TJSFunctionArguments): TWasmNativeInt; virtual;
+    function EatCallbackResult(View: TJSDataView; ResultP: TWasmNativeInt): jsvalue; virtual;
     // exports
     function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt): TJOBResult; virtual;
     function Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
@@ -392,7 +393,7 @@ end;
 
 function TJSObjectBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
 begin
-  //writeln('TJOBBridge.ReleaseObject ',ObjId);
+  writeln('TJOBBridge.ReleaseObject ',ObjId);
   if ObjId<0 then
     raise EJOBBridge.Create('cannot release a global object');
   if ObjId>=FLocalObjects.Length then
@@ -444,12 +445,17 @@ var
     aCall:=ReadWasmNativeInt;
     aData:=ReadWasmNativeInt;
     aCode:=ReadWasmNativeInt;
+
     Result:=function: jsvalue
-      var Args: TWasmNativeInt;
+      var
+        Args, ResultP: TWasmNativeInt;
       begin
-        writeln('TJSObjectBridge called Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length);
+        //writeln('TJSObjectBridge called JS Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length);
         Args:=CreateCallbackArgs(View,JSArguments);
-        Result:=CallbackHandler(aCall,aData,aCode,Args);
+        ResultP:=CallbackHandler(aCall,aData,aCode,Args); // this frees Args
+        //writeln('TJSObjectBridge called Wasm Call=',aCall,' Data=',aData,' Code=',aCode,' ResultP=',ResultP);
+        Result:=EatCallbackResult(View,ResultP); // this frees ResultP
+        //writeln('TJSObjectBridge Result=',Result);
       end;
   end;
 
@@ -550,7 +556,7 @@ begin
     r:=GetJOBResult(Arg);
     inc(Len);
     case r of
-    JOBResult_Boolean: inc(Len);
+    JOBResult_Boolean: ;
     JOBResult_Double: inc(Len,8);
     JOBResult_String: inc(Len,4+2*TJSString(Arg).length);
     JOBResult_Function,
@@ -569,24 +575,32 @@ begin
   begin
     Arg:=Args[i];
     r:=GetJOBResult(Arg);
-    View.setUint8(p,r);
-    inc(p);
+    //writeln('TJSObjectBridge.CreateCallbackArgs ',i,'/',Args.Length,' r=',r);
     case r of
+    JOBResult_Null:
+      begin
+        View.setUint8(p,JOBArgNil);
+        inc(p);
+      end;
     JOBResult_Boolean:
       begin
       if Arg then
-        View.setUint8(p,1)
+        View.setUint8(p,JOBArgTrue)
       else
-        View.setUint8(p,0);
+        View.setUint8(p,JOBArgFalse);
       inc(p);
       end;
     JOBResult_Double:
       begin
+        View.setUint8(p,JOBArgDouble);
+        inc(p);
         View.setFloat64(p,double(Arg),env.IsLittleEndian);
         inc(p,8);
       end;
     JOBResult_String:
       begin
+        View.setUint8(p,JOBArgUnicodeString);
+        inc(p);
         s:=String(Arg);
         View.setUint32(p,length(s));
         inc(p,4);
@@ -599,11 +613,59 @@ begin
     JOBResult_Function,
     JOBResult_Object:
       begin
+        View.setUint8(p,JOBArgObject);
+        inc(p);
         NewId:=RegisterLocalObject(TJSObject(Arg));
         View.setUint32(p, longword(NewId), env.IsLittleEndian);
         inc(p,4);
       end;
+    else
+      View.setUint8(p,JOBArgUndefined);
+      inc(p);
     end;
+  end;
+end;
+
+function TJSObjectBridge.EatCallbackResult(View: TJSDataView;
+  ResultP: TWasmNativeInt): jsvalue;
+var
+  p: TWasmNativeInt;
+  aType: Byte;
+  ObjId: LongInt;
+  Len: LongWord;
+  aWords: TJSUint16Array;
+begin
+  if ResultP=0 then
+    exit(Undefined);
+  p:=ResultP;
+  try
+    aType:=View.getUint8(p);
+    //writeln('TJSObjectBridge.EatCallbackResult aType=',aType);
+    inc(p);
+    case aType of
+    JOBArgTrue: Result:=true;
+    JOBArgFalse: Result:=false;
+    JOBArgLongint: Result:=View.getInt32(p,env.IsLittleEndian);
+    JOBArgDouble: Result:=View.getFloat64(p,env.IsLittleEndian);
+    JOBArgUnicodeString:
+      begin
+        Len:=View.getUInt32(p,env.IsLittleEndian);
+        inc(p);
+        aWords:=TJSUint16Array.New(View.buffer, p,Len);
+        Result:=TypedArrayToString(aWords);
+      end;
+    JOBArgNil: Result:=nil;
+    JOBArgObject:
+      begin
+        ObjId:=View.getInt32(p,env.IsLittleEndian);
+        Result:=FindObject(ObjId);
+      end;
+    else
+      Result:=Undefined;
+    end;
+  finally
+    //writeln('TJSObjectBridge.EatCallbackResult freeing result...');
+    WasiExports.freeMem(ResultP);
   end;
 end;
 

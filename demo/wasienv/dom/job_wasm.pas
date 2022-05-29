@@ -8,6 +8,7 @@
 unit JOB_WAsm;
 
 {$mode ObjFPC}{$H+}
+{$ModeSwitch advancedrecords}
 
 {$define VerboseJOB}
 
@@ -29,6 +30,7 @@ Type
     ObjectID: TJOBObjectID;
     FuncName: string;
   end;
+  EJSArgParse = class(EJSObject);
 
   TJOB_JSValueKind = (
     jjvkUndefined,
@@ -101,7 +103,7 @@ type
     function AsString: string; override;
   end;
 
-  TJOBCallback = function(const aMethod: TMethod; Args: NativeInt): TJOB_JSValue;
+  TJOBCallback = function(const aMethod: TMethod; Args: PByte): PByte;
 
   { TJOB_JSValueMethod }
 
@@ -131,7 +133,7 @@ type
   IJSObject = interface
     ['{BE5CDE03-D471-4AB3-8F27-A5EA637416F7}']
     function GetJSObjectID: TJOBObjectID;
-    function GetJSObjectCasted: IJSObject;
+    function GetJSObjectCastSrc: IJSObject;
     function GetPascalClassName: string;
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeSetType = jisCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Boolean; virtual;
@@ -162,7 +164,7 @@ type
   TJSObject = class(TInterfacedObject,IJSObject)
   private
     FObjectID: TJOBObjectID;
-    FCasted: IJSObject;
+    FCastSrc: IJSObject;
   protected
     type
       TJOBInvokeOneResultFunc = function(
@@ -174,7 +176,7 @@ type
           ResultP: PByte
         ): TJOBResult;
     function GetJSObjectID: TJOBObjectID;
-    function GetJSObjectCasted: IJSObject;
+    function GetJSObjectCastSrc: IJSObject;
     function GetPascalClassName: string;
     function FetchString(Len: NativeInt): UnicodeString;
     function InvokeJSOneResult(const aName: string; Const Args: Array of const;
@@ -185,9 +187,10 @@ type
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
   public
     constructor Cast(Intf: IJSObject);
-    constructor CreateFromID(aID: TJOBObjectID); virtual;
+    constructor CreateFromID(aID: TJOBObjectID); virtual; // use this only for the owner (it will release it on free)
     destructor Destroy; override;
     property ObjectID: TJOBObjectID read FObjectID;
+    property CastSrc: IJSObject read FCastSrc; // nil means it is the owner, otherwise it is a typecast
     // call a function
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeSetType = jisCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeGetType = jigCall): Boolean; virtual;
@@ -215,6 +218,32 @@ type
     procedure WriteJSPropertyValue(const aName: string; Value: TJOB_JSValue); virtual;
     // create a new object using the new-operator
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
+  end;
+
+  { TJOBCallbackHelper - parse callback arguments and create result }
+
+  TJOBCallbackHelper = record
+    p: PByte;
+    Index: integer;
+    Count: integer;
+    procedure Init(Args: PByte);
+    function GetType: byte; // see JOBArg* constants, keeps p
+    procedure Skip;
+    function GetBoolean: boolean;
+    function GetDouble: double;
+    function GetString: UnicodeString;
+    function GetObject(aResultClass: TJSObjectClass): TJSObject;
+    function GetValue: TJOB_JSValue;
+
+    function AllocUndefined: PByte;
+    function AllocBool(b: boolean): PByte;
+    function AllocLongint(i: longint): PByte;
+    function AllocDouble(const d: double): PByte;
+    function AllocString(const s: UnicodeString): PByte;
+    function AllocNil: PByte;
+    function AllocIntf(Intf: IJSObject): PByte;
+    function AllocObject(Obj: TJSObject): PByte;
+    function AllocObjId(ObjId: TJOBObjectID): PByte;
   end;
 
 var
@@ -285,7 +314,7 @@ function __job_invoke_jsvalueresult(
   ResultP: PByte  // various
 ): TJOBResult; external JOBExportName name JOBFn_InvokeJSValueResult;
 
-function MyCallBack(ObjID: TJOBObjectID): boolean;
+function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
 
 implementation
 
@@ -329,6 +358,7 @@ begin
     Result:='vt?';
   end;
 end;
+{$ENDIF}
 
 function __job_callback(w: NativeInt): boolean;
 begin
@@ -336,10 +366,288 @@ begin
   Result:=true;
 end;
 
-// exported function
-function MyCallBack(ObjID: TJOBObjectID): boolean; //public; alias: JOBFn_CallbackHandler;
+function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte
+  ): PByte;
+var
+  m: TMethod;
 begin
-  Result:=ObjID>0;
+  Result:=nil;
+  try
+    //writeln('JOBCallback');
+    m.Data:=Data;
+    m.Code:=Code;
+    Result:=Func(m,Args);
+  finally
+    if Args<>nil then
+      FreeMem(Args);
+  end;
+end;
+
+{ TJOBCallbackHelper }
+
+procedure TJOBCallbackHelper.Init(Args: PByte);
+begin
+  p:=Args;
+  Index:=0;
+  if p<>nil then
+  begin
+    Count:=p^;
+    inc(p);
+  end else
+    Count:=0;
+end;
+
+function TJOBCallbackHelper.GetType: byte;
+begin
+  if Index=Count then
+    Result:=JOBArgUndefined
+  else
+    Result:=p^;
+end;
+
+procedure TJOBCallbackHelper.Skip;
+var
+  Len: LongWord;
+begin
+  if Index=Count then exit;
+  case p^ of
+  JOBArgUndefined,
+  JOBArgTrue,
+  JOBArgFalse,
+  JOBArgNil: inc(p);
+  JOBArgDouble: inc(p,9);
+  JOBArgUnicodeString:
+    begin
+      inc(p);
+      Len:=PLongWord(p)^;
+      inc(p,4+2*Len);
+    end
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(Index);
+end;
+
+function TJOBCallbackHelper.GetBoolean: boolean;
+begin
+  Result:=false;
+  if Index=Count then
+    exit;
+  case p^ of
+  JOBArgUndefined: ;
+  JOBArgTrue: Result:=true;
+  JOBArgFalse: ;
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(p);
+  inc(Index);
+end;
+
+function TJOBCallbackHelper.GetDouble: double;
+begin
+  Result:=NaN;
+  if Index=Count then
+    exit;
+  case p^ of
+  JOBArgUndefined:
+    inc(p);
+  JOBArgDouble:
+    begin
+      inc(p);
+      Result:=PDouble(p)^;
+      inc(p,8);
+    end
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(Index);
+end;
+
+function TJOBCallbackHelper.GetString: UnicodeString;
+var
+  Len: LongWord;
+begin
+  Result:='';
+  if Index=Count then
+    exit;
+  case p^ of
+  JOBArgUndefined:
+    inc(p);
+  JOBArgUnicodeString:
+    begin
+      inc(p);
+      Len:=PLongWord(p)^;
+      inc(p,4);
+      if Len>0 then
+      begin
+        SetLength(Result,Len);
+        Move(p^,Result[1],2*Len);
+        inc(p,2*Len);
+      end;
+    end
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(Index);
+end;
+
+function TJOBCallbackHelper.GetObject(aResultClass: TJSObjectClass): TJSObject;
+var
+  ObjId: LongWord;
+begin
+  //writeln('TJOBCallbackHelper.GetObject ',Index,' Count=',Count);
+  Result:=nil;
+  if Index=Count then
+    exit;
+  //writeln('TJOBCallbackHelper.GetObject type=',p^);
+  case p^ of
+  JOBArgUndefined,
+  JOBArgNil:
+    inc(p);
+  JOBArgObject:
+    begin
+      inc(p);
+      ObjId:=PLongWord(p)^;
+      inc(p,4);
+      Result:=aResultClass.CreateFromID(ObjId);
+    end
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(Index);
+end;
+
+function TJOBCallbackHelper.GetValue: TJOB_JSValue;
+var
+  ObjId, Len: LongWord;
+  Obj: TJSObject;
+  S: UnicodeString;
+begin
+  Result:=nil;
+  if (Index=Count) or (p^=JOBArgUndefined) then
+  begin
+    Result:=TJOB_JSValue.Create(jjvkUndefined);
+    exit;
+  end;
+  case p^ of
+  JOBArgTrue:
+    begin
+      Result:=TJOB_JSValueBoolean.Create(true);
+      inc(p);
+    end;
+  JOBArgFalse:
+    begin
+      Result:=TJOB_JSValueBoolean.Create(false);
+      inc(p);
+    end;
+  JOBArgDouble:
+    begin
+      inc(p);
+      Result:=TJOB_JSValueDouble.Create(PDouble(p)^);
+      inc(p,8);
+    end;
+  JOBArgUnicodeString:
+    begin
+      inc(p);
+      Len:=PLongWord(p)^;
+      inc(p,4);
+      S:='';
+      if Len>0 then
+      begin
+        SetLength(S,Len);
+        Move(p^,S[1],2*Len);
+        inc(p,2*Len);
+      end;
+      Result:=TJOB_JSValueString.Create(S);
+    end;
+  JOBArgNil:
+    begin
+      Result:=TJOB_JSValueObject.Create(nil);
+      inc(p);
+    end;
+  JOBArgObject:
+    begin
+      inc(p);
+      ObjId:=PLongWord(p)^;
+      inc(p,4);
+      Obj:=TJSObject.CreateFromID(ObjId);
+      Result:=TJOB_JSValueObject.Create(Obj);
+    end;
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(Index);
+end;
+
+function TJOBCallbackHelper.AllocUndefined: PByte;
+begin
+  GetMem(Result,1);
+  Result^:=JOBArgUndefined;
+end;
+
+function TJOBCallbackHelper.AllocBool(b: boolean): PByte;
+begin
+  GetMem(Result,1);
+  if b then
+    Result^:=JOBArgTrue
+  else
+    Result^:=JOBArgFalse;
+end;
+
+function TJOBCallbackHelper.AllocLongint(i: longint): PByte;
+begin
+  GetMem(Result,5);
+  Result^:=JOBArgLongint;
+  PLongint(Result+1)^:=i;
+end;
+
+function TJOBCallbackHelper.AllocDouble(const d: double): PByte;
+begin
+  GetMem(Result,9);
+  Result^:=JOBArgDouble;
+  PDouble(Result+1)^:=d;
+end;
+
+function TJOBCallbackHelper.AllocString(const s: UnicodeString): PByte;
+var
+  l: SizeInt;
+begin
+  l:=length(s);
+  GetMem(Result,5+l);
+  Result^:=JOBArgUnicodeString;
+  PLongWord(Result+1)^:=l;
+  if l>0 then
+    Move(s[1],Result[5],l);
+end;
+
+function TJOBCallbackHelper.AllocNil: PByte;
+begin
+  GetMem(Result,1);
+  Result^:=JOBArgNil;
+end;
+
+function TJOBCallbackHelper.AllocIntf(Intf: IJSObject): PByte;
+begin
+  if Intf=nil then
+    Result:=AllocNil
+  else
+    Result:=AllocObjId(Intf.GetJSObjectID);
+end;
+
+function TJOBCallbackHelper.AllocObject(Obj: TJSObject): PByte;
+begin
+  if Obj=nil then
+    Result:=AllocNil
+  else
+    Result:=AllocObjId(Obj.ObjectID);
+end;
+
+function TJOBCallbackHelper.AllocObjId(ObjId: TJOBObjectID): PByte;
+begin
+  GetMem(Result,1+SizeOf(TJOBObjectID));
+  Result^:=JOBArgObject;
+  PJOBObjectID(Result+1)^:=ObjId;
 end;
 
 { TJOB_JSValueMethod }
@@ -356,8 +664,6 @@ function TJOB_JSValueMethod.AsString: string;
 begin
   Result:='Callback';
 end;
-
-{$ENDIF}
 
 { TJOB_JSValue }
 
@@ -438,9 +744,9 @@ begin
   Result:=FObjectID;
 end;
 
-function TJSObject.GetJSObjectCasted: IJSObject;
+function TJSObject.GetJSObjectCastSrc: IJSObject;
 begin
-  Result:=FCasted;
+  Result:=FCastSrc;
 end;
 
 function TJSObject.GetPascalClassName: string;
@@ -902,9 +1208,9 @@ end;
 constructor TJSObject.Cast(Intf: IJSObject);
 begin
   FObjectID:=Intf.GetJSObjectID;
-  FCasted:=Intf.GetJSObjectCasted;
-  if FCasted=nil then
-    FCasted:=Intf;
+  FCastSrc:=Intf.GetJSObjectCastSrc;
+  if FCastSrc=nil then
+    FCastSrc:=Intf;
 end;
 
 constructor TJSObject.CreateFromID(aID: TJOBObjectID);
@@ -914,8 +1220,8 @@ end;
 
 destructor TJSObject.Destroy;
 begin
-  if FCasted<>nil then
-    FCasted:=nil
+  if FCastSrc<>nil then
+    FCastSrc:=nil
   else if ObjectID>=0 then
     __job_release_object(ObjectID);
   FObjectID:=0;
@@ -951,7 +1257,10 @@ var
 begin
   b:=false;
   aError:=InvokeJSOneResult(aName,Args,@__job_invoke_boolresult,@b,Invoke);
-  if aError<>JOBResult_Boolean then
+  if aError=JOBResult_Boolean then
+  else if aError=JOBResult_Undefined then
+    b:=false
+  else
     InvokeJS_RaiseResultMismatch(aName,JOBResult_Boolean,aError);
   Result:=b;
 end;
@@ -963,7 +1272,10 @@ var
 begin
   Result:=NaN;
   aError:=InvokeJSOneResult(aName,Args,@__job_invoke_doubleresult,@Result,Invoke);
-  if aError<>JOBResult_Double then
+  if aError=JOBResult_Double then
+  else if aError=JOBResult_Undefined then
+    Result:=NaN
+  else
     InvokeJS_RaiseResultMismatch(aName,JOBResult_Double,aError);
 end;
 
@@ -975,9 +1287,13 @@ var
 begin
   ResultLen:=0;
   aError:=InvokeJSOneResult(aName,Args,@__job_invoke_stringresult,@ResultLen,Invoke);
-  if aError<>JOBResult_String then
-    InvokeJS_RaiseResultMismatch(aName,JOBResult_String,aError);
-  Result:=FetchString(ResultLen);
+  if aError=JOBResult_String then
+    Result:=FetchString(ResultLen)
+  else begin
+    Result:='';
+    if aError<>JOBResult_Undefined then
+      InvokeJS_RaiseResultMismatch(aName,JOBResult_String,aError);
+  end;
   //writeln('TJSObject.InvokeJSUnicodeStringResult Result="',Result,'"');
 end;
 
@@ -991,7 +1307,7 @@ begin
   Result:=nil;
   NewObjId:=-1;
   aError:=InvokeJSOneResult(aName,Args,@__job_invoke_objectresult,@NewObjId,Invoke);
-  if aError=JOBResult_Null then
+  if (aError=JOBResult_Null) or (aError=JOBResult_Undefined) then
     exit;
   if aError<>JOBResult_Object then
     InvokeJS_RaiseResultMismatch(aName,JOBResult_Object,aError);

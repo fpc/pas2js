@@ -90,6 +90,7 @@ const
 
   JOBInvokeCall = 0; // call function
   JOBInvokeGet = 1; // read property
+  JOBInvokeGetTypeOf = 4; // read property and typeof
   JOBInvokeSet = 2; // set property
   JOBInvokeNew = 3; // new operator
 

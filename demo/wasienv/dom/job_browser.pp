@@ -233,11 +233,16 @@ begin
         JSResult:=NewObj(TJSFunction(fn),Args)
       end;
     end;
-  JOBInvokeGet:
+  JOBInvokeGet,JOBInvokeGetTypeOf:
     begin
       if ArgsP>0 then
         exit(JOBResult_WrongArgs);
       JSResult:=Obj[PropName];
+      if Invoke=JOBInvokeGetTypeOf then
+      begin
+        Result:=GetJOBResult(jsTypeOf(JSResult));
+        exit;
+      end;
     end;
   JOBInvokeSet:
     begin

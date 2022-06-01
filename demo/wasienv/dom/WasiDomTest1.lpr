@@ -39,8 +39,14 @@ type
 { TApplication }
 
 function TWasmApp.OnPlaygroundClick(Event: IJSEventListenerEvent): boolean;
+var
+  w: TJOBResult;
 begin
   writeln('TWasmApp.OnPlaygroundClick ');
+  w:=Event.InvokeJSTypeOf('targetElement',[]);
+
+  writeln('TWasmApp.OnPlaygroundClick typeof=',w);
+
   Result:=true;
 end;
 

@@ -1435,6 +1435,25 @@ end;
 
 function FloatToDecimal(Value: double; Precision, Decimals: integer): TFloatRec;
 
+  {$ifdef DEBUGFLOATTODECIMAL}
+  Procedure dump;
+  
+  var
+    I : Integer;
+    S : String;
+  begin
+    for I:=0 to  FloatRecDigits do
+      begin
+      if I>0 then S:=S+',';
+      if Result.Digits[i]=#0 then
+        S:=S+'_'
+      else  
+        S:=S+Result.Digits[i];
+      end;
+    Writeln('Digits : (',S,') Exp: ',Result.Exponent,', Neg: ',Result.Negative);  
+  end;
+  {$endif}
+
 Const
   Rounds = '123456789:';
 
@@ -1444,8 +1463,12 @@ var
   OutPos,Error, N, L, C: Integer;
   GotNonZeroBeforeDot, BeforeDot : boolean;
 
+  
+
 begin
-  // Writeln('Precision ',Precision,' decimals: ',Decimals);
+  {$ifdef DEBUGFLOATTODECIMAL}
+  Writeln('Precision ',Precision,' decimals: ',Decimals);
+  {$ENDIF}
   Result.Negative:=False;
   Result.Exponent:=0;
   For C:=0 to FloatRecDigits do
@@ -1453,8 +1476,10 @@ begin
   if Value=0 then
     exit;
   Str(Value:24,Buffer); // Double precision
-  // writeln('12345678901234567890123456789012345678901234567890');
-  // Writeln('Buffer :',Buffer);
+  {$ifdef DEBUGFLOATTODECIMAL}
+  writeln('12345678901234567890123456789012345678901234567890');
+  Writeln('Buffer :',Buffer);
+  {$ENDIF}
   N := 1;
   L := Length(Buffer);
   while Buffer[N]=' ' do
@@ -1487,7 +1512,9 @@ begin
   GotNonZeroBeforeDot := false;
   while (L>=N) and (Buffer[N]<>'E') do
     begin
-      // Writeln('Examining : ',Buffer[N],'( output pos: ',outPos,')');
+      {$ifdef DEBUGFLOATTODECIMAL}
+      Writeln('Examining : ',Buffer[N],' (output pos: ',outPos,')');
+      {$ENDIF}
       if Buffer[N]='.' then
         BeforeDot := false
       else
@@ -1500,11 +1527,17 @@ begin
               GotNonZeroBeforeDot := true;
           end
         else
-          Result.Digits[Outpos-1] := Buffer[N];
+          Result.Digits[Outpos] := Buffer[N];
+        {$ifdef DEBUGFLOATTODECIMAL}
+        Dump;
+        {$ENDIF}
         Inc(outpos);
         end;
       Inc(N);
     end;
+  {$ifdef DEBUGFLOATTODECIMAL}
+  Dump;  
+  {$ENDIF}
   Inc(N); // Pass through 'E'
   if N<=L then
     begin
@@ -1513,7 +1546,9 @@ begin
     end;
   // Calculate number of digits we have from str
   N:=OutPos;
-  // Writeln('Number of digits: ',N,' requested precision : ',Precision);
+  {$ifdef DEBUGFLOATTODECIMAL}
+  Writeln('Number of digits: ',N,' requested precision : ',Precision);
+  {$ENDIF}
   L:=Length(Result.Digits);
   While N<L do
     begin
@@ -1526,7 +1561,9 @@ begin
     N := Precision;
   if N >= L Then
     N := L-1;
-  // Writeln('Rounding on digit : ',N);
+  {$ifdef DEBUGFLOATTODECIMAL}
+  Writeln('Rounding on digit : ',N);
+  {$ENDIF}
   if N = 0 Then
     begin
       if Result.Digits[0] >= '5' Then
@@ -1545,7 +1582,9 @@ begin
           Repeat
             Result.Digits[N] := #0;
             Dec(N);
-            // Writeln(N,': ',Result.Digits[N],', Rounding to : ',Rounds[StrToInt(Result.Digits[N])]);
+           {$ifdef DEBUGFLOATTODECIMAL}
+            Writeln(N,': ',Result.Digits[N],', Rounding to : ',Rounds[StrToInt(Result.Digits[N])]);
+            {$ENDIF}
             Result.Digits[N]:=Rounds[StrToInt(Result.Digits[N])+1];
           Until (N = 0) Or (Result.Digits[N] < ':');
           If Result.Digits[0] = ':' Then
@@ -1572,6 +1611,9 @@ begin
       Result.Exponent := 0;
       Result.Negative := False;
     end;
+  {$ifdef DEBUGFLOATTODECIMAL}
+  Dump;
+  {$ENDIF}
 end;
 
 Function FloatToStr(Value: Double; const aSettings : TFormatSettings): String; overload;

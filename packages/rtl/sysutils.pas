@@ -53,7 +53,7 @@ type
   TDayTable = array [1..12] of Word;
   TWeekNameArray = array [1..7] of string;
   TMonthNames = TMonthNameArray;
-  TDayNames = array[0..6] of string;
+  TDayNames = array[1..7] of string;
 
 type
 
@@ -4234,8 +4234,8 @@ var
               case Count of
                 1: StoreInt(Day, 0);
                 2: StoreInt(Day, 2);
-                3: StoreString(aSettings.ShortDayNames[DayOfWeek-1]);
-                4: StoreString(aSettings.LongDayNames[DayOfWeek-1]);
+                3: StoreString(aSettings.ShortDayNames[DayOfWeek]);
+                4: StoreString(aSettings.LongDayNames[DayOfWeek]);
                 5: StoreFormat(aSettings.ShortDateFormat, Nesting+1, False);
               else
                 StoreFormat(aSettings.LongDateFormat, Nesting+1, False);

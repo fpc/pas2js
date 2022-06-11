@@ -1205,9 +1205,16 @@ begin
     aChange.Status:='pending';
     if aDesc.Status=usInserted then
       aChange.old:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new))
-    else
+    else if aDesc.Status=usDeleted then
+      begin
       aChange.old:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._Old));
-    aChange.new_:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new));
+      if Length(aChange.old)=0 then
+        aChange.old:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new));
+      // Actually should be all null...
+      aChange.new_:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new));
+      end
+    else
+      aChange.new_:=CopyArray(TJSArray(TDADataRow(aDesc.Data)._new));
     excludeItems(ExcludedFields,aChange.new_);
     excludeItems(ExcludedFields,aChange.old);
     aChange.changeType:=ChangeTypes[aDesc.Status];

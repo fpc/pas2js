@@ -253,11 +253,12 @@ end;
 
 procedure TSQLDBRestConnection.SetupRequest(aXHR: TJSXMLHttpRequest);
 begin
-  inherited SetupRequest(aXHR);
   aXHR.setRequestHeader('Content-Type', 'application/json');
   aXHR.setRequestHeader('Accept', 'application/json');
   if (UserName<>'') then
     aXHR.setRequestHeader('Authorization', 'Basic '+window.btoa(UserName+':'+Password));
+  // Will call the OnSetupHTTPRequest handler
+  inherited SetupRequest(aXHR);
 end;
 
 function TSQLDBRestConnection.GetUpdateBaseURL(aRequest: TRecordUpdateDescriptor): String;

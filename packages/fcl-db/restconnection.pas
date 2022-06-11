@@ -29,11 +29,14 @@ Type
   { TRESTConnection }
   TRestGetURLEvent = Procedure (Sender : TComponent; aRequest : TDataRequest; Var aURL : String) of Object;
   TRestUpdateURLEvent = Procedure (Sender : TComponent; aRequest : TRecordUpdateDescriptor; Var aURL : String) of Object;
+  TSetupHTTPRequestEvent = Procedure  (Sender : TComponent; aHTTPRequest : TJSXMLHttpRequest) of Object;
+
   TRESTConnection = Class(TComponent)
   private
     FBaseURL: String;
     FDataProxy : TDataProxy;
     FOnGetURL: TRestGetURLEvent;
+    FOnSetupHTTPRequest: TSetupHTTPRequestEvent;
     FOnUpdateURL: TRestUpdateURLEvent;
     FPageParam: String;
     function GetDataProxy: TDataProxy;
@@ -46,6 +49,7 @@ Type
   Public
     Function DoGetDataProxy : TDataProxy; virtual;
   Public
+    Property OnSetupHTTPRequest : TSetupHTTPRequestEvent Read FOnSetupHTTPRequest Write FOnSetupHTTPRequest;
     Property DataProxy : TDataProxy Read GetDataProxy;
     Property BaseURL : String Read FBaseURL Write FBaseURL;
     Property PageParam : String Read FPageParam Write FPageParam;
@@ -148,8 +152,8 @@ end;
 
 procedure TRESTConnection.SetupRequest(aXHR: TJSXMLHttpRequest);
 begin
-  // Do nothing
-  if aXHR=nil then ;
+  if (aXHR<>nil) and Assigned(FOnSetupHTTPRequest) then
+    FOnSetupHTTPRequest(Self,aXHR);
 end;
 
 function TRESTConnection.GetUpdateBaseURL(aRequest: TRecordUpdateDescriptor): String;

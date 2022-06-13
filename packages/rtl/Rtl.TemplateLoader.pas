@@ -201,19 +201,29 @@ procedure TURLLoader.dofetch(resolve,reject : TJSPromiseResolver);
       );
   end;
 
+  function doErr(Err : JSValue) : JSValue;
+
+  Var
+    F : TFailData;
+  begin
+    F.message:='Unknown error: '+TJSJSON.Stringify(Err);
+    F.code:=999;
+    Result:=Reject(F);
+  end;
+
   function doFail(respo : JSValue) : JSValue;
 
   Var
     F : TFailData;
 
   begin
-    F.message:='unknown error';
+    F.message:='Unknown error';
     F.code:=999;
     Result:=Reject(F);
   end;
 
 begin
-  Window.Fetch(URl)._then(@DoOK).catch(@DoFail);
+  Window.Fetch(URl)._then(@DoOK,@DoErr).catch(@DoFail);
 end;
 
 function TURLLoader.fetch : TJSPromise;
@@ -282,7 +292,7 @@ Var
   Idx : Integer;
 
 begin
-  FTemplates[aName]:=aTemplate;
+  FTemplates[LowerCase(aName)]:=aTemplate;
   if Assigned(FOnLoad) then
     FOnLoad(Self,aName);
   Idx:=IndexOfTemplateEvent(aName);

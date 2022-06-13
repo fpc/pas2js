@@ -111,7 +111,13 @@ Type
   Public
     Constructor Create(aOwner : TComponent); override;
     class function Instance : TToastManager;
-    function ShowToast(const aHeader, aBody: String; aContext: TContextual=cNone; Closable: Boolean=True): TSimpleToastWidget;
+    { Show toast with given header & body.
+      aHideDelay overrides ToastHideDelay:
+        -1 means do not autohide.
+         0 means use default (ToastAutoHide,ToastHideDelay)
+         >0 means use AutoHide after specified milliseconds.
+    }
+    function ShowToast(const aHeader, aBody: String; aContext: TContextual=cNone; Closable: Boolean=True; aHideDelay : Integer = 0): TSimpleToastWidget;
   Published
     Property MultiToast : Boolean Read FMultiToast Write SetMultiToast;
     Property MinHeight : Integer Read FMinheight Write SetMinHeight default 250;
@@ -455,8 +461,26 @@ begin
   FAnimate:=False;
 end;
 
-function TToastManager.ShowToast(const aHeader, aBody: String; aContext : TContextual = cNone; Closable: Boolean = True): TSimpleToastWidget;
+function TToastManager.ShowToast(const aHeader, aBody: String;
+  aContext: TContextual; Closable: Boolean; aHideDelay: Integer
+  ): TSimpleToastWidget;
+
+Var
+  MsgDelay : Integer;
+  aHide : Boolean;
+
 begin
+  MsgDelay:=aHideDelay;
+  if MsgDelay=0 then
+    begin
+    MsgDelay:=ToastHideDelay;
+    aHide:=ToastAutoHide;
+    end
+  else if MsgDelay=-1 then
+    begin
+    MsgDelay:=0;
+    aHide:=False;
+    end;
   CheckInit;
   Result:=TSimpleToastWidget.Create(Self) ;
   With Result do
@@ -467,8 +491,8 @@ begin
     HeaderImage:=ToastIcon;
     CloseButton:=Closable;
     Contextual:=aContext;
-    AutoHide:=ToastAutoHide;
-    HideDelay:=ToastHideDelay;
+    AutoHide:=aHide;
+    HideDelay:=msgDelay;
     Animate:=ToastAnimate;
     MinWidth:=ToastMinWidth;
     Refresh;

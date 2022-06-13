@@ -13,6 +13,8 @@ type
   { TBrowserApplication }
 
   TBrowserApplication = class(TCustomApplication)
+  private
+    FShowExceptions: Boolean;
   protected
     function GetHTMLElement(aID : String) : TJSHTMLElement;
     function CreateHTMLElement(aTag : String; aID : String = '') : TJSHTMLElement;
@@ -21,11 +23,13 @@ type
     Function LogGetElementErrors : Boolean; virtual;
     function GetLocation: String; override;
   public
+    Constructor Create(aOwner: TComponent); override;
     procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;
     procedure ShowException(E: Exception); override;
     procedure HandleException(Sender: TObject); override;
     function RegisterServiceWorker(aFile: String;
       const aOnRegistered: TServiceWorkerRegisteredEvent = Nil; DoLogging: Boolean = false) : Boolean;
+    Property ShowExceptions : Boolean Read FShowExceptions Write FShowExceptions;
   end;
 
 procedure ReloadEnvironmentStrings;
@@ -137,6 +141,12 @@ begin
   Result:=''; // ToDo ExtractFilePath(GetExeName);
 end;
 
+constructor TBrowserApplication.Create(aOwner: TComponent);
+begin
+  inherited Create(aOwner);
+  ShowExceptions:=True;
+end;
+
 procedure TBrowserApplication.GetEnvironmentList(List: TStrings;
   NamesOnly: Boolean);
 var
@@ -163,7 +173,10 @@ begin
     S:=E.ClassName+': '+E.Message
   else if ExceptObjectJS then
     s:=TJSObject(ExceptObjectJS).toString;
-  window.alert('Unhandled exception caught:'+S);
+  S:='Unhandled exception caught: '+S;
+  if ShowExceptions then
+    window.alert(S);
+  Writeln(S);
 end;
 
 procedure TBrowserApplication.HandleException(Sender: TObject);

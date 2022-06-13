@@ -60,6 +60,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     Property target: TJSEventTarget Read FTarget;
   end;
 *)
+  TJSEvent = weborworker.TJSEvent;
   TEventListenerEvent = TJSEvent;
 
   TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean; safecall;
@@ -429,13 +430,15 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   TJSEventInit = weborworker.TJSEventInit;
 
-  TJSEvent = class external name 'Event' (weborworker.TJSEvent)
-  Private
-    FCurrentTargetElement : TJSElement; external name 'currentTarget';
-    FTargetElement : TJSElement; external name 'target';
+  { TJSEventHelper }
+
+  TJSEventHelper = class helper for TJSEvent
+  private
+    function GetCurrentTargetElement: TJSElement;
+    function GetTargetElement: TJSElement;
   Public
-    property currentTargetElement : TJSElement Read FCurrentTargetElement;
-    property targetElement : TJSElement Read FTargetElement;
+    property currentTargetElement : TJSElement Read GetCurrentTargetElement;
+    property targetElement : TJSElement Read GetTargetElement;
   end;
 
 
@@ -3297,6 +3300,18 @@ begin
     exit(true)
   else
     exit(false);
+end;
+
+{ TJSEventHelper }
+
+function TJSEventHelper.GetCurrentTargetElement: TJSElement;
+begin
+  Result:=TJSElement(CurrentTarget);
+end;
+
+function TJSEventHelper.GetTargetElement: TJSElement;
+begin
+  Result:=TJSElement(Target);
 end;
 
 end.

@@ -184,6 +184,8 @@ Type
     Property OnUnexpectedError : TRPCUnexpectedErrorCallback Read FOnUnexpectedError Write FOnUnexpectedError;
   end;
 
+  TPas2jsRPCClient = Class(TRPCClient); // For IDE support...
+
   { TRPCCustomService }
 
   // Result callback types for all supported types

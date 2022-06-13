@@ -89,6 +89,7 @@ Type
     Procedure Hide;
     Property IsRendered : Boolean Read GetIsRendered;
   end;
+  TCustomHTMLFragmentClass = class of TCustomHTMLFragment;
 
   THTMLFragment = class(TCustomHTMLFragment)
   Published
@@ -103,6 +104,7 @@ Type
     Property OnUnrendered;
 
   end;
+  THTMLFragmentClass = class of THTMLFragment;
 
 implementation
 

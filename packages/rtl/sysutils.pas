@@ -480,7 +480,7 @@ Var
 
 // Various conversions
 
-function DateTimeToJSDate(aDateTime : TDateTime) : TJSDate;
+function DateTimeToJSDate(aDateTime : TDateTime; asUTC : Boolean = False) : TJSDate;
 function JSDateToDateTime(aDate : TJSDate) : TDateTime;
 function DateTimeToTimeStamp(DateTime: TDateTime): TTimeStamp;
 function TimeStampToDateTime(const TimeStamp: TTimeStamp): TDateTime;
@@ -552,6 +552,12 @@ function StrToDateTimeDef(const S: String; const Defvalue : TDateTime): TDateTim
 function StrToDateTimeDef(const S: String; const Defvalue : TDateTime; aSettings : TFormatSettings): TDateTime; overload;
 function FormatDateTime(const FormatStr: string; const DateTime: TDateTime): string; overload;
 function FormatDateTime(const FormatStr: string; const DateTime: TDateTime; const aSettings: TFormatSettings): string; overload;
+
+// Local time
+
+function GetLocalTimeOffset: Integer; overload;
+function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean; out Offset: Integer): Boolean; overload;
+function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean = False): Integer; overload;
 
 
 { *****************************************************************************
@@ -3228,7 +3234,7 @@ begin
     Result:=0;
 end;
 
-function DateTimeToJSDate(aDateTime: TDateTime): TJSDate;
+function DateTimeToJSDate(aDateTime: TDateTime; asUTC : Boolean = False): TJSDate;
 
 Var
   Y,M,D,h,n,s,z : Word;
@@ -3236,7 +3242,10 @@ Var
 begin
   DecodeDate(Trunc(aDateTime),Y,M,D);
   DecodeTime(Frac(aDateTime),H,N,S,Z);
-  Result:=TJSDate.New(Y,M-1,D,h,n,s,z);
+  if asUTC then
+    Result:=TJSDate.New(TJSDate.UTC(Y,M-1,D,h,n,s,z))
+  else
+    Result:=TJSDate.New(Y,M-1,D,h,n,s,z);
 end;
 
 function JSDateToDateTime(aDate: TJSDate): TDateTime;
@@ -8804,6 +8813,25 @@ begin
   System.Delete(FData,Index+1,OVLen);
   System.Insert(New,FData,Index+1);
 end;
+
+Function GetLocalTimeOffset : Integer;
+
+begin
+  Result:=TJSDate.New.getTimezoneOffset;
+end;
+
+function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean; out Offset: Integer): Boolean;
+begin
+  offset:=DateTimeToJSDate(DateTime).getTimezoneOffset;
+  Result:=True;
+end;
+
+function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean): Integer;
+begin
+  if not GetLocalTimeOffset(DateTime, InputIsUTC, Result) then
+    Result:=GetLocalTimeOffset();
+end;
+
 
 initialization
   ShortMonthNames:=DefaultShortMonthNames;

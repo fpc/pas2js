@@ -185,10 +185,31 @@ begin
 end;
 
 procedure TCustomApplication.HandleException(Sender: TObject);
+
+Var
+  E : Exception;
+  Tmp : Exception;
+
 begin
-  ShowException(ExceptObject);
-  if FStopOnException then
-    Terminate(ExceptionExitCode);
+  Tmp:=Nil;
+  E:=ExceptObject;
+  if (E=Nil) and Assigned(ExceptObjectJS) then
+    begin
+    if (ExceptObjectJS is TJSError) then
+      Tmp:=EExternalException.Create(TJSError(ExceptObjectJS).Message)
+    else if (ExceptObjectJS is TJSObject) and TJSObject(ExceptObjectJS).hasOwnProperty('message') then
+      Tmp:=EExternalException.Create(String(TJSObject(ExceptObjectJS)['message']))
+    else
+      Tmp:=EExternalException.Create(TJSJSON.stringify(ExceptObjectJS));
+    E:=Tmp;
+    end;
+  try
+    ShowException(E);
+    if FStopOnException then
+      Terminate(ExceptionExitCode);
+  finally
+    Tmp.Free;
+  end;
   if Sender=nil then ;
 end;
 
@@ -214,6 +235,7 @@ begin
       else begin
         ExceptObject:=nil;
         ExceptObjectJS := JS.JSExceptValue;
+        HandleException(Self);
       end;
     end;
     break;

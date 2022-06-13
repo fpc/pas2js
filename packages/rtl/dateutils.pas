@@ -438,6 +438,16 @@ Function TimeToRFC3339(ADate :TDateTime):string;
 Function TryRFC3339ToDateTime(const Avalue: String; out ADateTime: TDateTime): Boolean;
 Function RFC3339ToDateTime(const Avalue: String): TDateTime;
 
+// ISO 8601 Date/Time formatting
+
+function DateToISO8601(const ADate: TDateTime; AInputIsUTC: Boolean = True): string;
+Function ISO8601ToDate(const DateString: string; ReturnUTC : Boolean = True): TDateTime;
+Function ISO8601ToDateDef(const DateString: string; ReturnUTC : Boolean; aDefault : TDateTime ): TDateTime; deprecated;
+Function ISO8601ToDateDef(const DateString: string; aDefault : TDateTime; ReturnUTC : Boolean = True ): TDateTime;
+Function TryISO8601ToDate(const DateString: string; out ADateTime: TDateTime; ReturnUTC : Boolean = True) : Boolean;
+
+
+
 Type
   {
     Inverse of formatdatetime, destined for the dateutils unit of FPC.
@@ -2353,11 +2363,6 @@ end;
 
 { Conversion of UTC to local time and vice versa }
 
-Function GetLocalTimeOffset : Integer;
-
-begin
-  Result:=TJSDate.New.getTimezoneOffset();
-end;
 
 function UniversalTimeToLocal(UT: TDateTime): TDateTime;
 
@@ -2474,6 +2479,314 @@ begin
   if Not TryRFC3339ToDateTime(AValue,Result) then
     Result:=0;
 end;
+
+Const
+  FmtUTC = 'yyyy"-"mm"-"dd"T"hh":"nn":"ss"."zzz';
+  FmtUTCTZ = 'hh":"mm';
+
+function DateToISO8601(const ADate: TDateTime; AInputIsUTC: Boolean = True): string;
+
+const
+  FmtOffset: string = '%.02d:%.02d';
+  Sign: array[Boolean] of Char = ('+', '-');
+
+var
+  Offset: Integer;
+begin
+  Result := FormatDateTime(FmtUTC, ADate);
+  Offset := GetLocalTimeOffset(ADate, AInputIsUTC);
+  if AInputIsUTC or (Offset=0) then
+    Result:=Result+'Z'
+  else
+    begin
+    Result:=Result+Sign[Offset>0];
+    Offset := Abs(Offset);
+    Result:= Result+Format(FmtOffset, [Offset div MinsPerHour, Offset mod MinsPerHour]);
+    end;
+end;
+
+function TryISOStrToDate(const aString: string; out outDate: TDateTime): Boolean;
+var
+  xYear, xMonth, xDay: LongInt;
+begin
+  case Length(aString) of
+    4: Result :=                                        // YYYY
+          TryStrToInt(aString, xYear) and
+          TryEncodeDate(xYear, 1, 1, outDate);
+    6: Result :=                                        // YYYYMM
+          TryStrToInt(Copy(aString, 1, 4), xYear) and
+          TryStrToInt(Copy(aString, 5, 2), xMonth) and
+          TryEncodeDate(xYear, xMonth, 1, outDate);
+    7: Result :=                                        // YYYY-MM
+          TryStrToInt(Copy(aString, 1, 4), xYear) and
+          TryStrToInt(Copy(aString, 6, 2), xMonth) and
+          TryEncodeDate(xYear, xMonth, 1, outDate);
+    8: Result :=                                        // YYYYMMDD
+          TryStrToInt(Copy(aString, 1, 4), xYear) and
+          TryStrToInt(Copy(aString, 5, 2), xMonth) and
+          TryStrToInt(Copy(aString, 7, 2), xDay) and
+          TryEncodeDate(xYear, xMonth, xDay, outDate);
+    10: Result :=                                       //YYYY-MM-DD
+          TryStrToInt(Copy(aString, 1, 4), xYear) and
+          TryStrToInt(Copy(aString, 6, 2), xMonth) and
+          TryStrToInt(Copy(aString, 9, 2), xDay) and
+          TryEncodeDate(xYear, xMonth, xDay, outDate);
+  else
+    Result := False;
+  end;
+  if not Result then
+    outDate := 0;
+end;
+
+function TryISOStrToTime(const aString: string; Out outTime: TDateTime): Boolean;
+var
+  xHour, xMinute, xSecond, xLength, res: LongInt;
+  xFractionalSecond: Extended;
+  tmp: String;
+begin
+  Result := True;
+  xLength := Length(aString);
+  if (xLength>0) and (aString[xLength] = 'Z') then
+  begin
+    Dec(xLength);
+  end else
+  if (xLength>6) and CharInSet(aString[xLength-5], ['+', '-']) then
+  begin
+    Result :=
+      TryStrToInt(Copy(aString, xLength-4, 2), xHour) and
+      (aString[xLength-2] = ':') and
+      TryStrToInt(Copy(aString, xLength-1, 2), xMinute);
+    Dec(xLength, 6);
+  end else
+  if (xLength>5) and CharInSet(aString[xLength-4], ['+', '-']) then
+  begin
+    Result :=
+      TryStrToInt(Copy(aString, xLength-3, 2), xHour) and
+      TryStrToInt(Copy(aString, xLength-1, 2), xMinute);
+    Dec(xLength, 5);
+  end else
+  if (xLength>3) and CharInSet(aString[xLength-2], ['+', '-']) then
+  begin
+    Result :=
+      TryStrToInt(Copy(aString, xLength-1, 2), xHour);
+    Dec(xLength, 3);
+  end;
+  if not Result then
+  begin
+    outTime := 0;
+    Exit;
+  end;
+  case xLength of
+    2: Result :=                                          // HH
+          TryStrToInt(aString, xHour) and
+          TryEncodeTime(xHour, 0, 0, 0, outTime);
+    4: Result :=                                          // HHNN
+          TryStrToInt(Copy(aString, 1, 2), xHour) and
+          TryStrToInt(Copy(aString, 3, 2), xMinute) and
+          TryEncodeTime(xHour, xMinute, 0, 0, outTime);
+    5: Result :=                                          // HH:NN
+          TryStrToInt(Copy(aString, 1, 2), xHour) and
+          (aString[3] = ':') and
+          TryStrToInt(Copy(aString, 4, 2), xMinute) and
+          TryEncodeTime(xHour, xMinute, 0, 0, outTime);
+    6: Result :=                                          // HHNNSS
+          TryStrToInt(Copy(aString, 1, 2), xHour) and
+          TryStrToInt(Copy(aString, 3, 2), xMinute) and
+          TryStrToInt(Copy(aString, 5, 2), xSecond) and
+          TryEncodeTime(xHour, xMinute, xSecond, 0, outTime);
+    else
+       if (xLength >= 8) and (aString[3] = ':') and (aString[6] = ':') then
+       begin
+         Result :=                            // HH:NN:SS
+           TryStrToInt(Copy(aString, 1, 2), xHour) and
+           TryStrToInt(Copy(aString, 4, 2), xMinute) and
+           TryStrToInt(Copy(aString, 7, 2), xSecond) and
+           TryEncodeTime(xHour, xMinute, xSecond, 0, outTime);
+         if Result and (xLength >= 9) then    // HH:NN:SS.[z] (0 or several z)
+         begin
+           tmp := copy(aString, 10, xLength-9);
+           val('.' + tmp, xFractionalSecond, res);
+           Result := (res = 0);
+           if Result then
+             outTime := outTime + xFractionalSecond * OneSecond;
+         end;
+       end else
+       if (xLength >= 7) and (aString[7] in ['.', ',']) then
+       begin
+         Result :=                         // HHNNSS
+           TryStrToInt(Copy(aString, 1, 2), xHour) and
+           TryStrToInt(Copy(aString, 3, 2), xMinute) and
+           TryStrToInt(Copy(aString, 5, 2), xSecond) and
+           TryEncodeTime(xHour, xMinute, xSecond, 0, outTime);
+         tmp := copy(aString, 8, xLength-7);
+         if Result and (tmp <> '') then
+         begin                           // HHNNSS.[z] (0 or several z)
+         val('.'+tmp, xFractionalSecond, res);
+          Result := res = 0;
+          if Result then
+            outTime := outTime + xFractionalSecond * OneSecond;
+        end;
+      end else
+        Result := false;
+ end;
+
+ if not Result then
+   outTime := 0;
+end;
+
+function TryISOStrToDateTime(const aString: string; out outDateTime: TDateTime): Boolean;
+var
+  xLength: Integer;
+  sDate,sTime : String;
+  xDate, xTime: TDateTime;
+
+begin
+  xLength := Length(aString);
+  if (xLength = 0) then
+    exit(false);
+
+  if (aString[1]='T') then
+    begin
+    Result := TryISOStrToTime(copy(aString, 2, Length(aString)-1), outDateTime);
+    exit;
+  end;
+
+  if (xLength in [4 {YYYY}, 7 {YYYY-MM}, 8 {YYYYMMDD}, 10 {YYYY-MM-DD}]) then
+    begin
+    Result := TryISOStrToDate(aString, outDateTime);
+    exit;
+    end;
+
+  if (xLength>11) and CharInSet(aString[11], [' ', 'T']) then   // YYYY-MM-DDT...
+    begin
+    sDate:=Copy(aString, 1, 10);
+    sTime:=Copy(aString, 12, Length(aString))
+    end
+  else if (xLength>9) and CharInSet(aString[9], [' ', 'T']) then    // YYYYMMDDT...
+    begin
+    sDate:=Copy(aString, 1, 8);
+    sTime:=Copy(aString, 10, Length(aString));
+    end
+  else
+    exit(False);
+  Result:=TryISOStrToDate(sDate, xDate)  and TryISOStrToTime(sTime, xTime);
+  if Result then
+    outDateTime := xDate+xTime
+  else
+    outDateTime := 0;
+end;
+
+Function TryISOTZStrToTZOffset(const TZ : String; Out TZOffset : Integer) : boolean;
+
+Var
+  H,M : LongInt;
+
+begin
+  Result:=(TZ='Z') or (TZ='');
+  if Result then
+    TZOffset:=0
+  else
+    begin
+    Result:=TZ[1] in ['+','-'];
+    if Not Result then
+      Exit;
+    case Length(TZ) of
+      3: begin
+        Result:=TryStrToInt(Copy(TZ,2,2),H);
+        M := 0;
+      end;
+      5: Result:=TryStrToInt(Copy(TZ,2,2),H) and TryStrToInt(Copy(TZ,4,2),M);
+      6: Result:=TryStrToInt(Copy(TZ,2,2),H) and TryStrToInt(Copy(TZ,5,2),M);
+    else
+      Result := False;
+    end;
+    if not Result then
+      exit;
+    TZOffset:=H*60+M;
+    if (TZ[1]='+') then
+      TZOffset:=-TZOffset;
+    end;
+end;
+
+Function ISOTZStrToTZOffset(TZ : String) : Integer;
+
+begin
+  if not TryISOTZStrToTZOffSet(TZ,Result) then
+    Raise EConvertError.CreateFmt('Invalid ISO timezone string',[TZ]);
+end;
+
+
+Function TryISO8601ToDate(const DateString: string; out ADateTime: TDateTime;ReturnUTC : Boolean = True) : Boolean;
+
+
+Var
+  S,TZ : String;
+  L,Offset,TZOffset : Integer;
+
+begin
+  S:=DateString;
+  L:=Length(S);
+  if L=0 then
+    exit(False);
+  if S[L]='Z' then
+    begin
+    TZ:='Z';
+    S:=Copy(S,1,L-1);
+    end
+  else if ((L>11) and ((S[11] in ['T',' ']) or (S[9] in ['T',' ']))) or // make sure that we dont't have date-only
+          (S[1]='T') then
+  begin
+    If (S[L-2] in ['+','-']) then
+    begin
+    TZ:=Copy(S,L-2,3);
+    S:=Copy(S,1,L-3);
+    end
+  else If (S[L-4] in ['+','-']) then
+    begin
+    TZ:=Copy(S,L-4,5);
+    S:=Copy(S,1,L-5);
+    end
+  else If (S[L-5] in ['+','-']) and ((L > 13) or (S[1]='T')) then  // do not confuse with '2021-05-21T13'
+    begin
+    TZ:=Copy(S,L-5,6);
+    S:=Copy(S,1,L-6);
+    end;
+  end;
+  Result:=TryIsoStrToDateTime(S,aDateTime) and TryISOTZStrToTZOffset(TZ,TZOffset);
+  if not Result then
+    exit;
+  aDateTime:=IncMinute(aDateTime,TZOffSet);
+  // offset for UTC or not
+  if ReturnUTC then
+    Offset:=0
+  else
+    OffSet:=-GetLocalTimeOffset(ADateTime, True);
+  aDateTime:=IncMinute(aDateTime,Offset);
+  Result:=True;
+end;
+
+
+Function ISO8601ToDate(const DateString: string; ReturnUTC : Boolean = True): TDateTime;
+
+begin
+  if not TryISO8601ToDate(DateString,Result,ReturnUTC) then
+    Raise EConvertError.CreateFmt(SErrInvalidTimeStamp,[DateString]);
+end;
+
+Function ISO8601ToDateDef(const DateString: string; ReturnUTC : Boolean; aDefault : TDateTime): TDateTime;
+
+begin
+  if not TryISO8601ToDate(DateString,Result,ReturnUTC) then
+    Result:=aDefault;
+end;
+
+Function ISO8601ToDateDef(const DateString: string; aDefault : TDateTime; ReturnUTC : Boolean = True): TDateTime;
+
+begin
+  if not TryISO8601ToDate(DateString,Result,ReturnUTC) then
+    Result:=aDefault;
+end;
+
 
 const
 

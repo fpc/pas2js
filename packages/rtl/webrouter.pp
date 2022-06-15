@@ -216,6 +216,7 @@ Type
     FHistory: THistory;
     FOnScroll: TPageScrollEvent;
     FRoutes : TRouteList;
+    FUseDefaultRoute: Boolean;
     function GetHistory: THistory;
     function GetHistoryKind: THistoryKind;
     function GetR(AIndex : Integer): TRoute;
@@ -253,8 +254,11 @@ Type
     Function RegisterRoute(Const APattern : String; const AObjectClass: TRouteObjectClass; IsDefault : Boolean = False) : TRoute; overload;
     // Find route. Matches Path on the various patterns. If a pattern is found, then the method is tested.
     // Returns the route that matches the pattern and method.
-    function FindHTTPRoute(const Path: String; Params: TStrings): TRoute;
-    function GetRoute(const Path: String; Params: TStrings): TRoute;
+    function FindHTTPRoute(const Path: String; Params: TStrings; AllowDefault : Boolean = False): TRoute;
+    // Call FindHTTPRoute and raise exception if no route is found.
+    function GetRoute(const Path: String; Params: TStrings; AllowDefault : Boolean = False): TRoute;
+    // Get Default Route. Can be Nil if there is no default route
+    function GetDefaultRoute: TRoute;
     // Do actual routing. Exceptions raised will not be caught.
     // If DoPush is true, the URL will be pushed on the browser history. If False, the route is simply activated.
     Function RouteRequest(Const ARouteURL : String; DoPush : Boolean = False) : TRoute;
@@ -283,6 +287,8 @@ Type
     Property History : THistory Read GetHistory;
     // Kind of current history. Shortcut for History.Kind, returns hkauto if History is not assigned
     Property HistoryKind : THistoryKind Read GetHistoryKind;
+    // Set true to automatically go to default route if a valid route is not found (and there is a default).
+    Property UseDefaultRoute : Boolean Read FUseDefaultRoute Write FUseDefaultRoute;
   end;
 
   TWebScroll = Class
@@ -476,7 +482,7 @@ Var
 begin
   Params:=TStringList.Create;
   try
-    R:=Router.FindHTTPRoute(aLocation,Params);
+    R:=Router.FindHTTPRoute(aLocation,Params,Router.UseDefaultRoute);
     Case ConfirmTransition(R,Params) of
     trOK :
       begin
@@ -633,7 +639,7 @@ begin
   APath:=AURL;
   Params:=TStringList.Create;
   try
-    Result:=GetRoute(APath,Params);
+    Result:=GetRoute(APath,Params,UseDefaultRoute);
     if DoPush then
       Push(aURL)
     else
@@ -788,29 +794,53 @@ begin
   Result:=Path;
 end;
 
-function TRouter.FindHTTPRoute(const Path: String; Params : TStrings): TRoute;
+function TRouter.FindHTTPRoute(const Path: String; Params : TStrings; AllowDefault : Boolean = False): TRoute;
 
 Var
   I : Integer;
   APathInfo : String;
+  aDefault : TRoute;
 
 begin
   APathInfo:=SanitizeRoute(Path);
   Result:=Nil;
+  aDefault:=Nil;
   I:=0;
   While (Result=Nil) and (I<FRoutes.Count) do
     begin
     Result:=FRoutes[i];
+    if Result.Default then
+      aDefault:=Result;
     If Not Result.MatchPattern(APathInfo,Params) then
       Result:=Nil;
     Inc(I);
     end;
+  if (Result=Nil) and AllowDefault then
+    Result:=aDefault;
 end;
 
-function TRouter.GetRoute(const Path: String; Params : TStrings): TRoute;
+function TRouter.GetDefaultRoute : TRoute;
+
+Var
+  I : Integer;
 
 begin
-  Result:=FindHTTPRoute(Path,Params);
+  Result:=Nil;
+  I:=FRoutes.Count-1;
+  While (Result=Nil) and (I>=0) do
+    begin
+    Result:=FRoutes[I];
+    if not Result.Default then
+      Result:=Nil;
+    Dec(I);
+    end;
+end;
+
+function TRouter.GetRoute(const Path: String; Params: TStrings;
+  AllowDefault: Boolean): TRoute;
+
+begin
+  Result:=FindHTTPRoute(Path,Params,AllowDefault);
   if Not Assigned(Result) then
     Raise EHTTPRoute.Create('Not found');
 end;

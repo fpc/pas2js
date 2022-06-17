@@ -8695,7 +8695,7 @@ begin
 
   if (Result=nil) then begin
     PersistentClass := GetClass(AClassName);
-    if PersistentClass.InheritsFrom(TComponent) then
+    if Assigned(PersistentClass) and PersistentClass.InheritsFrom(TComponent) then
       Result := TComponentClass(PersistentClass);
   end;
 

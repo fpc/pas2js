@@ -442,6 +442,7 @@ type
     property Size default 20;
   end;
 
+  TWideStringField = Class(TStringField);
 
 { TNumericField }
 
@@ -496,7 +497,7 @@ type
     property MinValue: Longint read FMinValue write SetMinValue default 0;
   end;
 
-  TLongintField = TIntegerField; // IDE creates TLongintField;
+  TLongintField = Class(TIntegerField); // IDE creates TLongintField;
 
 { TLargeintField }
 
@@ -1372,7 +1373,9 @@ type
     function IsLinkedTo(ADataSource: TDataSource): Boolean;
     function IsSequenced: Boolean; virtual;
     procedure Last;
-    Function Load(aOptions : TLoadOptions; aAfterLoad : TDatasetLoadEvent) : Boolean;
+    Function Load(aOptions : TLoadOptions; aAfterLoad : TDatasetLoadEvent) : Boolean; overload;
+    Function Load(aOptions : TLoadOptions) : Boolean; overload;
+    Function Load() : Boolean; overload;
     function Locate(const KeyFields{%H-}: string; const KeyValues{%H-}: JSValue; Options{%H-}: TLocateOptions) : boolean; virtual;
     function Lookup(const KeyFields{%H-}: string; const KeyValues{%H-}: JSValue; const ResultFields{%H-}: string): JSValue; virtual;
     function MoveBy(Distance: Longint): Longint;
@@ -4647,6 +4650,16 @@ begin
   if loCancelPending in aOptions then
     CancelLoading;
   Result:=DoLoad(aOptions,aAfterLoad);
+end;
+
+function TDataSet.Load(aOptions: TLoadOptions): Boolean;
+begin
+  Result:=Load(aOptions,Nil);
+end;
+
+function TDataSet.Load: Boolean;
+begin
+  Result:=Load([],Nil);
 end;
 
 function TDataSet.MoveBy(Distance: Longint): Longint;
@@ -9214,4 +9227,5 @@ end;
 
 Initialization
   RegisterClass(TLongintField);
+  RegisterClass(TWideStringField);
 end.

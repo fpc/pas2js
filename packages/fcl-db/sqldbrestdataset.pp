@@ -94,10 +94,12 @@ Type
 
   TSQLDBRestDataset = Class(TJSONDataset)
   private
+    FAutoApplyUpdates: Boolean;
     FConnection: TSQLDBRestConnection;
     FDatabaseConnection: String;
     FOnGetQueryParams: TGetQueryParamsEvent;
     FParams: TQueryParams;
+    FResourceID: String;
     FResourceName: String;
     FSQL: TStrings;
     function CleanSQL: String;
@@ -105,9 +107,12 @@ Type
     procedure DoSQLChange(Sender: TObject);
     procedure SetConnection(AValue: TSQLDBRestConnection);
     procedure SetParams(AValue: TQueryParams);
+    procedure SetResourceID(AValue: String);
     procedure SetResourceName(AValue: String);
     procedure SetSQL(AValue: TStrings);
   Protected
+    Procedure DoAfterPost; override;
+    Procedure DoAfterDelete; override;
     function MyURL(isRead : Boolean): String; virtual;
     Function CreateQueryParams : TQueryParams; virtual;
     function GetURLQueryParams(IsRead : Boolean): string; virtual;
@@ -122,15 +127,30 @@ Type
     Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; override;
     Function ParamByName(const aName : String) : TQueryParam;
   Published
+    // Connection to use to get data
     Property Connection: TSQLDBRestConnection Read FConnection Write SetConnection;
+    // The resource to get/post/put/delete
     Property ResourceName : String Read FResourceName Write SetResourceName;
+    // When set, the CustomView resource (as set in CustomViewResourceName) is used. Use with care!
     Property SQL : TStrings Read FSQL Write SetSQL;
+    // Database connection to use for the resource. Will be appended to URL.
     property DatabaseConnection : String Read FDatabaseConnection Write FDatabaseConnection;
+    // Parameters to send (use for filtering)
     Property Params : TQueryParams Read FParams Write SetParams;
+    {
+      If you want to get a single resource, set the ID of the resource here.
+      This is equivalent to setting a parameter ID to the specified value.
+    }
+    Property ResourceID : String Read FResourceID Write SetResourceID;
+    // Get additional parameters with this event.
     Property OnGetQueryParams : TGetQueryParamsEvent Read FOnGetQueryParams Write FOnGetQueryParams;
+    // Always immediatly call ApplyUpdates after post and delete.
+    Property AutoApplyUpdates : Boolean Read FAutoApplyUpdates Write FAutoApplyUpdates;
   end;
 
 implementation
+
+uses DateUtils;
 
 Type
 
@@ -170,10 +190,37 @@ begin
 end;
 
 function TQueryParam.AsQuery: String;
+
+var
+  S : String;
+  B : TBytes;
+  I : Integer;
+
 begin
   Result:='';
-  if Enabled then
-    Result:=Name+'='+encodeURIComponent(AsString);
+  if Not Enabled then
+    exit;
+  Case DataType of
+    ftInteger : Result:=IntToStr(AsInteger);
+    ftAutoInc,
+    ftLargeInt : Result:=IntToStr(AsLargeInt);
+    ftBoolean : Result:=IntToStr(Ord(AsBoolean));
+    ftFloat : Str(asFloat,Result);
+    ftDate : Result:=DateToISO8601(asDateTime);
+    ftTime : Result:=DateToISO8601(asDateTime);
+    ftDateTime : Result:=DateToISO8601(asDateTime);
+    ftBlob :
+         begin
+         B:=AsBlob;
+         Result:='';
+         For I:=0 to Length(B)-1 do
+           Result:=TJSString(Result).Concat(TJSString.fromCharCode(B[I]));
+         end;
+    ftMemo : Result:=AsMemo;
+  else
+    Result:=AsString
+  end;
+  Result:=Name+'='+encodeURIComponent(AsString);
 end;
 
 { TQueryParams }
@@ -361,6 +408,13 @@ begin
   FParams.Assign(AValue);
 end;
 
+procedure TSQLDBRestDataset.SetResourceID(AValue: String);
+begin
+  if FResourceID=AValue then Exit;
+  CheckInactive;
+  FResourceID:=AValue;
+end;
+
 function TSQLDBRestDataset.GetURLQueryParams(IsRead :Boolean) : string;
 
   Procedure AddToResult(aQuery : string);
@@ -381,7 +435,7 @@ begin
   if IsRead then
     begin
     if SameText(ResourceName,CustomViewResourceName) then
-      AddToResult('SQL'+EncodeURIComponent(CleanSQL));
+      AddToResult('SQL='+EncodeURIComponent(CleanSQL));
     For I:=0 to Params.Count-1 do
       AddToResult(Params[I].AsQuery);
     end;
@@ -399,6 +453,8 @@ begin
   if (Result<>'') and (Result[Length(Result)]<>'/') then
     Result:=Result+'/';
   Result:=Result+ResourceName;
+  if IsRead and (ResourceID<>'') then
+    Result:=Result+'/'+EncodeURIComponent(ResourceID);
   Qry:=GetURLQueryParams(IsRead);
   if Qry<>'' then
     Result:=Result+'?'+Qry;
@@ -440,6 +496,20 @@ procedure TSQLDBRestDataset.SetSQL(AValue: TStrings);
 begin
   if FSQL=AValue then Exit;
   FSQL.Assign(AValue);
+end;
+
+procedure TSQLDBRestDataset.DoAfterPost;
+begin
+  inherited DoAfterPost;
+  if AutoApplyUpdates then
+    ApplyUpdates;
+end;
+
+procedure TSQLDBRestDataset.DoAfterDelete;
+begin
+  inherited DoAfterDelete;
+  if AutoApplyUpdates then
+    ApplyUpdates;
 end;
 
 function TSQLDBRestDataset.CreateQueryParams: TQueryParams;

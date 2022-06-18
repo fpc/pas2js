@@ -1701,7 +1701,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure scrollIntoView(aObj : TJSObject);
     procedure scrollIntoView(Opts: TJSScrollIntoViewOptions);
     property dataset : TJSObject read FDataset;
-    property isContentEditable : Boolean read FIsContentEditable;
+    property isContentEditable : Boolean read FIsContentEditable Write FIsContentEditable;
     property offsetHeight : Double Read FOffsetHeight;
     property offsetLeft : Double Read FOffsetLeft;
     property offsetTop : Double Read FOffsetTop;

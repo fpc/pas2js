@@ -1,6 +1,7 @@
 unit htmlfragment;
 
 {$mode ObjFPC}
+{$INTERFACES CORBA}
 
 interface
 
@@ -11,6 +12,15 @@ Type
   TCustomHTMLFragment = class;
 
   { TFragmentHandler }
+    IRendered = Interface
+    Procedure HTMLAvailable;
+  end;
+
+  IFragmentClient = Interface ['{984EDD58-4F93-40BA-A757-06AC293D11F9}']
+    Procedure HTMLLoaded;
+    Procedure HTMLRendered;
+  end;
+
 
   TFragmentHandler = Class(TObject)
   Private
@@ -66,6 +76,7 @@ Type
     procedure SetUseProjectHTML(AValue: Boolean);
   Protected
     procedure CheckRendered(const aOperation: string);
+    procedure DoOnHTMLLoaded; virtual;
     procedure DoOnRender; virtual;
     procedure DoOnUnRender; virtual;
     procedure DoRender; virtual;
@@ -270,9 +281,16 @@ end;
 
 procedure TCustomHTMLFragment.DoOnRender;
 
+Var
+  I : Integer;
+  aClient : IFragmentClient;
+
 begin
   if Assigned(FOnRendered) then
     FOnRendered(Self);
+  For I:=0 to ComponentCount-1 do
+    if Supports(Components[i],IFRagmentClient,aClient) then
+      aClient.HTMLRendered;
 end;
 
 procedure TCustomHTMLFragment.DoOnUnRender;
@@ -333,14 +351,28 @@ begin
   DoOnUnRender;
 end;
 
+procedure TCustomHTMLFragment.DoOnHTMLLoaded;
+
+Var
+  I : Integer;
+  aClient : IFragmentClient;
+
+begin
+  if Assigned(FOnHTMLLoaded) then
+    FOnHTMLLoaded(Self);
+  For I:=0 to ComponentCount-1 do
+    if Supports(Components[i],IFRagmentClient,aClient) then
+      aClient.HTMLLoaded;
+end;
+
 procedure TCustomHTMLFragment.Show;
 
   Procedure DoStartRender(Sender : TObject; const aName : string);
 
   begin
-    FTemplate:=GlobalTemplates[aName];
-    if Assigned(FOnHTMLLoaded) then
-      FOnHTMLLoaded(Self);
+    if not UseProjectHTMLFile then
+      FTemplate:=GlobalTemplates[aName];
+    DoOnHTMLLoaded;
     Render;
   end;
 
@@ -349,11 +381,7 @@ Var
 
 begin
   if UseProjectHTMLFile then
-    begin
-    if Assigned(FOnHTMLLoaded) then
-      FOnHTMLLoaded(Self);
-    Render;
-    end
+    DoStartRender(GlobalTemplates,N)
   else
     begin
     N:=TemplateName;

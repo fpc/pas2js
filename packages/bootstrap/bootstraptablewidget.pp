@@ -928,7 +928,6 @@ var
   function Moustache(const match, pattern: string; offset: Integer; AString: string): string;
   begin
     Result:=String(Row[pattern]);
-    Result := '';
   end;
 
 begin

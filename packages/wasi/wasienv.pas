@@ -769,7 +769,7 @@ Var
 
 begin
   lowWord:=value;
-  highWord:=0;
+  highWord:=value shr 32;
   if LittleEndian then
     begin
     view.setUint32(ByteOffset+0, lowWord, littleEndian);
@@ -801,6 +801,7 @@ begin
   WASI_CLOCK_THREAD_CPUTIME_ID:
     Result:=TJSDate.Now;
   end;
+  Result:=Result*1000000
 end;
 
 

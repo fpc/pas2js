@@ -255,12 +255,21 @@ type
     Property Defs[aIndex : Integer] : TJSONIndexDef Read GetD Write SetD; default;
   end;
 
+  TBlobFormat = (bfHex, bfBase64, bfBytes, bfCustom);
+  TBlobFormats = Set of TBlobFormat;
+
+  TOnDecodeBlobBytesEvent = Procedure (Sender : TDataset; aValue : JSValue; var aData : TBytes) of object;
+  TOnEncodeBlobBytesEvent = Procedure (Sender : TDataset; aData : TBytes; var aValue : JSValue) of object;
+
   // basic JSON dataset. Does nothing ExtJS specific.
   TBaseJSONDataSet = class (TDataSet)
   private
     FActiveIndex: String;
+    FBlobFormat: TBlobFormat;
     FIndexes: TJSONIndexDefs;
     FMUS: Boolean;
+    FOnDecodeBlobValue: TOnDecodeBlobBytesEvent;
+    FOnEncodeBlobValue: TOnEncodeBlobBytesEvent;
     FOwnsData : Boolean;
     FDefaultIndex : TJSONIndex; // Default index, built from array
     FCurrentIndex : TJSONIndex; // Currently active index.
@@ -287,6 +296,8 @@ type
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
+    Function BlobDataToBytes(aValue : JSValue) : TBytes; override;
+    Function BytesToBlobData(aValue : TBytes) : JSValue ; override;
     // Remove calculated fields from buffer
     procedure RemoveCalcFields(Buf: JSValue);
     procedure ActivateIndex(Build : Boolean);
@@ -375,6 +386,12 @@ type
     Property Indexes : TJSONIndexDefs Read FIndexes Write SetIndexes;
     // Active index name. Set to empty for default index.
     Property ActiveIndex : String Read FActiveIndex Write SetActiveIndex;
+    // Blob format returned by server
+    Property BlobFormat : TBlobFormat Read FBlobFormat Write FBlobFormat;
+    // Called when BlobFormat is custom to decode incoming server data to TBytes
+    Property OnDecodeBlobValue : TOnDecodeBlobBytesEvent Read FOnDecodeBlobValue Write FOnDecodeBlobValue;
+    // Called when BlobFormat is custom to encode TBytes to server data.
+    Property OnEncodeBlobValue : TOnEncodeBlobBytesEvent Read FOnEncodeBlobValue Write FOnEncodeBlobValue;
   public
     constructor Create (AOwner: TComponent); override;
     destructor Destroy; override;
@@ -419,6 +436,9 @@ type
     property OnPostError;
     Property OnRecordResolved;
     property OnLoadFail;
+    Property BlobFormat;
+    Property OnDecodeBlobValue;
+    Property OnEncodeBlobValue;
   end;
 
   { TJSONObjectFieldMapper }
@@ -446,6 +466,9 @@ type
 implementation
 
 uses DateUtils;
+
+Function atob (s : String) : string; external name 'atob';
+Function btoa (s : String) : string; external name 'btoa';
 
 { TJSONIndexDef }
 
@@ -1135,6 +1158,55 @@ begin
   if FRowType=AValue then Exit;
   CheckInactive;
   FRowType:=AValue;
+end;
+
+
+
+function TBaseJSONDataSet.BlobDataToBytes(aValue: JSValue): TBytes;
+
+Var
+  S : String;
+  Arr : TJSUint8Array;
+  I : Integer;
+
+begin
+  Result:=[];
+  Case BlobFormat of
+  bfHex:
+    Result:=DefaultBlobDataToBytes(aValue);
+  bfBase64:
+    Result:=BytesOf(atob(String(aValue)));
+  bfBytes:
+    Result:=TBytes(aValue);
+  bfCustom:
+    if Assigned(FOnDecodeBlobValue) then
+      FOnDecodeBlobValue(Self,aValue,Result);
+  end;
+end;
+
+function TBaseJSONDataSet.BytesToBlobData(aValue: TBytes): JSValue;
+
+Var
+  S : String;
+  Arr : TJSUint8Array;
+  I : Integer;
+  Buf : TJSArrayBuffer;
+
+begin
+  Result:='';
+  Case BlobFormat of
+  bfHex:
+    Result:=DefaultBytesToBlobData(aValue);
+  bfBase64:
+    begin
+    Result:=BtoA(StringOf(aValue));
+    end;
+  bfBytes:
+    Result:=TBytes(aValue);
+  bfCustom:
+    if Assigned(FOnEncodeBlobValue) then
+      FOnEncodeBlobValue(Self,aValue,Result);
+  end;
 end;
 
 function TBaseJSONDataSet.ConvertDateTimeToNative(aField : TField; aValue: TDateTime): JSValue;

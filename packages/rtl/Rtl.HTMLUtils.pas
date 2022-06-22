@@ -4,6 +4,13 @@ interface
 
 uses JS, Web, SysUtils, DateUtils, Types;
 
+Type
+  IHTMLClient = Interface ['{984EDD58-4F93-40BA-A757-06AC293D11F9}']
+    Procedure HTMLLoaded;
+    Procedure HTMLRendered;
+  end;
+
+
 { ----------------------------------------------------------------------
   HTML tag manipulation
   ----------------------------------------------------------------------}
@@ -47,6 +54,7 @@ Function ExtractDate(S: String): TDateTime;
 Function ExtractTime(S: String): TDateTime;
 
 Function FormatHTMLDate(aDateTime : TDateTime; ZeroAsEmpty : Boolean = True) : string;
+Function FormatHTMLTime(aDateTime : TDateTime; ZeroAsEmpty : Boolean = True) : string;
 
 
 
@@ -93,6 +101,15 @@ begin
     Result:=''
   else
     Result:=FormatDateTime('yyyy"-"mm"-"dd',aDateTime);
+end;
+
+Function FormatHTMLTime(aDateTime : TDateTime; ZeroAsEmpty : Boolean = True) : string;
+
+begin
+  if (Trunc(aDateTime)=0) and (ZeroAsEmpty) then
+    Result:=''
+  else
+    Result:=FormatDateTime('hh":"nn"',aDateTime);
 end;
 
 Function ExtractDate(S: String): TDateTime;

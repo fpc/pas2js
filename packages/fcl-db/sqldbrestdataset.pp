@@ -125,6 +125,7 @@ Type
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     Class Function DefaultBlobDataToBytes(aValue : JSValue) : TBytes; override;
+    Class Function DefaultBytesToBlobData(aValue : TBytes) : JSValue; override;
     Function ParamByName(const aName : String) : TQueryParam;
   Published
     // Connection to use to get data
@@ -524,6 +525,12 @@ begin
   Result:=BytesOf(Window.atob(String(aValue)));
 end;
 
+class function TSQLDBRestDataset.DefaultBytesToBlobData(aValue: TBytes
+  ): JSValue;
+begin
+  Result:=Window.Btoa(StringOf(aValue));
+end;
+
 function TSQLDBRestDataset.ParamByName(const aName: String): TQueryParam;
 begin
   Result:=TQueryParam(Params.ParamByName(aName));
@@ -644,6 +651,7 @@ begin
   FSQL:=TStringList.Create;
   TStringList(FSQL).OnChange:=@DoSQLChange;
   FParams:=CreateQueryParams;
+  BlobFormat:=bfBase64;
 end;
 
 destructor TSQLDBRestDataset.Destroy;

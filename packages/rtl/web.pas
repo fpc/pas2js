@@ -38,7 +38,6 @@ Type
   TJSPointerEvent = Class;
   TJSUIEvent = class;
   TJSTouchEvent = Class;
-  TJSBlob = class;
   TJSPermissions = class;
   TJSFileSystemFileHandle = class;
   TJSFileSystemFileHandleArray = array of TJSFileSystemFileHandle;
@@ -62,6 +61,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 *)
   TJSEvent = weborworker.TJSEvent;
   TEventListenerEvent = TJSEvent;
+  TJSBlob = weborworker.TJSBlob;
 
   TJSEventHandler = reference to function(Event: TEventListenerEvent): boolean; safecall;
   TJSRawEventHandler = reference to Procedure(Event: TJSEvent); safecall;
@@ -1595,9 +1595,18 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
 
   { TJSHTMLElement }
 
+  TJSDatasetMap = class external name 'Object' (TJSObject)
+  Private
+    function GetProps(Name: String): String; external name '[]';
+    procedure SetProps(Name: String; const AValue: String); external name '[]';
+  Public
+    property Map[Name: String]: string read GetProps write SetProps; default;
+  end;
+
   TJSHTMLElement = class external name 'HTMLElement' (TJSElement)
   private
-    FDataset: TJSObject ; external name 'dataset';
+    FDataset: TJSDatasetMap ; external name 'dataset';
+    FDatasetObj: TJSObject ; external name 'dataset';
     FIsContentEditable: Boolean ; external name 'isContentEditable';
     FOffsetHeight: Double; external name 'offsetHeight';
     FOffsetLeft: Double; external name 'offsetLeft';
@@ -1700,8 +1709,9 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     procedure scrollIntoView(alignToTop : Boolean);
     procedure scrollIntoView(aObj : TJSObject);
     procedure scrollIntoView(Opts: TJSScrollIntoViewOptions);
-    property dataset : TJSObject read FDataset;
-    property isContentEditable : Boolean read FIsContentEditable Write FIsContentEditable;
+    property dataset : TJSDatasetMap read FDataset;
+    property datasetObj : TJSObject read FDatasetObj;
+    property isContentEditable : Boolean read FIsContentEditable;
     property offsetHeight : Double Read FOffsetHeight;
     property offsetLeft : Double Read FOffsetLeft;
     property offsetTop : Double Read FOffsetTop;
@@ -1771,23 +1781,6 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     property valueMissing : Boolean read FValueMissing;
   end;
 
-  { TJSBlob }
-
-  TJSBlob = class external name 'Blob' (TJSEventTarget)
-  private
-    FSize: NativeInt; external name 'size';
-    FType: string; external name  'type';
-  Public
-    procedure close;
-    function slice : TJSBlob; overload;
-    function slice(aStart : NativeInt) : TJSBlob; overload;
-    function slice(aStart,aEnd : NativeInt) : TJSBlob; overload;
-    function slice(aStart,aEnd : NativeInt; AContentType : String) : TJSBlob; overload;
-    function arrayBuffer : TJSPromise;
-    property size : NativeInt read FSize;
-    property _type : string read FType; deprecated;
-    property type_ : string read FType;
-  end;
 
   { TJSHTMLFile }
 

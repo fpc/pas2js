@@ -6,20 +6,13 @@ unit htmlfragment;
 interface
 
 uses
-  {$ifdef pas2js} web,{$endif} Classes, SysUtils;
+  {$ifdef pas2js} web,{$endif} Classes, SysUtils, Rtl.HTMLUtils;
 
 Type
   TCustomHTMLFragment = class;
 
   { TFragmentHandler }
-    IRendered = Interface
-    Procedure HTMLAvailable;
-  end;
-
-  IFragmentClient = Interface ['{984EDD58-4F93-40BA-A757-06AC293D11F9}']
-    Procedure HTMLLoaded;
-    Procedure HTMLRendered;
-  end;
+  IFragmentClient = Rtl.HTMLUtils.IHTMLClient;
 
 
   TFragmentHandler = Class(TObject)

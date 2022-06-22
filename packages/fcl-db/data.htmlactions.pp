@@ -155,6 +155,8 @@ Type
 
 Implementation
 
+uses strutils, rtl.HTMLUtils;
+
 { TButtonActionDataLink }
 
 procedure TButtonActionDataLink.EditingChanged;
@@ -389,15 +391,57 @@ begin
 end;
 
 procedure TDBCustomHTMLInputElementAction.ElementToDataset;
+
+Var
+  F : TField;
+  E : TJSHTMLElement;
+  EI : TJSHTMLInputElement absolute E;
+
 begin
-  if Assigned(Field) then
-    Field.AsString:=Value;
+  F:=Field;
+  E:=Element;
+  if Not Assigned(F) then
+    exit;
+  if E is TJSHTMLInputElement then
+    begin
+    if (EI._type='checkbox') then
+      F.AsBoolean:=EI.Checked
+    else if SameText(EI._type,'date')then
+      Field.AsDateTime:=ExtractDate(EI.value)
+    else if SameText(EI._type,'time')then
+      Field.AsDateTime:=ExtractTime(EI.value)
+    else
+      F.AsString:=Value;
+    end
+  else
+    F.AsString:=Value;
 end;
 
 procedure TDBCustomHTMLInputElementAction.DatasetToElement;
+
+Var
+  F : TField;
+  E : TJSHTMLElement;
+  EI : TJSHTMLInputElement absolute E;
+
 begin
-  if Assigned(Field) then
-    Value:=Field.AsString;
+  F:=Field;
+  E:=Element;
+  if Not Assigned(F) then
+    Exit;
+  if E is TJSHTMLInputElement then
+    begin
+    if (EI._type='checkbox') then
+      EI.Checked:=F.AsBoolean
+    else if SameText(EI._type,'date') then
+      EI.Value:=FormatHTMLDate(F.AsDateTime)
+    else if SameText(EI._type,'time') then
+      EI.Value:=FormatHTMLTime(F.AsDateTime)
+    else
+      Value:=Field.AsString;
+    end
+  else
+    Self.Value:=Field.AsString;
 end;
 
 procedure TDBCustomHTMLInputElementAction.DoKeyDown(aEvent : TJSEvent);

@@ -29,7 +29,7 @@ Type
    TForeachHTMLElementDataEx = {$ifdef pas2js}reference to {$endif} procedure (aElement : TJSHTMLElement; aData : TObject);
    TForeachHTMLElementData = {$ifdef pas2js}reference to {$endif} procedure (aElement : TJSHTMLElement);
 
-   THTMLCustomElementAction = class(TComponent)
+   THTMLCustomElementAction = class(TComponent,IHTMLClient)
    private
      FActionList: THTMLCustomElementActionList;
      FCSSSelector: String;
@@ -58,9 +58,12 @@ Type
      Procedure DoBind;
      Procedure DoBeforeBind; virtual;
      Procedure DoAfterBind; virtual;
+
    Public
      Destructor Destroy; override;
      Class Function GetElementValue(aElement : TJSHTMLElement) : String; virtual;
+     procedure HTMLLoaded;
+     procedure HTMLRendered;
      Class Procedure SetElementValue(aElement : TJSHTMLElement; const aValue : String; asHTML : Boolean = false); virtual;
      function GetParentComponent: TComponent; override;
      function HasParent: Boolean; override;
@@ -404,6 +407,16 @@ class function THTMLCustomElementAction.GetElementValue(aElement: TJSHTMLElement
   ): String;
 begin
   Result:=aElement.InputValue;
+end;
+
+procedure THTMLCustomElementAction.HTMLLoaded;
+begin
+  // Do nothing
+end;
+
+procedure THTMLCustomElementAction.HTMLRendered;
+begin
+  Bind;
 end;
 
 class procedure THTMLCustomElementAction.SetElementValue(

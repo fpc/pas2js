@@ -1002,7 +1002,7 @@ begin
   aImports['random_get']:=@random_get;
   aImports['sched_yield']:=@sched_yield;
   aImports['sock_recv']:=@sock_recv;
-  aImports['sock_recv']:=@sock_recv;
+  aImports['sock_send']:=@sock_send;
   aImports['sock_shutdown']:=@sock_shutdown;
 end;
 

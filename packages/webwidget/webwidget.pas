@@ -2314,7 +2314,7 @@ Var
 begin
   el:=Element;
   if Assigned(El) then
-    Result:=String(El.Dataset[aName])
+    Result:=El.Dataset[aName]
   else
     Result:='';
 end;

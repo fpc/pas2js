@@ -446,9 +446,12 @@ const
   MinsPerHour = 60;
   SecsPerMin  = 60;
   MSecsPerSec = 1000;
+  
   MinsPerDay  = HoursPerDay * MinsPerHour;
+  SecsPerHour = SecsPerMin * MinsPerHour;
   SecsPerDay  = MinsPerDay * SecsPerMin;
   MSecsPerDay = SecsPerDay * MSecsPerSec;
+  
   MaxDateTime: TDateTime =  2958465.99999999;
   MinDateTime: TDateTime =  -693593.99999999;
 

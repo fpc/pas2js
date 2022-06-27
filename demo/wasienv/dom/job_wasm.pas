@@ -103,18 +103,6 @@ type
     function AsString: string; override;
   end;
 
-  TJOBCallback = function(const aMethod: TMethod; Args: PByte): PByte;
-
-  { TJOB_JSValueMethod }
-
-  TJOB_JSValueMethod = class(TJOB_JSValue)
-  public
-    Value: TMethod;
-    Invoke: TJOBCallback;
-    constructor Create(const aMethod: TMethod; const AnInvoke: TJOBCallback);
-    function AsString: string; override;
-  end;
-
   TJOBInvokeType = (
     jiCall,  // call function
     jiGet, // read property
@@ -126,6 +114,44 @@ type
 
   TJSObject = class;
   TJSObjectClass = class of TJSObject;
+
+  { TJOBCallbackHelper - parse callback arguments and create result }
+
+  TJOBCallbackHelper = record
+    p: PByte;
+    Index: integer;
+    Count: integer;
+    procedure Init(Args: PByte);
+    function GetType: byte; // see JOBArg* constants, keeps p
+    procedure Skip;
+    function GetBoolean: boolean;
+    function GetDouble: double;
+    function GetString: UnicodeString;
+    function GetObject(aResultClass: TJSObjectClass): TJSObject;
+    function GetValue: TJOB_JSValue;
+
+    function AllocUndefined: PByte;
+    function AllocBool(b: boolean): PByte;
+    function AllocLongint(i: longint): PByte;
+    function AllocDouble(const d: double): PByte;
+    function AllocString(const s: UnicodeString): PByte;
+    function AllocNil: PByte;
+    function AllocIntf(Intf: IJSObject): PByte;
+    function AllocObject(Obj: TJSObject): PByte;
+    function AllocObjId(ObjId: TJOBObjectID): PByte;
+  end;
+
+  TJOBCallback = function(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+
+  { TJOB_JSValueMethod }
+
+  TJOB_JSValueMethod = class(TJOB_JSValue)
+  public
+    Value: TMethod;
+    Invoke: TJOBCallback;
+    constructor Create(const aMethod: TMethod; const AnInvoke: TJOBCallback);
+    function AsString: string; override;
+  end;
 
   { IJSObject }
 
@@ -230,32 +256,6 @@ type
     procedure WriteJSPropertyValue(const aName: string; Value: TJOB_JSValue); virtual;
     // create a new object using the new-operator
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
-  end;
-
-  { TJOBCallbackHelper - parse callback arguments and create result }
-
-  TJOBCallbackHelper = record
-    p: PByte;
-    Index: integer;
-    Count: integer;
-    procedure Init(Args: PByte);
-    function GetType: byte; // see JOBArg* constants, keeps p
-    procedure Skip;
-    function GetBoolean: boolean;
-    function GetDouble: double;
-    function GetString: UnicodeString;
-    function GetObject(aResultClass: TJSObjectClass): TJSObject;
-    function GetValue: TJOB_JSValue;
-
-    function AllocUndefined: PByte;
-    function AllocBool(b: boolean): PByte;
-    function AllocLongint(i: longint): PByte;
-    function AllocDouble(const d: double): PByte;
-    function AllocString(const s: UnicodeString): PByte;
-    function AllocNil: PByte;
-    function AllocIntf(Intf: IJSObject): PByte;
-    function AllocObject(Obj: TJSObject): PByte;
-    function AllocObjId(ObjId: TJOBObjectID): PByte;
   end;
 
 var
@@ -380,13 +380,15 @@ function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte
   ): PByte;
 var
   m: TMethod;
+  h: TJOBCallbackHelper;
 begin
   Result:=nil;
   try
     //writeln('JOBCallback');
     m.Data:=Data;
     m.Code:=Code;
-    Result:=Func(m,Args);
+    h.Init(Args);
+    Result:=Func(m,h);
   finally
     if Args<>nil then
       FreeMem(Args);

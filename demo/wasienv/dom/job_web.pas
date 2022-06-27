@@ -146,31 +146,27 @@ var
   JSDocument: TJSDocument;
   JSWindow: TJSWindow;
 
-function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod; Args: PByte): PByte;
-function JOBCallTJSEventHandler(const aMethod: TMethod; Args: PByte): PByte;
+function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+function JOBCallTJSEventHandler(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
 
 implementation
 
-function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod; Args: PByte
-  ): PByte;
+function JOBCallTJSHTMLClickEventHandler(const aMethod: TMethod;
+  var H: TJOBCallbackHelper): PByte;
 var
-  h: TJOBCallbackHelper;
   Event: IJSMouseEvent;
 begin
-  h.Init(Args);
-  Event:=h.GetObject(TJSMouseEvent) as IJSMouseEvent;
-  Result:=h.AllocBool(TJSHTMLClickEventHandler(aMethod)(Event));
+  Event:=H.GetObject(TJSMouseEvent) as IJSMouseEvent;
+  Result:=H.AllocBool(TJSHTMLClickEventHandler(aMethod)(Event));
 end;
 
-function JOBCallTJSEventHandler(const aMethod: TMethod; Args: PByte
-  ): PByte;
+function JOBCallTJSEventHandler(const aMethod: TMethod;
+  var H: TJOBCallbackHelper): PByte;
 var
-  h: TJOBCallbackHelper;
   Event: IJSEventListenerEvent;
 begin
-  h.Init(Args);
-  Event:=h.GetObject(TJSEventListenerEvent) as IJSEventListenerEvent;
-  Result:=h.AllocBool(TJSEventHandler(aMethod)(Event));
+  Event:=H.GetObject(TJSEventListenerEvent) as IJSEventListenerEvent;
+  Result:=H.AllocBool(TJSEventHandler(aMethod)(Event));
 end;
 
 { TJSEventTarget }

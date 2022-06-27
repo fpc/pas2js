@@ -49,7 +49,7 @@ const
     'Double',
     'String',
     'Object',
-    'Callback'
+    'Method'
     );
 
   JOB_Undefined = Pointer(1);
@@ -209,6 +209,7 @@ type
     function InvokeJSValueResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): TJOB_JSValue; virtual;
     function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): String; virtual;
     function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): LongInt; virtual;
+    function InvokeJSMaxIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): int64; virtual;
     function InvokeJSTypeOf(const aName: string; Const Args: Array of const): TJOBResult; virtual;
     // read a property
     function ReadJSPropertyBoolean(const aName: string): boolean; virtual;
@@ -217,6 +218,7 @@ type
     function ReadJSPropertyObject(const aName: string; aResultClass: TJSObjectClass): TJSObject; virtual;
     function ReadJSPropertyUtf8String(const aName: string): string; virtual;
     function ReadJSPropertyLongInt(const aName: string): LongInt; virtual;
+    function ReadJSPropertyInt64(const aName: string): Int64; virtual;
     function ReadJSPropertyValue(const aName: string): TJOB_JSValue; virtual;
     // write a property
     procedure WriteJSPropertyBoolean(const aName: string; Value: Boolean); virtual;
@@ -1383,6 +1385,18 @@ begin
     Result:=Trunc(d);
 end;
 
+function TJSObject.InvokeJSMaxIntResult(const aName: string;
+  const args: array of const; Invoke: TJOBInvokeType): int64;
+var
+  d: Double;
+begin
+  d:=InvokeJSDoubleResult(aName,Args,Invoke);
+  if (Frac(d)<>0) or (d<low(int64)) or (d>high(int64)) then
+    InvokeJS_RaiseResultMismatchStr(aName,'int64','double')
+  else
+    Result:=Trunc(d);
+end;
+
 function TJSObject.InvokeJSTypeOf(const aName: string;
   const Args: array of const): TJOBResult;
 begin
@@ -1419,6 +1433,11 @@ end;
 function TJSObject.ReadJSPropertyLongInt(const aName: string): LongInt;
 begin
   Result:=InvokeJSLongIntResult(aName,[],jiGet);
+end;
+
+function TJSObject.ReadJSPropertyInt64(const aName: string): Int64;
+begin
+  Result:=Trunc(InvokeJSDoubleResult(aName,[],jiGet));
 end;
 
 function TJSObject.ReadJSPropertyValue(const aName: string): TJOB_JSValue;

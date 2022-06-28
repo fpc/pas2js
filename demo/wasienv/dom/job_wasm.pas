@@ -129,6 +129,8 @@ type
     function GetString: UnicodeString;
     function GetObject(aResultClass: TJSObjectClass): TJSObject;
     function GetValue: TJOB_JSValue;
+    function GetLongInt: longint;
+    function GetMaxInt: int64;
 
     function AllocUndefined: PByte;
     function AllocBool(b: boolean): PByte;
@@ -180,7 +182,7 @@ type
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
     procedure WriteJSPropertyUnicodeString(const aName: string; const Value: UnicodeString); virtual;
     procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
-    procedure WriteJSPropertyObject(const aName: string; Value: TJSObject); virtual;
+    procedure WriteJSPropertyObject(const aName: string; Value: IJSObject); virtual;
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
   end;
@@ -251,7 +253,7 @@ type
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
     procedure WriteJSPropertyUnicodeString(const aName: string; const Value: UnicodeString); virtual;
     procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
-    procedure WriteJSPropertyObject(const aName: string; Value: TJSObject); virtual;
+    procedure WriteJSPropertyObject(const aName: string; Value: IJSObject); virtual;
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
     procedure WriteJSPropertyValue(const aName: string; Value: TJOB_JSValue); virtual;
     // create a new object using the new-operator
@@ -590,6 +592,28 @@ begin
     raise EJSArgParse.Create(JOBArgNames[p^]);
   end;
   inc(Index);
+end;
+
+function TJOBCallbackHelper.GetLongInt: longint;
+var
+  d: Double;
+begin
+  d:=GetDouble;
+  if (Frac(d)<>0) or (d<low(longint)) or (d>high(longint)) then
+    raise EJSArgParse.Create('expected longint, but got double')
+  else
+    Result:=Trunc(d);
+end;
+
+function TJOBCallbackHelper.GetMaxInt: int64;
+var
+  d: Double;
+begin
+  d:=GetDouble;
+  if (Frac(d)<>0) or (d<low(int64)) or (d>high(int64)) then
+    raise EJSArgParse.Create('expected int64, but got double')
+  else
+    Result:=Trunc(d);
 end;
 
 function TJOBCallbackHelper.AllocUndefined: PByte;
@@ -1469,7 +1493,7 @@ begin
   InvokeJSNoResult(aName,[Value],jiSet);
 end;
 
-procedure TJSObject.WriteJSPropertyObject(const aName: string; Value: TJSObject
+procedure TJSObject.WriteJSPropertyObject(const aName: string; Value: IJSObject
   );
 begin
   InvokeJSNoResult(aName,[Value],jiSet);

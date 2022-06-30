@@ -67,6 +67,9 @@
       </Options>
     </Linking>
     <Other>
+      <OtherDefines Count="1">
+        <Define0 Value="VerboseInvokeJSArgs"/>
+      </OtherDefines>
       <CompilerPath Value="/usr/lib/fpc/3.3.1/ppcrosswasm32"/>
     </Other>
   </CompilerOptions>

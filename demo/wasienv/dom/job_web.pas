@@ -174,9 +174,9 @@ end;
 procedure TJSEventTarget.addEventListener(const aName: UnicodeString;
   const aListener: TJSEventHandler);
 var
-  m: TJOB_JSValueMethod;
+  m: TJOB_Method;
 begin
-  m:=TJOB_JSValueMethod.Create(TMethod(aListener),@JOBCallTJSEventHandler);
+  m:=TJOB_Method.Create(TMethod(aListener),@JOBCallTJSEventHandler);
   try
     InvokeJSNoResult('addEventListener',[aName,m]);
   finally
@@ -188,9 +188,9 @@ end;
 
 procedure TJSHTMLElement.set_onclick(const h: TJSHTMLClickEventHandler);
 var
-  cb1: TJOB_JSValueMethod;
+  cb1: TJOB_Method;
 begin
-  cb1:=TJOB_JSValueMethod.Create(TMethod(h),@JOBCallTJSHTMLClickEventHandler);
+  cb1:=TJOB_Method.Create(TMethod(h),@JOBCallTJSHTMLClickEventHandler);
   try
     WriteJSPropertyValue('onclick',cb1);
   finally
@@ -276,9 +276,9 @@ end;
 procedure TJSWindow.addEventListener(const aName: UnicodeString;
   const aListener: TJSEventHandler);
 var
-  cb1: TJOB_JSValueMethod;
+  cb1: TJOB_Method;
 begin
-  cb1:=TJOB_JSValueMethod.Create(TMethod(aListener),@JOBCallTJSEventHandler);
+  cb1:=TJOB_Method.Create(TMethod(aListener),@JOBCallTJSEventHandler);
   try
     InvokeJSNoResult('addEventListener',[aName,cb1]);
   finally

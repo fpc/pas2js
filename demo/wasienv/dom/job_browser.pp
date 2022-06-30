@@ -191,7 +191,9 @@ var
   Obj: TJSObject;
   fn: JSValue;
 begin
+  {$IFDEF VerboseJOB}
   writeln('TJOBBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',NameP,' FuncNameLen=',NameLen,' ArgsP=',ArgsP,' Invoke=',Invoke);
+  {$ENDIF}
 
   Obj:=FindObject(ObjId);
   if Obj=nil then
@@ -201,7 +203,9 @@ begin
   aBytes:=TJSUint8Array.New(View.buffer, NameP, NameLen);
   //writeln('TJOBBridge.Invoke_JSResult aBytes=',aBytes);
   PropName:=TypedArrayToString(aBytes);
+  {$IFDEF VerboseJOB}
   writeln('TJOBBridge.Invoke_JSResult PropName="',PropName,'"');
+  {$ENDIF}
 
   case Invoke of
   JOBInvokeCall:
@@ -360,14 +364,20 @@ var
   b: byte;
   NewId: TJOBObjectID;
 begin
+  {$IFDEF VerboseJOB}
   writeln('TJOBBridge.Invoke_JSValueResult START');
+  {$ENDIF}
   // invoke
   Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
+  {$IFDEF VerboseJOB}
   writeln('TJOBBridge.Invoke_JSValueResult JSResult=',JSResult);
+  {$ENDIF}
   if Result<>JOBResult_Success then
     exit;
   Result:=GetJOBResult(JSResult);
+  {$IFDEF VerboseJOB}
   writeln('TJOBBridge.Invoke_JSValueResult Type=',Result);
+  {$ENDIF}
   // set result
   case Result of
   JOBResult_Boolean:
@@ -398,7 +408,9 @@ end;
 
 function TJSObjectBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
 begin
+  {$IFDEF VerboseJOB}
   writeln('TJOBBridge.ReleaseObject ',ObjId);
+  {$ENDIF}
   if ObjId<0 then
     raise EJOBBridge.Create('cannot release a global object');
   if ObjId>=FLocalObjects.Length then
@@ -443,7 +455,7 @@ var
     inc(p,4);
   end;
 
-  function GetArgMethod: TProxyFunc;
+  function ReadArgMethod: TProxyFunc;
   var
     aCall, aData, aCode: TWasmNativeInt;
   begin
@@ -464,76 +476,115 @@ var
       end;
   end;
 
+  function ReadUtf8String: String;
+  var
+    Len, Ptr: TWasmNativeInt;
+    aBytes: TJSUint8Array;
+  begin
+    Len:=ReadWasmNativeInt;
+    Ptr:=ReadWasmNativeInt;
+    aBytes:=TJSUint8Array.New(View.buffer, Ptr,Len);
+    Result:=TypedArrayToString(aBytes);
+  end;
+
+  function ReadUnicodeString: String;
+  var
+    Len, Ptr: TWasmNativeInt;
+    aWords: TJSUint16Array;
+  begin
+    Len:=ReadWasmNativeInt;
+    Ptr:=ReadWasmNativeInt;
+    aWords:=TJSUint16Array.New(View.buffer, Ptr,Len);
+    Result:=TypedArrayToString(aWords);
+  end;
+
+  function ReadValue: JSValue; forward;
+
+  function ReadArgDictionary: JSValue;
+  var
+    Cnt: TWasmNativeInt;
+    CurName: String;
+    i: Integer;
+    aType: Byte;
+  begin
+    Cnt:=ReadWasmNativeInt;
+    Result:=TJSObject.new;
+    for i:=0 to Cnt-1 do
+    begin
+      aType:=View.getUInt8(p);
+      inc(p);
+      if aType<>JOBArgUnicodeString then
+        raise EJOBBridge.Create('dictionary name must be unicodestring, but was '+IntToStr(aType));
+      CurName:=ReadUnicodeString;
+      TJSObject(Result)[CurName]:=ReadValue;
+    end;
+  end;
+
+  function ReadValue: JSValue;
+  var
+    aType: Byte;
+    ObjID: LongInt;
+    Obj: TJSObject;
+  begin
+    aType:=View.getUInt8(p);
+    inc(p);
+    case aType of
+    JOBArgUndefined:
+      Result:=Undefined;
+    JOBArgLongint:
+      begin
+        Result:=View.getInt32(p,env.IsLittleEndian);
+        inc(p,4);
+      end;
+    JOBArgDouble:
+      begin
+        Result:=View.getFloat64(p,env.IsLittleEndian);
+        inc(p,8);
+      end;
+    JOBArgTrue:
+      Result:=true;
+    JOBArgFalse:
+      Result:=false;
+    JOBArgChar:
+      begin
+        Result:=chr(View.getUint16(p,env.IsLittleEndian));
+        inc(p,2);
+      end;
+    JOBArgUTF8String:
+      Result:=ReadUtf8String;
+    JOBArgUnicodeString:
+      Result:=ReadUnicodeString;
+    JOBArgNil:
+      Result:=nil;
+    JOBArgPointer:
+      Result:=ReadWasmNativeInt;
+    JOBArgObject:
+      begin
+        ObjID:=ReadWasmNativeInt;
+        Obj:=FindObject(ObjID);
+        if Obj=nil then
+          raise EJOBBridge.Create('invalid JSObject '+IntToStr(ObjID));
+        Result:=Obj;
+      end;
+    JOBArgMethod:
+      Result:=ReadArgMethod;
+    JOBArgDictionary:
+      Result:=ReadArgDictionary;
+    else
+      raise EJOBBridge.Create('unknown arg type '+IntToStr(aType));
+    end;
+  end;
+
 var
-  Cnt, aType: Byte;
+  Cnt: Byte;
   i: Integer;
-  Len, Ptr: TWasmNativeInt;
-  aBytes: TJSUint8Array;
-  aWords: TJSUint16Array;
-  ObjID: LongInt;
-  Obj: TJSObject;
 begin
   p:=ArgsP;
   Cnt:=View.getUInt8(p);
   inc(p);
   for i:=0 to Cnt-1 do
   begin
-    aType:=View.getUInt8(p);
-    inc(p);
-    case aType of
-    JOBArgUndefined:
-      Result[i]:=Undefined;
-    JOBArgLongint:
-      begin
-        Result[i]:=View.getInt32(p,env.IsLittleEndian);
-        inc(p,4);
-      end;
-    JOBArgDouble:
-      begin
-        Result[i]:=View.getFloat64(p,env.IsLittleEndian);
-        inc(p,8);
-      end;
-    JOBArgTrue:
-      Result[i]:=true;
-    JOBArgFalse:
-      Result[i]:=false;
-    JOBArgChar:
-      begin
-        Result[i]:=chr(View.getUint16(p,env.IsLittleEndian));
-        inc(p,2);
-      end;
-    JOBArgUTF8String:
-      begin
-        Len:=ReadWasmNativeInt;
-        Ptr:=ReadWasmNativeInt;
-        aBytes:=TJSUint8Array.New(View.buffer, Ptr,Len);
-        Result[i]:=TypedArrayToString(aBytes);
-        //writeln('TJOBBridge.GetInvokeArguments UTF8String="',Result[i],'"');
-      end;
-    JOBArgUnicodeString:
-      begin
-        Len:=ReadWasmNativeInt;
-        Ptr:=ReadWasmNativeInt;
-        aWords:=TJSUint16Array.New(View.buffer, Ptr,Len);
-        Result[i]:=TypedArrayToString(aWords);
-      end;
-    JOBArgNil:
-      Result[i]:=nil;
-    JOBArgPointer:
-      Result[i]:=ReadWasmNativeInt;
-    JOBArgObject:
-      begin
-        ObjID:=ReadWasmNativeInt;
-        Obj:=FindObject(ObjID);
-        if Obj=nil then
-          raise Exception.Create('invalid JSObject'+IntToStr(ObjID));
-        Result[i]:=Obj;
-      end;
-    JOBArgMethod:
-      Result[i]:=GetArgMethod;
-    else
-      raise Exception.Create('unknown arg type '+IntToStr(aType));
-    end;
+    Result[i]:=ReadValue;
     //writeln('TJOBBridge.GetInvokeArguments ',i,'/',Cnt,' = ',Result[i]);
   end;
 end;
@@ -551,7 +602,7 @@ begin
   Result:=0;
   if Args.Length=0 then exit;
   if Args.Length>255 then
-    raise Exception.Create('too many arguments');
+    raise EJOBBridge.Create('too many arguments');
 
   // compute needed wasm memory
   Len:=1;
@@ -632,7 +683,7 @@ begin
 end;
 
 function TJSObjectBridge.EatCallbackResult(View: TJSDataView;
-  ResultP: TWasmNativeInt): jsvalue;
+  ResultP: TWasmNativeInt): JSValue;
 var
   p: TWasmNativeInt;
   aType: Byte;

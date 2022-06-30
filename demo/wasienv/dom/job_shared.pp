@@ -72,8 +72,9 @@ const
   JOBArgPointer = 9;
   JOBArgObject = 10; // followed by ObjectID
   JOBArgMethod = 11; // followed by Callback, Data, Code
+  JOBArgDictionary = 12; // followed by count and pairs
 
-  JOBArgNames: array[0..11] of string = (
+  JOBArgNames: array[0..12] of string = (
     'Undefined',
     'Longint',
     'Double',
@@ -85,7 +86,8 @@ const
     'Nil',
     'Pointer',
     'Object',
-    'Method'
+    'Method',
+    'Dictionary'
     );
 
   JOBInvokeCall = 0; // call function
@@ -101,6 +103,7 @@ const
     'New'
     );
 
+  // JS base classes
   JOBObjIdDocument = -1;
   JOBObjIdWindow = -2;
   JOBObjIdConsole = -3;

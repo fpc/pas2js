@@ -582,6 +582,7 @@ begin
   Fenv.OnGetConsoleInputString:=@DoStdRead;
   FMemoryDescriptor.initial:=256;
   FMemoryDescriptor.maximum:=256;
+  FMemoryDescriptor.shared:=False;
   FTableDescriptor.initial:=0;
   FTableDescriptor.maximum:=0;
   FTableDescriptor.element:='anyfunc';

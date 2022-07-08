@@ -14,6 +14,7 @@ Type
   TJSWebAssemblyMemoryDescriptor = record
     initial,
     maximum : integer;
+    shared : Boolean;
   end;
 
   TJSWebAssemblyMemory = class external name 'WebAssembly.Memory' (TJSObject)

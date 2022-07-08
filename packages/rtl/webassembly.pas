@@ -24,6 +24,7 @@ Type
   Public
     constructor new (memorydescriptor : TJSWebAssemblyMemoryDescriptor);
     constructor new (memorydescriptor : TJSObject);
+    Function grow(number : NativeInt) : NativeInt; external name 'grow';
     Property buffer : TJSArrayBuffer Read FBuffer;
     Property length: NativeInt Read FLength;
   end;

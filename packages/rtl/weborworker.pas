@@ -131,6 +131,21 @@ type
   end;
   TJSMessagePortDynArray = Array of TJSMessagePort;
 
+  { TJSMessageEvent }
+
+  TJSMessageEvent = class external name 'MessageEvent' (TJSEvent)
+  private
+    FData: JSValue; external name 'data';
+    FLastEventID: String; external name 'lastEventID';
+    FOrigin: String;  external name 'origin';
+    FPorts: TJSMessagePortDynArray; external name 'ports';
+  Public
+    Property Data : JSValue Read FData;
+    Property LastEventID : String Read FLastEventID;
+    Property Origin : String Read FOrigin;
+    Property Ports : TJSMessagePortDynArray Read FPorts;
+  end;
+
   { TJSExtendableMessageEvent }
 
   TJSExtendableMessageEvent = class external name 'ExtendableMessageEvent' (TJSExtendableEvent)

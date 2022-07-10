@@ -87,6 +87,7 @@ Type
     function GetP(aIndex : Integer): TQueryParam;
     procedure SetP(aIndex : Integer; AValue: TQueryParam);
   Public
+    function AddParam(aName : string; aEnabled : Boolean = False) : TQueryParam;  overload;
     Property Params[aIndex : Integer] : TQueryParam Read GetP Write SetP; default;
   end;
 
@@ -193,7 +194,6 @@ end;
 function TQueryParam.AsQuery: String;
 
 var
-  S : String;
   B : TBytes;
   I : Integer;
 
@@ -221,7 +221,7 @@ begin
   else
     Result:=AsString
   end;
-  Result:=Name+'='+encodeURIComponent(AsString);
+  Result:=Name+'='+Result;
 end;
 
 { TQueryParams }
@@ -234,6 +234,13 @@ end;
 procedure TQueryParams.SetP(aIndex : Integer; AValue: TQueryParam);
 begin
   Items[aIndex]:=aValue;
+end;
+
+function TQueryParams.AddParam(aName: string; aEnabled: Boolean): TQueryParam;
+begin
+  Result:=add As TQueryParam;
+  Result.Name:=aName;
+  Result.Enabled:=aEnabled;
 end;
 
 { TServiceRequest }
@@ -582,8 +589,10 @@ begin
   if Not jsIsNan(toNumber(D)) then
     begin
     Result:=Trunc(toNumber(D));
-    if (Result<=0) then
+    if (Result<0) then
       Raise EJSONDataset.CreateFmt('Invalid maximum length specifier for field %s',[AName])
+    else if Result=0 then // memofield
+      Result:=1000000
     end
   else
     begin

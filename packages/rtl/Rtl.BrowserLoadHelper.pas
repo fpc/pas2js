@@ -47,7 +47,7 @@ class procedure TBrowserLoadHelper.LoadText(aURL: String; aSync: Boolean; OnLoad
 
   begin
     Result:=False;
-    OnError('Error 999: unknown error');
+    OnError('Error 999: unknown error: '+TJSJSON.Stringify(response));
   end;
 
 begin

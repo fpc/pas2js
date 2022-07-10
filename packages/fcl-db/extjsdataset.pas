@@ -228,7 +228,7 @@ Var
 
 begin
   Result:=True;
-  if anUpdate.OriginalStatus=usDeleted then
+  if anUpdate.Status=usDeleted then
     exit;
   D:=anUpdate.ServerData;
   If isNull(D) then

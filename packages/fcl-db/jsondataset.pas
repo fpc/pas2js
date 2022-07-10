@@ -296,8 +296,6 @@ type
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
-    Function BlobDataToBytes(aValue : JSValue) : TBytes; override;
-    Function BytesToBlobData(aValue : TBytes) : JSValue ; override;
     // Remove calculated fields from buffer
     procedure RemoveCalcFields(Buf: JSValue);
     procedure ActivateIndex(Build : Boolean);
@@ -395,6 +393,8 @@ type
   public
     constructor Create (AOwner: TComponent); override;
     destructor Destroy; override;
+    Function BlobDataToBytes(aValue : JSValue) : TBytes; override;
+    Function BytesToBlobData(aValue : TBytes) : JSValue ; override;
     function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     function Locate(const KeyFields: string; const KeyValues: JSValue; Options: TLocateOptions): boolean; override;
     function Lookup(const KeyFields: string; const KeyValues: JSValue; const ResultFields: string): JSValue; override;
@@ -445,7 +445,7 @@ type
   // Fieldmapper to be used when the data is in an object
   TJSONObjectFieldMapper = Class(TJSONFieldMapper)
   Public
-    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
+    Procedure RemoveField(Const FieldName : String; FieldIndex{%H-} : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
@@ -455,7 +455,7 @@ type
   // Fieldmapper to be used when the data is in an array
   TJSONArrayFieldMapper = Class(TJSONFieldMapper)
   Public
-    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
+    Procedure RemoveField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
@@ -1164,11 +1164,6 @@ end;
 
 function TBaseJSONDataSet.BlobDataToBytes(aValue: JSValue): TBytes;
 
-Var
-  S : String;
-  Arr : TJSUint8Array;
-  I : Integer;
-
 begin
   Result:=[];
   Case BlobFormat of
@@ -1185,12 +1180,6 @@ begin
 end;
 
 function TBaseJSONDataSet.BytesToBlobData(aValue: TBytes): JSValue;
-
-Var
-  S : String;
-  Arr : TJSUint8Array;
-  I : Integer;
-  Buf : TJSArrayBuffer;
 
 begin
   Result:='';

@@ -336,6 +336,7 @@ type
     Class Var UTF8TextDecoder: TJSTextDecoder;
   Protected
     class procedure setBigUint64(View: TJSDataView; byteOffset, value: NativeInt; littleEndian: Boolean);
+    class procedure setBigInt64(View: TJSDataView; byteOffset, value: NativeInt; littleEndian: Boolean);
     procedure DoConsoleWrite(IsStdErr: Boolean; aBytes: TJSArray); virtual;
     procedure GetImports(aImports: TJSObject); virtual;
     Function GetTime(aClockID : NativeInt): NativeInt; virtual;
@@ -396,6 +397,14 @@ type
     Constructor Create;
     Destructor Destroy; override;
     Function GetUTF8StringFromMem(aLoc, aLen : Longint) : String;
+    Procedure SetMemInfoInt8(aLoc : Integer; aValue : ShortInt);
+    Procedure SetMemInfoInt16(aLoc : Integer; aValue : SmallInt);
+    Procedure SetMemInfoInt32(aLoc : Integer; aValue : Longint);
+    Procedure SetMemInfoInt64(aLoc : Integer; aValue : NativeInt);
+    Procedure SetMemInfoUInt8(aLoc : Integer; aValue : Byte);
+    Procedure SetMemInfoUInt16(aLoc : Integer; aValue : Word);
+    Procedure SetMemInfoUInt32(aLoc : Integer; aValue : Cardinal);
+    Procedure SetMemInfoUInt64(aLoc : Integer; aValue : NativeUint);
     // Add imports
     Procedure AddImports(aObject: TJSObject); 
     Property ImportObject : TJSObject Read GetImportObject;
@@ -782,6 +791,28 @@ begin
     view.setUint32(ByteOffset+0, highWord, littleEndian);
     end;
 end;
+
+class procedure TPas2JSWASIEnvironment.setBigInt64(View: TJSDataView;
+  byteOffset, value: NativeInt; littleEndian: Boolean);
+
+Var
+  LowWord,HighWord : Integer;
+
+begin
+  lowWord:=value;
+  highWord:=value shr 32;
+  if LittleEndian then
+    begin
+    view.setint32(ByteOffset+0, lowWord, littleEndian);
+    view.setint32(ByteOffset+4, highWord, littleEndian);
+    end
+  else
+    begin
+    view.setint32(ByteOffset+4, lowWord, littleEndian);
+    view.setint32(ByteOffset+0, highWord, littleEndian);
+    end;
+end;
+
 
 procedure TPas2JSWASIEnvironment.SetInstance(AValue: TJSWebAssemblyInstance);
 begin
@@ -1370,6 +1401,85 @@ end;
 function TPas2JSWASIEnvironment.GetUTF8StringFromMem(aLoc, aLen: Longint): String;
 begin
   Result:=UTF8TextDecoder.Decode(getModuleMemoryDataView.buffer.slice(aLoc,aLoc+alen));
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoInt8(aLoc: Integer; aValue: ShortInt
+  );
+
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  view.setint8(aLoc,aValue);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoInt16(aLoc: Integer; aValue: SmallInt);
+
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  view.setint16(aLoc,aValue, IsLittleEndian);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoInt32(aLoc: Integer; aValue: Longint);
+
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  view.setInt32(aLoc,aValue,IsLittleEndian);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoInt64(aLoc: Integer; aValue: NativeInt);
+
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  setBigInt64(View,aLoc,aValue,IsLittleEndian);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoUInt8(aLoc: Integer; aValue: Byte);
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  view.setUInt8(aLoc,aValue);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoUInt16(aLoc: Integer; aValue: Word);
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  view.setUint16(aLoc,aValue,IsLittleEndian);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoUInt32(aLoc: Integer;
+  aValue: Cardinal);
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  view.setUint32(aLoc,aValue,IsLittleEndian);
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemInfoUInt64(aLoc: Integer;
+  aValue: NativeUint);
+Var
+  View : TJSDataView;
+
+begin
+  view:=getModuleMemoryDataView();
+  setBigUint64(View,aLoc,aValue,IsLittleEndian);
 end;
 
 initialization

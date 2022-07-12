@@ -185,6 +185,8 @@ type
     Procedure AppendToIndex; virtual; abstract;
     // Delete aListIndex from list, not from row. Return Recordindex of deleted record.
     Function Delete(aListIndex : Integer) : Integer; virtual;
+    // Delete By rowIndex, Return list index of deleted record.
+    Function DeleteByRowIndex(aRowIndex : Integer) : Integer; virtual;
     // Append aRecordIndex to list. Return ListIndex of appended record.
     Function Append(aRecordIndex : Integer) : Integer; virtual; abstract;
     // Insert record into list. By default, this does an append. Return ListIndex of inserted record
@@ -193,6 +195,8 @@ type
     Function Update(aRecordIndex : Integer) : Integer; virtual; abstract;
     // Find list index for Record at index aCurrentIndex. Return -1 if not found.
     Function FindRecord(aRecordIndex : Integer) : Integer; virtual; abstract;
+    // index of record in index list, based on Row index.
+    Function IndexOfRow(aRowIndex : Integer): NativeInt;
     // index of record in FRows based on aListIndex in List.
     Property RecordIndex[aListIndex : Integer] : NativeInt Read GetRecordIndex;
     // Number of records in index. This can differ from FRows, e.g. when filtering.
@@ -296,8 +300,6 @@ type
     procedure SetRows(AValue: TJSArray);
     procedure SetRowType(AValue: TJSONRowType);
   protected
-    Function BlobDataToBytes(aValue : JSValue) : TBytes; override;
-    Function BytesToBlobData(aValue : TBytes) : JSValue ; override;
     // Remove calculated fields from buffer
     procedure RemoveCalcFields(Buf: JSValue);
     procedure ActivateIndex(Build : Boolean);
@@ -395,6 +397,8 @@ type
   public
     constructor Create (AOwner: TComponent); override;
     destructor Destroy; override;
+    Function BlobDataToBytes(aValue : JSValue) : TBytes; override;
+    Function BytesToBlobData(aValue : TBytes) : JSValue ; override;
     function ConvertDateTimeToNative(aField : TField; aValue : TDateTime) : JSValue; override;
     function Locate(const KeyFields: string; const KeyValues: JSValue; Options: TLocateOptions): boolean; override;
     function Lookup(const KeyFields: string; const KeyValues: JSValue; const ResultFields: string): JSValue; override;
@@ -445,7 +449,7 @@ type
   // Fieldmapper to be used when the data is in an object
   TJSONObjectFieldMapper = Class(TJSONFieldMapper)
   Public
-    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
+    Procedure RemoveField(Const FieldName : String; FieldIndex{%H-} : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName : String; FieldIndex{%H-} : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
@@ -455,7 +459,7 @@ type
   // Fieldmapper to be used when the data is in an array
   TJSONArrayFieldMapper = Class(TJSONFieldMapper)
   Public
-    Procedure RemoveField(Const FieldName : String; FieldIndex : Integer; Row : JSValue); override;
+    Procedure RemoveField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue); override;
     procedure SetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row,Data : JSValue); override;
     Function GetJSONDataForField(Const FieldName{%H-} : String; FieldIndex : Integer; Row : JSValue) : JSValue; override;
     Function CreateRow : JSValue; override;
@@ -585,21 +589,26 @@ end;
 procedure TSortedJSONIndex.CreateIndex;
 
 Var
-  Lst : TJSArray;
-  Len : Integer;
+  Lst : Array of Integer;
+  I,SrcLen,Destlen : Integer;
 begin
   // CreateIndex is called during constructor. We cannot build index then, so we exit
   if FComparer=Nil then
     exit;
-  Len:=FRows.Length-1;
+  SrcLen:=FRows.Length;
   // Temp list, mergsort destroys list
-  Lst:=TJSArray.New(Len+1);
-  While Len>=0 do
+  SetLength(Lst,SrcLen);
+  DestLen:=0;
+  For I:=0 to SrcLen-1 do
     begin
-    Lst[Len]:=Len;
-    Dec(Len);
+    if not isUndefined(FRows[I]) then
+      begin
+      Lst[DestLen]:=I;
+      Inc(DestLen);
+      end;
     end;
-  FList:=MergeSort(Lst);
+  SetLength(Lst,DestLen);
+  FList:=MergeSort(TJSArray(Lst));
 end;
 
 procedure TSortedJSONIndex.AppendToIndex;
@@ -994,9 +1003,21 @@ begin
     Result:=-1;
 end;
 
+function TJSONIndex.DeleteByRowIndex(aRowIndex: Integer): Integer;
+begin
+  Result:=IndexOfRow(aRowIndex);
+  if Result<>-1 then
+    FList.Splice(Result,1);
+end;
+
 function TJSONIndex.Insert(aCurrentIndex, aRecordIndex: Integer): Integer;
 begin
   Result:=Append(aRecordIndex);
+end;
+
+function TJSONIndex.IndexOfRow(aRowIndex: Integer): NativeInt;
+begin
+  Result:=FList.indexOf(aRowIndex);
 end;
 
 function TJSONIndex.GetCount: Integer;
@@ -1164,11 +1185,6 @@ end;
 
 function TBaseJSONDataSet.BlobDataToBytes(aValue: JSValue): TBytes;
 
-Var
-  S : String;
-  Arr : TJSUint8Array;
-  I : Integer;
-
 begin
   Result:=[];
   Case BlobFormat of
@@ -1185,12 +1201,6 @@ begin
 end;
 
 function TBaseJSONDataSet.BytesToBlobData(aValue: TBytes): JSValue;
-
-Var
-  S : String;
-  Arr : TJSUint8Array;
-  I : Integer;
-  Buf : TJSArrayBuffer;
 
 begin
   Result:='';
@@ -1476,20 +1486,26 @@ end;
 procedure TBaseJSONDataSet.InternalDelete;
 
 Var
-  Idx : Integer;
+  I,RowIdx : Integer;
+  aIndex : TJSONIndex;
 
 begin
-  Idx:=FCurrentIndex.Delete(FCurrent);
-  if (Idx<>-1) then
+  RowIdx:=FCurrentIndex.Delete(FCurrent);
+  if (RowIdx<>-1) then
     begin
-    // Add code here to Delete from other indexes as well.
+    For I:=0 to FIndexes.Count-1 do
+      begin
+      aIndex:=FIndexes[i].Index;
+      if aIndex<>FCurrentIndex then
+        aIndex.DeleteByRowIndex(RowIdx);
+      end;
     // ...
     // Add to array of deleted records.
     if Not Assigned(FDeletedRows) then
-      FDeletedRows:=TJSArray.New(FRows[idx])
+      FDeletedRows:=TJSArray.New(FRows[RowIdx])
     else
-      FDeletedRows.Push(FRows[Idx]);
-    FRows[Idx]:=Undefined;
+      FDeletedRows.Push(FRows[RowIdx]);
+    FRows[RowIdx]:=Undefined;
     end;
 end;
 

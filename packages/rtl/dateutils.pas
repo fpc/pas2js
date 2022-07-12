@@ -507,7 +507,7 @@ Function ScanDateTime(APattern,AValue: String; APos : integer = 1) : TDateTime;
 
 implementation
 
-uses js, rtlconsts;
+uses  rtlconsts;
 
 const
   TDateTimeEpsilon = 2.2204460493e-16;
@@ -2482,7 +2482,7 @@ end;
 
 Const
   FmtUTC = 'yyyy"-"mm"-"dd"T"hh":"nn":"ss"."zzz';
-  FmtUTCTZ = 'hh":"mm';
+//  FmtUTCTZ = 'hh":"mm';
 
 function DateToISO8601(const ADate: TDateTime; AInputIsUTC: Boolean = True): string;
 
@@ -2708,12 +2708,14 @@ begin
     end;
 end;
 
+(*
 Function ISOTZStrToTZOffset(TZ : String) : Integer;
 
 begin
   if not TryISOTZStrToTZOffSet(TZ,Result) then
     Raise EConvertError.CreateFmt('Invalid ISO timezone string',[TZ]);
 end;
+*)
 
 
 Function TryISO8601ToDate(const DateString: string; out ADateTime: TDateTime;ReturnUTC : Boolean = True) : Boolean;

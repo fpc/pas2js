@@ -14,6 +14,7 @@ Type
   TJSWebAssemblyMemoryDescriptor = record
     initial,
     maximum : integer;
+    shared : Boolean;
   end;
 
   TJSWebAssemblyMemory = class external name 'WebAssembly.Memory' (TJSObject)
@@ -23,6 +24,7 @@ Type
   Public
     constructor new (memorydescriptor : TJSWebAssemblyMemoryDescriptor);
     constructor new (memorydescriptor : TJSObject);
+    Function grow(number : NativeInt) : NativeInt; external name 'grow';
     Property buffer : TJSArrayBuffer Read FBuffer;
     Property length: NativeInt Read FLength;
   end;

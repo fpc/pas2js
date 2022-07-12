@@ -70,6 +70,18 @@ Type
     Property Self_ : TJSWorkerGlobalScope Read FSelf;
   end;
 
+  { TJSDedicatedWorkerGlobalScope }
+
+  TJSDedicatedWorkerGlobalScope = class external name 'DedicatedWorkerGlobalScope' (TJSWorkerGlobalScope)
+  private
+    FName: String; external name 'name';
+  Public
+    Procedure close;
+    Procedure PostMessage(aMessage : JSValue); overload;
+    Procedure PostMessage(aMessage : JSValue; TransferableObjects : Array of JSValue); overload;
+    Property name : String Read FName;
+  end;
+
   TJSClientsMatchAllOptions = class external name 'Object'
     includeUncontrolled : Boolean;
     type_ : string; external name 'type';

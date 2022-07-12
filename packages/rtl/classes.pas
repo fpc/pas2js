@@ -10463,10 +10463,9 @@ begin
   if not IsAlpha then
     ErrorFmt(SParserExpected,[GetTokenName(toSymbol)]);
   Result:='';
-  while IsAlphaNum do
+  while (not fEofReached) and IsAlphaNum do
   begin
     Result:=Result+fBuf[fPos];
-
     GotoToNextChar;
   end;
 end;
@@ -10476,7 +10475,7 @@ begin
   if fBuf[fPos]=#13 then //CR
     GotoToNextChar;
 
-  if fBuf[fPos]=#10 then //LF
+  if (not fEOFReached) and (fBuf[fPos]=#10) then //LF
     GotoToNextChar;
 
   inc(fSourceLine);

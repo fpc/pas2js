@@ -8,7 +8,7 @@ uses
 
 var
   config: TChartConfiguration;
-  dataset: TChartLineDataset;
+  dataset, d2: TChartLineDataset;
 begin
   config := TChartConfiguration.new;
   config.type_ := 'line';
@@ -21,6 +21,12 @@ begin
   dataset.fill := False;
   dataset.borderColor := 'rgb(75, 192, 192)';
   dataset.lineTension := 0.1;
-  config.data.datasets := [dataset];
+  d2 := TChartLineDataset.new;
+  d2.label_ := 'My other dataset';
+  d2.data := [35, 49, 90, 70, 55, 45, 20];
+  d2.fill := False;
+  d2.borderColor := 'rgb(255, 192, 192)';
+  d2.lineTension := 0.1;
+  config.data.datasets := [dataset,d2];
   TChart.new('myChart', config);
 end.

@@ -39,6 +39,7 @@ Type
     function Invoke_StringResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_ObjectResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_JSValueResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
+    function Invoke_ArrayStringResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function ReleaseObject(ObjId: TJOBObjectID): TJOBResult; virtual;
     function GetStringResult(ResultP: NativeInt): TJOBResult; virtual;
     function ReleaseStringResult: TJOBResult; virtual;
@@ -143,6 +144,7 @@ begin
   aObject[JOBFn_InvokeObjectResult]:=@Invoke_ObjectResult;
   aObject[JOBFn_ReleaseObject]:=@ReleaseObject;
   aObject[JOBFn_InvokeJSValueResult]:=@Invoke_JSValueResult;
+  aObject[JOBFn_InvokeArrayStringResult]:=@Invoke_ArrayStringResult;
 end;
 
 function TJSObjectBridge.FindObject(ObjId: TJOBObjectID): TJSObject;
@@ -404,6 +406,22 @@ begin
   else
     // no args
   end;
+end;
+
+function TJSObjectBridge.Invoke_ArrayStringResult(ObjId: TJOBObjectID; NameP,
+  NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult;
+var
+  JSResult: JSValue;
+begin
+  // invoke
+  Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
+  if Result<>JOBResult_Success then
+    exit;
+  raise EJOBBridge.Create('TJSObjectBridge.Invoke_ArrayStringResult not yet implemented');
+  // check result type
+  //exit(GetJOBResult(JSResult));
+  Result:=JOBResult_String;
+  if ResultP=0 then ;
 end;
 
 function TJSObjectBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
@@ -710,7 +728,7 @@ begin
 end;
 
 function TJSObjectBridge.EatCallbackResult(View: TJSDataView;
-  ResultP: TWasmNativeInt): JSValue;
+  ResultP: TWasmNativeInt): jsvalue;
 var
   p: TWasmNativeInt;
   aType: Byte;

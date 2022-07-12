@@ -13,6 +13,9 @@ type
 
   IJSDate = interface(IJSObject)
     ['{F12818EA-542E-488C-A3C5-279E05639E9E}']
+    function Create(aYear: NativeInt; aMonth: NativeInt; aDayOfMonth: NativeInt = 1;
+      TheHours: NativeInt = 0; TheMinutes: NativeInt = 0; TheSeconds: NativeInt = 0;
+      TheMilliseconds: NativeInt = 0): IJSDate;
     function toLocaleDateString: UnicodeString; overload; // date in locale timezone, no time
   end;
 
@@ -20,7 +23,8 @@ type
 
   TJSDate = class(TJSObject,IJSDate)
   public
-    class function Create(aYear: NativeInt; aMonth: NativeInt; aDayOfMonth: NativeInt = 1;
+    class function Cast(Intf: IJSObject): IJSDate; overload;
+    function Create(aYear: NativeInt; aMonth: NativeInt; aDayOfMonth: NativeInt = 1;
       TheHours: NativeInt = 0; TheMinutes: NativeInt = 0; TheSeconds: NativeInt = 0;
       TheMilliseconds: NativeInt = 0): IJSDate;
     function toLocaleDateString: UnicodeString; overload; // date in locale timezone, no time
@@ -33,7 +37,12 @@ implementation
 
 { TJSDate }
 
-class function TJSDate.Create(aYear: NativeInt; aMonth: NativeInt;
+class function TJSDate.Cast(Intf: IJSObject): IJSDate;
+begin
+  Result:=TJSDate.JOBCast(Intf);
+end;
+
+function TJSDate.Create(aYear: NativeInt; aMonth: NativeInt;
   aDayOfMonth: NativeInt; TheHours: NativeInt; TheMinutes: NativeInt;
   TheSeconds: NativeInt; TheMilliseconds: NativeInt): IJSDate;
 begin
@@ -46,7 +55,7 @@ begin
 end;
 
 initialization
-  JSDate:=TJSDate.CreateFromID(JOBObjIdDate);
+  JSDate:=TJSDate.JOBCreateFromID(JOBObjIdDate);
 
 end.
 

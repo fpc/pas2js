@@ -257,8 +257,8 @@ type
 
   TJSObject = class(TInterfacedObject,IJSObject)
   private
-    FObjectID: TJOBObjectID;
-    FCastSrc: IJSObject;
+    FJOBObjectID: TJOBObjectID;
+    FJOBCastSrc: IJSObject;
   protected
     type
       TJOBInvokeNoResultFunc = function(
@@ -291,11 +291,12 @@ type
     procedure InvokeJS_RaiseResultMismatchStr(const aName: string; const Expected, Actual: string); virtual;
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
   public
-    constructor Cast(Intf: IJSObject);
-    constructor CreateFromID(aID: TJOBObjectID); virtual; // use this only for the owner (it will release it on free)
+    constructor JOBCast(Intf: IJSObject); overload;
+    constructor JOBCreateFromID(aID: TJOBObjectID); virtual; // use this only for the owner (it will release it on free)
+    class function Cast(Intf: IJSObject): IJSObject; overload;
     destructor Destroy; override;
-    property ObjectID: TJOBObjectID read FObjectID;
-    property CastSrc: IJSObject read FCastSrc; // nil means it is the owner, otherwise it is a typecast
+    property JOBObjectID: TJOBObjectID read FJOBObjectID;
+    property JOBCastSrc: IJSObject read FJOBCastSrc; // nil means it is the owner, otherwise it is a typecast
     // call a function
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Boolean; virtual;
@@ -693,7 +694,7 @@ begin
       inc(p);
       ObjId:=PLongWord(p)^;
       inc(p,4);
-      Result:=aResultClass.CreateFromID(ObjId);
+      Result:=aResultClass.JOBCreateFromID(ObjId);
     end
   else
     raise EJSArgParse.Create(JOBArgNames[p^]);
@@ -754,7 +755,7 @@ begin
       inc(p);
       ObjId:=PLongWord(p)^;
       inc(p,4);
-      Obj:=TJSObject.CreateFromID(ObjId);
+      Obj:=TJSObject.JOBCreateFromID(ObjId);
       Result:=TJOB_Object.Create(Obj);
     end;
   else
@@ -845,7 +846,7 @@ begin
   if Obj=nil then
     Result:=AllocNil
   else
-    Result:=AllocObjId(Obj.ObjectID);
+    Result:=AllocObjId(Obj.JOBObjectID);
 end;
 
 function TJOBCallbackHelper.AllocObjId(ObjId: TJOBObjectID): PByte;
@@ -1059,12 +1060,12 @@ end;
 
 function TJSObject.GetJSObjectID: TJOBObjectID;
 begin
-  Result:=FObjectID;
+  Result:=FJOBObjectID;
 end;
 
 function TJSObject.GetJSObjectCastSrc: IJSObject;
 begin
-  Result:=FCastSrc;
+  Result:=FJOBCastSrc;
 end;
 
 function TJSObject.GetPascalClassName: string;
@@ -1107,11 +1108,11 @@ var
   InvokeArgs: PByte;
 begin
   if length(Args)=0 then
-    Result:=InvokeFunc(ObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],nil)
+    Result:=InvokeFunc(JOBObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],nil)
   else begin
     InvokeArgs:=CreateInvokeJSArgs(Args);
     try
-      Result:=InvokeFunc(ObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],InvokeArgs);
+      Result:=InvokeFunc(JOBObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],InvokeArgs);
     finally
       if InvokeArgs<>nil then
         FreeMem(InvokeArgs);
@@ -1126,11 +1127,11 @@ var
   InvokeArgs: PByte;
 begin
   if length(Args)=0 then
-    Result:=InvokeFunc(ObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],nil,ResultP)
+    Result:=InvokeFunc(JOBObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],nil,ResultP)
   else begin
     InvokeArgs:=CreateInvokeJSArgs(Args);
     try
-      Result:=InvokeFunc(ObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],InvokeArgs,ResultP);
+      Result:=InvokeFunc(JOBObjectID,PChar(aName),length(aName),InvokeGetToInt[Invoke],InvokeArgs,ResultP);
     finally
       if InvokeArgs<>nil then
         FreeMem(InvokeArgs);
@@ -1143,7 +1144,7 @@ var
   E: EJSInvoke;
 begin
   E:=EJSInvoke.Create(Msg);
-  E.ObjectID:=ObjectID;
+  E.ObjectID:=JOBObjectID;
   E.FuncName:=aName;
   raise E;
 end;
@@ -1152,8 +1153,8 @@ procedure TJSObject.InvokeJS_RaiseResultMismatch(const aName: string;
   Expected, Actual: TJOBResult);
 begin
   case Actual of
-  JOBResult_UnknownObjId: InvokeJS_Raise(aName,'unknown object id '+IntToStr(ObjectID));
-  JOBResult_NotAFunction: InvokeJS_Raise(aName,'object '+IntToStr(ObjectID)+' does not have a function "'+aName+'"');
+  JOBResult_UnknownObjId: InvokeJS_Raise(aName,'unknown object id '+IntToStr(JOBObjectID));
+  JOBResult_NotAFunction: InvokeJS_Raise(aName,'object '+IntToStr(JOBObjectID)+' does not have a function "'+aName+'"');
   else
     InvokeJS_RaiseResultMismatchStr(aName,JOBResult_Names[Expected],JOBResult_Names[Actual]);
   end;
@@ -1162,7 +1163,7 @@ end;
 procedure TJSObject.InvokeJS_RaiseResultMismatchStr(const aName: string;
   const Expected, Actual: string);
 begin
-  InvokeJS_Raise(aName,'expected '+Expected+', but got '+Actual+' from object '+IntToStr(ObjectID)+' function "'+aName+'"');
+  InvokeJS_Raise(aName,'expected '+Expected+', but got '+Actual+' from object '+IntToStr(JOBObjectID)+' function "'+aName+'"');
 end;
 
 function TJSObject.CreateInvokeJSArgs(const Args: array of const): PByte;
@@ -1551,7 +1552,7 @@ begin
           p^:=JOBArgNil;
           inc(p);
         end else if Obj is TJSObject then
-          AddObjectID(TJSObject(Obj).ObjectID)
+          AddObjectID(TJSObject(Obj).JOBObjectID)
         else if Obj is TJOB_JSValue then
         begin
           JSValue:=TJOB_JSValue(Obj);
@@ -1623,26 +1624,31 @@ begin
   {$ENDIF}
 end;
 
-constructor TJSObject.Cast(Intf: IJSObject);
+constructor TJSObject.JOBCast(Intf: IJSObject);
 begin
-  FObjectID:=Intf.GetJSObjectID;
-  FCastSrc:=Intf.GetJSObjectCastSrc;
-  if FCastSrc=nil then
-    FCastSrc:=Intf;
+  FJOBObjectID:=Intf.GetJSObjectID;
+  FJOBCastSrc:=Intf.GetJSObjectCastSrc;
+  if FJOBCastSrc=nil then
+    FJOBCastSrc:=Intf;
 end;
 
-constructor TJSObject.CreateFromID(aID: TJOBObjectID);
+constructor TJSObject.JOBCreateFromID(aID: TJOBObjectID);
 begin
-  FObjectID:=aID;
+  FJOBObjectID:=aID;
+end;
+
+class function TJSObject.Cast(Intf: IJSObject): IJSObject;
+begin
+  Result:=JOBCast(Intf);
 end;
 
 destructor TJSObject.Destroy;
 begin
-  if FCastSrc<>nil then
-    FCastSrc:=nil
-  else if ObjectID>=0 then
-    __job_release_object(ObjectID);
-  FObjectID:=0;
+  if FJOBCastSrc<>nil then
+    FJOBCastSrc:=nil
+  else if JOBObjectID>=0 then
+    __job_release_object(JOBObjectID);
+  FJOBObjectID:=0;
   inherited Destroy;
 end;
 
@@ -1719,7 +1725,7 @@ begin
   if aError<>JOBResult_Object then
     InvokeJS_RaiseResultMismatch(aName,JOBResult_Object,aError);
 
-  Result:=aResultClass.CreateFromID(NewObjId);
+  Result:=aResultClass.JOBCreateFromID(NewObjId);
 end;
 
 function TJSObject.InvokeJSValueResult(const aName: string;
@@ -1748,7 +1754,7 @@ begin
   JOBResult_Function,
   JOBResult_Object:
     begin
-    Obj:=TJSObject.CreateFromID(PJOBObjectID(p)^);
+    Obj:=TJSObject.JOBCreateFromID(PJOBObjectID(p)^);
     Result:=TJOB_Object.Create(Obj);
     end;
   else
@@ -1943,7 +1949,7 @@ begin
 end;
 
 initialization
-  JSObject:=TJSObject.CreateFromID(JOBObjIdObject) as IJSObject;
+  JSObject:=TJSObject.JOBCreateFromID(JOBObjIdObject) as IJSObject;
 
 end.
 

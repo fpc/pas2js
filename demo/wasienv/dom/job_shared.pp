@@ -28,8 +28,9 @@ const
   JOBResult_Object = 11;
   JOBResult_BigInt = 12;
   JOBResult_Symbol = 13;
+  JOBResult_ArrayOfString = 14;
 
-  JOBResultLast = 13;
+  JOBResultLast = 14;
 
   JOBResult_Names: array[0..JOBResultLast] of string = (
     'None',
@@ -45,7 +46,8 @@ const
     'Function',
     'Object',
     'BigInt',
-    'Symbol'
+    'Symbol',
+    'ArrayOfString'
     );
 
   JOBExportName = 'job';
@@ -53,6 +55,7 @@ const
   JOBFn_InvokeBooleanResult = 'invoke_boolresult';
   JOBFn_InvokeDoubleResult = 'invoke_doubleresult';
   JOBFn_InvokeStringResult = 'invoke_stringresult';
+  JOBFn_InvokeArrayStringResult = 'invoke_arraystringresult';
   JOBFn_GetStringResult = 'get_stringresult';
   JOBFn_ReleaseStringResult = 'release_stringresult';
   JOBFn_InvokeObjectResult = 'invoke_objectresult';
@@ -73,8 +76,10 @@ const
   JOBArgObject = 10; // followed by ObjectID
   JOBArgMethod = 11; // followed by Callback, Data, Code
   JOBArgDictionary = 12; // followed by count and pairs
+  JOBArgArrayOfJSValue = 13; // followed by count and values
+  JOBArgArrayOfDouble = 14; // followed by count and pointer
 
-  JOBArgNames: array[0..12] of string = (
+  JOBArgNames: array[0..14] of string = (
     'Undefined',
     'Longint',
     'Double',
@@ -87,7 +92,9 @@ const
     'Pointer',
     'Object',
     'Method',
-    'Dictionary'
+    'Dictionary',
+    'ArrayOfJSValue',
+    'ArrayOfDouble'
     );
 
   JOBInvokeCall = 0; // call function

@@ -39,7 +39,9 @@ Type
     jjvkString,
     jjvkObject,
     jjvkMethod,
-    jjvkDictionary
+    jjvkDictionary,
+    jjvkArrayOfJSValue,
+    jjvkArrayOfDouble
     );
   TJOB_JSValueKinds = set of TJOB_JSValueKind;
 
@@ -51,12 +53,15 @@ const
     'String',
     'Object',
     'Method',
-    'Dictionary'
+    'Dictionary',
+    'ArrayOfJSValue',
+    'ArrayOfDouble'
     );
 
   JOB_Undefined = Pointer(1);
 
 type
+  TUnicodeStringDynArray = array of UnicodeString;
 
   { TJOB_JSValue }
 
@@ -66,6 +71,8 @@ type
     constructor Create(aKind: TJOB_JSValueKind);
     function AsString: string; virtual;
   end;
+  TJOB_JSValueClass = class of TJOB_JSValue;
+  TJOB_JSValueArray = array of TJOB_JSValue;
 
   { TJOB_Boolean }
 
@@ -174,6 +181,28 @@ type
     procedure Clear;
   end;
 
+  TJOB_ArrayBase = class(TJOB_JSValue)
+  end;
+
+  { TJOB_ArrayOfJSValue }
+
+  TJOB_ArrayOfJSValue = class(TJOB_ArrayBase)
+  public
+    Values: TJOB_JSValueArray;
+    procedure Add(const aValue: TJOB_JSValue);
+    constructor Create(const TheValues: array of const);
+    destructor Destroy; override;
+    procedure Clear;
+  end;
+
+  { TJOB_ArrayOfDouble }
+
+  TJOB_ArrayOfDouble = class(TJOB_ArrayBase)
+  public
+    Values: TDoubleDynArray;
+    constructor Create(const TheValues: TDoubleDynArray);
+  end;
+
   { IJSObject }
 
   IJSObject = interface
@@ -181,6 +210,9 @@ type
     function GetJSObjectID: TJOBObjectID;
     function GetJSObjectCastSrc: IJSObject;
     function GetPascalClassName: string;
+    function GetProperties(const PropName: String): TJOB_JSValue; virtual;
+    procedure SetProperties(const PropName: String; const AValue: TJOB_JSValue); virtual;
+    // call a function
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Boolean; virtual;
     function InvokeJSDoubleResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Double; virtual;
@@ -190,6 +222,8 @@ type
     function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): String; virtual;
     function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): LongInt; virtual;
     function InvokeJSTypeOf(const aName: string; Const Args: Array of const): TJOBResult; virtual;
+    function InvokeJSUnicodeStringArrayResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): TUnicodeStringDynArray; virtual;
+    // read a property
     function ReadJSPropertyBoolean(const aName: string): boolean; virtual;
     function ReadJSPropertyDouble(const aName: string): double; virtual;
     function ReadJSPropertyUnicodeString(const aName: string): UnicodeString; virtual;
@@ -197,13 +231,26 @@ type
     function ReadJSPropertyUtf8String(const aName: string): string; virtual;
     function ReadJSPropertyLongInt(const aName: string): LongInt; virtual;
     function ReadJSPropertyValue(const aName: string): TJOB_JSValue; virtual;
+    // write a property
     procedure WriteJSPropertyBoolean(const aName: string; Value: Boolean); virtual;
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
     procedure WriteJSPropertyUnicodeString(const aName: string; const Value: UnicodeString); virtual;
     procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
     procedure WriteJSPropertyObject(const aName: string; Value: IJSObject); virtual;
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
+    // create a new object using the new-operator
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
+    // JS members
+    function getOwnPropertyNames(const Obj: IJSObject): TUnicodeStringDynArray;
+    function getPrototypeOf(const Obj: IJSObject): IJSObject;
+    function hasOwnProperty(const PropName: String): boolean; virtual;
+    function isPrototypeOf(const Obj: IJSObject): boolean; virtual;
+    function propertyIsEnumerable(const PropName: String): boolean; virtual;
+    function toLocaleString: UnicodeString; virtual; overload;
+    function toString: String; override; overload;
+    function toUString: UnicodeString; virtual; overload;
+    function valueOf: TJOB_JSValue; virtual; overload;
+    property Properties[const PropName: String]: TJOB_JSValue read GetProperties write SetProperties; default;
   end;
 
   { TJSObject }
@@ -232,6 +279,8 @@ type
     function GetJSObjectID: TJOBObjectID;
     function GetJSObjectCastSrc: IJSObject;
     function GetPascalClassName: string;
+    function GetProperties(const PropName: String): TJOB_JSValue; virtual;
+    procedure SetProperties(const PropName: String; const AValue: TJOB_JSValue); virtual;
     function FetchString(Len: NativeInt): UnicodeString;
     function InvokeJSNoResultFunc(const aName: string; Const Args: Array of const;
       const InvokeFunc: TJOBInvokeNoResultFunc; Invoke: TJOBInvokeType): TJOBResult;
@@ -258,6 +307,7 @@ type
     function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): LongInt; virtual;
     function InvokeJSMaxIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): int64; virtual;
     function InvokeJSTypeOf(const aName: string; Const Args: Array of const): TJOBResult; virtual;
+    function InvokeJSUnicodeStringArrayResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): TUnicodeStringDynArray; virtual;
     // read a property
     function ReadJSPropertyBoolean(const aName: string): boolean; virtual;
     function ReadJSPropertyDouble(const aName: string): double; virtual;
@@ -277,10 +327,21 @@ type
     procedure WriteJSPropertyValue(const aName: string; Value: TJOB_JSValue); virtual;
     // create a new object using the new-operator
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
+    // JS members
+    function getOwnPropertyNames(const Obj: IJSObject): TUnicodeStringDynArray;
+    function getPrototypeOf(const Obj: IJSObject): IJSObject;
+    function hasOwnProperty(const PropName: String): boolean; virtual;
+    function isPrototypeOf(const Obj: IJSObject): boolean; virtual;
+    function propertyIsEnumerable(const PropName: String): boolean; virtual;
+    function toLocaleString: UnicodeString; virtual; overload;
+    function toString: String; override; overload;
+    function toUString: UnicodeString; virtual; overload;
+    function valueOf: TJOB_JSValue; virtual; overload;
+    property Properties[const PropName: String]: TJOB_JSValue read GetProperties write SetProperties; default;
   end;
 
 var
-  JSObject: TJSObject;
+  JSObject: IJSObject; // global singleton of JS 'Object'
 
 // imported functions from browser
 function __job_invoke_noresult(
@@ -347,7 +408,17 @@ function __job_invoke_jsvalueresult(
   ResultP: PByte  // various
 ): TJOBResult; external JOBExportName name JOBFn_InvokeJSValueResult;
 
+function __job_invoke_arraystringresult(
+  ObjID: TJOBObjectID;
+  NameP: PChar;
+  NameLen: longint;
+  Invoke: longint;
+  ArgP: PByte;
+  ResultLenP: PByte // nativeint
+): TJOBResult; external JOBExportName name JOBFn_InvokeArrayStringResult;
+
 function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
+function VarRecToJSValue(const V: TVarRec): TJOB_JSValue;
 
 implementation
 
@@ -413,6 +484,85 @@ begin
   finally
     if Args<>nil then
       FreeMem(Args);
+  end;
+end;
+
+function VarRecToJSValue(const V: TVarRec): TJOB_JSValue;
+var
+  p: Pointer;
+  CurLen: SizeInt;
+  S: String;
+  Obj: TObject;
+  Intf: IJSObject;
+begin
+  case V.VType of
+  vtInteger:
+    Result:=TJOB_Double.Create(V.VInteger);
+  vtBoolean:
+    Result:=TJOB_Boolean.Create(V.VBoolean);
+  vtChar:
+    Result:=TJOB_String.Create(UnicodeString(V.VChar));
+  {$ifndef FPUNONE}
+  vtExtended:
+    Result:=TJOB_Double.Create(V.VExtended^);
+  {$endif}
+  vtString:
+    Result:=TJOB_String.Create(UnicodeString(V.VString^));
+  vtPointer:
+    begin
+    p:=V.VPointer;
+    if p=nil then
+      Result:=TJOB_Object.Create(nil)
+    else if p=JOB_Undefined then
+      Result:=TJOB_JSValue.Create(jjvkUndefined)
+    else
+      raise EJSArgParse.Create('VarRecToJSValue pointer not supported');
+    end;
+  vtPChar:
+    begin
+    CurLen:=strlen(V.VPChar);
+    SetString(S,V.VPChar,CurLen);
+    Result:=TJOB_String.Create(UnicodeString(S));
+    end;
+  vtObject:
+    begin
+    Obj:=V.VObject;
+    if Obj=nil then
+      Result:=TJOB_Object.Create(nil)
+    else if Obj is TJOB_JSValue then
+      Result:=TJOB_JSValue(Obj)
+    else if Obj is TJSObject then
+      Result:=TJOB_Object.Create(TJSObject(Obj) as IJSObject)
+    else
+      raise EJSArgParse.Create('VarRecToJSValue object '+Obj.ClassName+' not supported');
+    end;
+  vtClass:
+    raise EJSArgParse.Create('VarRecToJSValue class not supported');
+  vtWideChar:
+    Result:=TJOB_String.Create(V.VWideChar);
+  vtPWideChar:
+    raise EJSArgParse.Create('VarRecToJSValue vtPWideChar not supported');
+  vtAnsiString:
+    Result:=TJOB_String.Create(UnicodeString(PAnsiString(V.VAnsiString)^));
+  vtCurrency:
+    Result:=TJOB_Double.Create(V.VCurrency^);
+  vtVariant:
+    raise EJSArgParse.Create('VarRecToJSValue vtVariant not supported');
+  vtInterface:
+    begin
+    Intf:=IJSObject(V.VInterface);
+    Result:=TJOB_Object.Create(Intf);
+    end;
+  vtWideString:
+    raise EJSArgParse.Create('VarRecToJSValue vtWideString not supported');
+  vtInt64:
+    Result:=TJOB_Double.Create(V.VInt64^);
+  vtQWord:
+    Result:=TJOB_Double.Create(V.VQWord^);
+  vtUnicodeString:
+    Result:=TJOB_String.Create(PUnicodeString(V.VUnicodeString)^);
+  else
+    raise EJSArgParse.Create('VarRecToJSValue unsupported VType '+IntToStr(V.VType));
   end;
 end;
 
@@ -809,10 +959,6 @@ var
   i: Integer;
   l, CurLen: SizeInt;
   CurName: UnicodeString;
-  Value: TJOB_JSValue;
-  p: Pointer;
-  Obj: TObject;
-  Intf: IJSObject;
 begin
   inherited Create(jjvkDictionary);
   l:=length(Pairs);
@@ -845,75 +991,7 @@ begin
     inc(i);
     if i=l then
       raise EJSArgParse.Create('TJOB_Dictionary.Create name "'+String(CurName)+'" has no value');
-    case Pairs[i].VType of
-    vtInteger:
-      Value:=TJOB_Double.Create(Pairs[i].VInteger);
-    vtBoolean:
-      Value:=TJOB_Boolean.Create(Pairs[i].VBoolean);
-    vtChar:
-      Value:=TJOB_String.Create(UnicodeString(Pairs[i].VChar));
-    {$ifndef FPUNONE}
-    vtExtended:
-      Value:=TJOB_Double.Create(Pairs[i].VExtended^);
-    {$endif}
-    vtString:
-      Value:=TJOB_String.Create(UnicodeString(Pairs[i].VString^));
-    vtPointer:
-      begin
-      p:=Pairs[i].VPointer;
-      if p=nil then
-        Value:=TJOB_Object.Create(nil)
-      else if p=JOB_Undefined then
-        Value:=TJOB_JSValue.Create(jjvkUndefined)
-      else
-        raise EJSArgParse.Create('TJOB_Dictionary.Create pointer not supported, name='+String(CurName));
-      end;
-    vtPChar:
-      begin
-      CurLen:=strlen(Pairs[i].VPChar);
-      SetString(CurName,Pairs[i].VPChar,CurLen);
-      end;
-    vtObject:
-      begin
-      Obj:=Pairs[i].VObject;
-      if Obj=nil then
-        Value:=TJOB_Object.Create(nil)
-      else if Obj is TJOB_JSValue then
-        Value:=TJOB_JSValue(Obj)
-      else if Obj is TJSObject then
-        Value:=TJOB_Object.Create(TJSObject(Obj) as IJSObject)
-      else
-        raise EJSArgParse.Create('TJOB_Dictionary.Create object '+Obj.ClassName+' not supported, name='+String(CurName));
-      end;
-    vtClass:
-      raise EJSArgParse.Create('TJOB_Dictionary.Create class not supported, name='+String(CurName));
-    vtWideChar:
-      Value:=TJOB_String.Create(Pairs[i].VWideChar);
-    vtPWideChar:
-      raise EJSArgParse.Create('TJOB_Dictionary.Create vtPWideChar not supported, name='+String(CurName));
-    vtAnsiString:
-      Value:=TJOB_String.Create(UnicodeString(PAnsiString(Pairs[i].VAnsiString)^));
-    vtCurrency:
-      Value:=TJOB_Double.Create(Pairs[i].VCurrency^);
-    vtVariant:
-      raise EJSArgParse.Create('TJOB_Dictionary.Create vtVariant not supported, name='+String(CurName));
-    vtInterface:
-      begin
-      Intf:=IJSObject(Pairs[i].VInterface);
-      Value:=TJOB_Object.Create(Intf);
-      end;
-    vtWideString:
-      raise EJSArgParse.Create('TJOB_Dictionary.Create vtWideString not supported, name='+String(CurName));
-    vtInt64:
-      Value:=TJOB_Double.Create(Pairs[i].VInt64^);
-    vtQWord:
-      Value:=TJOB_Double.Create(Pairs[i].VQWord^);
-    vtUnicodeString:
-      Value:=TJOB_String.Create(PUnicodeString(Pairs[i].VUnicodeString)^);
-    else
-      raise EJSArgParse.Create('TJOB_Dictionary.Create unsupported VType '+IntToStr(Pairs[i].VType)+' at index '+IntToStr(i));
-    end;
-    Values[i div 2].Value:=Value;
+    Values[i div 2].Value:=VarRecToJSValue(Pairs[i]);
     inc(i);
   end;
 end;
@@ -933,6 +1011,50 @@ begin
   Values:=nil;
 end;
 
+{ TJOB_ArrayOfJSValue }
+
+procedure TJOB_ArrayOfJSValue.Add(const aValue: TJOB_JSValue);
+begin
+  Insert(aValue,Values,length(Values));
+end;
+
+constructor TJOB_ArrayOfJSValue.Create(const TheValues: array of const);
+var
+  l: SizeInt;
+  i: Integer;
+begin
+  inherited Create(jjvkArrayOfJSValue);
+  l:=length(TheValues);
+  SetLength(Values,l);
+  for i:=0 to l-1 do
+    Values[i]:=nil;
+  for i:=0 to l-1 do
+    Values[i]:=VarRecToJSValue(TheValues[i]);
+end;
+
+destructor TJOB_ArrayOfJSValue.Destroy;
+begin
+  Clear;
+  inherited Destroy;
+end;
+
+procedure TJOB_ArrayOfJSValue.Clear;
+var
+  i: Integer;
+begin
+  for i:=0 to length(Values)-1 do
+    FreeAndNil(Values[i]);
+  Values:=nil;
+end;
+
+{ TJOB_ArrayOfDouble }
+
+constructor TJOB_ArrayOfDouble.Create(const TheValues: TDoubleDynArray);
+begin
+  inherited Create(jjvkArrayOfDouble);
+  Values:=TheValues;
+end;
+
 { TJSObject }
 
 function TJSObject.GetJSObjectID: TJOBObjectID;
@@ -948,6 +1070,17 @@ end;
 function TJSObject.GetPascalClassName: string;
 begin
   Result:=ClassName;
+end;
+
+function TJSObject.GetProperties(const PropName: String): TJOB_JSValue;
+begin
+  Result:=ReadJSPropertyValue(PropName);
+end;
+
+procedure TJSObject.SetProperties(const PropName: String;
+  const AValue: TJOB_JSValue);
+begin
+  WriteJSPropertyValue(PropName,AValue);
 end;
 
 function TJSObject.FetchString(Len: NativeInt): UnicodeString;
@@ -1051,6 +1184,7 @@ var
   var
     Dict: TJOB_PairArray;
     i: Integer;
+    Arr: TJOB_JSValueArray;
   begin
     case JSValue.Kind of
       jjvkUndefined: Result:=1;
@@ -1073,6 +1207,15 @@ var
             inc(Result,SizeOfTJOB_JSValue(Dict[i].Value));
             end;
         end;
+      jjvkArrayOfJSValue:
+        begin
+          Result:=1+SizeOf(NativeInt);
+          Arr:=TJOB_ArrayOfJSValue(JSValue).Values;
+          for i:=0 to length(Arr)-1 do
+            inc(Result,SizeOfTJOB_JSValue(Dict[i].Value));
+        end;
+      jjvkArrayOfDouble:
+        Result:=1+SizeOf(NativeInt)+SizeOf(PByte);
       else
         RaiseNotSupported('20220630135718'){%H-};
     end;
@@ -1164,6 +1307,7 @@ var
     aMethod: TJOB_Method;
     Dict: TJOB_PairArray;
     i: Integer;
+    Arr: TJOB_JSValueArray;
   begin
     case aValue.Kind of
       jjvkUndefined:
@@ -1201,11 +1345,35 @@ var
           p^:=JOBArgDictionary;
           inc(p);
           PNativeInt(p)^:=length(Dict);
+          inc(p,SizeOf(NativeInt));
           for i:=0 to length(Dict)-1 do
           begin
             AddUnicodeString(Dict[i].Name);
             Add_TJOB_JSValue(Dict[i].Value);
           end;
+        end;
+      jjvkArrayOfJSValue:
+        begin
+          Arr:=TJOB_ArrayOfJSValue(aValue).Values;
+          p^:=JOBArgArrayOfJSValue;
+          inc(p);
+          PNativeInt(p)^:=length(Arr);
+          inc(p,SizeOf(NativeInt));
+          for i:=0 to length(Arr)-1 do
+            Add_TJOB_JSValue(Arr[i]);
+        end;
+      jjvkArrayOfDouble:
+        begin
+          p^:=JOBArgArrayOfDouble;
+          inc(p);
+          i:=length(TJOB_ArrayOfDouble(aValue).Values);
+          PNativeInt(p)^:=i;
+          inc(p,SizeOf(NativeInt));
+          if i=0 then
+            PPointer(p)^:=nil
+          else
+            PPointer(p)^:=@TJOB_ArrayOfDouble(aValue).Values[0];
+          inc(p,sizeof(Pointer));
         end;
     end;
   end;
@@ -1624,6 +1792,23 @@ begin
   Result:=InvokeJSNoResultFunc(aName,Args,@__job_invoke_noresult,jiGetTypeOf);
 end;
 
+function TJSObject.InvokeJSUnicodeStringArrayResult(const aName: string;
+  const Args: array of const; Invoke: TJOBInvokeType): TUnicodeStringDynArray;
+var
+  ResultP: NativeInt;
+  aError: TJOBResult;
+begin
+  ResultP:=0;
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_arraystringresult,@ResultP,Invoke);
+  if aError=JOBResult_ArrayOfString then
+    Result:=TUnicodeStringDynArray(ResultP)
+  else begin
+    Result:=[];
+    if aError<>JOBResult_Undefined then
+      InvokeJS_RaiseResultMismatch(aName,JOBResult_ArrayOfString,aError);
+  end;
+end;
+
 function TJSObject.ReadJSPropertyBoolean(const aName: string): boolean;
 begin
   Result:=InvokeJSBooleanResult(aName,[],jiGet);
@@ -1711,8 +1896,54 @@ begin
   Result:=InvokeJSObjectResult('',Args,aResultClass,jiNew);
 end;
 
+function TJSObject.getOwnPropertyNames(const Obj: IJSObject
+  ): TUnicodeStringDynArray;
+begin
+  Result:=JSObject.InvokeJSUnicodeStringArrayResult('getOwnPropertyNames',[Obj]);
+end;
+
+function TJSObject.getPrototypeOf(const Obj: IJSObject): IJSObject;
+begin
+  Result:=JSObject.InvokeJSObjectResult('getPrototypeOf',[Obj],TJSObject) as IJSObject;
+end;
+
+function TJSObject.hasOwnProperty(const PropName: String): boolean;
+begin
+  Result:=InvokeJSBooleanResult('hasOwnProperty',[PropName]);
+end;
+
+function TJSObject.isPrototypeOf(const Obj: IJSObject): boolean;
+begin
+  Result:=InvokeJSBooleanResult('isPrototypeOf',[Obj]);
+end;
+
+function TJSObject.propertyIsEnumerable(const PropName: String): boolean;
+begin
+  Result:=InvokeJSBooleanResult('propertyIsEnumerable',[PropName]);
+end;
+
+function TJSObject.toLocaleString: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('toLocaleString',[]);
+end;
+
+function TJSObject.toString: String;
+begin
+  Result:=InvokeJSUtf8StringResult('toString',[]);
+end;
+
+function TJSObject.toUString: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('toString',[]);
+end;
+
+function TJSObject.valueOf: TJOB_JSValue;
+begin
+  Result:=InvokeJSValueResult('valueOf',[]);
+end;
+
 initialization
-  JSObject:=TJSObject.CreateFromID(JOBObjIdObject);
+  JSObject:=TJSObject.CreateFromID(JOBObjIdObject) as IJSObject;
 
 end.
 

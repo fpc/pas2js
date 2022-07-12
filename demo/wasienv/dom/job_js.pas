@@ -8,6 +8,9 @@ uses
   JOB_Shared, JOB_WAsm;
 
 type
+
+  { IJSDate }
+
   IJSDate = interface(IJSObject)
     ['{F12818EA-542E-488C-A3C5-279E05639E9E}']
     function toLocaleDateString: UnicodeString; overload; // date in locale timezone, no time

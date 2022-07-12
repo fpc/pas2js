@@ -520,6 +520,29 @@ var
     end;
   end;
 
+  function ReadArgArrayOfJSValue: JSValue;
+  var
+    Cnt: TWasmNativeInt;
+    i: Integer;
+  begin
+    Cnt:=ReadWasmNativeInt;
+    Result:=TJSArray.new;
+    for i:=0 to Cnt-1 do
+      TJSArray(Result)[i]:=ReadValue;
+  end;
+
+  function ReadArgArrayOfDouble: JSValue;
+  var
+    Cnt, El: TWasmNativeInt;
+    i: Integer;
+  begin
+    Cnt:=ReadWasmNativeInt;
+    El:=ReadWasmNativeInt;
+    Result:=TJSArray.new;
+    for i:=0 to Cnt-1 do
+      TJSArray(Result)[i]:=View.getFloat64(El+i*8,env.IsLittleEndian);
+  end;
+
   function ReadValue: JSValue;
   var
     aType: Byte;
@@ -570,6 +593,10 @@ var
       Result:=ReadArgMethod;
     JOBArgDictionary:
       Result:=ReadArgDictionary;
+    JOBArgArrayOfJSValue:
+      Result:=ReadArgArrayOfJSValue;
+    JOBArgArrayOfDouble:
+      Result:=ReadArgArrayOfDouble;
     else
       raise EJOBBridge.Create('unknown arg type '+IntToStr(aType));
     end;

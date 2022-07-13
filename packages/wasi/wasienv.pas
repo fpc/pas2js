@@ -556,13 +556,6 @@ function TWASIHost.CreateWebAssembly(aPath: string; aImportObject: TJSObject
     Result:=TJSResponse(Res).arrayBuffer._then(@ArrayOK,Nil)
   end;
 
-  function DoFail(Res : jsValue) : JSValue;
-
-  begin
-    Console.Log('Failed to fetch webassembly '+aPath+' : ');
-    Console.Debug(res);
-  end;
-
 begin
   Result:=fetch(aPath)._then(@fetchOK);
 end;
@@ -643,6 +636,7 @@ Var
   function DoFail(aValue: JSValue): JSValue;
 
   begin
+    Result:=True;
     Console.Log('Failed to create webassembly. Reason:');
     Console.Debug(aValue);
   end;
@@ -904,7 +898,6 @@ var
     Inc(Written,iov.byteLength);
     Result:=true;
   end;
-
 
 begin
   BufferBytes:=TJSArray.New;
@@ -1229,7 +1222,6 @@ var
       end;
     Result:=true;
   end;
-
 
 begin
   bytesRead:=0;

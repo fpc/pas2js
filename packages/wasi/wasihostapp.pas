@@ -9,9 +9,7 @@ uses
 
 Type
 
-  { TWASIHostApplication }
-
-
+  { TBrowserWASIHostApplication }
 
   TBrowserWASIHostApplication = class(TBrowserApplication)
   private

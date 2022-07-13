@@ -14,10 +14,11 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <CustomData Count="3">
+    <CustomData Count="4">
       <Item0 Name="MaintainHTML" Value="1"/>
       <Item1 Name="Pas2JSProject" Value="1"/>
-      <Item2 Name="PasJSWebBrowserProject" Value="1"/>
+      <Item2 Name="PasJSLocation" Value="BrowserDomTest1"/>
+      <Item3 Name="PasJSWebBrowserProject" Value="1"/>
     </CustomData>
     <BuildModes>
       <Item Name="Default" Default="True"/>

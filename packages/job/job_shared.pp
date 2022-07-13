@@ -51,6 +51,7 @@ const
     );
 
   JOBExportName = 'job';
+  JOBFn_GetGlobal = 'get_registered';
   JOBFn_InvokeNoResult = 'invoke_noresult';
   JOBFn_InvokeBooleanResult = 'invoke_boolresult';
   JOBFn_InvokeDoubleResult = 'invoke_doubleresult';
@@ -109,30 +110,6 @@ const
     'Set',
     'New'
     );
-
-  // JS base classes
-  JOBObjIdDocument = -1;
-  JOBObjIdWindow = -2;
-  JOBObjIdConsole = -3;
-  JOBObjIdCaches = -4;
-  JOBObjIdObject = -5;
-  JOBObjIdFunction = -6;
-  JOBObjIdDate = -7;
-  JOBObjIdString = -8;
-  JOBObjIdArray = -9;
-  JOBObjIdArrayBuffer = -10;
-  JOBObjIdInt8Array = -11;
-  JOBObjIdUint8Array = -12;
-  JOBObjIdUint8ClampedArray = -13;
-  JOBObjIdInt16Array = -13;
-  JOBObjIdUint16Array = -14;
-  JOBObjIdInt32Array = -16;
-  JOBObjIdFloat32Array = -17;
-  JOBObjIdFloat64Array = -18;
-  JOBObjIdJSON = -19;
-  JOBObjIdPromise = -20;
-
-  JObjIdBird = -21;
 
 implementation
 

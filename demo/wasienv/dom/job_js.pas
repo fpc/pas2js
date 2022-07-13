@@ -292,6 +292,7 @@ type
   public
     constructor JOBCast(Intf: IJSObject); overload;
     constructor JOBCreateFromID(aID: TJOBObjectID); virtual; // use this only for the owner (it will release it on free)
+    constructor JOBCreateGlobal(const aID: UnicodeString); virtual;
     class function Cast(Intf: IJSObject): IJSObject; overload;
     destructor Destroy; override;
     property JOBObjectID: TJOBObjectID read FJOBObjectID;
@@ -438,6 +439,11 @@ function __job_invoke_arraystringresult(
   ArgP: PByte;
   ResultLenP: PByte // nativeint
 ): TJOBResult; external JOBExportName name JOBFn_InvokeArrayStringResult;
+
+function __job_get_global(
+  NameP: PWideChar;
+  NameLen: longint
+  ): TJOBObjectID; external JOBExportName name JOBFn_GetGlobal;
 
 function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
 function VarRecToJSValue(const V: TVarRec): TJOB_JSValue;
@@ -1658,6 +1664,13 @@ begin
   FJOBObjectID:=aID;
 end;
 
+constructor TJSObject.JOBCreateGlobal(const aID: UnicodeString);
+begin
+  FJOBObjectID:=__job_get_global(PWideChar(aID),length(aID));
+  if FJOBObjectID=0 then
+    raise EJSObject.Create('JS object "'+String(aID)+'" is not registered');
+end;
+
 class function TJSObject.Cast(Intf: IJSObject): IJSObject;
 begin
   Result:=JOBCast(Intf);
@@ -1989,8 +2002,8 @@ begin
 end;
 
 initialization
-  JSObject:=TJSObject.JOBCreateFromID(JOBObjIdObject) as IJSObject;
-  JSDate:=TJSDate.JOBCreateFromID(JOBObjIdDate) as IJSDate;
+  JSObject:=TJSObject.JOBCreateGlobal('Object') as IJSObject;
+  JSDate:=TJSDate.JOBCreateGlobal('Date') as IJSDate;
 
 end.
 

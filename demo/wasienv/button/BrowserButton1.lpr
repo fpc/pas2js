@@ -3,8 +3,7 @@ program BrowserButton1;
 {$mode objfpc}
 
 uses
-  BrowserConsole, BrowserApp, JS, Classes, SysUtils, Web, WebAssembly, Types,
-  WasiEnv, WasiHostApp, JOB_Shared, JOB_Browser;
+  BrowserConsole, JS, Classes, SysUtils, Web, WasiEnv, WasiHostApp, JOB_Browser;
 
 Type
 
@@ -16,7 +15,7 @@ Type
     function OnBeforeStart(Sender: TObject;
       aDescriptor: TWebAssemblyStartDescriptor): Boolean;
   Public
-    Constructor Create(aOwner : TComponent); override;
+    constructor Create(aOwner : TComponent); override;
     procedure DoRun; override;
   end;
 
@@ -35,7 +34,6 @@ begin
 end;
 
 procedure TMyApplication.DoRun;
-
 begin
   // Your code here
   StartWebAssembly('WasiButton1.wasm',true,@OnBeforeStart);

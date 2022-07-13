@@ -21,7 +21,8 @@ Type
   TJSObjectBridge = class(TImportExtension)
   Private
     FCallbackHandler: TJOBCallback;
-    FGlobalObjects: TJSArray;
+    FGlobalObjects: TJSArray; // id to TJSObject
+    FGlobalNames: TJSObject; // name to id
     FLocalObjects: TJSArray;
     FFreeLocalIds: TJSArray; // free positions in FLocalObjects
     FStringResult: string;
@@ -33,6 +34,7 @@ Type
     function CreateCallbackArgs(View: TJSDataView; const Args: TJSFunctionArguments): TWasmNativeInt; virtual;
     function EatCallbackResult(View: TJSDataView; ResultP: TWasmNativeInt): jsvalue; virtual;
     // exports
+    function Get_GlobalID(NameP, NameLen: NativeInt): TJOBObjectID; virtual;
     function Invoke_NoResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt): TJOBResult; virtual;
     function Invoke_BooleanResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
     function Invoke_DoubleResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP, ResultP: NativeInt): TJOBResult; virtual;
@@ -48,8 +50,9 @@ Type
     Procedure FillImportObject(aObject: TJSObject); override;
     Function ImportName: String; override;
     function FindObject(ObjId: TJOBObjectID): TJSObject; virtual;
+    function FindGlobalObject(const aName: string): TJOBObjectID; virtual; // 0=not found
     function RegisterLocalObject(Obj: TJSObject): TJOBObjectID; virtual;
-    Function RegisterGlobalObject(Obj: TJSObject): TJOBObjectID; virtual;
+    Function RegisterGlobalObject(Obj: JSValue; const aName: string): TJOBObjectID; virtual;
     Function GetJOBResult(v: jsvalue): TJOBResult;
     property CallbackHandler: TJOBCallback read FCallbackHandler write FCallbackHandler;
     property WasiExports: TWASIExports read FWasiExports write SetWasiExports;
@@ -99,27 +102,30 @@ constructor TJSObjectBridge.Create(aEnv: TPas2JSWASIEnvironment);
 begin
   Inherited Create(aEnv);
   FGlobalObjects:=TJSArray.new;
-  FGlobalObjects[-JOBObjIdDocument]:=document;
-  FGlobalObjects[-JOBObjIdWindow]:=window;
-  FGlobalObjects[-JOBObjIdConsole]:=console;
-  FGlobalObjects[-JOBObjIdCaches]:=caches;
-  FGlobalObjects[-JOBObjIdObject]:=TJSObject;
-  FGlobalObjects[-JOBObjIdFunction]:=TJSFunction;
-  FGlobalObjects[-JOBObjIdDate]:=TJSDate;
-  FGlobalObjects[-JOBObjIdString]:=TJSString;
-  FGlobalObjects[-JOBObjIdArray]:=TJSArray;
-  FGlobalObjects[-JOBObjIdArrayBuffer]:=TJSArrayBuffer;
-  FGlobalObjects[-JOBObjIdInt8Array]:=TJSInt8Array;
-  FGlobalObjects[-JOBObjIdUint8Array]:=TJSUint8Array;
-  FGlobalObjects[-JOBObjIdUint8ClampedArray]:=TJSUint8ClampedArray;
-  FGlobalObjects[-JOBObjIdInt16Array]:=TJSInt16Array;
-  FGlobalObjects[-JOBObjIdUint16Array]:=TJSUint16Array;
-  FGlobalObjects[-JOBObjIdInt32Array]:=TJSUint32Array;
-  FGlobalObjects[-JOBObjIdFloat32Array]:=TJSFloat32Array;
-  FGlobalObjects[-JOBObjIdFloat64Array]:=TJSFloat64Array;
-  FGlobalObjects[-JOBObjIdJSON]:=TJSJSON;
-  FGlobalObjects[-JOBObjIdPromise]:=TJSPromise;
+  FGlobalObjects.push(nil); // allocate FGlobalObjects[0]
+  FGlobalNames:=TJSObject.new;
+  RegisterGlobalObject(document,'document');
+  RegisterGlobalObject(window,'window');
+  RegisterGlobalObject(console,'console');
+  RegisterGlobalObject(caches,'caches');
+  RegisterGlobalObject(TJSObject,'Object');
+  RegisterGlobalObject(TJSFunction,'Function');
+  RegisterGlobalObject(TJSDate,'Date');
+  RegisterGlobalObject(TJSString,'String');
+  RegisterGlobalObject(TJSArray,'Array');
+  RegisterGlobalObject(TJSArrayBuffer,'ArrayBuffer');
+  RegisterGlobalObject(TJSInt8Array,'Int8Array');
+  RegisterGlobalObject(TJSUint8Array,'Uint8Array');
+  RegisterGlobalObject(TJSUint8ClampedArray,'Uint8ClampedArray');
+  RegisterGlobalObject(TJSInt16Array,'Int16Array');
+  RegisterGlobalObject(TJSUint16Array,'Uint16Array');
+  RegisterGlobalObject(TJSUint32Array,'Uint32Array');
+  RegisterGlobalObject(TJSFloat32Array,'Float32Array');
+  RegisterGlobalObject(TJSFloat64Array,'Float64Array');
+  RegisterGlobalObject(TJSJSON,'JSON');
+  RegisterGlobalObject(TJSPromise,'Promise');
   FLocalObjects:=TJSArray.new;
+  FLocalObjects.push(nil); // allocate FLocalObjects[0]
   FFreeLocalIds:=TJSArray.new;
 end;
 
@@ -128,13 +134,18 @@ begin
   Result:=JOBExportName;
 end;
 
-function TJSObjectBridge.RegisterGlobalObject(Obj: TJSObject): TJOBObjectID;
+function TJSObjectBridge.RegisterGlobalObject(Obj: JSValue; const aName: string
+  ): TJOBObjectID;
 begin
+  if FGlobalNames.hasOwnProperty(aName) then
+    raise EJOBBridge.Create('duplicate "'+aName+'"');
   Result:=-(FGlobalObjects.push(Obj)-1);
+  FGlobalNames[aName]:=Result;
 end;
 
 procedure TJSObjectBridge.FillImportObject(aObject: TJSObject);
 begin
+  aObject[JOBFn_GetGlobal]:=@Get_GlobalID;
   aObject[JOBFn_InvokeNoResult]:=@Invoke_NoResult;
   aObject[JOBFn_InvokeBooleanResult]:=@Invoke_BooleanResult;
   aObject[JOBFn_InvokeDoubleResult]:=@Invoke_DoubleResult;
@@ -155,6 +166,13 @@ begin
     Result:=TJSObject(FLocalObjects[ObjId]);
   if isUndefined(Result) then
     Result:=nil;
+end;
+
+function TJSObjectBridge.FindGlobalObject(const aName: string): TJOBObjectID;
+begin
+  if not FGlobalNames.hasOwnProperty(aName) then
+    exit(0);
+  Result:=NativeInt(FGlobalNames[aName]);
 end;
 
 function TJSObjectBridge.RegisterLocalObject(Obj: TJSObject): TJOBObjectID;
@@ -768,6 +786,19 @@ begin
     //writeln('TJSObjectBridge.EatCallbackResult freeing result...');
     WasiExports.freeMem(ResultP);
   end;
+end;
+
+function TJSObjectBridge.Get_GlobalID(NameP, NameLen: NativeInt
+  ): TJOBObjectID;
+var
+  View: TJSDataView;
+  aWords: TJSUint16Array;
+  aName: String;
+begin
+  View:=getModuleMemoryDataView();
+  aWords:=TJSUint16Array.New(View.buffer, NameP, NameLen);
+  aName:=TypedArrayToString(aWords);
+  Result:=FindGlobalObject(aName);
 end;
 
 function TJSObjectBridge.GetJOBResult(v: jsvalue): TJOBResult;

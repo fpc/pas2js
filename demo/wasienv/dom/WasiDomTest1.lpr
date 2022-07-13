@@ -66,7 +66,7 @@ begin
 
   exit;
 
-  obj:=TJSObject.JOBCreateFromID(JObjIdBird);
+  obj:=TJSObject.JOBCreateGlobal('Bird');
   obj.WriteJSPropertyUnicodeString('Caption','Root');
   writeln('AAA1 ');
   //u:='äbc';

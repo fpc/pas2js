@@ -6,7 +6,7 @@ unit JOB_Web;
 interface
 
 uses
-  Classes, SysUtils, JOB_Shared, JOB_WAsm, JOB_JS;
+  Classes, SysUtils, JOB_Shared, JOB_JS;
 
 type
   IJSEvent = interface;
@@ -476,8 +476,8 @@ begin
 end;
 
 initialization
-  JSDocument:=TJSDocument.JOBCreateFromID(JOBObjIdDocument);
-  JSWindow:=TJSWindow.JOBCreateFromID(JOBObjIdWindow);
+  JSDocument:=TJSDocument.JOBCreateGlobal('document');
+  JSWindow:=TJSWindow.JOBCreateGlobal('window');
 finalization
   JSDocument.Free;
   JSWindow.Free;

@@ -4,7 +4,7 @@ program BrowserDomTest1;
 
 uses
   BrowserConsole, BrowserApp, JS, Classes, SysUtils, Web, WebAssembly, Types,
-  wasienv, job_browser, job_shared;
+  wasienv, job_shared, JOB_Browser;
 
 Type
 

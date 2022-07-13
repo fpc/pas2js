@@ -4,7 +4,7 @@ program BrowserButton1;
 
 uses
   BrowserConsole, BrowserApp, JS, Classes, SysUtils, Web, WebAssembly, Types,
-  WasiEnv, JOB_Browser, JOB_Shared;
+  WasiEnv, JOB_Shared, JOB_Browser;
 
 Type
 

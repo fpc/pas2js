@@ -5,7 +5,7 @@ library WasiButton1;
 {$codepage UTF8}
 
 uses
-  SysUtils, JOB_WAsm, JOB_Shared, JOB_Web, JOB_JS;
+  SysUtils, JOB_Shared, JOB_Web, JOB_JS;
 
 type
 
@@ -58,7 +58,7 @@ end;
 // workaround: fpc wasm does not yet support exporting functions from units
 function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
 begin
-  Result:=JOB_WAsm.JOBCallback(Func,Data,Code,Args);
+  Result:=JOB_JS.JOBCallback(Func,Data,Code,Args);
 end;
 
 exports

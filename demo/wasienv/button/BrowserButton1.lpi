@@ -36,16 +36,21 @@
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
-        <Filename Value="../button/index.html"/>
+        <Filename Value="index.html"/>
         <IsPartOfProject Value="True"/>
         <CustomData Count="1">
           <Item0 Name="PasJSIsProjectHTMLFile" Value="1"/>
         </CustomData>
       </Unit>
       <Unit>
-        <Filename Value="../dom/job_browser.pp"/>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="JOB_Browser"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_shared.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Shared"/>
       </Unit>
     </Units>
   </ProjectOptions>
@@ -56,7 +61,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="../dom"/>
+      <OtherUnitFiles Value="../../../packages/job"/>
       <UnitOutputDirectory Value="js"/>
     </SearchPaths>
     <Parsing>

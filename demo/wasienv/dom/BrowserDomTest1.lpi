@@ -42,9 +42,14 @@
         </CustomData>
       </Unit>
       <Unit>
-        <Filename Value="job_browser.pp"/>
+        <Filename Value="../../../packages/job/job_browser.pp"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="JOB_Browser"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_shared.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Shared"/>
       </Unit>
     </Units>
   </ProjectOptions>
@@ -55,6 +60,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
+      <OtherUnitFiles Value="../../../packages/job"/>
       <UnitOutputDirectory Value="js"/>
     </SearchPaths>
     <Parsing>

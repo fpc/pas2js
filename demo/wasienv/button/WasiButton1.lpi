@@ -29,11 +29,6 @@
         <IsPartOfProject Value="True"/>
       </Unit>
       <Unit>
-        <Filename Value="../dom/job_wasm.pas"/>
-        <IsPartOfProject Value="True"/>
-        <UnitName Value="JOB_WAsm"/>
-      </Unit>
-      <Unit>
         <Filename Value="../dom/job_web.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="JOB_Web"/>
@@ -42,6 +37,11 @@
         <Filename Value="../dom/job_js.pas"/>
         <IsPartOfProject Value="True"/>
         <UnitName Value="JOB_JS"/>
+      </Unit>
+      <Unit>
+        <Filename Value="../../../packages/job/job_shared.pp"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="JOB_Shared"/>
       </Unit>
     </Units>
   </ProjectOptions>
@@ -52,7 +52,7 @@
     </Target>
     <SearchPaths>
       <IncludeFiles Value="$(ProjOutDir)"/>
-      <OtherUnitFiles Value="../dom"/>
+      <OtherUnitFiles Value="../dom;../../../packages/job"/>
       <UnitOutputDirectory Value="lib/$(TargetCPU)-$(TargetOS)"/>
     </SearchPaths>
     <CodeGeneration>

@@ -1,0 +1,4 @@
+[submodule "compiler"]
+	path = compiler
+	url = ../source
+	branch = main

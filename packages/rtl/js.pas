@@ -81,6 +81,7 @@ type
     function valueOf: JSValue;
     property Properties[Name: String]: JSValue read GetProperties write SetProperties; default;
   end;
+  TJSObjectClass = class of TJSObject;
 
   TJSObjectDynArray = Array of TJSObject;
   TJSObjectDynArrayArray = Array of TJSObjectDynArray;

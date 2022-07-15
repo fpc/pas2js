@@ -107,7 +107,7 @@ type
   TJSSetEventProc = reference to procedure(value : JSValue; key: NativeInt; set_: TJSSet);
   TJSSetProcCallBack = reference  to procedure(value: JSValue; key: JSValue);
 
-   { TJSSet }
+  { TJSSet }
   TJSSet = class external name 'Set'
   private
     FSize : NativeInt; external name 'size';

@@ -341,6 +341,45 @@ type
     property Properties[const PropName: String]: TJOB_JSValue read GetProperties write SetProperties; default;
   end;
 
+  { IJSSet }
+
+  IJSSet = interface(IJSObject)
+    ['{1D276953-95E2-4B07-8D4E-BE70D1CEF356}']
+  end;
+
+  { TJSSet }
+
+  TJSSet = class(TJSObject,IJSSet)
+  public
+    class function Cast(Intf: IJSObject): IJSSet; overload;
+  end;
+
+  { IJSMap }
+
+  IJSMap = interface(IJSObject)
+    ['{D31F19A1-388E-4612-BC71-9392ECA90DA3}']
+  end;
+
+  { TJSMap }
+
+  TJSMap = class(TJSObject,IJSMap)
+  public
+    class function Cast(Intf: IJSObject): IJSMap; overload;
+  end;
+
+  { IJSFunction }
+
+  IJSFunction = interface(IJSObject)
+    ['{8BD36F12-F6F7-4F8B-91FB-43D8626A72FE}']
+  end;
+
+  { TJSFunction }
+
+  TJSFunction = class(TJSObject,IJSFunction)
+  public
+    class function Cast(Intf: IJSObject): IJSFunction; overload;
+  end;
+
   { IJSDate }
 
   IJSDate = interface(IJSObject)
@@ -360,6 +399,279 @@ type
       TheHours: NativeInt = 0; TheMinutes: NativeInt = 0; TheSeconds: NativeInt = 0;
       TheMilliseconds: NativeInt = 0): IJSDate;
     function toLocaleDateString: UnicodeString; overload; // date in locale timezone, no time
+  end;
+
+  { IJSRegExp }
+
+  IJSRegExp = interface(IJSObject)
+    ['{3E9E4F54-10DA-45BF-ABED-7ED2C255617E}']
+  end;
+
+  { TJSRegExp }
+
+  TJSRegExp = class(TJSObject,IJSRegExp)
+  public
+    class function Cast(Intf: IJSObject): IJSRegExp; overload;
+  end;
+
+  { IJSString }
+
+  IJSString = interface(IJSObject)
+    ['{4C3B1B1C-4C0D-42A2-81BE-36CC78DCF9AE}']
+  end;
+
+  { TJSString }
+
+  TJSString = class(TJSObject,IJSString)
+  public
+    class function Cast(Intf: IJSObject): IJSString; overload;
+  end;
+
+  { IJSArray }
+
+  IJSArray = interface(IJSObject)
+    ['{21E331BA-7B57-42DD-8DCE-B26FEA85C693}']
+  end;
+
+  { TJSArray }
+
+  TJSArray = class(TJSObject,IJSArray)
+  public
+    class function Cast(Intf: IJSObject): IJSArray; overload;
+  end;
+
+  { IJSArrayBuffer }
+
+  IJSArrayBuffer = interface(IJSObject)
+    ['{A1612EED-4F05-46C0-90BE-ACD511B15E89}']
+  end;
+
+  { TJSArrayBuffer }
+
+  TJSArrayBuffer = class(TJSObject,IJSArrayBuffer)
+  public
+    class function Cast(Intf: IJSObject): IJSArrayBuffer; overload;
+  end;
+
+  { IJSTypedArray }
+
+  IJSTypedArray = interface(IJSObject)
+    ['{6A76602B-9555-4136-A7B7-2E683265EA82}']
+  end;
+
+  { TJSTypedArray }
+
+  TJSTypedArray = class(TJSObject,IJSTypedArray)
+  public
+    class function Cast(Intf: IJSObject): IJSTypedArray; overload;
+  end;
+
+  { IJSInt8Array }
+
+  IJSInt8Array = interface(IJSTypedArray)
+    ['{72D65C5E-E18E-4294-8709-D7A63BF12958}']
+  end;
+
+  { TJSInt8Array }
+
+  TJSInt8Array = class(TJSTypedArray,IJSInt8Array)
+  public
+    class function Cast(Intf: IJSObject): IJSInt8Array; overload;
+  end;
+
+  { IJSUint8Array }
+
+  IJSUint8Array = interface(IJSTypedArray)
+    ['{99EC7B3A-30E5-425F-933C-C169B2F4193C}']
+  end;
+
+  { TJSUint8Array }
+
+  TJSUint8Array = class(TJSTypedArray,IJSUint8Array)
+  public
+    class function Cast(Intf: IJSObject): IJSUint8Array; overload;
+  end;
+
+  { IJSUint8ClampedArray }
+
+  IJSUint8ClampedArray = interface(IJSTypedArray)
+    ['{A1508D6E-8629-4416-875E-9F669ECDC47F}']
+  end;
+
+  { TJSUint8ClampedArray }
+
+  TJSUint8ClampedArray = class(TJSTypedArray,IJSUint8ClampedArray)
+  public
+    class function Cast(Intf: IJSObject): IJSUint8ClampedArray; overload;
+  end;
+
+  { IJSInt16Array }
+
+  IJSInt16Array = interface(IJSTypedArray)
+    ['{B5FA7A13-D8CA-44E4-ADAE-F10FFFAE46B4}']
+  end;
+
+  { TJSInt16Array }
+
+  TJSInt16Array = class(TJSTypedArray,IJSInt16Array)
+  public
+    class function Cast(Intf: IJSObject): IJSInt16Array; overload;
+  end;
+
+  { IJSUint16Array }
+
+  IJSUint16Array = interface(IJSTypedArray)
+    ['{6023E2BC-C464-4288-A8DA-4A5D0B2B915E}']
+  end;
+
+  { TJSUint16Array }
+
+  TJSUint16Array = class(TJSTypedArray,IJSUint16Array)
+  public
+    class function Cast(Intf: IJSObject): IJSUint16Array; overload;
+  end;
+
+  { IJSInt32Array }
+
+  IJSInt32Array = interface(IJSTypedArray)
+    ['{16F1A6FB-2F26-4A64-8A2B-D883DE2F58C4}']
+  end;
+
+  { TJSInt32Array }
+
+  TJSInt32Array = class(TJSTypedArray,IJSInt32Array)
+  public
+    class function Cast(Intf: IJSObject): IJSInt32Array; overload;
+  end;
+
+  { IJSUint32Array }
+
+  IJSUint32Array = interface(IJSTypedArray)
+    ['{C637B2FA-CED6-4EC7-8D97-C56824EAF8B3}']
+  end;
+
+  { TJSUint32Array }
+
+  TJSUint32Array = class(TJSTypedArray,IJSUint32Array)
+  public
+    class function Cast(Intf: IJSObject): IJSUint32Array; overload;
+  end;
+
+  { IJSFloat32Array }
+
+  IJSFloat32Array = interface(IJSTypedArray)
+    ['{B5CE57F6-CA7C-4168-AEA3-32EF13DA52D6}']
+  end;
+
+  { TJSFloat32Array }
+
+  TJSFloat32Array = class(TJSTypedArray,IJSFloat32Array)
+  public
+    class function Cast(Intf: IJSObject): IJSFloat32Array; overload;
+  end;
+
+  { IJSFloat64Array }
+
+  IJSFloat64Array = interface(IJSTypedArray)
+    ['{A7876DC5-9549-4FDA-BE35-A641CE9D9F0B}']
+  end;
+
+  { TJSFloat64Array }
+
+  TJSFloat64Array = class(TJSTypedArray,IJSFloat64Array)
+  public
+    class function Cast(Intf: IJSObject): IJSFloat64Array; overload;
+  end;
+
+  { IJSBufferSource }
+
+  IJSBufferSource = interface(IJSObject)
+    ['{7F2A68EE-2FA6-445C-BFC1-2C9E4D45FFBF}']
+  end;
+
+  { TJSBufferSource }
+
+  TJSBufferSource = class(TJSObject,IJSBufferSource)
+  public
+    class function Cast(Intf: IJSObject): IJSBufferSource; overload;
+  end;
+
+  { IJSDataView }
+
+  IJSDataView = interface(IJSObject)
+    ['{42F14387-FAD2-46BA-8CB4-057445095CEE}']
+  end;
+
+  { TJSDataView }
+
+  TJSDataView = class(TJSObject,IJSDataView)
+  public
+    class function Cast(Intf: IJSObject): IJSDataView; overload;
+  end;
+
+  { IJSJSON }
+
+  IJSJSON = interface(IJSObject)
+    ['{73535059-91DD-4A22-91A6-D8072008C5F3}']
+  end;
+
+  { TJSJSON }
+
+  TJSJSON = class(TJSObject,IJSJSON)
+  public
+    class function Cast(Intf: IJSObject): IJSJSON; overload;
+  end;
+
+  { IJSError }
+
+  IJSError = interface(IJSObject)
+    ['{80532C4D-CAD2-4C70-A4EA-01B29BB8C2C8}']
+  end;
+
+  { TJSError }
+
+  TJSError = class(TJSObject,IJSError)
+  public
+    class function Cast(Intf: IJSObject): IJSError; overload;
+  end;
+
+  { IJSPromise }
+
+  IJSPromise = interface(IJSObject)
+    ['{2BFE673B-B5D4-4F31-96CD-5E1A60EFBE26}']
+  end;
+
+  { TJSPromise }
+
+  TJSPromise = class(TJSObject,IJSPromise)
+  public
+    class function Cast(Intf: IJSObject): IJSPromise; overload;
+  end;
+
+  { IJSTextDecoder }
+
+  IJSTextDecoder = interface(IJSObject)
+    ['{EB42F04D-B92D-42AC-96F8-58DEC2F7F8D0}']
+  end;
+
+  { TJSTextDecoder }
+
+  TJSTextDecoder = class(TJSObject,IJSTextDecoder)
+  public
+    class function Cast(Intf: IJSObject): IJSTextDecoder; overload;
+  end;
+
+  { IJSTextEncoder }
+
+  IJSTextEncoder = interface(IJSObject)
+    ['{C2964DC1-E9AE-4321-99BD-EB788A7F2D9E}']
+  end;
+
+  { TJSTextEncoder }
+
+  TJSTextEncoder = class(TJSObject,IJSTextEncoder)
+  public
+    class function Cast(Intf: IJSObject): IJSTextEncoder; overload;
   end;
 
 var
@@ -592,6 +904,174 @@ begin
   else
     raise EJSArgParse.Create('VarRecToJSValue unsupported VType '+IntToStr(V.VType));
   end;
+end;
+
+{ TJSTextEncoder }
+
+class function TJSTextEncoder.Cast(Intf: IJSObject): IJSTextEncoder;
+begin
+  Result:=TJSTextEncoder.Cast(Intf);
+end;
+
+{ TJSTextDecoder }
+
+class function TJSTextDecoder.Cast(Intf: IJSObject): IJSTextDecoder;
+begin
+  Result:=TJSTextDecoder.Cast(Intf);
+end;
+
+{ TJSPromise }
+
+class function TJSPromise.Cast(Intf: IJSObject): IJSPromise;
+begin
+  Result:=TJSPromise.Cast(Intf);
+end;
+
+{ TJSError }
+
+class function TJSError.Cast(Intf: IJSObject): IJSError;
+begin
+  Result:=TJSError.Cast(Intf);
+end;
+
+{ TJSJSON }
+
+class function TJSJSON.Cast(Intf: IJSObject): IJSJSON;
+begin
+  Result:=TJSJSON.Cast(Intf);
+end;
+
+{ TJSDataView }
+
+class function TJSDataView.Cast(Intf: IJSObject): IJSDataView;
+begin
+  Result:=TJSDataView.Cast(Intf);
+end;
+
+{ TJSBufferSource }
+
+class function TJSBufferSource.Cast(Intf: IJSObject): IJSBufferSource;
+begin
+  Result:=TJSBufferSource.Cast(Intf);
+end;
+
+{ TJSFloat64Array }
+
+class function TJSFloat64Array.Cast(Intf: IJSObject): IJSFloat64Array;
+begin
+  Result:=TJSFloat64Array.Cast(Intf);
+end;
+
+{ TJSFloat32Array }
+
+class function TJSFloat32Array.Cast(Intf: IJSObject): IJSFloat32Array;
+begin
+  Result:=TJSFloat32Array.Cast(Intf);
+end;
+
+{ TJSUint32Array }
+
+class function TJSUint32Array.Cast(Intf: IJSObject): IJSUint32Array;
+begin
+  Result:=TJSUint32Array.Cast(Intf);
+end;
+
+{ TJSInt32Array }
+
+class function TJSInt32Array.Cast(Intf: IJSObject): IJSInt32Array;
+begin
+  Result:=TJSInt32Array.Cast(Intf);
+end;
+
+{ TJSUint16Array }
+
+class function TJSUint16Array.Cast(Intf: IJSObject): IJSUint16Array;
+begin
+  Result:=TJSUint16Array.Cast(Intf);
+end;
+
+{ TJSInt16Array }
+
+class function TJSInt16Array.Cast(Intf: IJSObject): IJSInt16Array;
+begin
+  Result:=TJSInt16Array.Cast(Intf);
+end;
+
+{ TJSUint8ClampedArray }
+
+class function TJSUint8ClampedArray.Cast(Intf: IJSObject): IJSUint8ClampedArray;
+begin
+  Result:=TJSUint8ClampedArray.Cast(Intf);
+end;
+
+{ TJSUInt8Array }
+
+class function TJSUInt8Array.Cast(Intf: IJSObject): IJSUInt8Array;
+begin
+  Result:=TJSUInt8Array.Cast(Intf);
+end;
+
+{ TJSInt8Array }
+
+class function TJSInt8Array.Cast(Intf: IJSObject): IJSInt8Array;
+begin
+  Result:=TJSInt8Array.Cast(Intf);
+end;
+
+{ TJSTypedArray }
+
+class function TJSTypedArray.Cast(Intf: IJSObject): IJSTypedArray;
+begin
+  Result:=TJSTypedArray.Cast(Intf);
+end;
+
+{ TJSArrayBuffer }
+
+class function TJSArrayBuffer.Cast(Intf: IJSObject): IJSArrayBuffer;
+begin
+  Result:=TJSArrayBuffer.Cast(Intf);
+end;
+
+{ TJSArray }
+
+class function TJSArray.Cast(Intf: IJSObject): IJSArray;
+begin
+  Result:=TJSArray.Cast(Intf);
+end;
+
+{ TJSString }
+
+class function TJSString.Cast(Intf: IJSObject): IJSString;
+begin
+  Result:=TJSString.Cast(Intf);
+end;
+
+{ TJSRegExp }
+
+class function TJSRegExp.Cast(Intf: IJSObject): IJSRegExp;
+begin
+  Result:=TJSRegExp.Cast(Intf);
+end;
+
+{ TJSFunction }
+
+class function TJSFunction.Cast(Intf: IJSObject): IJSFunction;
+begin
+  Result:=TJSFunction.Cast(Intf);
+end;
+
+{ TJSMap }
+
+class function TJSMap.Cast(Intf: IJSObject): IJSMap;
+begin
+  Result:=TJSMap.Cast(Intf);
+end;
+
+{ TJSSet }
+
+class function TJSSet.Cast(Intf: IJSObject): IJSSet;
+begin
+  Result:=TJSSet.Cast(Intf);
 end;
 
 { TJOBCallbackHelper }

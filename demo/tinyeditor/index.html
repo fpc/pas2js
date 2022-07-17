@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta http-equiv="Content-type" content="text/html; charset=utf-8">
+  <title>Tiny Editor demo project</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- We need font awesome -->
+  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+  <!-- Bulma for some styling -->
+  <link rel="stylesheet" href="bulma.min.css">
+  <!-- Local copy of tiny editor -->
+  <script src="tinyeditor.js"></script>
+  <!-- Our demo project-->
+  <script src="tinyeditordemo.js"></script>
+</head>
+
+<body>
+  <div class="hero">
+    <div class="hero-body has-text-centered">
+      <h2 class="title is-4">Tiny editor demo</h2>
+      <p class="">This is simple demo of a <a href="https://github.com/fvilers/tiny-editor">Tiny editor</a>.</p>
+      <p>edit html, and press the 'Render HTML' button to display the edited html in the lower part of the screen.
+    </div>
+  </div>
+  <div class="box py-5">
+    <div class="is-flex is-justify-content-center">
+      <div>
+        <div class="content">
+          <div id="editor" style="min-height: 250px">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="box py-5">
+    <div class="block">
+      <div class="is-flex is-justify-content-center">
+         <button id="btnShowHTML" class="button is-primary">Render HTML</button>
+      </div>
+    </div>
+    <div class="block">
+      <div class="is-flex is-justify-content-center">
+        <div class="content" id="divHTMLContent">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.addEventListener("load", rtl.run);
+  </script>
+</body>
+</html>

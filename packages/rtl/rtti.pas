@@ -1082,11 +1082,14 @@ end;
 function TRttiStructuredType.GetProperty(const AName: string): TRttiProperty;
 var
   Prop: TRttiProperty;
+  lName: String;
 
 begin
+  lName := LowerCase(AName);
   for Prop in GetProperties do
-    if Prop.Name = AName then
+    if lowercase(Prop.Name) = lName then
       Exit(Prop);
+  Result:=nil;
 end;
 
 function TRttiStructuredType.GetDeclaredProperties: TRttiPropertyArray;

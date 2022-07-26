@@ -149,6 +149,7 @@ type
     function AllocIntf(Intf: IJSObject): PByte;
     function AllocObject(Obj: TJSObject): PByte;
     function AllocObjId(ObjId: TJOBObjectID): PByte;
+    function AllocJSValue(Value: TJOB_JSValue): PByte;
   end;
 
   TJOBCallback = function(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -1361,6 +1362,21 @@ begin
   GetMem(Result,1+SizeOf(TJOBObjectID));
   Result^:=JOBArgObject;
   PJOBObjectID(Result+1)^:=ObjId;
+end;
+
+function TJOBCallbackHelper.AllocJSValue(Value: TJOB_JSValue): PByte;
+begin
+  if Value=nil then
+    exit(AllocUndefined);
+  case Value.Kind of
+    jjvkUndefined: Result:=AllocUndefined;
+    jjvkBoolean: Result:=AllocBool(TJOB_Boolean(Value).Value);
+    jjvkDouble: Result:=AllocDouble(TJOB_Double(Value).Value);
+    jjvkString: Result:=AllocString(TJOB_String(Value).Value);
+    jjvkObject: Result:=AllocIntf(TJOB_Object(Value).Value);
+  else
+    raise EJSArgParse.Create('AllocJSValue unsupported: '+JOB_JSValueKindNames[Value.Kind]);
+  end;
 end;
 
 { TJOB_JSValue }

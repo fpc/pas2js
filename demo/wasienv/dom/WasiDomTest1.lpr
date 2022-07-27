@@ -31,14 +31,14 @@ type
 
   TWasmApp = class
   private
-    function OnPlaygroundClick(Event: IJSEventListenerEvent): boolean;
+    function OnPlaygroundClick(Event: IJSEvent): boolean;
   public
     procedure Run;
   end;
 
 { TApplication }
 
-function TWasmApp.OnPlaygroundClick(Event: IJSEventListenerEvent): boolean;
+function TWasmApp.OnPlaygroundClick(Event: IJSEvent): boolean;
 var
   w: TJOBResult;
 begin
@@ -58,7 +58,7 @@ var
   JSElem: IJSElement;
 begin
   JSElem:=JSDocument.getElementById('playground');
-  writeln('TWasmApp.Run playground classname=',JSElem._ClassName);
+  writeln('TWasmApp.Run playground classname=',JSElem.className_);
 
   writeln('TWasmApp.Run addEventListener click...');
   JSElem.addEventListener('click',@OnPlaygroundClick);

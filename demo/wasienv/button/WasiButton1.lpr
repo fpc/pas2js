@@ -13,14 +13,14 @@ type
 
   TWasmApp = class
   private
-    function OnButtonClick(Event: IJSEventListenerEvent): boolean;
+    function OnButtonClick(Event: IJSEvent): boolean;
   public
     procedure Run;
   end;
 
 { TApplication }
 
-function TWasmApp.OnButtonClick(Event: IJSEventListenerEvent): boolean;
+function TWasmApp.OnButtonClick(Event: IJSEvent): boolean;
 begin
   writeln('TWasmApp.OnButtonClick ');
   if Event=nil then ;

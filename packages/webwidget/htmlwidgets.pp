@@ -1522,12 +1522,12 @@ begin
   end;
   if Assigned(cl) or (RowChecks[K] in TableOptions) then
      begin
-     C.dataset['row']:=ACell.Row;
+     C.dataset['row']:=IntToStr(ACell.Row);
      C.Dataset['kind']:=RowKindNames[K];
      end;
   if Assigned(cl) or (ColChecks[K] in TableOptions) then
      begin
-     C.dataset['col']:=ACell.Col;
+     C.dataset['col']:=IntToStr(ACell.Col);
      C.Dataset['kind']:=RowKindNames[K];
      end;
   if Assigned(M) then
@@ -1605,7 +1605,7 @@ begin
        end;
        if Assigned(CL) or (TableRowChecks[Akind] in TableOptions) then
          begin
-         RowEl.dataset['row']:=Enum.CurrentRow;
+         RowEl.dataset['row']:=IntToStr(Enum.CurrentRow);
          RowEl.dataset['kind']:=RowKindNames[aKind];
          end;
        if Assigned(M) then

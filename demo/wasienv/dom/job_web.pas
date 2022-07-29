@@ -599,10 +599,12 @@ Type
     TJSShareData
     --------------------------------------------------------------------}
 
+  TJSFileDynArray = IJSArray; // array of TJSFile
   TJSShareDataRec = record
     title: UnicodeString;
     text: UnicodeString;
     url: UnicodeString;
+    files: TJSFileDynArray;
   end;
 
   { --------------------------------------------------------------------
@@ -2561,7 +2563,7 @@ Type
   TJSRangeDynArray = IJSArray; // array of TJSRange
 
   IJSSelection = interface(IJSObject)
-    ['{522D4098-FC2A-35AF-A806-57B88516481A}']
+    ['{A4886FB0-977D-3F5E-AEF5-E54883662A9A}']
     function _GetanchorNode: IJSNode;
     function _GetanchorOffset: LongWord;
     function _GetfocusNode: IJSNode;
@@ -2592,6 +2594,7 @@ Type
     procedure deleteFromDocument;
     function containsNode(aNode: IJSNode; allowPartialContainment: Boolean): Boolean; overload;
     function containsNode(aNode: IJSNode): Boolean; overload;
+    function toString: UnicodeString;
     procedure modify(const alter: UnicodeString; const aDirection: UnicodeString; const aGranularity: UnicodeString);
     function toStringWithFormat(const aFormatType: UnicodeString; aFlags: LongWord; aWrapColumn: Integer): UnicodeString;
     procedure addSelectionListener(aNewListener: IJSnsISelectionListener);
@@ -2645,6 +2648,7 @@ Type
     procedure deleteFromDocument;
     function containsNode(aNode: IJSNode; allowPartialContainment: Boolean): Boolean; overload;
     function containsNode(aNode: IJSNode): Boolean; overload;
+    function toString: UnicodeString;
     procedure modify(const alter: UnicodeString; const aDirection: UnicodeString; const aGranularity: UnicodeString);
     function toStringWithFormat(const aFormatType: UnicodeString; aFlags: LongWord; aWrapColumn: Integer): UnicodeString;
     procedure addSelectionListener(aNewListener: IJSnsISelectionListener);
@@ -4469,12 +4473,15 @@ Type
     --------------------------------------------------------------------}
 
   IJSNode = interface(IJSEventTarget)
-    ['{14C2BA88-3B6E-38A7-B7BB-309263ADD6A5}']
+    ['{D147ACB2-D5F2-3E4B-B173-FE9078740E75}']
     function _GetnodeType: Word;
     function _GetnodeName: UnicodeString;
     function _GetbaseURI: UnicodeString;
     function _GetisConnected: Boolean;
+    function _GetownerDocument: IJSDocument;
     function _GetparentNode: IJSNode;
+    function _GetparentElement: IJSElement;
+    function _GetchildNodes: IJSNodeList;
     function _GetfirstChild: IJSNode;
     function _GetlastChild: IJSNode;
     function _GetpreviousSibling: IJSNode;
@@ -4504,7 +4511,10 @@ Type
     property nodeName: UnicodeString read _GetnodeName;
     property baseURI: UnicodeString read _GetbaseURI;
     property isConnected: Boolean read _GetisConnected;
+    property ownerDocument: IJSDocument read _GetownerDocument;
     property parentNode: IJSNode read _GetparentNode;
+    property parentElement: IJSElement read _GetparentElement;
+    property childNodes: IJSNodeList read _GetchildNodes;
     property firstChild: IJSNode read _GetfirstChild;
     property lastChild: IJSNode read _GetlastChild;
     property previousSibling: IJSNode read _GetpreviousSibling;
@@ -4519,7 +4529,10 @@ Type
     function _GetnodeName: UnicodeString;
     function _GetbaseURI: UnicodeString;
     function _GetisConnected: Boolean;
+    function _GetownerDocument: IJSDocument;
     function _GetparentNode: IJSNode;
+    function _GetparentElement: IJSElement;
+    function _GetchildNodes: IJSNodeList;
     function _GetfirstChild: IJSNode;
     function _GetlastChild: IJSNode;
     function _GetpreviousSibling: IJSNode;
@@ -4571,7 +4584,10 @@ Type
     property nodeName: UnicodeString read _GetnodeName;
     property baseURI: UnicodeString read _GetbaseURI;
     property isConnected: Boolean read _GetisConnected;
+    property ownerDocument: IJSDocument read _GetownerDocument;
     property parentNode: IJSNode read _GetparentNode;
+    property parentElement: IJSElement read _GetparentElement;
+    property childNodes: IJSNodeList read _GetchildNodes;
     property firstChild: IJSNode read _GetfirstChild;
     property lastChild: IJSNode read _GetlastChild;
     property previousSibling: IJSNode read _GetpreviousSibling;
@@ -5955,7 +5971,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSDocument = interface(IJSNode)
-    ['{A1B6B3EF-9623-307D-B3D8-CB586BF44C96}']
+    ['{83571DA0-6FFE-34FA-83C8-C58C8170FB3C}']
     function _Getimplementation_: IJSDOMImplementation;
     function _GetURL: UnicodeString;
     function _GetdocumentURI: UnicodeString;
@@ -6076,6 +6092,7 @@ Type
     function importNode(aNode: IJSNode): IJSNode; overload;
     function adoptNode(aNode: IJSNode): IJSNode;
     function createEvent(const aInterface_: UnicodeString): IJSEvent;
+    function createRange: IJSRange;
     function createCDATASection(const aData: UnicodeString): IJSCDATASection;
     function createAttribute(const aName: UnicodeString): IJSAttr;
     function createAttributeNS(const aNamespace: UnicodeString; const aName: UnicodeString): IJSAttr;
@@ -6450,6 +6467,7 @@ Type
     function importNode(aNode: IJSNode): IJSNode; overload;
     function adoptNode(aNode: IJSNode): IJSNode;
     function createEvent(const aInterface_: UnicodeString): IJSEvent;
+    function createRange: IJSRange;
     function createCDATASection(const aData: UnicodeString): IJSCDATASection;
     function createAttribute(const aName: UnicodeString): IJSAttr;
     function createAttributeNS(const aNamespace: UnicodeString; const aName: UnicodeString): IJSAttr;
@@ -6742,7 +6760,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSElement = interface(IJSNode)
-    ['{509EC8E5-B2F0-3FDB-8B1E-ED96E018A43D}']
+    ['{72733125-1779-3283-A7CC-978597375199}']
     function _GetnamespaceURI: UnicodeString;
     function _Getprefix: UnicodeString;
     function _GetlocalName: UnicodeString;
@@ -6771,6 +6789,8 @@ Type
     function _GetscrollLeftMax: Integer;
     function _GetinnerHTML: UnicodeString;
     function _GetouterHTML: UnicodeString;
+    function _GetshadowRoot: IJSShadowRoot;
+    function _GetopenOrClosedShadowRoot: IJSShadowRoot;
     function _Getslot: UnicodeString;
     function _GethasVisibleScrollbars: Boolean;
     function _GetclientHeightDouble: Double;
@@ -6823,6 +6843,9 @@ Type
     function removeAttributeNode(aOldAttr: IJSAttr): IJSAttr;
     function getAttributeNodeNS(const aNamespaceURI: UnicodeString; const aLocalName: UnicodeString): IJSAttr;
     function setAttributeNodeNS(aNewAttr: IJSAttr): IJSAttr;
+    function getTransformToAncestor(ancestor: IJSElement): IJSDOMMatrixReadOnly;
+    function getTransformToParent: IJSDOMMatrixReadOnly;
+    function getTransformToViewport: IJSDOMMatrixReadOnly;
     function getClientRects: IJSDOMRectList;
     function getBoundingClientRect: IJSDOMRect;
     procedure scrollIntoView(arg: Boolean); overload;
@@ -6841,6 +6864,7 @@ Type
     procedure insertAdjacentHTML(const aPosition: UnicodeString; const aText: UnicodeString);
     function querySelector(const aSelectors: UTF8String): IJSElement;
     function querySelectorAll(const aSelectors: UTF8String): IJSNodeList;
+    function attachShadow(const aShadowRootInitDict: TJSShadowRootInit): IJSShadowRoot;
     procedure requestPointerLock;
     function hasGridFragments: Boolean;
     function getElementsWithGrid: TJSElementDynArray;
@@ -6891,6 +6915,8 @@ Type
     property scrollLeftMax: Integer read _GetscrollLeftMax;
     property innerHTML: UnicodeString read _GetinnerHTML write _SetinnerHTML;
     property outerHTML: UnicodeString read _GetouterHTML write _SetouterHTML;
+    property shadowRoot: IJSShadowRoot read _GetshadowRoot;
+    property openOrClosedShadowRoot: IJSShadowRoot read _GetopenOrClosedShadowRoot;
     property slot: UnicodeString read _Getslot write _Setslot;
     // property onfullscreenchange: TEventHandler read _Getonfullscreenchange write _Setonfullscreenchange;
     // property onfullscreenerror: TEventHandler read _Getonfullscreenerror write _Setonfullscreenerror;
@@ -6936,6 +6962,8 @@ Type
     function _GetscrollLeftMax: Integer;
     function _GetinnerHTML: UnicodeString;
     function _GetouterHTML: UnicodeString;
+    function _GetshadowRoot: IJSShadowRoot;
+    function _GetopenOrClosedShadowRoot: IJSShadowRoot;
     function _Getslot: UnicodeString;
     function _GethasVisibleScrollbars: Boolean;
     function _GetclientHeightDouble: Double;
@@ -6989,6 +7017,9 @@ Type
     function removeAttributeNode(aOldAttr: IJSAttr): IJSAttr;
     function getAttributeNodeNS(const aNamespaceURI: UnicodeString; const aLocalName: UnicodeString): IJSAttr;
     function setAttributeNodeNS(aNewAttr: IJSAttr): IJSAttr;
+    function getTransformToAncestor(ancestor: IJSElement): IJSDOMMatrixReadOnly;
+    function getTransformToParent: IJSDOMMatrixReadOnly;
+    function getTransformToViewport: IJSDOMMatrixReadOnly;
     function getClientRects: IJSDOMRectList;
     function getBoundingClientRect: IJSDOMRect;
     procedure scrollIntoView(arg: Boolean); overload;
@@ -7007,6 +7038,7 @@ Type
     procedure insertAdjacentHTML(const aPosition: UnicodeString; const aText: UnicodeString);
     function querySelector(const aSelectors: UTF8String): IJSElement;
     function querySelectorAll(const aSelectors: UTF8String): IJSNodeList;
+    function attachShadow(const aShadowRootInitDict: TJSShadowRootInit): IJSShadowRoot;
     procedure requestPointerLock;
     function hasGridFragments: Boolean;
     function getElementsWithGrid: TJSElementDynArray;
@@ -7058,6 +7090,8 @@ Type
     property scrollLeftMax: Integer read _GetscrollLeftMax;
     property innerHTML: UnicodeString read _GetinnerHTML write _SetinnerHTML;
     property outerHTML: UnicodeString read _GetouterHTML write _SetouterHTML;
+    property shadowRoot: IJSShadowRoot read _GetshadowRoot;
+    property openOrClosedShadowRoot: IJSShadowRoot read _GetopenOrClosedShadowRoot;
     property slot: UnicodeString read _Getslot write _Setslot;
     // property onfullscreenchange: TEventHandler read _Getonfullscreenchange write _Setonfullscreenchange;
     // property onfullscreenerror: TEventHandler read _Getonfullscreenerror write _Setonfullscreenerror;
@@ -9854,7 +9888,11 @@ var
   column: LongWord;
   error: TJOB_JSValue;
 begin
-  event:=H.GetValue;  source:=H.GetString;  lineno:=H.GetMaxInt;  column:=H.GetMaxInt;  error:=H.GetValue;
+  event:=H.GetValue;
+  source:=H.GetString;
+  lineno:=H.GetMaxInt;
+  column:=H.GetMaxInt;
+  error:=H.GetValue;
   Result:=H.AllocJSValue(TOnErrorEventHandlerNonNull(aMethod)(event,source,lineno,column,error));
 end;
 
@@ -9889,7 +9927,8 @@ var
   oldDocument: IJSDocument;
   newDocment: IJSDocument;
 begin
-  oldDocument:=H.GetObject(TJSDocument) as IJSDocument;  newDocment:=H.GetObject(TJSDocument) as IJSDocument;
+  oldDocument:=H.GetObject(TJSDocument) as IJSDocument;
+  newDocment:=H.GetObject(TJSDocument) as IJSDocument;
   TLifecycleAdoptedCallback(aMethod)(oldDocument,newDocment);
   Result:=H.AllocUndefined;
 end;
@@ -9901,7 +9940,10 @@ var
   newValue: UnicodeString;
   namespaceURI: UnicodeString;
 begin
-  attrName:=H.GetString;  oldValue:=H.GetString;  newValue:=H.GetString;  namespaceURI:=H.GetString;
+  attrName:=H.GetString;
+  oldValue:=H.GetString;
+  newValue:=H.GetString;
+  namespaceURI:=H.GetString;
   TLifecycleAttributeChangedCallback(aMethod)(attrName,oldValue,newValue,namespaceURI);
   Result:=H.AllocUndefined;
 end;
@@ -11620,6 +11662,11 @@ end;
 function TJSSelection.containsNode(aNode: IJSNode): Boolean; overload;
 begin
   Result:=InvokeJSBooleanResult('containsNode',[aNode]);
+end;
+
+function TJSSelection.toString: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('toString',[]);
 end;
 
 procedure TJSSelection.modify(const alter: UnicodeString; const aDirection: UnicodeString; const aGranularity: UnicodeString);
@@ -13622,9 +13669,24 @@ begin
   Result:=ReadJSPropertyBoolean('isConnected');
 end;
 
+function TJSNode._GetownerDocument: IJSDocument;
+begin
+  Result:=ReadJSPropertyObject('ownerDocument',TJSDocument) as IJSDocument;
+end;
+
 function TJSNode._GetparentNode: IJSNode;
 begin
   Result:=ReadJSPropertyObject('parentNode',TJSNode) as IJSNode;
+end;
+
+function TJSNode._GetparentElement: IJSElement;
+begin
+  Result:=ReadJSPropertyObject('parentElement',TJSElement) as IJSElement;
+end;
+
+function TJSNode._GetchildNodes: IJSNodeList;
+begin
+  Result:=ReadJSPropertyObject('childNodes',TJSNodeList) as IJSNodeList;
 end;
 
 function TJSNode._GetfirstChild: IJSNode;
@@ -16087,6 +16149,11 @@ begin
   Result:=InvokeJSObjectResult('createEvent',[aInterface_],TJSEvent) as IJSEvent;
 end;
 
+function TJSDocument.createRange: IJSRange;
+begin
+  Result:=InvokeJSObjectResult('createRange',[],TJSRange) as IJSRange;
+end;
+
 function TJSDocument.createCDATASection(const aData: UnicodeString): IJSCDATASection;
 begin
   Result:=InvokeJSObjectResult('createCDATASection',[aData],TJSCDATASection) as IJSCDATASection;
@@ -16574,6 +16641,16 @@ begin
   Result:=ReadJSPropertyUnicodeString('outerHTML');
 end;
 
+function TJSElement._GetshadowRoot: IJSShadowRoot;
+begin
+  Result:=ReadJSPropertyObject('shadowRoot',TJSShadowRoot) as IJSShadowRoot;
+end;
+
+function TJSElement._GetopenOrClosedShadowRoot: IJSShadowRoot;
+begin
+  Result:=ReadJSPropertyObject('openOrClosedShadowRoot',TJSShadowRoot) as IJSShadowRoot;
+end;
+
 function TJSElement._Getslot: UnicodeString;
 begin
   Result:=ReadJSPropertyUnicodeString('slot');
@@ -16834,6 +16911,21 @@ begin
   Result:=InvokeJSObjectResult('setAttributeNodeNS',[aNewAttr],TJSAttr) as IJSAttr;
 end;
 
+function TJSElement.getTransformToAncestor(ancestor: IJSElement): IJSDOMMatrixReadOnly;
+begin
+  Result:=InvokeJSObjectResult('getTransformToAncestor',[ancestor],TJSDOMMatrixReadOnly) as IJSDOMMatrixReadOnly;
+end;
+
+function TJSElement.getTransformToParent: IJSDOMMatrixReadOnly;
+begin
+  Result:=InvokeJSObjectResult('getTransformToParent',[],TJSDOMMatrixReadOnly) as IJSDOMMatrixReadOnly;
+end;
+
+function TJSElement.getTransformToViewport: IJSDOMMatrixReadOnly;
+begin
+  Result:=InvokeJSObjectResult('getTransformToViewport',[],TJSDOMMatrixReadOnly) as IJSDOMMatrixReadOnly;
+end;
+
 function TJSElement.getClientRects: IJSDOMRectList;
 begin
   Result:=InvokeJSObjectResult('getClientRects',[],TJSDOMRectList) as IJSDOMRectList;
@@ -16922,6 +17014,11 @@ end;
 function TJSElement.querySelectorAll(const aSelectors: UTF8String): IJSNodeList;
 begin
   Result:=InvokeJSObjectResult('querySelectorAll',[aSelectors],TJSNodeList) as IJSNodeList;
+end;
+
+function TJSElement.attachShadow(const aShadowRootInitDict: TJSShadowRootInit): IJSShadowRoot;
+begin
+  Result:=InvokeJSObjectResult('attachShadow',[aShadowRootInitDict],TJSShadowRoot) as IJSShadowRoot;
 end;
 
 procedure TJSElement.requestPointerLock;
@@ -20503,3 +20600,4 @@ finalization
   JSDocument.Free;
   JSWindow.Free;
 end.
+

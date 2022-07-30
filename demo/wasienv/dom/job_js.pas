@@ -827,16 +827,59 @@ type
     class function Cast(Intf: IJSObject): IJSError; overload;
   end;
 
+  TJSPromiseResolver = function(const aValue: TJOB_JSValue): TJOB_JSValue of object;
+  TJSPromiseExecutor = procedure(const OnResolve, OnReject: TJSPromiseResolver) of object;
+  TJSPromiseFinallyHandler = procedure of object;
+
   { IJSPromise }
 
   IJSPromise = interface(IJSObject)
     ['{2BFE673B-B5D4-4F31-96CD-5E1A60EFBE26}']
+    function all(arg: IJSArray): IJSPromise; overload;
+    function all(arg: TJOB_JSValue): IJSPromise; overload;
+    function allSettled(arg: IJSArray): IJSPromise; overload;
+    function allSettled(arg: TJOB_JSValue): IJSPromise; overload;
+    function race(arg: IJSArray): IJSPromise; overload;
+    function race(arg: TJOB_JSValue): IJSPromise; overload;
+    function reject(const reason: UnicodeString): IJSPromise; overload;
+    function reject(reason: TJOB_JSValue): IJSPromise; overload;
+    function resolve(const value: boolean): IJSPromise; overload;
+    function resolve(const value: longint): IJSPromise; overload;
+    function resolve(const value: double): IJSPromise; overload;
+    function resolve(const value: IJSObject): IJSPromise; overload;
+    function resolve(const value: UnicodeString): IJSPromise; overload;
+    function resolve(value: TJOB_JSValue): IJSPromise; overload;
+    function resolve: IJSPromise; overload;
+    function _then (const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
+    function _then (const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
+    function catch (const OnRejected: TJSPromiseResolver): IJSPromise; overload;
+    function _finally(const Handler: TJSPromiseFinallyHandler): IJSPromise; overload;
   end;
 
   { TJSPromise }
 
   TJSPromise = class(TJSObject,IJSPromise)
   public
+    //class function Create(const Executor: TJSPromiseExecutor): IJSPromise; overload;
+    function all(arg: IJSArray): IJSPromise; overload;
+    function all(arg: TJOB_JSValue): IJSPromise; overload;
+    function allSettled(arg: IJSArray): IJSPromise; overload;
+    function allSettled(arg: TJOB_JSValue): IJSPromise; overload;
+    function race(arg: IJSArray): IJSPromise; overload;
+    function race(arg: TJOB_JSValue): IJSPromise; overload;
+    function reject(const reason: UnicodeString): IJSPromise; overload;
+    function reject(reason: TJOB_JSValue): IJSPromise; overload;
+    function resolve(const value: boolean): IJSPromise; overload;
+    function resolve(const value: longint): IJSPromise; overload;
+    function resolve(const value: double): IJSPromise; overload;
+    function resolve(const value: IJSObject): IJSPromise; overload;
+    function resolve(const value: UnicodeString): IJSPromise; overload;
+    function resolve(value: TJOB_JSValue): IJSPromise; overload;
+    function resolve: IJSPromise; overload;
+    function _then (const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
+    function _then (const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
+    function catch (const OnRejected: TJSPromiseResolver): IJSPromise; overload;
+    function _finally(const Handler: TJSPromiseFinallyHandler): IJSPromise; overload;
     class function Cast(Intf: IJSObject): IJSPromise; overload;
   end;
 
@@ -1098,6 +1141,24 @@ begin
   end;
 end;
 
+function JOBCallTJSPromiseResolver(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+var
+  aValue: TJOB_JSValue;
+begin
+  aValue:=H.GetValue;
+  try
+    Result:=H.AllocJSValue(TJSPromiseResolver(aMethod)(aValue));
+  finally
+    aValue.Free;
+  end;
+end;
+
+function JOBCallTJSPromiseFinallyHandler(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+begin
+  Result:=H.AllocUndefined;
+  TJSPromiseFinallyHandler(aMethod)();
+end;
+
 { TJSTextEncoder }
 
 class function TJSTextEncoder.Cast(Intf: IJSObject): IJSTextEncoder;
@@ -1113,6 +1174,133 @@ begin
 end;
 
 { TJSPromise }
+
+function TJSPromise.all(arg: IJSArray): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('all',[arg],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.all(arg: TJOB_JSValue): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('all',[arg],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.allSettled(arg: IJSArray): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('allSettled',[arg],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.allSettled(arg: TJOB_JSValue): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('allSettled',[arg],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.race(arg: IJSArray): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('race',[arg],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.race(arg: TJOB_JSValue): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('race',[arg],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.reject(const reason: UnicodeString): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('reject',[reason],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.reject(reason: TJOB_JSValue): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('reject',[reason],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve(const value: boolean): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve(const value: longint): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve(const value: double): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve(const value: IJSObject): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve(const value: UnicodeString): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve(value: TJOB_JSValue): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise.resolve: IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('resolve',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSPromise._then(const OnAccepted: TJSPromiseResolver): IJSPromise;
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(onAccepted),@JOBCallTJSPromiseResolver);
+  try
+    Result:=InvokeJSObjectResult('then',[m],TJSPromise) as IJSPromise;
+  finally
+    m.Free;
+  end;
+end;
+
+function TJSPromise._then(const OnAccepted, OnRejected: TJSPromiseResolver
+  ): IJSPromise;
+var
+  ma, mr: TJOB_Method;
+begin
+  ma:=TJOB_Method.Create(TMethod(OnAccepted),@JOBCallTJSPromiseResolver);
+  mr:=TJOB_Method.Create(TMethod(OnRejected),@JOBCallTJSPromiseResolver);
+  try
+    Result:=InvokeJSObjectResult('then',[ma,mr],TJSPromise) as IJSPromise;
+  finally
+    mr.Free;
+    ma.Free;
+  end;
+end;
+
+function TJSPromise.catch(const OnRejected: TJSPromiseResolver): IJSPromise;
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(OnRejected),@JOBCallTJSPromiseResolver);
+  try
+    Result:=InvokeJSObjectResult('catch',[m],TJSPromise) as IJSPromise;
+  finally
+    m.Free;
+  end;
+end;
+
+function TJSPromise._finally(const Handler: TJSPromiseFinallyHandler
+  ): IJSPromise;
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(Handler),@JOBCallTJSPromiseFinallyHandler);
+  try
+    Result:=InvokeJSObjectResult('finally',[m],TJSPromise) as IJSPromise;
+  finally
+    m.Free;
+  end;
+end;
 
 class function TJSPromise.Cast(Intf: IJSObject): IJSPromise;
 begin

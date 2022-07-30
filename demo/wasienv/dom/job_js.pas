@@ -375,12 +375,29 @@ type
 
   IJSFunction = interface(IJSObject)
     ['{8BD36F12-F6F7-4F8B-91FB-43D8626A72FE}']
+    function _GetLength: NativeInt;
+    function _GetName: UnicodeString;
+    function _GetPrototyp: IJSFunction;
+    procedure _SetName(const AValue: UnicodeString);
+    property name: UnicodeString read _GetName write _SetName;
+    property prototyp: IJSFunction read _GetPrototyp;
+    property length: NativeInt read _GetLength;
+    //function apply(thisArg: TJSObject; const ArgArray: TJSValueDynArray): JSValue; varargs;
+    //function bind(thisArg: TJSObject): JSValue; varargs;
+    //function call(thisArg: TJSObject): JSValue; varargs;
   end;
 
   { TJSFunction }
 
   TJSFunction = class(TJSObject,IJSFunction)
   public
+    function _GetLength: NativeInt;
+    function _GetName: UnicodeString;
+    function _GetPrototyp: IJSFunction;
+    procedure _SetName(const AValue: UnicodeString);
+    property name: UnicodeString read _GetName write _SetName;
+    property prototyp: IJSFunction read _GetPrototyp;
+    property length: NativeInt read _GetLength;
     class function Cast(Intf: IJSObject): IJSFunction; overload;
   end;
 
@@ -1434,6 +1451,26 @@ begin
 end;
 
 { TJSFunction }
+
+function TJSFunction._GetLength: NativeInt;
+begin
+  Result:=ReadJSPropertyLongInt('length');
+end;
+
+function TJSFunction._GetName: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('name');
+end;
+
+function TJSFunction._GetPrototyp: IJSFunction;
+begin
+  Result:=ReadJSPropertyObject('prototyp',TJSFunction) as IJSFunction;
+end;
+
+procedure TJSFunction._SetName(const AValue: UnicodeString);
+begin
+  WriteJSPropertyUnicodeString('length',AValue);
+end;
 
 class function TJSFunction.Cast(Intf: IJSObject): IJSFunction;
 begin

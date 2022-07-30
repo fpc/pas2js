@@ -326,6 +326,7 @@ type
     procedure WriteJSPropertyUtf8String(const aName: string; const Value: String); virtual;
     procedure WriteJSPropertyObject(const aName: string; Value: IJSObject); virtual;
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
+    procedure WriteJSPropertyInt64(const aName: string; Value: Int64); virtual;
     procedure WriteJSPropertyValue(const aName: string; Value: TJOB_JSValue); virtual;
     // create a new object using the new-operator
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
@@ -432,12 +433,133 @@ type
 
   IJSArray = interface(IJSObject)
     ['{21E331BA-7B57-42DD-8DCE-B26FEA85C693}']
+    function _GetElements(Index: NativeInt): TJOB_JSValue;
+    function _GetLength: NativeInt;
+    procedure _SetElements(Index: NativeInt; const AValue: TJOB_JSValue);
+    procedure _SetLength(const AValue: NativeInt);
+    function isArray(a: TJOB_JSValue): Boolean; overload;
+    function concat(el: TJOB_JSValue): IJSArray; overload; {varargs;}
+    //function copyWithin(aTarget: NativeInt): TJSArray;overload; // not in IE
+    //function copyWithin(aTarget, aStart: NativeInt): TJSArray;overload; // not in IE
+    //function copyWithin(aTarget, aStart, aEnd: NativeInt): TJSArray;overload; // not in IE
+    //function entries: TJSIterator;
+    //Function every(const aCallback: TJSArrayCallBack): boolean;overload;
+    //Function every(const aCallback: TJSArrayEvent; aThis: TObject): boolean;overload;
+    //Function filter(const aCallBack: TJSArrayCallBack): TJSArray; overload;
+    //Function filter(const aCallBack: TJSArrayEvent; aThis: TObject): TJSArray;overload;
+    Function fill(aValue: TJOB_JSValue): IJSArray; overload;
+    Function fill(aValue: TJOB_JSValue; aStartIndex: NativeInt): IJSArray; overload;
+    Function fill(aValue: TJOB_JSValue; aStartIndex,aEndIndex: NativeInt): IJSArray; overload;
+    //Function find(const aCallBack: TJSArrayCallBack): TJOB_JSValue; overload;
+    //Function find(const aCallBack: TJSArrayEvent; aThis: TObject): TJOB_JSValue; overload;
+    //Function findIndex(const aCallBack: TJSArrayCallBack): NativeInt; overload;
+    //Function findIndex(const aCallBack: TJSArrayEvent; aThis: TObject): NativeInt; overload;
+    //procedure forEach(const aCallBack: TJSArrayEventProc); overload;
+    //procedure forEach(const aCallBack: TJSArrayEvent); overload;
+    //procedure forEach(const aCallBack: TJSArrayEvent; aThis: TObject); overload;
+    function includes(aElement: TJOB_JSValue): Boolean; overload;
+    function includes(aElement: TJOB_JSValue; FromIndex: NativeInt): Boolean; overload;
+    function indexOf(aElement: TJOB_JSValue): NativeInt; overload;
+    function indexOf(aElement: TJOB_JSValue; FromIndex: NativeInt): NativeInt; overload;
+    function join: UnicodeString; overload;
+    function join (const aSeparator: UnicodeString): UnicodeString; overload;
+    //function keys: TJSIterator;
+    function lastIndexOf(aElement: TJOB_JSValue): NativeInt; overload;
+    function lastIndexOf(aElement: TJOB_JSValue; FromIndex: NativeInt): NativeInt; overload;
+    //Function map(const aCallBack: TJSArrayMapCallBack): TJSArray; overload;
+    //Function map(const aCallBack: TJSArrayMapEvent; aThis: TObject): TJSArray; overload;
+    function pop: TJOB_JSValue;
+    function push(aElement: TJOB_JSValue): NativeInt; overload; {varargs;}
+    //function reduce(const aCallBack: TJSArrayReduceCallBack): TJOB_JSValue; overload;
+    //function reduce(const aCallBack: TJSArrayReduceCallBack; initialValue: TJOB_JSValue): TJOB_JSValue; overload;
+    //function reduceRight(const aCallBack: TJSArrayReduceCallBack): TJOB_JSValue; overload;
+    //function reduceRight(const aCallBack: TJSArrayReduceCallBack; initialValue: TJOB_JSValue): TJOB_JSValue; overload;
+    Function reverse: IJSArray;
+    Function shift: TJOB_JSValue;
+    Function slice: IJSArray; overload;
+    function slice(aBegin: NativeInt): IJSArray; overload;
+    function slice(aBegin,aEnd: NativeInt): IJSArray; overload;
+    //Function some(const aCallback: TJSArrayCallBack): boolean; overload;
+    //Function some(const aCallback: TJSArrayEvent; aThis: TObject): boolean; overload;
+    //Function sort(const aCallback: TJSArrayCompareCallBack): IJSArray; overload;
+    Function sort(): IJSArray; overload;
+    function splice(aStart: NativeInt): IJSArray; overload;
+    function splice(aStart,aDeleteCount: NativeInt): IJSArray; {varargs;} overload;
+    function toLocaleString: UnicodeString; overload;
+    function toLocaleString(const locales: UnicodeString): UnicodeString; overload;
+    //function toLocaleString(locales: string; const Options: TLocaleCompareOptions): String; overload;
+    function toString: UnicodeString;
+    function unshift: NativeInt; {varargs;}
+    //function values: TJSIterator;
+    Property Length: NativeInt Read _GetLength Write _SetLength;
+    property Elements[Index: NativeInt]: TJOB_JSValue read _GetElements write _SetElements; default;
   end;
 
   { TJSArray }
 
   TJSArray = class(TJSObject,IJSArray)
+  private
+    function _GetElements(Index: NativeInt): TJOB_JSValue;
+    function _GetLength: NativeInt;
+    procedure _SetElements(Index: NativeInt; const AValue: TJOB_JSValue);
+    procedure _SetLength(const AValue: NativeInt);
   public
+    function isArray(a: TJOB_JSValue): Boolean; overload;
+    function concat(el: TJOB_JSValue): IJSArray; overload; {varargs;}
+    //function copyWithin(aTarget: NativeInt): IJSArray;overload; // not in IE
+    //function copyWithin(aTarget, aStart: NativeInt): IJSArray;overload; // not in IE
+    //function copyWithin(aTarget, aStart, aEnd: NativeInt): IJSArray;overload; // not in IE
+    //function entries: TJSIterator;
+    //Function every(const aCallback: TJSArrayCallBack): boolean;overload;
+    //Function every(const aCallback: TJSArrayEvent; aThis: TObject): boolean;overload;
+    //Function filter(const aCallBack: TJSArrayCallBack): IJSArray; overload;
+    //Function filter(const aCallBack: TJSArrayEvent; aThis: TObject): IJSArray;overload;
+    Function fill(aValue: TJOB_JSValue): IJSArray; overload;
+    Function fill(aValue: TJOB_JSValue; aStartIndex: NativeInt): IJSArray; overload;
+    Function fill(aValue: TJOB_JSValue; aStartIndex,aEndIndex: NativeInt): IJSArray; overload;
+    //Function find(const aCallBack: TJSArrayCallBack): TJOB_JSValue; overload;
+    //Function find(const aCallBack: TJSArrayEvent; aThis: TObject): TJOB_JSValue; overload;
+    //Function findIndex(const aCallBack: TJSArrayCallBack): NativeInt; overload;
+    //Function findIndex(const aCallBack: TJSArrayEvent; aThis: TObject): NativeInt; overload;
+    //procedure forEach(const aCallBack: TJSArrayEventProc); overload;
+    //procedure forEach(const aCallBack: TJSArrayEvent); overload;
+    //procedure forEach(const aCallBack: TJSArrayEvent; aThis: TObject); overload;
+    function includes(aElement: TJOB_JSValue): Boolean; overload;
+    function includes(aElement: TJOB_JSValue; FromIndex: NativeInt): Boolean; overload;
+    function indexOf(aElement: TJOB_JSValue): NativeInt; overload;
+    function indexOf(aElement: TJOB_JSValue; FromIndex: NativeInt): NativeInt; overload;
+    function join: UnicodeString; overload;
+    function join (const aSeparator: UnicodeString): UnicodeString; overload;
+    //function keys: TJSIterator;
+    function lastIndexOf(aElement: TJOB_JSValue): NativeInt; overload;
+    function lastIndexOf(aElement: TJOB_JSValue; FromIndex: NativeInt): NativeInt; overload;
+    //Function map(const aCallBack: TJSArrayMapCallBack): IJSArray; overload;
+    //Function map(const aCallBack: TJSArrayMapEvent; aThis: TObject): IJSArray; overload;
+    function pop: TJOB_JSValue;
+    function push(aElement: TJOB_JSValue): NativeInt; overload; {varargs;}
+    //function reduce(const aCallBack: TJSArrayReduceCallBack): TJOB_JSValue; overload;
+    //function reduce(const aCallBack: TJSArrayReduceCallBack; initialValue: TJOB_JSValue): TJOB_JSValue; overload;
+    //function reduceRight(const aCallBack: TJSArrayReduceCallBack): TJOB_JSValue; overload;
+    //function reduceRight(const aCallBack: TJSArrayReduceCallBack; initialValue: TJOB_JSValue): TJOB_JSValue; overload;
+    Function reverse: IJSArray;
+    Function shift: TJOB_JSValue;
+    Function slice: IJSArray; overload;
+    function slice(aBegin: NativeInt): IJSArray; overload;
+    function slice(aBegin,aEnd: NativeInt): IJSArray; overload;
+    //Function some(const aCallback: TJSArrayCallBack): boolean; overload;
+    //Function some(const aCallback: TJSArrayEvent; aThis: TObject): boolean; overload;
+    //Function sort(const aCallback: TJSArrayCompareCallBack): IJSArray; overload;
+    Function sort(): IJSArray; overload;
+    function splice(aStart: NativeInt): IJSArray; overload;
+    function splice(aStart,aDeleteCount: NativeInt): IJSArray; {varargs;} overload;
+    function toLocaleString: UnicodeString; overload;
+    function toLocaleString(const locales: UnicodeString): UnicodeString; overload;
+    //function toLocaleString(locales: string; const Options: TLocaleCompareOptions): String; overload;
+    function toString: UnicodeString;
+    function unshift: NativeInt; {varargs;}
+    //function values: TJSIterator;
+    Property Length: NativeInt Read _GetLength Write _SetLength;
+    property Elements[Index: NativeInt]: TJOB_JSValue read _GetElements write _SetElements; default;
     class function Cast(Intf: IJSObject): IJSArray; overload;
   end;
 
@@ -1034,6 +1156,165 @@ begin
 end;
 
 { TJSArray }
+
+function TJSArray._GetElements(Index: NativeInt): TJOB_JSValue;
+begin
+  Result:=InvokeJSValueResult(IntToStr(Index),[],jiGet);
+end;
+
+function TJSArray._GetLength: NativeInt;
+begin
+  Result:=ReadJSPropertyLongInt('length');
+end;
+
+procedure TJSArray._SetElements(Index: NativeInt; const AValue: TJOB_JSValue);
+begin
+  InvokeJSNoResult(IntToStr(Index),[AValue],jiSet);
+end;
+
+procedure TJSArray._SetLength(const AValue: NativeInt);
+begin
+  WriteJSPropertyLongInt('length',AValue);
+end;
+
+function TJSArray.isArray(a: TJOB_JSValue): Boolean;
+begin
+  Result:=InvokeJSBooleanResult('isArray',[a]);
+end;
+
+function TJSArray.concat(el: TJOB_JSValue): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('isArray',[el],TJSArray) as IJSArray;
+end;
+
+function TJSArray.fill(aValue: TJOB_JSValue): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('fill',[aValue],TJSArray) as IJSArray;
+end;
+
+function TJSArray.fill(aValue: TJOB_JSValue; aStartIndex: NativeInt): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('fill',[aValue,aStartIndex],TJSArray) as IJSArray;
+end;
+
+function TJSArray.fill(aValue: TJOB_JSValue; aStartIndex, aEndIndex: NativeInt
+  ): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('fill',[aValue,aStartIndex,aEndIndex],TJSArray) as IJSArray;
+end;
+
+function TJSArray.includes(aElement: TJOB_JSValue): Boolean;
+begin
+  Result:=InvokeJSBooleanResult('includes',[aElement]);
+end;
+
+function TJSArray.includes(aElement: TJOB_JSValue; FromIndex: NativeInt
+  ): Boolean;
+begin
+  Result:=InvokeJSBooleanResult('includes',[aElement,FromIndex]);
+end;
+
+function TJSArray.indexOf(aElement: TJOB_JSValue): NativeInt;
+begin
+  Result:=InvokeJSMaxIntResult('indexOf',[aElement]);
+end;
+
+function TJSArray.indexOf(aElement: TJOB_JSValue; FromIndex: NativeInt
+  ): NativeInt;
+begin
+  Result:=InvokeJSMaxIntResult('indexOf',[aElement,FromIndex]);
+end;
+
+function TJSArray.join: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('join',[]);
+end;
+
+function TJSArray.join(const aSeparator: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('join',[aSeparator]);
+end;
+
+function TJSArray.lastIndexOf(aElement: TJOB_JSValue): NativeInt;
+begin
+  Result:=InvokeJSMaxIntResult('lastIndexOf',[aElement]);
+end;
+
+function TJSArray.lastIndexOf(aElement: TJOB_JSValue; FromIndex: NativeInt
+  ): NativeInt;
+begin
+  Result:=InvokeJSMaxIntResult('lastIndexOf',[aElement,FromIndex]);
+end;
+
+function TJSArray.pop: TJOB_JSValue;
+begin
+  Result:=InvokeJSValueResult('pop',[]);
+end;
+
+function TJSArray.push(aElement: TJOB_JSValue): NativeInt;
+begin
+  Result:=InvokeJSMaxIntResult('push',[aElement]);
+end;
+
+function TJSArray.reverse: IJSArray;
+begin
+  Result:=InvokeJSObjectResult('reverse',[],TJSArray) as IJSArray;
+end;
+
+function TJSArray.shift: TJOB_JSValue;
+begin
+  Result:=InvokeJSValueResult('shift',[]);
+end;
+
+function TJSArray.slice: IJSArray;
+begin
+  Result:=InvokeJSObjectResult('slice',[],TJSArray) as IJSArray;
+end;
+
+function TJSArray.slice(aBegin: NativeInt): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('slice',[aBegin],TJSArray) as IJSArray;
+end;
+
+function TJSArray.slice(aBegin, aEnd: NativeInt): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('slice',[aBegin,aEnd],TJSArray) as IJSArray;
+end;
+
+function TJSArray.sort(): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('sort',[],TJSArray) as IJSArray;
+end;
+
+function TJSArray.splice(aStart: NativeInt): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('splice',[aStart],TJSArray) as IJSArray;
+end;
+
+function TJSArray.splice(aStart, aDeleteCount: NativeInt): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('splice',[aStart,aDeleteCount],TJSArray) as IJSArray;
+end;
+
+function TJSArray.toLocaleString: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('toLocaleString',[]);
+end;
+
+function TJSArray.toLocaleString(const locales: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('toLocaleString',[locales]);
+end;
+
+function TJSArray.toString: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('toString',[]);
+end;
+
+function TJSArray.unshift: NativeInt;
+begin
+  Result:=InvokeJSMaxIntResult('unshift',[]);
+end;
 
 class function TJSArray.Cast(Intf: IJSObject): IJSArray;
 begin
@@ -2416,6 +2697,11 @@ begin
 end;
 
 procedure TJSObject.WriteJSPropertyLongInt(const aName: string; Value: LongInt);
+begin
+  InvokeJSNoResult(aName,[Value],jiSet);
+end;
+
+procedure TJSObject.WriteJSPropertyInt64(const aName: string; Value: Int64);
 begin
   InvokeJSNoResult(aName,[Value],jiSet);
 end;

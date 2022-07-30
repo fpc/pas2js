@@ -399,9 +399,9 @@ type
     class function from(arrayLike : JSValue; mapFunction : TJSMapFunctionCallBack; thisArg : JSValue): TJSArray; overload;
 {$ENDIF}
     function concat(el : JSValue) : TJSArray; varargs;
-    function copyWithin(aTarget : NativeInt) : TJSarray;overload; // not in IE
-    function copyWithin(aTarget, aStart : NativeInt) : TJSarray;overload; // not in IE
-    function copyWithin(aTarget, aStart, aEnd : NativeInt) : TJSarray;overload; // not in IE
+    function copyWithin(aTarget : NativeInt) : TJSArray;overload; // not in IE
+    function copyWithin(aTarget, aStart : NativeInt) : TJSArray;overload; // not in IE
+    function copyWithin(aTarget, aStart, aEnd : NativeInt) : TJSArray;overload; // not in IE
     function entries: TJSIterator;
     Function every(const aCallback : TJSArrayCallBack) : boolean;overload;
     Function every(const aCallback : TJSArrayEvent; aThis : TObject) : boolean;overload;

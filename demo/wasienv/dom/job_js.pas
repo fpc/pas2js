@@ -203,6 +203,8 @@ type
     constructor Create(const TheValues: TDoubleDynArray);
   end;
 
+  IJSArray = interface;
+
   { IJSObject }
 
   IJSObject = interface
@@ -407,12 +409,52 @@ type
 
   IJSRegExp = interface(IJSObject)
     ['{3E9E4F54-10DA-45BF-ABED-7ED2C255617E}']
+    function exec(const aString: UnicodeString): IJSArray;
+    function _GetGlobal: Boolean;
+    function _GetIgnoreCase: Boolean;
+    function _GetLastIndex: NativeInt;
+    function _GetMultiLine: Boolean;
+    function _GetSource: UnicodeString;
+    function _GetUnicode: boolean;
+    procedure _SetGlobal(const AValue: Boolean);
+    procedure _SetIgnoreCase(const AValue: Boolean);
+    procedure _SetlastIndex(const AValue: NativeInt);
+    procedure _SetMultiline(const AValue: Boolean);
+    procedure _SetSource(const AValue: UnicodeString);
+    procedure _SetUnicode(const AValue: boolean);
+    function test(const aString: UnicodeString): boolean;
+    property lastIndex: NativeInt read _GetLastIndex write _SetlastIndex;
+    property global: Boolean read _GetGlobal write _SetGlobal;
+    property ignoreCase: Boolean read _GetIgnoreCase write _SetIgnoreCase;
+    property multiline: Boolean Read _GetMultiLine write _SetMultiline;
+    property source: UnicodeString Read _GetSource write _SetSource;
+    property unicode: boolean Read _GetUnicode write _SetUnicode;
   end;
 
   { TJSRegExp }
 
   TJSRegExp = class(TJSObject,IJSRegExp)
   public
+    function exec(const aString: UnicodeString): IJSArray;
+    function _GetGlobal: Boolean;
+    function _GetIgnoreCase: Boolean;
+    function _GetLastIndex: NativeInt;
+    function _GetMultiLine: Boolean;
+    function _GetSource: UnicodeString;
+    function _GetUnicode: boolean;
+    procedure _SetGlobal(const AValue: Boolean);
+    procedure _SetIgnoreCase(const AValue: Boolean);
+    procedure _SetlastIndex(const AValue: NativeInt);
+    procedure _SetMultiline(const AValue: Boolean);
+    procedure _SetSource(const AValue: UnicodeString);
+    procedure _SetUnicode(const AValue: boolean);
+    function test(const aString: UnicodeString): boolean;
+    property lastIndex: NativeInt read _GetLastIndex write _SetlastIndex;
+    property global: Boolean read _GetGlobal write _SetGlobal;
+    property ignoreCase: Boolean read _GetIgnoreCase write _SetIgnoreCase;
+    property multiline: Boolean Read _GetMultiLine write _SetMultiline;
+    property source: UnicodeString Read _GetSource write _SetSource;
+    property unicode: boolean Read _GetUnicode write _SetUnicode;
     class function Cast(Intf: IJSObject): IJSRegExp; overload;
   end;
 
@@ -485,10 +527,8 @@ type
     Function sort(): IJSArray; overload;
     function splice(aStart: NativeInt): IJSArray; overload;
     function splice(aStart,aDeleteCount: NativeInt): IJSArray; {varargs;} overload;
-    function toLocaleString: UnicodeString; overload;
     function toLocaleString(const locales: UnicodeString): UnicodeString; overload;
     //function toLocaleString(locales: string; const Options: TLocaleCompareOptions): String; overload;
-    function toString: UnicodeString;
     function unshift: NativeInt; {varargs;}
     //function values: TJSIterator;
     Property Length: NativeInt Read _GetLength Write _SetLength;
@@ -552,10 +592,8 @@ type
     Function sort(): IJSArray; overload;
     function splice(aStart: NativeInt): IJSArray; overload;
     function splice(aStart,aDeleteCount: NativeInt): IJSArray; {varargs;} overload;
-    function toLocaleString: UnicodeString; overload;
     function toLocaleString(const locales: UnicodeString): UnicodeString; overload;
     //function toLocaleString(locales: string; const Options: TLocaleCompareOptions): String; overload;
-    function toString: UnicodeString;
     function unshift: NativeInt; {varargs;}
     //function values: TJSIterator;
     Property Length: NativeInt Read _GetLength Write _SetLength;
@@ -1296,19 +1334,9 @@ begin
   Result:=InvokeJSObjectResult('splice',[aStart,aDeleteCount],TJSArray) as IJSArray;
 end;
 
-function TJSArray.toLocaleString: UnicodeString;
-begin
-  Result:=InvokeJSUnicodeStringResult('toLocaleString',[]);
-end;
-
 function TJSArray.toLocaleString(const locales: UnicodeString): UnicodeString;
 begin
   Result:=InvokeJSUnicodeStringResult('toLocaleString',[locales]);
-end;
-
-function TJSArray.toString: UnicodeString;
-begin
-  Result:=InvokeJSUnicodeStringResult('toString',[]);
 end;
 
 function TJSArray.unshift: NativeInt;
@@ -1329,6 +1357,76 @@ begin
 end;
 
 { TJSRegExp }
+
+function TJSRegExp.exec(const aString: UnicodeString): IJSArray;
+begin
+  Result:=InvokeJSObjectResult('exec',[aString],TJSArray) as IJSArray;
+end;
+
+function TJSRegExp._GetGlobal: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('global');
+end;
+
+function TJSRegExp._GetIgnoreCase: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('ignoreCase');
+end;
+
+function TJSRegExp._GetLastIndex: NativeInt;
+begin
+  Result:=ReadJSPropertyLongInt('lastIndex');
+end;
+
+function TJSRegExp._GetMultiLine: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('multiline');
+end;
+
+function TJSRegExp._GetSource: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('source');
+end;
+
+function TJSRegExp._GetUnicode: boolean;
+begin
+  Result:=ReadJSPropertyBoolean('unicode');
+end;
+
+procedure TJSRegExp._SetGlobal(const AValue: Boolean);
+begin
+  WriteJSPropertyBoolean('global',AValue);
+end;
+
+procedure TJSRegExp._SetIgnoreCase(const AValue: Boolean);
+begin
+  WriteJSPropertyBoolean('ignoreCase',AValue);
+end;
+
+procedure TJSRegExp._SetlastIndex(const AValue: NativeInt);
+begin
+  WriteJSPropertyLongInt('lastIndex',AValue);
+end;
+
+procedure TJSRegExp._SetMultiline(const AValue: Boolean);
+begin
+  WriteJSPropertyBoolean('multiline',AValue);
+end;
+
+procedure TJSRegExp._SetSource(const AValue: UnicodeString);
+begin
+  WriteJSPropertyUnicodeString('source',AValue);
+end;
+
+procedure TJSRegExp._SetUnicode(const AValue: boolean);
+begin
+  WriteJSPropertyBoolean('unicode',AValue);
+end;
+
+function TJSRegExp.test(const aString: UnicodeString): boolean;
+begin
+  Result:=InvokeJSBooleanResult('test',[aString]);
+end;
 
 class function TJSRegExp.Cast(Intf: IJSObject): IJSRegExp;
 begin

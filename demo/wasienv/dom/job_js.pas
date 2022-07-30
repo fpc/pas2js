@@ -835,24 +835,24 @@ type
 
   IJSPromise = interface(IJSObject)
     ['{2BFE673B-B5D4-4F31-96CD-5E1A60EFBE26}']
-    function all(arg: IJSArray): IJSPromise; overload;
-    function all(arg: TJOB_JSValue): IJSPromise; overload;
-    function allSettled(arg: IJSArray): IJSPromise; overload;
-    function allSettled(arg: TJOB_JSValue): IJSPromise; overload;
-    function race(arg: IJSArray): IJSPromise; overload;
-    function race(arg: TJOB_JSValue): IJSPromise; overload;
+    function all(const arg: IJSArray): IJSPromise; overload;
+    function all(const arg: TJOB_JSValue): IJSPromise; overload;
+    function allSettled(const arg: IJSArray): IJSPromise; overload;
+    function allSettled(const arg: TJOB_JSValue): IJSPromise; overload;
+    function race(const arg: IJSArray): IJSPromise; overload;
+    function race(const arg: TJOB_JSValue): IJSPromise; overload;
     function reject(const reason: UnicodeString): IJSPromise; overload;
-    function reject(reason: TJOB_JSValue): IJSPromise; overload;
+    function reject(const reason: TJOB_JSValue): IJSPromise; overload;
     function resolve(const value: boolean): IJSPromise; overload;
     function resolve(const value: longint): IJSPromise; overload;
     function resolve(const value: double): IJSPromise; overload;
     function resolve(const value: IJSObject): IJSPromise; overload;
     function resolve(const value: UnicodeString): IJSPromise; overload;
-    function resolve(value: TJOB_JSValue): IJSPromise; overload;
+    function resolve(const value: TJOB_JSValue): IJSPromise; overload;
     function resolve: IJSPromise; overload;
-    function _then (const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
-    function _then (const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
-    function catch (const OnRejected: TJSPromiseResolver): IJSPromise; overload;
+    function _then(const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
+    function _then(const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
+    function catch(const OnRejected: TJSPromiseResolver): IJSPromise; overload;
     function _finally(const Handler: TJSPromiseFinallyHandler): IJSPromise; overload;
   end;
 
@@ -861,26 +861,26 @@ type
   TJSPromise = class(TJSObject,IJSPromise)
   public
     //class function Create(const Executor: TJSPromiseExecutor): IJSPromise; overload;
-    function all(arg: IJSArray): IJSPromise; overload;
-    function all(arg: TJOB_JSValue): IJSPromise; overload;
-    function allSettled(arg: IJSArray): IJSPromise; overload;
-    function allSettled(arg: TJOB_JSValue): IJSPromise; overload;
-    function race(arg: IJSArray): IJSPromise; overload;
-    function race(arg: TJOB_JSValue): IJSPromise; overload;
+    function all(const arg: IJSArray): IJSPromise; overload;
+    function all(const arg: TJOB_JSValue): IJSPromise; overload;
+    function allSettled(const arg: IJSArray): IJSPromise; overload;
+    function allSettled(const arg: TJOB_JSValue): IJSPromise; overload;
+    function race(const arg: IJSArray): IJSPromise; overload;
+    function race(const arg: TJOB_JSValue): IJSPromise; overload;
     function reject(const reason: UnicodeString): IJSPromise; overload;
-    function reject(reason: TJOB_JSValue): IJSPromise; overload;
+    function reject(const reason: TJOB_JSValue): IJSPromise; overload;
     function resolve(const value: boolean): IJSPromise; overload;
     function resolve(const value: longint): IJSPromise; overload;
     function resolve(const value: double): IJSPromise; overload;
     function resolve(const value: IJSObject): IJSPromise; overload;
     function resolve(const value: UnicodeString): IJSPromise; overload;
-    function resolve(value: TJOB_JSValue): IJSPromise; overload;
+    function resolve(const value: TJOB_JSValue): IJSPromise; overload;
     function resolve: IJSPromise; overload;
-    function _then (const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
-    function _then (const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
-    function catch (const OnRejected: TJSPromiseResolver): IJSPromise; overload;
+    function _then(const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
+    function _then(const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
+    function catch(const OnRejected: TJSPromiseResolver): IJSPromise; overload;
     function _finally(const Handler: TJSPromiseFinallyHandler): IJSPromise; overload;
-    class function Cast(Intf: IJSObject): IJSPromise; overload;
+    class function Cast(const Intf: IJSObject): IJSPromise; overload;
   end;
 
   { IJSTextDecoder }
@@ -1175,32 +1175,32 @@ end;
 
 { TJSPromise }
 
-function TJSPromise.all(arg: IJSArray): IJSPromise;
+function TJSPromise.all(const arg: IJSArray): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('all',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.all(arg: TJOB_JSValue): IJSPromise;
+function TJSPromise.all(const arg: TJOB_JSValue): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('all',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.allSettled(arg: IJSArray): IJSPromise;
+function TJSPromise.allSettled(const arg: IJSArray): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('allSettled',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.allSettled(arg: TJOB_JSValue): IJSPromise;
+function TJSPromise.allSettled(const arg: TJOB_JSValue): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('allSettled',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.race(arg: IJSArray): IJSPromise;
+function TJSPromise.race(const arg: IJSArray): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('race',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.race(arg: TJOB_JSValue): IJSPromise;
+function TJSPromise.race(const arg: TJOB_JSValue): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('race',[arg],TJSPromise) as IJSPromise;
 end;
@@ -1210,7 +1210,7 @@ begin
   Result:=InvokeJSObjectResult('reject',[reason],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.reject(reason: TJOB_JSValue): IJSPromise;
+function TJSPromise.reject(const reason: TJOB_JSValue): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('reject',[reason],TJSPromise) as IJSPromise;
 end;
@@ -1240,7 +1240,7 @@ begin
   Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.resolve(value: TJOB_JSValue): IJSPromise;
+function TJSPromise.resolve(const value: TJOB_JSValue): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
 end;
@@ -1302,7 +1302,7 @@ begin
   end;
 end;
 
-class function TJSPromise.Cast(Intf: IJSObject): IJSPromise;
+class function TJSPromise.Cast(const Intf: IJSObject): IJSPromise;
 begin
   Result:=TJSPromise.Cast(Intf);
 end;

@@ -333,6 +333,14 @@ Type
   TJSFileSystemDirectoryReader = class;
   IJSFormData = interface;
   TJSFormData = class;
+  IJSServiceWorker = interface;
+  TJSServiceWorker = class;
+  IJSAbstractWorker = interface;
+  TJSAbstractWorker = class;
+  IJSWindowOrWorkerGlobalScope = interface;
+  TJSWindowOrWorkerGlobalScope = class;
+  IJSCacheStorage = interface;
+  TJSCacheStorage = class;
   TJSEventListenerOptions = TJOB_Dictionary;
   TJSAddEventListenerOptions = TJOB_Dictionary;
   TJSGetRootNodeOptions = TJOB_Dictionary;
@@ -370,6 +378,7 @@ Type
   TJSFileSystemFlags = TJOB_Dictionary;
   TJSChannelPixelLayout = TJOB_Dictionary;
   TJSImageBitmapOptions = TJOB_Dictionary;
+  TJSMultiCacheQueryOptions = TJOB_Dictionary;
   TVisibilityState = UnicodeString;
   TDocumentAutoplayPolicy = UnicodeString;
   TFlashClassification = UnicodeString;
@@ -393,6 +402,8 @@ Type
   TImageOrientation = UnicodeString;
   TPremultiplyAlpha = UnicodeString;
   TColorSpaceConversion = UnicodeString;
+  TServiceWorkerState = UnicodeString;
+  TCacheStorageNamespace = UnicodeString;
   TEventListener = function (event: IJSEvent): Boolean of object;
   TEventHandlerNonNull = function (event: IJSEvent): TJOB_JSValue of object;
   TEventHandler = TEventHandlerNonNull;
@@ -821,6 +832,14 @@ Type
     colorSpaceConversion: TColorSpaceConversion;
     resizeWidth: LongWord;
     resizeHeight: LongWord;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSMultiCacheQueryOptions
+    --------------------------------------------------------------------}
+
+  TJSMultiCacheQueryOptionsRec = record
+    cacheName: UnicodeString;
   end;
 
   { --------------------------------------------------------------------
@@ -4477,6 +4496,96 @@ Type
   end;
 
   { --------------------------------------------------------------------
+    TJSAbstractWorker
+    --------------------------------------------------------------------}
+
+  IJSAbstractWorker = interface(IJSObject)
+    ['{2D2E9E9C-BF21-3301-BE30-7D8E8AF584D5}']
+    // property onerror: TEventHandler read _Getonerror write _Setonerror;
+  end;
+
+  TJSAbstractWorker = class(TJSObject,IJSAbstractWorker)
+  Private
+  Public
+    class function Cast(Intf: IJSObject): IJSAbstractWorker;
+    // property onerror: TEventHandler read _Getonerror write _Setonerror;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSWindowOrWorkerGlobalScope
+    --------------------------------------------------------------------}
+
+  IJSWindowOrWorkerGlobalScope = interface(IJSObject)
+    ['{A638F512-23A4-3CE5-9F80-7BDB74A6E1BB}']
+    function _Getorigin: UnicodeString;
+    function _GetcrossOriginIsolated: Boolean;
+    function _GetisSecureContext: Boolean;
+    function _Getcaches: IJSCacheStorage;
+    procedure reportError(aE: TJOB_JSValue);
+    function btoa(const aBtoa: UnicodeString): UnicodeString;
+    function atob(const _atob: UnicodeString): UnicodeString;
+    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearTimeout(aHandle: Integer); overload;
+    procedure clearTimeout; overload;
+    function setInterval(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearInterval(aHandle: Integer); overload;
+    procedure clearInterval; overload;
+    property origin: UnicodeString read _Getorigin;
+    property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
+    property isSecureContext: Boolean read _GetisSecureContext;
+    property caches: IJSCacheStorage read _Getcaches;
+  end;
+
+  TJSWindowOrWorkerGlobalScope = class(TJSObject,IJSWindowOrWorkerGlobalScope)
+  Private
+    function _Getorigin: UnicodeString;
+    function _GetcrossOriginIsolated: Boolean;
+    function _GetisSecureContext: Boolean;
+    function _Getcaches: IJSCacheStorage;
+  Public
+    procedure reportError(aE: TJOB_JSValue);
+    function btoa(const aBtoa: UnicodeString): UnicodeString;
+    function atob(const _atob: UnicodeString): UnicodeString;
+    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearTimeout(aHandle: Integer); overload;
+    procedure clearTimeout; overload;
+    function setInterval(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearInterval(aHandle: Integer); overload;
+    procedure clearInterval; overload;
+    class function Cast(Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
+    property origin: UnicodeString read _Getorigin;
+    property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
+    property isSecureContext: Boolean read _GetisSecureContext;
+    property caches: IJSCacheStorage read _Getcaches;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSCacheStorage
+    --------------------------------------------------------------------}
+
+  IJSCacheStorage = interface(IJSObject)
+    ['{E6CE12C8-9006-3FF9-944A-1ED81AA2A621}']
+  end;
+
+  TJSCacheStorage = class(TJSObject,IJSCacheStorage)
+  Private
+  Public
+    class function Cast(Intf: IJSObject): IJSCacheStorage;
+  end;
+
+  { --------------------------------------------------------------------
     TJSNode
     --------------------------------------------------------------------}
 
@@ -5972,6 +6081,32 @@ Type
   Public
     function createReader: IJSFileSystemDirectoryReader;
     class function Cast(Intf: IJSObject): IJSFileSystemDirectoryEntry;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSServiceWorker
+    --------------------------------------------------------------------}
+
+  IJSServiceWorker = interface(IJSEventTarget)
+    ['{578B7E11-8576-31FB-96D8-0793D46C61C4}']
+    function _GetscriptURL: UnicodeString;
+    function _Getstate: TServiceWorkerState;
+    property scriptURL: UnicodeString read _GetscriptURL;
+    property state: TServiceWorkerState read _Getstate;
+    // property onstatechange: TEventHandler read _Getonstatechange write _Setonstatechange;
+    // property onerror: TEventHandler read _Getonerror write _Setonerror;
+  end;
+
+  TJSServiceWorker = class(TJSEventTarget,IJSServiceWorker)
+  Private
+    function _GetscriptURL: UnicodeString;
+    function _Getstate: TServiceWorkerState;
+  Public
+    class function Cast(Intf: IJSObject): IJSServiceWorker;
+    property scriptURL: UnicodeString read _GetscriptURL;
+    property state: TServiceWorkerState read _Getstate;
+    // property onstatechange: TEventHandler read _Getonstatechange write _Setonstatechange;
+    // property onerror: TEventHandler read _Getonerror write _Setonerror;
   end;
 
   { --------------------------------------------------------------------
@@ -13657,6 +13792,116 @@ begin
   Result:=TJSFormData.JOBCast(Intf);
 end;
 
+class function TJSAbstractWorker.Cast(Intf: IJSObject): IJSAbstractWorker;
+begin
+  Result:=TJSAbstractWorker.JOBCast(Intf);
+end;
+
+function TJSWindowOrWorkerGlobalScope._Getorigin: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('origin');
+end;
+
+function TJSWindowOrWorkerGlobalScope._GetcrossOriginIsolated: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('crossOriginIsolated');
+end;
+
+function TJSWindowOrWorkerGlobalScope._GetisSecureContext: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('isSecureContext');
+end;
+
+function TJSWindowOrWorkerGlobalScope._Getcaches: IJSCacheStorage;
+begin
+  Result:=ReadJSPropertyObject('caches',TJSCacheStorage) as IJSCacheStorage;
+end;
+
+procedure TJSWindowOrWorkerGlobalScope.reportError(aE: TJOB_JSValue);
+begin
+  InvokeJSNoResult('reportError',[aE]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.btoa(const aBtoa: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('btoa',[aBtoa]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.atob(const _atob: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('atob',[_atob]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setTimeout(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler,aTimeout,arguments]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setTimeout(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler,aTimeout,aUnused]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler]);
+end;
+
+procedure TJSWindowOrWorkerGlobalScope.clearTimeout(aHandle: Integer); overload;
+begin
+  InvokeJSNoResult('clearTimeout',[aHandle]);
+end;
+
+procedure TJSWindowOrWorkerGlobalScope.clearTimeout; overload;
+begin
+  InvokeJSNoResult('clearTimeout',[]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setInterval(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler,aTimeout,arguments]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setInterval(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler,aTimeout,aUnused]);
+end;
+
+function TJSWindowOrWorkerGlobalScope.setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler]);
+end;
+
+procedure TJSWindowOrWorkerGlobalScope.clearInterval(aHandle: Integer); overload;
+begin
+  InvokeJSNoResult('clearInterval',[aHandle]);
+end;
+
+procedure TJSWindowOrWorkerGlobalScope.clearInterval; overload;
+begin
+  InvokeJSNoResult('clearInterval',[]);
+end;
+
+class function TJSWindowOrWorkerGlobalScope.Cast(Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
+begin
+  Result:=TJSWindowOrWorkerGlobalScope.JOBCast(Intf);
+end;
+
+class function TJSCacheStorage.Cast(Intf: IJSObject): IJSCacheStorage;
+begin
+  Result:=TJSCacheStorage.JOBCast(Intf);
+end;
+
 function TJSNode._GetnodeType: Word;
 begin
   Result:=ReadJSPropertyLongInt('nodeType');
@@ -15555,6 +15800,21 @@ end;
 class function TJSFileSystemDirectoryEntry.Cast(Intf: IJSObject): IJSFileSystemDirectoryEntry;
 begin
   Result:=TJSFileSystemDirectoryEntry.JOBCast(Intf);
+end;
+
+function TJSServiceWorker._GetscriptURL: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('scriptURL');
+end;
+
+function TJSServiceWorker._Getstate: TServiceWorkerState;
+begin
+  Result:=ReadJSPropertyUnicodeString('state');
+end;
+
+class function TJSServiceWorker.Cast(Intf: IJSObject): IJSServiceWorker;
+begin
+  Result:=TJSServiceWorker.JOBCast(Intf);
 end;
 
 function TJSDocument._Getimplementation_: IJSDOMImplementation;
@@ -20608,4 +20868,3 @@ finalization
   JSDocument.Free;
   JSWindow.Free;
 end.
-

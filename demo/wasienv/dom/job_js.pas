@@ -791,12 +791,26 @@ type
 
   IJSJSON = interface(IJSObject)
     ['{73535059-91DD-4A22-91A6-D8072008C5F3}']
+    function parse(const aJSON: UnicodeString): TJOB_JSValue; overload;
+    // Use this only when you are sure you will get an object, no checking is done.
+    function parseObject(const aJSON: UnicodeString): IJSObject; overload;
+    function stringify(aValue: TJOB_JSValue): UnicodeString; overload;
+    function stringify(aValue,aReplacer: TJOB_JSValue): UnicodeString; overload;
+    function stringify(aValue,aReplacer: TJOB_JSValue; space:  NativeInt): UnicodeString; overload;
+    function stringify(aValue,aReplacer: TJOB_JSValue; const space: UnicodeString): UnicodeString; overload;
   end;
 
   { TJSJSON }
 
   TJSJSON = class(TJSObject,IJSJSON)
   public
+    function parse(const aJSON: UnicodeString): TJOB_JSValue; overload;
+    // Use this only when you are sure you will get an object, no checking is done.
+    function parseObject(const aJSON: UnicodeString): IJSObject; overload;
+    function stringify(aValue: TJOB_JSValue): UnicodeString; overload;
+    function stringify(aValue,aReplacer: TJOB_JSValue): UnicodeString; overload;
+    function stringify(aValue,aReplacer: TJOB_JSValue; space:  NativeInt): UnicodeString; overload;
+    function stringify(aValue,aReplacer: TJOB_JSValue; const space: UnicodeString): UnicodeString; overload;
     class function Cast(Intf: IJSObject): IJSJSON; overload;
   end;
 
@@ -1113,6 +1127,38 @@ begin
 end;
 
 { TJSJSON }
+
+function TJSJSON.parse(const aJSON: UnicodeString): TJOB_JSValue;
+begin
+  Result:=InvokeJSValueResult('parse',[aJSON]);
+end;
+
+function TJSJSON.parseObject(const aJSON: UnicodeString): IJSObject;
+begin
+  Result:=InvokeJSObjectResult('parse',[aJSON],TJSObject) as IJSObject;
+end;
+
+function TJSJSON.stringify(aValue: TJOB_JSValue): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('stringify',[aValue]);
+end;
+
+function TJSJSON.stringify(aValue, aReplacer: TJOB_JSValue): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('stringify',[aValue,aReplacer]);
+end;
+
+function TJSJSON.stringify(aValue, aReplacer: TJOB_JSValue; space: NativeInt
+  ): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('stringify',[aValue,aReplacer,space]);
+end;
+
+function TJSJSON.stringify(aValue, aReplacer: TJOB_JSValue;
+  const space: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('stringify',[aValue,aReplacer,space]);
+end;
 
 class function TJSJSON.Cast(Intf: IJSObject): IJSJSON;
 begin

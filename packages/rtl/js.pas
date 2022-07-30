@@ -131,6 +131,7 @@ type
   TJSMapProcCallBack = reference  to procedure(value: JSValue; key: JSValue);
 
   { TJSMap }
+
   TJSMap = class external name 'Map'
   Private
     FSize : NativeInt; external name 'size';
@@ -841,6 +842,9 @@ type
     class function all(arg : Array of JSValue) : TJSPromise; overload;
     class function all(arg : JSValue) : TJSPromise; overload;
     class function all(arg : TJSPromiseArray) : TJSPromise; overload;
+    class function allSettled(arg : Array of JSValue) : TJSPromise; overload;
+    class function allSettled(arg : JSValue) : TJSPromise; overload;
+    class function allSettled(arg : TJSPromiseArray) : TJSPromise; overload;
     class function race(arg : Array of JSValue) : TJSPromise; overload;
     class function race(arg : JSValue) : TJSPromise; overload;
     class function race(arg : TJSPromiseArray) : TJSPromise; overload;

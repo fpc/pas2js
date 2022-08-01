@@ -341,6 +341,10 @@ Type
   TJSWindowOrWorkerGlobalScope = class;
   IJSCacheStorage = interface;
   TJSCacheStorage = class;
+  IJSResponse = interface;
+  TJSResponse = class;
+  IJSHeaders = interface;
+  TJSHeaders = class;
   TJSEventListenerOptions = TJOB_Dictionary;
   TJSAddEventListenerOptions = TJOB_Dictionary;
   TJSGetRootNodeOptions = TJOB_Dictionary;
@@ -379,6 +383,7 @@ Type
   TJSChannelPixelLayout = TJOB_Dictionary;
   TJSImageBitmapOptions = TJOB_Dictionary;
   TJSMultiCacheQueryOptions = TJOB_Dictionary;
+  TJSResponseInit = TJOB_Dictionary;
   TVisibilityState = UnicodeString;
   TDocumentAutoplayPolicy = UnicodeString;
   TFlashClassification = UnicodeString;
@@ -404,6 +409,8 @@ Type
   TColorSpaceConversion = UnicodeString;
   TServiceWorkerState = UnicodeString;
   TCacheStorageNamespace = UnicodeString;
+  TResponseType = UnicodeString;
+  THeadersGuardEnum = UnicodeString;
   TEventListener = function (event: IJSEvent): Boolean of object;
   TEventHandlerNonNull = function (event: IJSEvent): TJOB_JSValue of object;
   TEventHandler = TEventHandlerNonNull;
@@ -438,6 +445,8 @@ Type
   TImagePixelLayout = IJSArray; // array of TJSChannelPixelLayout
   // Union of Blob, Directory, USVString
   TFormDataEntryValue = TJOB_JSValue;
+  // Union of sequence, record
+  THeadersInit = TJOB_JSValue;
 
   { --------------------------------------------------------------------
     TJSEventListenerOptions
@@ -840,6 +849,16 @@ Type
 
   TJSMultiCacheQueryOptionsRec = record
     cacheName: UnicodeString;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSResponseInit
+    --------------------------------------------------------------------}
+
+  TJSResponseInitRec = record
+    status: Word;
+    statusText: UnicodeString;
+    headers: THeadersInit;
   end;
 
   { --------------------------------------------------------------------
@@ -2590,7 +2609,7 @@ Type
   TJSRangeDynArray = IJSArray; // array of TJSRange
 
   IJSSelection = interface(IJSObject)
-    ['{A4886FB0-977D-3F5E-AEF5-E54883662A9A}']
+    ['{522D4098-FC2A-35AF-A806-57B88516481A}']
     function _GetanchorNode: IJSNode;
     function _GetanchorOffset: LongWord;
     function _GetfocusNode: IJSNode;
@@ -2621,7 +2640,6 @@ Type
     procedure deleteFromDocument;
     function containsNode(aNode: IJSNode; allowPartialContainment: Boolean): Boolean; overload;
     function containsNode(aNode: IJSNode): Boolean; overload;
-    function toString: UnicodeString;
     procedure modify(const alter: UnicodeString; const aDirection: UnicodeString; const aGranularity: UnicodeString);
     function toStringWithFormat(const aFormatType: UnicodeString; aFlags: LongWord; aWrapColumn: Integer): UnicodeString;
     procedure addSelectionListener(aNewListener: IJSnsISelectionListener);
@@ -2675,7 +2693,6 @@ Type
     procedure deleteFromDocument;
     function containsNode(aNode: IJSNode; allowPartialContainment: Boolean): Boolean; overload;
     function containsNode(aNode: IJSNode): Boolean; overload;
-    function toString: UnicodeString;
     procedure modify(const alter: UnicodeString; const aDirection: UnicodeString; const aGranularity: UnicodeString);
     function toStringWithFormat(const aFormatType: UnicodeString; aFlags: LongWord; aWrapColumn: Integer): UnicodeString;
     procedure addSelectionListener(aNewListener: IJSnsISelectionListener);
@@ -4586,6 +4603,98 @@ Type
   end;
 
   { --------------------------------------------------------------------
+    TJSResponse
+    --------------------------------------------------------------------}
+
+  IJSResponse = interface(IJSObject)
+    ['{1C2F3A3B-95B8-328C-AF98-F7FD8DBAB69C}']
+    function _Gettype_: TResponseType;
+    function _Geturl: UnicodeString;
+    function _Getredirected: Boolean;
+    function _Getstatus: Word;
+    function _Getok: Boolean;
+    function _GetstatusText: UnicodeString;
+    function _Getheaders: IJSHeaders;
+    function _GethasCacheInfoChannel: Boolean;
+    function error: IJSResponse;
+    function redirect(const aUrl: UnicodeString; aStatus: Word): IJSResponse; overload;
+    function redirect(const aUrl: UnicodeString): IJSResponse; overload;
+    function clone: IJSResponse;
+    function cloneUnfiltered: IJSResponse;
+    function json: IJSPromise; overload;
+    property type_: TResponseType read _Gettype_;
+    property url: UnicodeString read _Geturl;
+    property redirected: Boolean read _Getredirected;
+    property status: Word read _Getstatus;
+    property ok: Boolean read _Getok;
+    property statusText: UnicodeString read _GetstatusText;
+    property headers: IJSHeaders read _Getheaders;
+    property hasCacheInfoChannel: Boolean read _GethasCacheInfoChannel;
+  end;
+
+  { TJSResponse }
+
+  TJSResponse = class(TJSObject,IJSResponse)
+  Private
+    function _Gettype_: TResponseType;
+    function _Geturl: UnicodeString;
+    function _Getredirected: Boolean;
+    function _Getstatus: Word;
+    function _Getok: Boolean;
+    function _GetstatusText: UnicodeString;
+    function _Getheaders: IJSHeaders;
+    function _GethasCacheInfoChannel: Boolean;
+  Public
+    function error: IJSResponse;
+    function redirect(const aUrl: UnicodeString; aStatus: Word): IJSResponse; overload;
+    function redirect(const aUrl: UnicodeString): IJSResponse; overload;
+    function clone: IJSResponse;
+    function cloneUnfiltered: IJSResponse;
+    function json: IJSPromise; overload;
+    class function Cast(Intf: IJSObject): IJSResponse;
+    property type_: TResponseType read _Gettype_;
+    property url: UnicodeString read _Geturl;
+    property redirected: Boolean read _Getredirected;
+    property status: Word read _Getstatus;
+    property ok: Boolean read _Getok;
+    property statusText: UnicodeString read _GetstatusText;
+    property headers: IJSHeaders read _Getheaders;
+    property hasCacheInfoChannel: Boolean read _GethasCacheInfoChannel;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSHeaders
+    --------------------------------------------------------------------}
+
+  TUnicodeStringDynArrayDynArray = IJSArray; // array of TUnicodeStringDynArray
+
+  IJSHeaders = interface(IJSObject)
+    ['{C0BCC7DF-3747-3F31-83C9-BDEB874234DC}']
+    function _Getguard: THeadersGuardEnum;
+    procedure _Setguard(const aValue: THeadersGuardEnum);
+    procedure append(const aName: UnicodeString; const aValue: UnicodeString);
+    procedure delete(const aName: UnicodeString);
+    function get(const aName: UnicodeString): UnicodeString;
+    function has(const aName: UnicodeString): Boolean;
+    procedure set_(const aName: UnicodeString; const aValue: UnicodeString);
+    property guard: THeadersGuardEnum read _Getguard write _Setguard;
+  end;
+
+  TJSHeaders = class(TJSObject,IJSHeaders)
+  Private
+    function _Getguard: THeadersGuardEnum;
+    procedure _Setguard(const aValue: THeadersGuardEnum);
+  Public
+    procedure append(const aName: UnicodeString; const aValue: UnicodeString);
+    procedure delete(const aName: UnicodeString);
+    function get(const aName: UnicodeString): UnicodeString;
+    function has(const aName: UnicodeString): Boolean;
+    procedure set_(const aName: UnicodeString; const aValue: UnicodeString);
+    class function Cast(Intf: IJSObject): IJSHeaders;
+    property guard: THeadersGuardEnum read _Getguard write _Setguard;
+  end;
+
+  { --------------------------------------------------------------------
     TJSNode
     --------------------------------------------------------------------}
 
@@ -4865,6 +4974,7 @@ Type
     procedure cancelIdleCallback(aHandle: LongWord);
     function getRegionalPrefsLocales: TUnicodeStringDynArray;
     function getWebExposedLocales: TUnicodeStringDynArray;
+    function fetch(const URL: UnicodeString): IJSPromise;
     property window: IJSWindowProxy read _Getwindow;
     property self_: IJSWindowProxy read _Getself_;
     property document: IJSDocument read _Getdocument;
@@ -5044,6 +5154,8 @@ Type
     property localStorage: IJSStorage read _GetlocalStorage;
   end;
 
+  { TJSWindow }
+
   TJSWindow = class(TJSEventTarget,IJSWindow)
   Private
     function _Getwindow: IJSWindowProxy;
@@ -5199,6 +5311,7 @@ Type
     procedure cancelIdleCallback(aHandle: LongWord);
     function getRegionalPrefsLocales: TUnicodeStringDynArray;
     function getWebExposedLocales: TUnicodeStringDynArray;
+    function fetch(const URL: UnicodeString): IJSPromise;
     class function Cast(Intf: IJSObject): IJSWindow;
     property window: IJSWindowProxy read _Getwindow;
     property self_: IJSWindowProxy read _Getself_;
@@ -11807,11 +11920,6 @@ begin
   Result:=InvokeJSBooleanResult('containsNode',[aNode]);
 end;
 
-function TJSSelection.toString: UnicodeString;
-begin
-  Result:=InvokeJSUnicodeStringResult('toString',[]);
-end;
-
 procedure TJSSelection.modify(const alter: UnicodeString; const aDirection: UnicodeString; const aGranularity: UnicodeString);
 begin
   InvokeJSNoResult('modify',[alter,aDirection,aGranularity]);
@@ -13902,6 +14010,121 @@ begin
   Result:=TJSCacheStorage.JOBCast(Intf);
 end;
 
+function TJSResponse._Gettype_: TResponseType;
+begin
+  Result:=ReadJSPropertyUnicodeString('type');
+end;
+
+function TJSResponse._Geturl: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('url');
+end;
+
+function TJSResponse._Getredirected: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('redirected');
+end;
+
+function TJSResponse._Getstatus: Word;
+begin
+  Result:=ReadJSPropertyLongInt('status');
+end;
+
+function TJSResponse._Getok: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('ok');
+end;
+
+function TJSResponse._GetstatusText: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('statusText');
+end;
+
+function TJSResponse._Getheaders: IJSHeaders;
+begin
+  Result:=ReadJSPropertyObject('headers',TJSHeaders) as IJSHeaders;
+end;
+
+function TJSResponse._GethasCacheInfoChannel: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('hasCacheInfoChannel');
+end;
+
+function TJSResponse.error: IJSResponse;
+begin
+  Result:=InvokeJSObjectResult('error',[],TJSResponse) as IJSResponse;
+end;
+
+function TJSResponse.redirect(const aUrl: UnicodeString; aStatus: Word): IJSResponse; overload;
+begin
+  Result:=InvokeJSObjectResult('redirect',[aUrl,aStatus],TJSResponse) as IJSResponse;
+end;
+
+function TJSResponse.redirect(const aUrl: UnicodeString): IJSResponse; overload;
+begin
+  Result:=InvokeJSObjectResult('redirect',[aUrl],TJSResponse) as IJSResponse;
+end;
+
+function TJSResponse.clone: IJSResponse;
+begin
+  Result:=InvokeJSObjectResult('clone',[],TJSResponse) as IJSResponse;
+end;
+
+function TJSResponse.cloneUnfiltered: IJSResponse;
+begin
+  Result:=InvokeJSObjectResult('cloneUnfiltered',[],TJSResponse) as IJSResponse;
+end;
+
+function TJSResponse.json: IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('json',[],TJSPromise) as IJSPromise;
+end;
+
+class function TJSResponse.Cast(Intf: IJSObject): IJSResponse;
+begin
+  Result:=TJSResponse.JOBCast(Intf);
+end;
+
+function TJSHeaders._Getguard: THeadersGuardEnum;
+begin
+  Result:=ReadJSPropertyUnicodeString('guard');
+end;
+
+procedure TJSHeaders._Setguard(const aValue: THeadersGuardEnum);
+begin
+  WriteJSPropertyUnicodeString('guard',aValue);
+end;
+
+procedure TJSHeaders.append(const aName: UnicodeString; const aValue: UnicodeString);
+begin
+  InvokeJSNoResult('append',[aName,aValue]);
+end;
+
+procedure TJSHeaders.delete(const aName: UnicodeString);
+begin
+  InvokeJSNoResult('delete',[aName]);
+end;
+
+function TJSHeaders.get(const aName: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('get',[aName]);
+end;
+
+function TJSHeaders.has(const aName: UnicodeString): Boolean;
+begin
+  Result:=InvokeJSBooleanResult('has',[aName]);
+end;
+
+procedure TJSHeaders.set_(const aName: UnicodeString; const aValue: UnicodeString);
+begin
+  InvokeJSNoResult('set',[aName,aValue]);
+end;
+
+class function TJSHeaders.Cast(Intf: IJSObject): IJSHeaders;
+begin
+  Result:=TJSHeaders.JOBCast(Intf);
+end;
+
 function TJSNode._GetnodeType: Word;
 begin
   Result:=ReadJSPropertyLongInt('nodeType');
@@ -14800,6 +15023,11 @@ end;
 function TJSWindow.getWebExposedLocales: TUnicodeStringDynArray;
 begin
   Result:=InvokeJSObjectResult('getWebExposedLocales',[],TJSArray) as TUnicodeStringDynArray;
+end;
+
+function TJSWindow.fetch(const URL: UnicodeString): IJSPromise;
+begin
+  Result:=InvokeJSObjectResult('fetch',[URL],TJSPromise) as IJSPromise;
 end;
 
 class function TJSWindow.Cast(Intf: IJSObject): IJSWindow;

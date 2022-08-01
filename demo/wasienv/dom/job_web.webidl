@@ -3768,8 +3768,7 @@ interface Selection {
   [Throws]
   boolean   containsNode(Node node,
                          optional boolean allowPartialContainment = false);
-  /* Mattias: added toString */
-  stringifier DOMString toString ();
+// Mattias: stringifier DOMString toString ();
 };
 
 // Additional methods not currently in the spec
@@ -4079,8 +4078,8 @@ interface Range : AbstractRange {
   [Throws]
   boolean intersectsNode(Node node);
 
-  [Throws, BinaryName="ToString"]
-  stringifier;
+// Mattias:  [Throws, BinaryName="ToString"]
+//  stringifier;
 };
 
 // http://domparsing.spec.whatwg.org/#dom-range-createcontextualfragment
@@ -7430,4 +7429,268 @@ interface FormData {
   [Throws]
   void set(USVString name, USVString value);
   iterable<USVString, FormDataEntryValue>;
+};
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * http://slightlyoff.github.io/ServiceWorker/spec/service_worker/index.html#service-worker-obj
+ *
+ */
+
+// Still unclear what should be subclassed.
+// https://github.com/slightlyoff/ServiceWorker/issues/189
+[Func="ServiceWorkerVisible",
+ // FIXME(nsm): Bug 1113522. This is exposed to satisfy webidl constraints, but it won't actually work.
+ Exposed=(Window,Worker)]
+interface ServiceWorker : EventTarget {
+  readonly attribute USVString scriptURL;
+  readonly attribute ServiceWorkerState state;
+
+  attribute EventHandler onstatechange;
+
+// Mattias:  [Throws]
+//  void postMessage(any message, sequence<object> transferable);
+// Mattias:  [Throws]
+//  void postMessage(any message, optional StructuredSerializeOptions options = {});
+};
+
+ServiceWorker includes AbstractWorker;
+
+enum ServiceWorkerState {
+  // https://github.com/w3c/ServiceWorker/issues/1162
+  "parsed",
+
+  "installing",
+  "installed",
+  "activating",
+  "activated",
+  "redundant"
+};
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ */
+
+[Exposed=(Window,Worker)]
+interface mixin AbstractWorker {
+    attribute EventHandler onerror;
+};
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is:
+ * https://html.spec.whatwg.org/multipage/webappapis.html#windoworworkerglobalscope-mixin
+ * https://fetch.spec.whatwg.org/#fetch-method
+ * https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
+ * https://w3c.github.io/ServiceWorker/#self-caches
+ */
+
+// https://html.spec.whatwg.org/multipage/webappapis.html#windoworworkerglobalscope-mixin
+[Exposed=(Window,Worker)]
+interface mixin WindowOrWorkerGlobalScope {
+  [Replaceable] readonly attribute USVString origin;
+  readonly attribute boolean crossOriginIsolated;
+
+  [Throws, NeedsCallerType]
+  void reportError(any e);
+
+  // base64 utility methods
+  [Throws]
+  DOMString btoa(DOMString btoa);
+  [Throws]
+  DOMString atob(DOMString atob);
+
+  // timers
+  // NOTE: We're using overloads where the spec uses a union.  Should
+  // be black-box the same.
+  [Throws]
+  long setTimeout(Function handler, optional long timeout = 0, any... arguments);
+  [Throws]
+  long setTimeout(DOMString handler, optional long timeout = 0, any... unused);
+  void clearTimeout(optional long handle = 0);
+  [Throws]
+  long setInterval(Function handler, optional long timeout = 0, any... arguments);
+  [Throws]
+  long setInterval(DOMString handler, optional long timeout = 0, any... unused);
+  void clearInterval(optional long handle = 0);
+
+// Mattias:  // microtask queuing
+//  void queueMicrotask(VoidFunction callback);
+
+  // ImageBitmap
+// Mattias:  [Throws]
+//  Promise<ImageBitmap> createImageBitmap(ImageBitmapSource aImage,
+//                                         optional ImageBitmapOptions aOptions = {});
+// Mattias:  [Throws]
+//  Promise<ImageBitmap> createImageBitmap(ImageBitmapSource aImage,
+//                                         long aSx, long aSy, long aSw, long aSh,
+//                                         optional ImageBitmapOptions aOptions = {});
+
+  // structured cloning
+// Mattias:  [Throws]
+//  any structuredClone(any value, optional StructuredSerializeOptions options = {});
+};
+
+// https://fetch.spec.whatwg.org/#fetch-method
+partial interface mixin WindowOrWorkerGlobalScope {
+// Mattias:  [NewObject, NeedsCallerType]
+//  Promise<Response> fetch(RequestInfo input, optional RequestInit init = {});
+};
+
+// https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
+partial interface mixin WindowOrWorkerGlobalScope {
+  readonly attribute boolean isSecureContext;
+};
+
+// http://w3c.github.io/IndexedDB/#factory-interface
+partial interface mixin WindowOrWorkerGlobalScope {
+   // readonly attribute IDBFactory indexedDB;
+// Mattias:   [Throws]
+//   readonly attribute IDBFactory? indexedDB;
+};
+
+// https://w3c.github.io/ServiceWorker/#self-caches
+partial interface mixin WindowOrWorkerGlobalScope {
+  [Throws, Func="nsGlobalWindowInner::CachesEnabled", SameObject]
+  readonly attribute CacheStorage caches;
+};
+
+// https://wicg.github.io/scheduling-apis/#ref-for-windoworworkerglobalscope-scheduler
+partial interface mixin WindowOrWorkerGlobalScope {
+// Mattias:  [Replaceable, Pref="dom.enable_web_task_scheduling", SameObject]
+//  readonly attribute Scheduler scheduler;
+};
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * https://w3c.github.io/ServiceWorker/#cachestorage-interface
+ */
+
+interface Principal;
+
+[Exposed=(Window,Worker),
+ Func="nsGlobalWindowInner::CachesEnabled"]
+interface CacheStorage {
+  [Throws, ChromeOnly]
+  constructor(CacheStorageNamespace namespace, Principal principal);
+
+// Mattias:  [NewObject]
+//  Promise<Response> match(RequestInfo request, optional MultiCacheQueryOptions options = {});
+// Mattias:  [NewObject]
+//  Promise<boolean> has(DOMString cacheName);
+// Mattias:  [NewObject]
+//  Promise<Cache> open(DOMString cacheName);
+// Mattias:  [NewObject]
+//  Promise<boolean> delete(DOMString cacheName);
+// Mattias:  [NewObject]
+//  Promise<sequence<DOMString>> keys();
+};
+
+dictionary MultiCacheQueryOptions : CacheQueryOptions {
+  DOMString cacheName;
+};
+
+// chrome-only, gecko specific extension
+enum CacheStorageNamespace {
+  "content", "chrome"
+};
+/* -*- Mode: IDL; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * https://fetch.spec.whatwg.org/#response-class
+ */
+
+[Exposed=(Window,Worker)]
+interface Response {
+  // This should be constructor(optional BodyInit... but BodyInit doesn't
+  // include ReadableStream yet because we don't want to expose Streams API to
+  // Request.
+  [Throws]
+  constructor(optional (Blob or BufferSource or FormData or URLSearchParams or ReadableStream or USVString)? body = null,
+              optional ResponseInit init = {});
+
+  [NewObject] static Response error();
+  [Throws,
+   NewObject] static Response redirect(USVString url, optional unsigned short status = 302);
+
+  readonly attribute ResponseType type;
+
+  readonly attribute USVString url;
+  readonly attribute boolean redirected;
+  readonly attribute unsigned short status;
+  readonly attribute boolean ok;
+  readonly attribute ByteString statusText;
+  [SameObject, BinaryName="headers_"] readonly attribute Headers headers;
+
+  [Throws,
+   NewObject] Response clone();
+
+  [ChromeOnly, NewObject, Throws] Response cloneUnfiltered();
+
+  // For testing only.
+  [ChromeOnly] readonly attribute boolean hasCacheInfoChannel;
+};
+// Mattias: Response includes Body;
+
+// This should be part of Body but we don't want to expose body to request yet.
+// See bug 1387483.
+partial interface Response {
+// Mattias:  [GetterThrows]
+//  readonly attribute ReadableStream? body;
+};
+
+dictionary ResponseInit {
+  unsigned short status = 200;
+  ByteString statusText = "";
+  HeadersInit headers;
+};
+
+enum ResponseType { "basic", "cors", "default", "error", "opaque", "opaqueredirect" };
+/* -*- Mode: IDL; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* vim: set ts=8 sts=2 et sw=2 tw=80: */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * http://fetch.spec.whatwg.org/#headers-class
+ */
+
+typedef (sequence<sequence<ByteString>> or record<ByteString, ByteString>) HeadersInit;
+
+enum HeadersGuardEnum {
+  "none",
+  "request",
+  "request-no-cors",
+  "response",
+  "immutable"
+};
+
+[Exposed=(Window,Worker)]
+interface Headers {
+  [Throws]
+  constructor(optional HeadersInit init);
+
+  [Throws] void append(ByteString name, ByteString value);
+  [Throws] void delete(ByteString name);
+  [Throws] ByteString? get(ByteString name);
+  [Throws] boolean has(ByteString name);
+  [Throws] void set(ByteString name, ByteString value);
+  iterable<ByteString, ByteString>;
+
+  // Used to test different guard states from mochitest.
+  // Note: Must be set prior to populating headers or will throw.
+  [ChromeOnly, SetterThrows] attribute HeadersGuardEnum guard;
 };

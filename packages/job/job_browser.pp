@@ -505,7 +505,8 @@ var
       begin
         //writeln('TJSObjectBridge called JS Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length);
         Args:=CreateCallbackArgs(View,JSArguments);
-        ResultP:=CallbackHandler(aCall,aData,aCode,Args); // this frees Args
+        ResultP:=CallbackHandler(aCall,aData,aCode,Args); // this frees Args, and may detach View
+        View:=getModuleMemoryDataView();
         //writeln('TJSObjectBridge called Wasm Call=',aCall,' Data=',aData,' Code=',aCode,' ResultP=',ResultP);
         Result:=EatCallbackResult(View,ResultP); // this frees ResultP
         //writeln('TJSObjectBridge Result=',Result);

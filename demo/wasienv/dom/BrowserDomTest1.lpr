@@ -15,14 +15,17 @@ Type
     procedure Proc;
     function ArgsToStr(Args: TJSFunctionArguments): string;
   published
+    Enabled: boolean;
+    Scale: double;
     Size: integer;
     Name: string;
     Child: TBird;
     function GetBoolean: boolean;
     function GetDouble: double;
-    function GetString: string;
     function GetInteger: integer;
-    function CreateChick(const aName: string): TBird;
+    function GetString: string;
+    function GetBird: TBird;
+    function CreateBird(const aName: string): TBird;
   end;
 
   { TMyApplication }
@@ -50,7 +53,8 @@ begin
     GetDouble;
     GetInteger;
     GetString;
-    CreateChick('');
+    GetBird;
+    CreateBird('');
   end;
 end;
 
@@ -62,32 +66,36 @@ end;
 function TBird.GetBoolean: boolean;
 begin
   writeln('TBird.GetBoolean [',Name,'] ',ArgsToStr(JSArguments));
-  Result:=JSArguments.Length mod 1 = 0;
+  Result:=Enabled;
 end;
 
 function TBird.GetDouble: double;
 begin
   writeln('TBird.GetDouble [',Name,'] ',ArgsToStr(JSArguments));
-  Result:=0.3+JSArguments.Length;
+  Result:=Scale;
 end;
 
 function TBird.GetString: string;
 begin
   writeln('TBird.GetString [',Name,'] ',ArgsToStr(JSArguments));
-  Result:='TBird.GetString:'+str(JSArguments.Length);
-  if JSArguments.Length>0 then
-    Result:=Result+String(JSArguments[0]);
+  Result:=Name;
+end;
+
+function TBird.GetBird: TBird;
+begin
+  writeln('TBird.GetBird [',Name,'] ',ArgsToStr(JSArguments));
+  Result:=Child;
 end;
 
 function TBird.GetInteger: integer;
 begin
   writeln('TBird.GetInteger [',Name,'] ',ArgsToStr(JSArguments));
-  Result:=3000+JSArguments.Length;
+  Result:=Size;
 end;
 
-function TBird.CreateChick(const aName: string): TBird;
+function TBird.CreateBird(const aName: string): TBird;
 begin
-  writeln('TBird.CreateChick [',Name,'] ',ArgsToStr(JSArguments));
+  writeln('TBird.CreateBird [',Name,'] ',ArgsToStr(JSArguments));
   Result:=TBird.Create(Name+'.'+aName);
 end;
 

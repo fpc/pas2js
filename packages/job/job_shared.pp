@@ -56,8 +56,8 @@ const
   JOBFn_InvokeBooleanResult = 'invoke_boolresult';
   JOBFn_InvokeDoubleResult = 'invoke_doubleresult';
   JOBFn_InvokeStringResult = 'invoke_stringresult';
-  JOBFn_InvokeArrayStringResult = 'invoke_arraystringresult';
   JOBFn_GetStringResult = 'get_stringresult';
+  JOBFn_InvokeArrayStringResult = 'invoke_arraystringresult';
   JOBFn_ReleaseStringResult = 'release_stringresult';
   JOBFn_InvokeObjectResult = 'invoke_objectresult';
   JOBFn_ReleaseObject = 'release_object';
@@ -100,13 +100,14 @@ const
 
   JOBInvokeCall = 0; // call function
   JOBInvokeGet = 1; // read property
-  JOBInvokeGetTypeOf = 4; // read property and typeof
-  JOBInvokeSet = 2; // set property
-  JOBInvokeNew = 3; // new operator
+  JOBInvokeGetTypeOf = 2; // read property and typeof
+  JOBInvokeSet = 3; // set property
+  JOBInvokeNew = 4; // new operator
 
-  JOBInvokeNames: array[0..3] of string = (
+  JOBInvokeNames: array[0..4] of string = (
     'Call',
     'Get',
+    'GetTypeOf',
     'Set',
     'New'
     );

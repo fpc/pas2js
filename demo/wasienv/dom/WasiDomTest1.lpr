@@ -20,6 +20,12 @@ type
     // functions
     procedure IncSize;
     function CreateBird(const aName: string): IJSBird;
+    function GetBoolean: boolean;
+    function GetInteger: Integer;
+    function GetDouble: Double;
+    function GetUnicodeString: UnicodeString;
+    function GetUtf8String: String;
+    function GetBird: IJSBird;
     // properties
     function GetCaption: UnicodeString;
     function GetEnabled: boolean;
@@ -49,6 +55,12 @@ type
     // functions
     procedure IncSize;
     function CreateBird(const aName: string): IJSBird;
+    function GetBoolean: boolean;
+    function GetInteger: Integer;
+    function GetDouble: Double;
+    function GetUnicodeString: UnicodeString;
+    function GetUtf8String: String;
+    function GetBird: IJSBird;
     // properties
     function GetCaption: UnicodeString;
     function GetEnabled: boolean;
@@ -84,19 +96,26 @@ type
     procedure AssertEqual(const Msg: string; const Expected, Actual: integer);
     procedure AssertEqual(const Msg: string; const Expected, Actual: double);
     procedure AssertEqual(const Msg: string; const Expected, Actual: String);
-    procedure AssertEqual(const Msg: string; const Expected, Actual: UnicodeString);
+    procedure AssertEqualUS(const Msg: string; const Expected, Actual: UnicodeString);
     procedure AssertEqual(const Msg: string; const Expected, Actual: IJSBird);
   public
     // read/write properties
     procedure TestBooleanProperty;
     procedure TestIntegerProperty;
     procedure TestDoubleProperty;
-    procedure TestStringProperty;
+    procedure TestUnicodeStringProperty;
+    procedure TestUTF8StringProperty;
     procedure TestObjectProperty;
     // todo procedure TestVariantProperty;
 
     // function
-    // todo procedure TestCallProcedure;
+    procedure TestCallProcedure;
+    procedure TestFuncResultBoolean;
+    procedure TestFuncResultInteger;
+    procedure TestFuncResultDouble;
+    procedure TestFuncResultUnicodeString;
+    procedure TestFuncResultUTF8String;
+    procedure TestFuncResultBird;
   end;
 
 
@@ -120,11 +139,20 @@ var
 begin
   Bird:=TJSBird.JOBCreateGlobal('Bird') as IJSBird;
 
-  //TestBooleanProperty;
-  //TestIntegerProperty;
-  //TestDoubleProperty;
-  //TestStringProperty;
+  TestBooleanProperty;
+  TestIntegerProperty;
+  TestDoubleProperty;
+  TestUnicodeStringProperty;
+  TestUTF8StringProperty;
   TestObjectProperty;
+
+  TestCallProcedure;
+  TestFuncResultBoolean;
+  TestFuncResultInteger;
+  TestFuncResultDouble;
+  //TestFuncResultUnicodeString;
+  TestFuncResultUTF8String;
+  TestFuncResultBird;
 
   exit;
 
@@ -134,37 +162,6 @@ begin
   writeln('TWasmApp.Run addEventListener click...');
   JSElem.addEventListener('click',@OnPlaygroundClick);
   writeln('TWasmApp.Run ');
-
-  exit;
-
- { obj:=TJSObject.JOBCreateGlobal('Bird');
-  obj.WriteJSPropertyUnicodeString('Caption','Root');
-  writeln('AAA1 ');
-  //u:='äbc';
-
-  //obj.InvokeJSNoResult('Proc',[]);
-  //d:=obj.InvokeJSDoubleResult('GetDouble',[u,12345678901]);
-  writeln('Create Freddy...');
-  Freddy:=obj.InvokeJSObjectResult('CreateChick',['Freddy'],TJSBird) as TJSBird;
-  writeln('AAA5 ',Freddy.Name);
-
-  writeln('Create Alice...');
-  Alice:=obj.InvokeJSObjectResult('CreateChick',['Alice'],TJSBird) as TJSBird;
-  writeln('Freddy.Child:=Alice...');
-  Freddy.Child:=Alice;
-  aBird:=Freddy.Child;
-  writeln('Freddy.Child=',aBird.Name);
-
-  //Freddy.Size:=123;
-  //writeln('Freddy.Size=',Freddy.Size);
-  JSValue:=Freddy.ReadJSPropertyValue('Child');
-  writeln('JSValue: ',JSValue.Kind,' ',JSValue.AsString);
-
-  writeln('Freeing Freddy...');
-  Freddy.Free;
-  writeln('Freeing Alice...');
-  Alice.Free;
-}
 end;
 
 procedure TWasmApp.TestBooleanProperty;
@@ -207,9 +204,26 @@ begin
   AssertEqual('Bird.Scale:=0.12345678901234',0.12345678901234,Bird.Scale);
 end;
 
-procedure TWasmApp.TestStringProperty;
+procedure TWasmApp.TestUnicodeStringProperty;
 begin
-  Prefix:='TWasmApp.TestStringProperty';
+  Prefix:='TWasmApp.TestUnicodeStringProperty';
+  Bird.Caption:='';
+  AssertEqualUS('Bird.Caption:=''''','',Bird.Caption);
+  Bird.Caption:='a';
+  AssertEqualUS('Bird.Caption:=''a''','a',Bird.Caption);
+  Bird.Caption:='abc';
+  AssertEqualUS('Bird.Caption:=''abc''','abc',Bird.Caption);
+  Bird.Caption:=#13;
+  AssertEqualUS('Bird.Caption:=#13',#13,Bird.Caption);
+  Bird.Caption:='ä';
+  AssertEqualUS('Bird.Caption:=''ä''','ä',Bird.Caption);
+  Bird.Caption:='🎉';
+  AssertEqualUS('Bird.Caption:=''🎉''','🎉',Bird.Caption);
+end;
+
+procedure TWasmApp.TestUTF8StringProperty;
+begin
+  Prefix:='TWasmApp.TestUTF8StringProperty';
   Bird.Name:='';
   AssertEqual('Bird.Name:=''''','',Bird.Name);
   Bird.Name:='a';
@@ -229,14 +243,118 @@ var
   Lisa, Bart: IJSBird;
 begin
   Prefix:='TWasmApp.TestObjectProperty';
+  Bird.Name:='TestObjectProperty';
   Bird.Child:=nil;
   AssertEqual('Bird.Child:=nil',nil,Bird.Child);
   Lisa:=Bird.CreateBird('Lisa');
-  AssertEqual('Lisa','Root.Lisa',Lisa.Name);
+  AssertEqual('Lisa','TestObjectProperty.Lisa',Lisa.Name);
   Bart:=Bird.CreateBird('Bart');
-  AssertEqual('Bart','Root.Bart',Bart.Name);
+  AssertEqual('Bart','TestObjectProperty.Bart',Bart.Name);
   Bird.Child:=Lisa;
   AssertEqual('Bird.Child:=Lisa',Lisa,Bird.Child);
+end;
+
+procedure TWasmApp.TestCallProcedure;
+begin
+  Prefix:='TWasmApp.TestCallProcedure';
+  Bird.Size:=13;
+  AssertEqual('Bird.Size:=13',13,Bird.Size);
+  Bird.IncSize;
+  AssertEqual('Bird.IncSize',14,Bird.Size);
+end;
+
+procedure TWasmApp.TestFuncResultBoolean;
+begin
+  Prefix:='TWasmApp.TestFuncResultBoolean';
+  Bird.Enabled:=true;
+  AssertEqual('Bird.Enabled:=true',true,Bird.Enabled);
+  AssertEqual('Bird.GetBoolean',true,Bird.GetBoolean);
+  Bird.Enabled:=false;
+  AssertEqual('Bird.Enabled:=false',false,Bird.Enabled);
+  AssertEqual('Bird.GetBoolean',false,Bird.GetBoolean);
+end;
+
+procedure TWasmApp.TestFuncResultInteger;
+begin
+  Prefix:='TWasmApp.TestFuncResultInteger';
+  Bird.Size:=73;
+  AssertEqual('Bird.Size:=73',73,Bird.Size);
+  AssertEqual('Bird.GetInteger',73,Bird.GetInteger);
+  Bird.Size:=low(integer);
+  AssertEqual('Bird.Size:=low(integer)',low(integer),Bird.Size);
+  AssertEqual('Bird.GetInteger',low(integer),Bird.GetInteger);
+  Bird.Size:=high(integer);
+  AssertEqual('Bird.Size:=high(integer)',high(integer),Bird.Size);
+  AssertEqual('Bird.GetInteger',high(integer),Bird.GetInteger);
+end;
+
+procedure TWasmApp.TestFuncResultDouble;
+begin
+  Prefix:='TWasmApp.TestFuncResultDouble';
+  Bird.Scale:=0.3;
+  AssertEqual('Bird.GetDouble 0.3',0.3,Bird.GetDouble);
+  Bird.Scale:=-0.3;
+  AssertEqual('Bird.GetDouble -0.3',-0.3,Bird.GetDouble);
+  Bird.Scale:=NaN;
+  if not IsNan(Bird.GetDouble) then
+    Fail('Bird.GetDouble NaN');
+  Bird.Scale:=Infinity;
+  AssertEqual('Bird.GetDouble Infinity',Infinity,Bird.GetDouble);
+  Bird.Scale:=NegInfinity;
+  AssertEqual('Bird.GetDouble NegInfinity',NegInfinity,Bird.GetDouble);
+  Bird.Scale:=0.12345678901234;
+  AssertEqual('Bird.GetDouble 0.12345678901234',0.12345678901234,Bird.GetDouble);
+end;
+
+procedure TWasmApp.TestFuncResultUnicodeString;
+begin
+  Prefix:='TWasmApp.TestFuncResultUnicodeString';
+  Bird.Name:='';
+  AssertEqualUS('Bird.GetUnicodeString ''''','',Bird.GetUnicodeString);
+  Bird.Name:='a';
+  AssertEqualUS('Bird.GetUnicodeString ''a''','a',Bird.GetUnicodeString);
+  Bird.Name:='abc';
+  AssertEqualUS('Bird.GetUnicodeString ''abc''','abc',Bird.GetUnicodeString);
+  Bird.Name:=#13;
+  AssertEqualUS('Bird.GetUnicodeString #13',#13,Bird.GetUnicodeString);
+  Bird.Name:='ä';
+  AssertEqualUS('Bird.GetUnicodeString ''ä''','ä',Bird.GetUnicodeString);
+  Bird.Name:='🎉';
+  AssertEqualUS('Bird.GetUnicodeString ''🎉''','🎉',Bird.GetUnicodeString);
+end;
+
+procedure TWasmApp.TestFuncResultUTF8String;
+begin
+  Prefix:='TWasmApp.TestFuncResultUTF8String';
+  Bird.Name:='';
+  AssertEqual('Bird.GetUTF8String ''''','',Bird.GetUTF8String);
+  Bird.Name:='a';
+  AssertEqual('Bird.GetUTF8String ''a''','a',Bird.GetUTF8String);
+  Bird.Name:='abc';
+  AssertEqual('Bird.GetUTF8String ''abc''','abc',Bird.GetUTF8String);
+  Bird.Name:=#13;
+  AssertEqual('Bird.GetUTF8String #13',#13,Bird.GetUTF8String);
+  Bird.Name:='ä';
+  AssertEqual('Bird.GetUTF8String ''ä''','ä',Bird.GetUTF8String);
+  Bird.Name:='🎉';
+  AssertEqual('Bird.GetUTF8String ''🎉''','🎉',Bird.GetUTF8String);
+end;
+
+procedure TWasmApp.TestFuncResultBird;
+var
+  Lisa: IJSBird;
+begin
+  Prefix:='TWasmApp.TestFuncResultBird';
+  Bird.Name:='TestFuncResultBird';
+  Bird.Child:=nil;
+  AssertEqual('Bird.Child:=nil',nil,Bird.Child);
+  AssertEqual('Bird.GetBird',nil,Bird.GetBird);
+
+  Lisa:=Bird.CreateBird('Lisa');
+  AssertEqual('Lisa','TestFuncResultBird.Lisa',Lisa.Name);
+  Bird.Child:=Lisa;
+  AssertEqual('Bird.Child:=Lisa',Lisa,Bird.Child);
+  AssertEqual('Bird.GetBird',Lisa,Bird.GetBird);
 end;
 
 procedure TWasmApp.Fail(const Msg: string);
@@ -273,7 +391,7 @@ begin
   Fail(Msg+'. Expected "'+Expected+'", but got "'+Actual+'"');
 end;
 
-procedure TWasmApp.AssertEqual(const Msg: string; const Expected,
+procedure TWasmApp.AssertEqualUS(const Msg: string; const Expected,
   Actual: UnicodeString);
 begin
   if Expected=Actual then exit;
@@ -306,6 +424,36 @@ end;
 function TJSBird.CreateBird(const aName: string): IJSBird;
 begin
   Result:=InvokeJSObjectResult('CreateBird',[aName],TJSBird) as IJSBird;
+end;
+
+function TJSBird.GetBoolean: boolean;
+begin
+  Result:=InvokeJSBooleanResult('GetBoolean',[]);
+end;
+
+function TJSBird.GetInteger: Integer;
+begin
+  Result:=InvokeJSLongIntResult('GetInteger',[]);
+end;
+
+function TJSBird.GetDouble: Double;
+begin
+  Result:=InvokeJSDoubleResult('GetDouble',[]);
+end;
+
+function TJSBird.GetUnicodeString: UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('GetString',[]);
+end;
+
+function TJSBird.GetUtf8String: String;
+begin
+  Result:=InvokeJSUtf8StringResult('GetString',[]);
+end;
+
+function TJSBird.GetBird: IJSBird;
+begin
+  Result:=InvokeJSObjectResult('GetBird',[],TJSBird) as IJSBird;
 end;
 
 function TJSBird.GetCaption: UnicodeString;

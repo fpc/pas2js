@@ -26,6 +26,7 @@ Type
     function GetString: string;
     function GetBird: TBird;
     function CreateBird(const aName: string): TBird;
+    procedure IncSize;
   end;
 
   { TMyApplication }
@@ -97,6 +98,11 @@ function TBird.CreateBird(const aName: string): TBird;
 begin
   writeln('TBird.CreateBird [',Name,'] ',ArgsToStr(JSArguments));
   Result:=TBird.Create(Name+'.'+aName);
+end;
+
+procedure TBird.IncSize;
+begin
+  inc(Size);
 end;
 
 function TBird.ArgsToStr(Args: TJSFunctionArguments): string;

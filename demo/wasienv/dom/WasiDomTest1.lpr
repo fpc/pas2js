@@ -6,7 +6,7 @@ library WasiDomTest1;
 {$WARN 5028 off : Local $1 "$2" is not used}
 
 uses
-  SysUtils, JOB_Shared, JOB_Web, JOB_JS;
+  Math, SysUtils, JOB_Shared, JOB_Web, JOB_JS;
 
 type
   EWasiTest = class(Exception);
@@ -18,6 +18,7 @@ type
   IJSBird = interface(IJSObject)
     ['{BABEA093-411B-4E30-8C56-53C11060BF5D}']
     // functions
+    procedure IncSize;
     function CreateBird(const aName: string): IJSBird;
     // properties
     function GetCaption: UnicodeString;
@@ -46,6 +47,7 @@ type
   private
   public
     // functions
+    procedure IncSize;
     function CreateBird(const aName: string): IJSBird;
     // properties
     function GetCaption: UnicodeString;
@@ -77,14 +79,24 @@ type
     Prefix: string;
     Bird: IJSBird;
     procedure Run;
-    procedure TestBooleanProperty;
-    procedure TestIntegerProperty;
     procedure Fail(const Msg: string);
     procedure AssertEqual(const Msg: string; const Expected, Actual: boolean);
     procedure AssertEqual(const Msg: string; const Expected, Actual: integer);
     procedure AssertEqual(const Msg: string; const Expected, Actual: double);
     procedure AssertEqual(const Msg: string; const Expected, Actual: String);
     procedure AssertEqual(const Msg: string; const Expected, Actual: UnicodeString);
+    procedure AssertEqual(const Msg: string; const Expected, Actual: IJSBird);
+  public
+    // read/write properties
+    procedure TestBooleanProperty;
+    procedure TestIntegerProperty;
+    procedure TestDoubleProperty;
+    procedure TestStringProperty;
+    procedure TestObjectProperty;
+    // todo procedure TestVariantProperty;
+
+    // function
+    // todo procedure TestCallProcedure;
   end;
 
 
@@ -107,8 +119,12 @@ var
   JSElem: IJSElement;
 begin
   Bird:=TJSBird.JOBCreateGlobal('Bird') as IJSBird;
-  TestBooleanProperty;
-  TestIntegerProperty;
+
+  //TestBooleanProperty;
+  //TestIntegerProperty;
+  //TestDoubleProperty;
+  //TestStringProperty;
+  TestObjectProperty;
 
   exit;
 
@@ -153,7 +169,7 @@ end;
 
 procedure TWasmApp.TestBooleanProperty;
 begin
-  Prefix:='TWasmApp.TestBoolean';
+  Prefix:='TWasmApp.TestBooleanProperty';
   Bird.Enabled:=true;
   AssertEqual('Bird.Enabled:=true',true,Bird.Enabled);
   Bird.Enabled:=false;
@@ -162,7 +178,7 @@ end;
 
 procedure TWasmApp.TestIntegerProperty;
 begin
-  Prefix:='TWasmApp.TestInteger;';
+  Prefix:='TWasmApp.TestIntegerProperty';
   Bird.Size:=3;
   AssertEqual('Bird.Size:=3',3,Bird.Size);
   Bird.Size:=-13;
@@ -173,8 +189,59 @@ begin
   AssertEqual('Bird.Size:=Low(longint)',Low(longint),Bird.Size);
 end;
 
+procedure TWasmApp.TestDoubleProperty;
+begin
+  Prefix:='TWasmApp.TestDoubleProperty';
+  Bird.Scale:=0.3;
+  AssertEqual('Bird.Scale:=0.3',0.3,Bird.Scale);
+  Bird.Scale:=-0.3;
+  AssertEqual('Bird.Scale:=-0.3',-0.3,Bird.Scale);
+  Bird.Scale:=NaN;
+  if not IsNan(Bird.Scale) then
+    Fail('Bird.Scale:=NaN');
+  Bird.Scale:=Infinity;
+  AssertEqual('Bird.Scale:=Infinity',Infinity,Bird.Scale);
+  Bird.Scale:=NegInfinity;
+  AssertEqual('Bird.Scale:=NegInfinity',NegInfinity,Bird.Scale);
+  Bird.Scale:=0.12345678901234;
+  AssertEqual('Bird.Scale:=0.12345678901234',0.12345678901234,Bird.Scale);
+end;
+
+procedure TWasmApp.TestStringProperty;
+begin
+  Prefix:='TWasmApp.TestStringProperty';
+  Bird.Name:='';
+  AssertEqual('Bird.Name:=''''','',Bird.Name);
+  Bird.Name:='a';
+  AssertEqual('Bird.Name:=''a''','a',Bird.Name);
+  Bird.Name:='abc';
+  AssertEqual('Bird.Name:=''abc''','abc',Bird.Name);
+  Bird.Name:=#13;
+  AssertEqual('Bird.Name:=#13',#13,Bird.Name);
+  Bird.Name:='ä';
+  AssertEqual('Bird.Name:=''ä''','ä',Bird.Name);
+  Bird.Name:='🎉';
+  AssertEqual('Bird.Name:=''🎉''','🎉',Bird.Name);
+end;
+
+procedure TWasmApp.TestObjectProperty;
+var
+  Lisa, Bart: IJSBird;
+begin
+  Prefix:='TWasmApp.TestObjectProperty';
+  Bird.Child:=nil;
+  AssertEqual('Bird.Child:=nil',nil,Bird.Child);
+  Lisa:=Bird.CreateBird('Lisa');
+  AssertEqual('Lisa','Root.Lisa',Lisa.Name);
+  Bart:=Bird.CreateBird('Bart');
+  AssertEqual('Bart','Root.Bart',Bart.Name);
+  Bird.Child:=Lisa;
+  AssertEqual('Bird.Child:=Lisa',Lisa,Bird.Child);
+end;
+
 procedure TWasmApp.Fail(const Msg: string);
 begin
+  writeln('TWasmApp.Fail ',Prefix+': '+Msg);
   raise EWasiTest.Create(Prefix+': '+Msg);
 end;
 
@@ -213,7 +280,28 @@ begin
   Fail(Msg+'. Expected "'+string(Expected)+'", but got "'+string(Actual)+'"');
 end;
 
+procedure TWasmApp.AssertEqual(const Msg: string; const Expected,
+  Actual: IJSBird);
+var
+  ExpName, ActName: String;
+begin
+  if Expected=Actual then exit;
+  if Expected=nil then
+    Fail(Msg+'. Expected nil, but got Name="'+string(Actual.Name)+'"');
+  if Actual=nil then
+    Fail(Msg+'. Expected Name="'+string(Expected.Name)+'", but got nil');
+  ExpName:=Expected.Name;
+  ActName:=Actual.Name;
+  if ExpName=ActName then exit;
+  Fail(Msg+'. Expected Name="'+string(ExpName)+'", but got Name="'+string(ActName)+'"');
+end;
+
 { TBird }
+
+procedure TJSBird.IncSize;
+begin
+  InvokeJSNoResult('IncSize',[]);
+end;
 
 function TJSBird.CreateBird(const aName: string): IJSBird;
 begin

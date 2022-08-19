@@ -106,6 +106,7 @@ type
     procedure TestUnicodeStringProperty;
     procedure TestUTF8StringProperty;
     procedure TestObjectProperty;
+    // todo procedure TestMethodProperty;
     // todo procedure TestVariantProperty;
 
     // function
@@ -127,6 +128,10 @@ type
     // todo procedure TestFuncArgBird;
     // todo procedure TestFuncArgMethod;
     // todo procedure TestFuncArgVariant;
+
+    // dictionaries
+
+    // arrays
   end;
 
 

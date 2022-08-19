@@ -994,8 +994,6 @@ function __job_get_global(
 
 function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
 function VarRecToJSValue(const V: TVarRec): TJOB_JSValue;
-function UTF8CodepointToUnicode(p: PChar; out CodepointLen: integer): Cardinal;
-function UTF8AsUTF16Len(p: PChar; l: NativeInt): NativeInt;
 
 implementation
 
@@ -1141,120 +1139,6 @@ begin
   else
     raise EJSArgParse.Create('VarRecToJSValue unsupported VType '+IntToStr(V.VType));
   end;
-end;
-
-function UTF8CodepointToUnicode(p: PChar; out CodepointLen: integer): Cardinal;
-{ if p=nil then CodepointLen=0 otherwise CodepointLen>0
-  If there is an encoding error the Result is 0 and CodepointLen=1.
-  It does not check if the codepoint is defined in the Unicode tables.
-}
-begin
-  if p<>nil then begin
-    if ord(p^)<%11000000 then begin
-      // regular single byte character (#0 is a normal char, this is pascal ;)
-      Result:=ord(p^);
-      CodepointLen:=1;
-    end
-    else if ((ord(p^) and %11100000) = %11000000) then begin
-      // starts with %110 => could be double byte character
-      if (ord(p[1]) and %11000000) = %10000000 then begin
-        CodepointLen:=2;
-        Result:=((ord(p^) and %00011111) shl 6) or (ord(p[1]) and %00111111);
-        if Result<(1 shl 7) then begin
-          // wrong encoded, could be an XSS attack
-          Result:=0;
-        end;
-      end else begin
-        Result:=ord(p^);
-        CodepointLen:=1;
-      end;
-    end
-    else if ((ord(p^) and %11110000) = %11100000) then begin
-      // starts with %1110 => could be triple byte character
-      if ((ord(p[1]) and %11000000) = %10000000)
-      and ((ord(p[2]) and %11000000) = %10000000) then begin
-        CodepointLen:=3;
-        Result:=((ord(p^) and %00011111) shl 12)
-                or ((ord(p[1]) and %00111111) shl 6)
-                or (ord(p[2]) and %00111111);
-        if Result<(1 shl 11) then begin
-          // wrong encoded, could be an XSS attack
-          Result:=0;
-        end;
-      end else begin
-        Result:=ord(p^);
-        CodepointLen:=1;
-      end;
-    end
-    else if ((ord(p^) and %11111000) = %11110000) then begin
-      // starts with %11110 => could be 4 byte character
-      if ((ord(p[1]) and %11000000) = %10000000)
-      and ((ord(p[2]) and %11000000) = %10000000)
-      and ((ord(p[3]) and %11000000) = %10000000) then begin
-        CodepointLen:=4;
-        Result:=((ord(p^) and %00001111) shl 18)
-                or ((ord(p[1]) and %00111111) shl 12)
-                or ((ord(p[2]) and %00111111) shl 6)
-                or (ord(p[3]) and %00111111);
-        if Result<(1 shl 16) then begin
-          // wrong encoded, could be an XSS attack
-          Result:=0;
-        end else if Result>$10FFFF then begin
-          // out of range
-          Result:=0;
-        end;
-      end else begin
-        Result:=ord(p^);
-        CodepointLen:=1;
-      end;
-    end
-    else begin
-      // invalid character
-      Result:=ord(p^);
-      CodepointLen:=1;
-    end;
-  end else begin
-    Result:=0;
-    CodepointLen:=0;
-  end;
-end;
-
-function UTF8AsUTF16Len(p: PChar; l: NativeInt): NativeInt;
-// l<0 means count til #0
-var
-  MaxP: PChar;
-  c: Char;
-  CodepointLen: integer;
-  CodePoint: Cardinal;
-begin
-  Result:=0;
-  writeln('BBB1 UTF8AsUTF16Len ',p<>nil,' l=',l);
-  if (p=nil) or (l=0) then
-    exit
-  else if l>0 then
-    MaxP:=p+l;
-  repeat
-    c:=p^;
-    if (c=#0) and (l<0) then
-      // end at #0
-      break
-    else if c<#192 then
-    begin
-      inc(Result);
-      inc(p);
-    end
-    else begin
-      CodePoint:=UTF8CodepointToUnicode(p,CodepointLen);
-      inc(p,CodepointLen);
-      case CodePoint of
-      0..$D7FF: inc(Result);
-      $D800..$DFFF: raise EJSArgParse.Create('invalid UTF8');
-      $E000..$10000: inc(Result);
-      else
-        inc(Result,2);
-      end;
-    end;
-  until (l>0) and (p>=MaxP);
 end;
 
 function JOBCallTJSPromiseResolver(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;

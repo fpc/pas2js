@@ -70,7 +70,7 @@ const
   JOBArgTrue = 3;
   JOBArgFalse = 4;
   JOBArgChar = 5; // followed by a word
-  JOBArgUTF8String = 6; // followed by length and pointer
+  JOBArgString = 6; // followed by length and UTF-16 data
   JOBArgUnicodeString = 7; // followed by length and pointer
   JOBArgNil = 8;
   JOBArgPointer = 9;

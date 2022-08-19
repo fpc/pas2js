@@ -513,15 +513,14 @@ var
       end;
   end;
 
-  function ReadUtf8String: String;
+  function ReadString: String;
   var
-    Len, Ptr: TWasmNativeInt;
-    aBytes: TJSUint8Array;
+    Len: TWasmNativeInt;
+    aWords: TJSUint16Array;
   begin
     Len:=ReadWasmNativeInt;
-    Ptr:=ReadWasmNativeInt;
-    aBytes:=TJSUint8Array.New(View.buffer, Ptr,Len);
-    Result:=TypedArrayToString(aBytes);
+    aWords:=TJSUint16Array.New(View.buffer, p,Len);
+    Result:=TypedArrayToString(aWords);
   end;
 
   function ReadUnicodeString: String;
@@ -610,8 +609,8 @@ var
         Result:=chr(View.getUint16(p,env.IsLittleEndian));
         inc(p,2);
       end;
-    JOBArgUTF8String:
-      Result:=ReadUtf8String;
+    JOBArgString:
+      Result:=ReadString;
     JOBArgUnicodeString:
       Result:=ReadUnicodeString;
     JOBArgNil:

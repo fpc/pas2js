@@ -994,6 +994,8 @@ function __job_get_global(
 
 function JOBCallback(const Func: TJOBCallback; Data, Code: Pointer; Args: PByte): PByte;
 function VarRecToJSValue(const V: TVarRec): TJOB_JSValue;
+function UTF8CodepointToUnicode(p: PChar; out CodepointLen: integer): Cardinal;
+function UTF8AsUTF16Len(p: PChar; l: NativeInt): NativeInt;
 
 implementation
 
@@ -1082,7 +1084,7 @@ begin
     Result:=TJOB_Double.Create(V.VExtended^);
   {$endif}
   vtString:
-    Result:=TJOB_String.Create(UnicodeString(V.VString^));
+    Result:=TJOB_String.Create(UTF8Decode(V.VString^));
   vtPointer:
     begin
     p:=V.VPointer;
@@ -1097,7 +1099,7 @@ begin
     begin
     CurLen:=strlen(V.VPChar);
     SetString(S,V.VPChar,CurLen);
-    Result:=TJOB_String.Create(UnicodeString(S));
+    Result:=TJOB_String.Create(UTF8Decode(S));
     end;
   vtObject:
     begin
@@ -1118,7 +1120,7 @@ begin
   vtPWideChar:
     raise EJSArgParse.Create('VarRecToJSValue vtPWideChar not supported');
   vtAnsiString:
-    Result:=TJOB_String.Create(UnicodeString(PAnsiString(V.VAnsiString)^));
+    Result:=TJOB_String.Create(UTF8Decode(PAnsiString(V.VAnsiString)^));
   vtCurrency:
     Result:=TJOB_Double.Create(V.VCurrency^);
   vtVariant:
@@ -1139,6 +1141,120 @@ begin
   else
     raise EJSArgParse.Create('VarRecToJSValue unsupported VType '+IntToStr(V.VType));
   end;
+end;
+
+function UTF8CodepointToUnicode(p: PChar; out CodepointLen: integer): Cardinal;
+{ if p=nil then CodepointLen=0 otherwise CodepointLen>0
+  If there is an encoding error the Result is 0 and CodepointLen=1.
+  It does not check if the codepoint is defined in the Unicode tables.
+}
+begin
+  if p<>nil then begin
+    if ord(p^)<%11000000 then begin
+      // regular single byte character (#0 is a normal char, this is pascal ;)
+      Result:=ord(p^);
+      CodepointLen:=1;
+    end
+    else if ((ord(p^) and %11100000) = %11000000) then begin
+      // starts with %110 => could be double byte character
+      if (ord(p[1]) and %11000000) = %10000000 then begin
+        CodepointLen:=2;
+        Result:=((ord(p^) and %00011111) shl 6) or (ord(p[1]) and %00111111);
+        if Result<(1 shl 7) then begin
+          // wrong encoded, could be an XSS attack
+          Result:=0;
+        end;
+      end else begin
+        Result:=ord(p^);
+        CodepointLen:=1;
+      end;
+    end
+    else if ((ord(p^) and %11110000) = %11100000) then begin
+      // starts with %1110 => could be triple byte character
+      if ((ord(p[1]) and %11000000) = %10000000)
+      and ((ord(p[2]) and %11000000) = %10000000) then begin
+        CodepointLen:=3;
+        Result:=((ord(p^) and %00011111) shl 12)
+                or ((ord(p[1]) and %00111111) shl 6)
+                or (ord(p[2]) and %00111111);
+        if Result<(1 shl 11) then begin
+          // wrong encoded, could be an XSS attack
+          Result:=0;
+        end;
+      end else begin
+        Result:=ord(p^);
+        CodepointLen:=1;
+      end;
+    end
+    else if ((ord(p^) and %11111000) = %11110000) then begin
+      // starts with %11110 => could be 4 byte character
+      if ((ord(p[1]) and %11000000) = %10000000)
+      and ((ord(p[2]) and %11000000) = %10000000)
+      and ((ord(p[3]) and %11000000) = %10000000) then begin
+        CodepointLen:=4;
+        Result:=((ord(p^) and %00001111) shl 18)
+                or ((ord(p[1]) and %00111111) shl 12)
+                or ((ord(p[2]) and %00111111) shl 6)
+                or (ord(p[3]) and %00111111);
+        if Result<(1 shl 16) then begin
+          // wrong encoded, could be an XSS attack
+          Result:=0;
+        end else if Result>$10FFFF then begin
+          // out of range
+          Result:=0;
+        end;
+      end else begin
+        Result:=ord(p^);
+        CodepointLen:=1;
+      end;
+    end
+    else begin
+      // invalid character
+      Result:=ord(p^);
+      CodepointLen:=1;
+    end;
+  end else begin
+    Result:=0;
+    CodepointLen:=0;
+  end;
+end;
+
+function UTF8AsUTF16Len(p: PChar; l: NativeInt): NativeInt;
+// l<0 means count til #0
+var
+  MaxP: PChar;
+  c: Char;
+  CodepointLen: integer;
+  CodePoint: Cardinal;
+begin
+  Result:=0;
+  writeln('BBB1 UTF8AsUTF16Len ',p<>nil,' l=',l);
+  if (p=nil) or (l=0) then
+    exit
+  else if l>0 then
+    MaxP:=p+l;
+  repeat
+    c:=p^;
+    if (c=#0) and (l<0) then
+      // end at #0
+      break
+    else if c<#192 then
+    begin
+      inc(Result);
+      inc(p);
+    end
+    else begin
+      CodePoint:=UTF8CodepointToUnicode(p,CodepointLen);
+      inc(p,CodepointLen);
+      case CodePoint of
+      0..$D7FF: inc(Result);
+      $D800..$DFFF: raise EJSArgParse.Create('invalid UTF8');
+      $E000..$10000: inc(Result);
+      else
+        inc(Result,2);
+      end;
+    end;
+  until (l>0) and (p>=MaxP);
 end;
 
 function JOBCallTJSPromiseResolver(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -2146,7 +2262,7 @@ begin
     vtChar:
       CurName:=UnicodeString(Pairs[i].VChar);
     vtString:
-      CurName:=UnicodeString(Pairs[i].VString^);
+      CurName:=UTF8Decode(Pairs[i].VString^);
     vtPChar:
       begin
       CurLen:=strlen(Pairs[i].VPChar);
@@ -2155,7 +2271,7 @@ begin
     vtWideChar:
       CurName:=Pairs[i].VWideChar;
     vtAnsiString:
-      CurName:=UnicodeString(PAnsiString(Pairs[i].VAnsiString)^);
+      CurName:=UTF8Decode(PAnsiString(Pairs[i].VAnsiString)^);
     vtUnicodeString:
       CurName:=PUnicodeString(Pairs[i].VUnicodeString)^;
     else
@@ -2353,6 +2469,7 @@ function TJSObject.CreateInvokeJSArgs(const Args: array of const): PByte;
 
 var
   p: PByte;
+  Len: NativeInt;
 
   function SizeOfTJOB_JSValue(JSValue: TJOB_JSValue): integer;
   var
@@ -2395,8 +2512,21 @@ var
     end;
   end;
 
+  procedure Grow(Need: NativeInt);
+  begin
+    inc(Need,p-Result);
+    if Need<=Len then exit;
+    Len:=Len*2;
+    if Len<Need then
+      Len:=Need;
+    Need:=p-Result;
+    ReAllocMem(Result,Len);
+    p:=Result+Need;
+  end;
+
   procedure AddBoolean(b: boolean);
   begin
+    Grow(1);
     if b then
       p^:=JOBArgTrue
     else
@@ -2406,6 +2536,7 @@ var
 
   procedure AddLongInt(const i: LongInt);
   begin
+    Grow(5);
     p^:=JOBArgLongint;
     inc(p);
     PLongint(p)^:=i;
@@ -2414,6 +2545,7 @@ var
 
   procedure AddDouble(const d: double);
   begin
+    Grow(9);
     p^:=JOBArgDouble;
     inc(p);
     PDouble(p)^:=d;
@@ -2422,6 +2554,7 @@ var
 
   procedure AddChar(c: word);
   begin
+    Grow(3);
     p^:=JOBArgChar;
     inc(p);
     PWord(p)^:=c;
@@ -2430,6 +2563,7 @@ var
 
   procedure AddObjectID(const ObjId: TJOBObjectID);
   begin
+    Grow(1+SizeOf(NativeInt));
     p^:=JOBArgObject;
     inc(p);
     PNativeInt(p)^:=ObjId;
@@ -2440,24 +2574,16 @@ var
   begin
     if Intf=nil then
     begin
+      Grow(1);
       p^:=JOBArgNil;
       inc(p);
     end else
       AddObjectID(Intf.GetJSObjectID);
   end;
 
-  procedure AddUTF8String(s: PByte; Len: NativeInt);
-  begin
-    p^:=JOBArgUTF8String;
-    inc(p);
-    PNativeInt(p)^:=Len;
-    inc(p,sizeof(NativeInt));
-    PPointer(p)^:=s;
-    inc(p,sizeof(Pointer));
-  end;
-
   procedure AddUnicodeString(s: PByte; Len: NativeInt); overload;
   begin
+    Grow(1+SizeOf(NativeInt)+SizeOf(Pointer));
     p^:=JOBArgUnicodeString;
     inc(p);
     PNativeInt(p)^:=Len;
@@ -2474,6 +2600,45 @@ var
       AddUnicodeString(@us[1],length(us));
   end;
 
+  procedure AddUTF8String(const s: String); overload;
+  var
+    us: UnicodeString;
+    l: SizeInt;
+  begin
+    if s='' then
+    begin
+      AddUnicodeString(nil,0);
+      exit;
+    end;
+    us:=UTF8Decode(s);
+    l:=length(us);
+    if l=0 then
+    begin
+      AddUnicodeString(nil,0);
+      exit;
+    end;
+    Grow(1+SizeOf(NativeInt)+2*l);
+    p^:=JOBArgString;
+    inc(p);
+    PNativeInt(p)^:=l;
+    inc(p,SizeOf(NativeInt));
+    Move(us[1],p^,2*l);
+    inc(p,2*l);
+  end;
+
+  procedure AddUTF8String(p: PByte; l: NativeInt);
+  var
+    s: string;
+  begin
+    if (p=nil) or (l=0) then
+    begin
+      AddUnicodeString(nil,0);
+      exit;
+    end;
+    SetString(s,PAnsiChar(p),l);
+    AddUTF8String(s);
+  end;
+
   procedure Add_TJOB_JSValue(aValue: TJOB_JSValue);
   var
     us: UnicodeString;
@@ -2486,6 +2651,7 @@ var
     case aValue.Kind of
       jjvkUndefined:
         begin
+          Grow(1);
           p^:=JOBArgUndefined;
           inc(p);
         end;
@@ -2503,6 +2669,7 @@ var
         AddIJSObject(TJOB_Object(aValue).Value);
       jjvkMethod:
         begin
+          Grow(1+3*SizeOf(Pointer));
           aMethod:=TJOB_Method(aValue);
           p^:=JOBArgMethod;
           inc(p);
@@ -2515,6 +2682,7 @@ var
         end;
       jjvkDictionary:
         begin
+          Grow(1+SizeOf(NativeInt));
           Dict:=TJOB_Dictionary(aValue).Values;
           p^:=JOBArgDictionary;
           inc(p);
@@ -2528,6 +2696,7 @@ var
         end;
       jjvkArrayOfJSValue:
         begin
+          Grow(1+SizeOf(NativeInt));
           Arr:=TJOB_ArrayOfJSValue(aValue).Values;
           p^:=JOBArgArrayOfJSValue;
           inc(p);
@@ -2538,6 +2707,7 @@ var
         end;
       jjvkArrayOfDouble:
         begin
+          Grow(1+SizeOf(NativeInt)+SizeOf(Pointer));
           p^:=JOBArgArrayOfDouble;
           inc(p);
           i:=length(TJOB_ArrayOfDouble(aValue).Values);
@@ -2553,236 +2723,149 @@ var
   end;
 
 var
-  i, Len: Integer;
+  i: Integer;
   qw: QWord;
   i64: Int64;
   h: PByte;
   s: String;
   ws: WideString;
   us: UnicodeString;
-  d: Double;
   Obj: TObject;
   JSValue: TJOB_JSValue;
+  ok: Boolean;
 begin
   Result:=nil;
   if length(Args)>255 then
     raise EJSInvoke.Create('Invoke js: too many args');
 
-  Len:=1;
-  for i:=0 to high(Args) do
-  begin
-    {$IFDEF VerboseInvokeJSArgs}
-    writeln('TJSObject.CreateInvokeJSArgs ',i,' VType=',Args[i].VType);
-    {$ENDIF}
-    case Args[i].VType of
-    vtInteger       : inc(Len,5);
-    vtBoolean       : inc(Len);
-    vtChar,
-    vtWideChar      : inc(Len,3);
-    {$ifndef FPUNONE}
-    vtExtended:
-      begin
-        d:=double(Args[i].VExtended^);
-        if d=0 then ;
-        inc(Len,9);
-      end;
-    {$endif}
-    vtString        : inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtPointer:
-      begin
-        p:=Args[i].VPointer;
-        if p=JOB_Undefined then
-          inc(Len)
-        else
-          inc(Len,1+SizeOf(PByte));
-      end;
-    vtPChar:
-      begin
-        // check length
-        strlen(Args[i].VPChar);
-        inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-      end;
-    vtObject:
-      begin
-        Obj:=Args[i].VObject;
-        if Obj=nil then
-          inc(Len,1)
-        else if Obj is TJSObject then
-          inc(Len,1+sizeof(TJOBObjectID))
-        else if Obj is TJOB_JSValue then
-        begin
-          JSValue:=TJOB_JSValue(Obj);
-          inc(Len,SizeOfTJOB_JSValue(JSValue));
-        end else
-          RaiseNotSupported('object');
-      end;
-    vtClass         : RaiseNotSupported('class');
-    vtPWideChar:
-      begin
-        // check length
-        strlen(Args[i].VPWideChar);
-        inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-      end;
-    vtAnsiString:
-      inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtCurrency      : RaiseNotSupported('currency');
-    {$ifdef FPC_HAS_FEATURE_VARIANTS}
-    vtVariant       : RaiseNotSupported('variant');
-    {$endif FPC_HAS_FEATURE_VARIANTS}
-    vtInterface:
-      begin
-        p:=Args[i].VInterface;
-        if p=nil then
-          inc(Len,1)
-        else if IInterface(p) is IJSObject then
-          inc(Len,1+sizeof(TJOBObjectID))
-        else
-          RaiseNotSupported('interface');
-      end;
-    vtWideString:
-      inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtInt64:
-      begin
-        i64:=Args[i].VInt64^;
-        if (i64<MinSafeIntDouble) or (i64>MaxSafeIntDouble) then
-          RaiseRange;
-        if (i64>=low(longint)) and (i64<=high(longint)) then
-          inc(Len,5)
-        else
-          inc(Len,9);
-      end;
-    vtUnicodeString:
-      inc(Len,1+SizeOf(NativeInt)+SizeOf(PByte));
-    vtQWord:
-      begin
-        qw:=Args[i].VQWord^;
-        if (qw>MaxSafeIntDouble) then
-          RaiseRange;
-        if (qw<=high(longint)) then
-          inc(Len,5)
-        else
-          inc(Len,9);
-      end;
-    else
-      RaiseNotSupported(IntToStr(Args[i].VType));
-    end;
-  end;
-
+  Len:=1+length(Args);
   Result:=GetMem(Len);
-  p:=Result;
-  p^:=length(Args);
-  inc(p);
-  for i:=0 to high(Args) do
-  begin
-    case Args[i].VType of
-    vtInteger:
-      AddLongInt(Args[i].VInteger);
-    vtBoolean:
-      AddBoolean(Args[i].VBoolean);
-    {$ifndef FPUNONE}
-    vtExtended:
-      AddDouble(double(Args[i].VExtended^));
-    {$endif}
-    vtChar:
-      AddChar(ord(Args[i].VChar));
-    vtWideChar:
-      AddChar(ord(Args[i].VWideChar));
-    vtString:
-      begin
-        // shortstring
-        h:=PByte(Args[i].VString);
-        AddUTF8String(h+1,h^);
-      end;
-    vtPointer:
-      begin
-        h:=Args[i].VPointer;
-        if h=nil then
+  ok:=false;
+  try
+    p:=Result;
+
+    p^:=length(Args);
+    inc(p);
+    for i:=0 to high(Args) do
+    begin
+      case Args[i].VType of
+      vtInteger:
+        AddLongInt(Args[i].VInteger);
+      vtBoolean:
+        AddBoolean(Args[i].VBoolean);
+      vtExtended:
+        AddDouble(double(Args[i].VExtended^));
+      vtChar:
+        AddChar(ord(Args[i].VChar));
+      vtWideChar:
+        AddChar(ord(Args[i].VWideChar));
+      vtString:
         begin
-          p^:=JOBArgNil;
-          inc(p);
-        end else if h=JOB_Undefined then
-        begin
-          p^:=JOBArgUndefined;
-          inc(p);
-        end
-        else begin
-          p^:=JOBArgPointer;
-          inc(p);
-          PPointer(p)^:=h;
-          inc(p,sizeof(Pointer));
+          // shortstring
+          h:=PByte(Args[i].VString);
+          AddUTF8String(h+1,h^);
         end;
-      end;
-    vtPChar:
-      begin
-        h:=PByte(Args[i].VPChar);
-        AddUTF8String(h,strlen(PChar(h)));
-      end;
-    vtObject:
-      begin
-        Obj:=Args[i].VObject;
-        if Obj=nil then
+      vtPointer:
         begin
-          p^:=JOBArgNil;
-          inc(p);
-        end else if Obj is TJSObject then
-          AddObjectID(TJSObject(Obj).JOBObjectID)
-        else if Obj is TJOB_JSValue then
+          h:=Args[i].VPointer;
+          if h=nil then
+          begin
+            Grow(1);
+            p^:=JOBArgNil;
+            inc(p);
+          end else if h=JOB_Undefined then
+          begin
+            Grow(1);
+            p^:=JOBArgUndefined;
+            inc(p);
+          end
+          else begin
+            Grow(1+SizeOf(Pointer));
+            p^:=JOBArgPointer;
+            inc(p);
+            PPointer(p)^:=h;
+            inc(p,sizeof(Pointer));
+          end;
+        end;
+      vtPChar:
         begin
-          JSValue:=TJOB_JSValue(Obj);
-          Add_TJOB_JSValue(JSValue);
-        end else
-          RaiseNotSupported(Obj.ClassName);
-      end;
-    vtClass: ;
-    vtPWideChar:
-      begin
-        h:=PByte(Args[i].VPWideChar);
-        AddUnicodeString(h,strlen(PWideChar(h)));
-      end;
-    vtAnsiString:
-      begin
-        h:=Args[i].VAnsiString;
-        s:=AnsiString(h);
-        AddUTF8String(h,length(s));
-      end;
-    vtCurrency      : ;
-    {$ifdef FPC_HAS_FEATURE_VARIANTS}
-    vtVariant       : ;
-    {$endif FPC_HAS_FEATURE_VARIANTS}
-    vtInterface:
-      begin
-        h:=Args[i].VInterface;
-        AddIJSObject(IJSObject(h));
-      end;
-    vtWideString:
-      begin
-        h:=Args[i].VWideString;
-        ws:=WideString(h);
-        AddUnicodeString(h,length(ws));
-      end;
-    vtInt64:
-      begin
-        i64:=Args[i].VInt64^;
-        if (i64>=low(longint)) and (i64<=high(longint)) then
-          AddLongInt(i64)
-        else
-          AddDouble(i64);
-      end;
-    vtUnicodeString:
-      begin
-        h:=Args[i].VUnicodeString;
-        us:=UnicodeString(h);
-        AddUnicodeString(h,length(us));
-      end;
-    vtQWord:
-      begin
-        qw:=Args[i].VQWord^;
-        if (qw<=high(longint)) then
-          AddLongInt(qw)
-        else
-          AddDouble(qw);
+          h:=PByte(Args[i].VPChar);
+          AddUTF8String(h,strlen(PChar(h)));
+        end;
+      vtObject:
+        begin
+          Obj:=Args[i].VObject;
+          if Obj=nil then
+          begin
+            Grow(1);
+            p^:=JOBArgNil;
+            inc(p);
+          end else if Obj is TJSObject then
+            AddObjectID(TJSObject(Obj).JOBObjectID)
+          else if Obj is TJOB_JSValue then
+          begin
+            JSValue:=TJOB_JSValue(Obj);
+            Add_TJOB_JSValue(JSValue);
+          end else
+            RaiseNotSupported(Obj.ClassName);
+        end;
+      vtClass: ;
+      vtPWideChar:
+        begin
+          h:=PByte(Args[i].VPWideChar);
+          AddUnicodeString(h,strlen(PWideChar(h)));
+        end;
+      vtAnsiString:
+        begin
+          h:=Args[i].VAnsiString;
+          s:=AnsiString(h);
+          AddUTF8String(h,length(s));
+        end;
+      vtCurrency      : RaiseNotSupported('currency');
+      vtVariant       : RaiseNotSupported('variant');
+      vtInterface:
+        begin
+          h:=Args[i].VInterface;
+          AddIJSObject(IJSObject(h));
+        end;
+      vtWideString:
+        begin
+          h:=Args[i].VWideString;
+          ws:=WideString(h);
+          AddUnicodeString(h,length(ws));
+        end;
+      vtInt64:
+        begin
+          i64:=Args[i].VInt64^;
+          if (i64>=low(longint)) and (i64<=high(longint)) then
+            AddLongInt(i64)
+          else
+            AddDouble(i64);
+        end;
+      vtUnicodeString:
+        begin
+          h:=Args[i].VUnicodeString;
+          us:=UnicodeString(h);
+          AddUnicodeString(h,length(us));
+        end;
+      vtQWord:
+        begin
+          qw:=Args[i].VQWord^;
+          if (qw<=high(longint)) then
+            AddLongInt(qw)
+          else
+            AddDouble(qw);
+        end;
+      else
+        RaiseNotSupported(IntToStr(Args[i].VType));
       end;
     end;
+    Len:=p-Result;
+    ReAllocMem(Result,Len);
+    ok:=true;
+  finally
+    if not ok then
+      FreeMemAndNil(Result);
   end;
 
   {$IFDEF VerboseInvokeJSArgs}
@@ -2945,7 +3028,7 @@ end;
 function TJSObject.InvokeJSUtf8StringResult(const aName: string;
   const args: array of const; Invoke: TJOBInvokeType): String;
 begin
-  Result:=String(InvokeJSUnicodeStringResult(aName,Args,Invoke));
+  Result:=UTF8Encode(InvokeJSUnicodeStringResult(aName,Args,Invoke));
 end;
 
 function TJSObject.InvokeJSLongIntResult(const aName: string;

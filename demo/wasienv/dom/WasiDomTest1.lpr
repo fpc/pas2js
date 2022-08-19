@@ -116,6 +116,17 @@ type
     procedure TestFuncResultUnicodeString;
     procedure TestFuncResultUTF8String;
     procedure TestFuncResultBird;
+    // todo procedure TestFuncResultVariant;
+
+    // function args
+    // todo procedure TestFuncArgBoolean;
+    // todo procedure TestFuncArgInteger;
+    // todo procedure TestFuncArgDouble;
+    // todo procedure TestFuncArgUnicodeString;
+    // todo procedure TestFuncArgUTF8String;
+    // todo procedure TestFuncArgBird;
+    // todo procedure TestFuncArgMethod;
+    // todo procedure TestFuncArgVariant;
   end;
 
 
@@ -150,7 +161,7 @@ begin
   TestFuncResultBoolean;
   TestFuncResultInteger;
   TestFuncResultDouble;
-  //TestFuncResultUnicodeString;
+  TestFuncResultUnicodeString;
   TestFuncResultUTF8String;
   TestFuncResultBird;
 

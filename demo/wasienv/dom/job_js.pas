@@ -14,7 +14,7 @@ unit JOB_JS;
 
 interface
 uses
-  SysUtils, Types, Math, Classes, JOB_Shared;
+  SysUtils, Types, Math, Classes, Variants, JOB_Shared;
 
 const
   MinSafeIntDouble = -$1fffffffffffff; // -9007199254740991 54 bits (52 plus signed bit plus implicit highest bit)
@@ -221,6 +221,7 @@ type
     function InvokeJSUnicodeStringResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): UnicodeString; virtual;
     function InvokeJSObjectResult(const aName: string; Const Args: Array of const; aResultClass: TJSObjectClass; Invoke: TJOBInvokeType = jiCall): TJSObject; virtual;
     function InvokeJSValueResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): TJOB_JSValue; virtual;
+    function InvokeJSVariantResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Variant; virtual;
     function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): String; virtual;
     function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): LongInt; virtual;
     function InvokeJSTypeOf(const aName: string; Const Args: Array of const): TJOBResult; virtual;
@@ -307,6 +308,7 @@ type
     function InvokeJSUnicodeStringResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): UnicodeString; virtual;
     function InvokeJSObjectResult(const aName: string; Const Args: Array of const; aResultClass: TJSObjectClass; Invoke: TJOBInvokeType = jiCall): TJSObject; virtual;
     function InvokeJSValueResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): TJOB_JSValue; virtual;
+    function InvokeJSVariantResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Variant; virtual;
     function InvokeJSUtf8StringResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): String; virtual;
     function InvokeJSLongIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): LongInt; virtual;
     function InvokeJSMaxIntResult(const aName: string; Const args: Array of const; Invoke: TJOBInvokeType = jiCall): int64; virtual;
@@ -2408,6 +2410,13 @@ var
     p:=Result+Need;
   end;
 
+  procedure Prep(Need: NativeInt; aType: Byte);
+  begin
+    Grow(Need);
+    p^:=aType;
+    inc(p);
+  end;
+
   procedure AddBoolean(b: boolean);
   begin
     Grow(1);
@@ -2420,36 +2429,28 @@ var
 
   procedure AddLongInt(const i: LongInt);
   begin
-    Grow(5);
-    p^:=JOBArgLongint;
-    inc(p);
+    Prep(5,JOBArgLongint);
     PLongint(p)^:=i;
     inc(p,4);
   end;
 
   procedure AddDouble(const d: double);
   begin
-    Grow(9);
-    p^:=JOBArgDouble;
-    inc(p);
+    Prep(9,JOBArgDouble);
     PDouble(p)^:=d;
     inc(p,8);
   end;
 
   procedure AddChar(c: word);
   begin
-    Grow(3);
-    p^:=JOBArgChar;
-    inc(p);
+    Prep(3,JOBArgChar);
     PWord(p)^:=c;
     inc(p,2);
   end;
 
   procedure AddObjectID(const ObjId: TJOBObjectID);
   begin
-    Grow(1+SizeOf(NativeInt));
-    p^:=JOBArgObject;
-    inc(p);
+    Prep(1+SizeOf(NativeInt),JOBArgObject);
     PNativeInt(p)^:=ObjId;
     inc(p,sizeof(NativeInt));
   end;
@@ -2457,19 +2458,14 @@ var
   procedure AddIJSObject(const Intf: IJSObject);
   begin
     if Intf=nil then
-    begin
-      Grow(1);
-      p^:=JOBArgNil;
-      inc(p);
-    end else
+      Prep(1,JOBArgNil)
+    else
       AddObjectID(Intf.GetJSObjectID);
   end;
 
   procedure AddUnicodeString(s: PByte; Len: NativeInt); overload;
   begin
-    Grow(1+SizeOf(NativeInt)+SizeOf(Pointer));
-    p^:=JOBArgUnicodeString;
-    inc(p);
+    Prep(1+SizeOf(NativeInt)+SizeOf(Pointer),JOBArgUnicodeString);
     PNativeInt(p)^:=Len;
     inc(p,sizeof(NativeInt));
     PPointer(p)^:=s;
@@ -2501,9 +2497,7 @@ var
       AddUnicodeString(nil,0);
       exit;
     end;
-    Grow(1+SizeOf(NativeInt)+2*l);
-    p^:=JOBArgString;
-    inc(p);
+    Prep(1+SizeOf(NativeInt)+2*l,JOBArgString);
     PNativeInt(p)^:=l;
     inc(p,SizeOf(NativeInt));
     Move(us[1],p^,2*l);
@@ -2534,11 +2528,7 @@ var
   begin
     case aValue.Kind of
       jjvkUndefined:
-        begin
-          Grow(1);
-          p^:=JOBArgUndefined;
-          inc(p);
-        end;
+        Prep(1,JOBArgUndefined);
       jjvkBoolean:
         AddBoolean(TJOB_Boolean(aValue).Value);
       jjvkDouble:
@@ -2553,10 +2543,8 @@ var
         AddIJSObject(TJOB_Object(aValue).Value);
       jjvkMethod:
         begin
-          Grow(1+3*SizeOf(Pointer));
           aMethod:=TJOB_Method(aValue);
-          p^:=JOBArgMethod;
-          inc(p);
+          Prep(1+3*SizeOf(Pointer),JOBArgMethod);
           PPointer(p)^:=Pointer(aMethod.Invoke);
           inc(p,sizeof(Pointer));
           PPointer(p)^:=aMethod.Value.Data;
@@ -2566,10 +2554,8 @@ var
         end;
       jjvkDictionary:
         begin
-          Grow(1+SizeOf(NativeInt));
           Dict:=TJOB_Dictionary(aValue).Values;
-          p^:=JOBArgDictionary;
-          inc(p);
+          Prep(1+SizeOf(NativeInt),JOBArgDictionary);
           PNativeInt(p)^:=length(Dict);
           inc(p,SizeOf(NativeInt));
           for i:=0 to length(Dict)-1 do
@@ -2580,10 +2566,8 @@ var
         end;
       jjvkArrayOfJSValue:
         begin
-          Grow(1+SizeOf(NativeInt));
           Arr:=TJOB_ArrayOfJSValue(aValue).Values;
-          p^:=JOBArgArrayOfJSValue;
-          inc(p);
+          Prep(1+SizeOf(NativeInt),JOBArgArrayOfJSValue);
           PNativeInt(p)^:=length(Arr);
           inc(p,SizeOf(NativeInt));
           for i:=0 to length(Arr)-1 do
@@ -2591,9 +2575,7 @@ var
         end;
       jjvkArrayOfDouble:
         begin
-          Grow(1+SizeOf(NativeInt)+SizeOf(Pointer));
-          p^:=JOBArgArrayOfDouble;
-          inc(p);
+          Prep(1+SizeOf(NativeInt)+SizeOf(Pointer),JOBArgArrayOfDouble);
           i:=length(TJOB_ArrayOfDouble(aValue).Values);
           PNativeInt(p)^:=i;
           inc(p,SizeOf(NativeInt));
@@ -2603,6 +2585,39 @@ var
             PPointer(p)^:=@TJOB_ArrayOfDouble(aValue).Values[0];
           inc(p,sizeof(Pointer));
         end;
+    end;
+  end;
+
+  procedure AddVariant(Index: integer);
+  var
+    v: Variant;
+    t: tvartype;
+  begin
+    v:=Args[Index].VVariant^;
+    t:=VarType(v);
+    case t of
+    varEmpty:
+      Prep(1,JOBArgUndefined);
+    varNull:
+      Prep(1,JOBArgNil);
+    varSmallInt,varInteger,varByte,varWord,varShortInt:
+      AddLongInt(v);
+    varLongWord,varCurrency,varInt64,varQWord,varSingle,varDouble,varDate:
+      AddDouble(v);
+    varOleStr:
+      begin
+      if tvardata(v).volestr=nil then
+        Prep(1,JOBArgNil)
+      else
+        raise EJSInvoke.Create('Invoke js: [20220820185118] unsupported variant: '+IntToStr(t));
+      end;
+    varBoolean:
+      if v then
+        Prep(1,JOBArgTrue)
+      else
+        Prep(1,JOBArgFalse);
+    else
+      raise EJSInvoke.Create('Invoke js: [20220820185131] unsupported variant: '+IntToStr(t));
     end;
   end;
 
@@ -2653,20 +2668,11 @@ begin
         begin
           h:=Args[i].VPointer;
           if h=nil then
-          begin
-            Grow(1);
-            p^:=JOBArgNil;
-            inc(p);
-          end else if h=JOB_Undefined then
-          begin
-            Grow(1);
-            p^:=JOBArgUndefined;
-            inc(p);
-          end
+            Prep(1,JOBArgNil)
+          else if h=JOB_Undefined then
+            Prep(1,JOBArgUndefined)
           else begin
-            Grow(1+SizeOf(Pointer));
-            p^:=JOBArgPointer;
-            inc(p);
+            Prep(1+SizeOf(Pointer),JOBArgPointer);
             PPointer(p)^:=h;
             inc(p,sizeof(Pointer));
           end;
@@ -2680,11 +2686,8 @@ begin
         begin
           Obj:=Args[i].VObject;
           if Obj=nil then
-          begin
-            Grow(1);
-            p^:=JOBArgNil;
-            inc(p);
-          end else if Obj is TJSObject then
+            Prep(1,JOBArgNil)
+          else if Obj is TJSObject then
             AddObjectID(TJSObject(Obj).JOBObjectID)
           else if Obj is TJOB_JSValue then
           begin
@@ -2705,8 +2708,10 @@ begin
           s:=AnsiString(h);
           AddUTF8String(h,length(s));
         end;
-      vtCurrency      : RaiseNotSupported('currency');
-      vtVariant       : RaiseNotSupported('variant');
+      vtCurrency:
+        AddDouble(double(Args[i].VCurrency^));
+      vtVariant:
+        AddVariant(i);
       vtInterface:
         begin
           h:=Args[i].VInterface;
@@ -2905,6 +2910,40 @@ begin
     Result:=TJOB_Object.Create(Obj);
     end;
   else
+    InvokeJS_RaiseResultMismatchStr(aName,'jsvalue',JOBResult_Names[aError]);
+  end;
+end;
+
+function TJSObject.InvokeJSVariantResult(const aName: string;
+  const Args: array of const; Invoke: TJOBInvokeType): Variant;
+var
+  Buf: array[0..7] of byte;
+  p: PByte;
+  aError: TJOBResult;
+  Obj: TJSObject;
+begin
+  FillByte(Buf[0],length(Buf),0);
+  p:=@Buf[0];
+  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_jsvalueresult,p,Invoke);
+  case aError of
+  JOBResult_Undefined:
+    Result:=Variants.Unassigned;
+  JOBResult_Null:
+    Result:=nil;
+  JOBResult_Boolean:
+    Result:=p^<>0;
+  JOBResult_Double:
+    Result:=PDouble(p)^;
+  JOBResult_String:
+    Result:=FetchString(PNativeInt(p)^);
+  JOBResult_Function,
+  JOBResult_Object:
+    begin
+    Obj:=TJSObject.JOBCreateFromID(PJOBObjectID(p)^);
+    Result:=Obj as IJSObject;
+    end;
+  else
+    VarClear(Result);
     InvokeJS_RaiseResultMismatchStr(aName,'jsvalue',JOBResult_Names[aError]);
   end;
 end;

@@ -6,7 +6,7 @@ library WasiDomTest1;
 {$WARN 5028 off : Local $1 "$2" is not used}
 
 uses
-  Math, SysUtils, JOB_Shared, JOB_Web, JOB_JS;
+  Math, SysUtils, Variants, JOB_Shared, JOB_Web, JOB_JS;
 
 type
   EWasiTest = class(Exception);
@@ -26,6 +26,7 @@ type
     function GetUnicodeString: UnicodeString;
     function GetUtf8String: String;
     function GetBird: IJSBird;
+    function Echo(const v: Variant): Variant;
     // properties
     function GetCaption: UnicodeString;
     function GetEnabled: boolean;
@@ -61,6 +62,7 @@ type
     function GetUnicodeString: UnicodeString;
     function GetUtf8String: String;
     function GetBird: IJSBird;
+    function Echo(const v: Variant): Variant;
     // properties
     function GetCaption: UnicodeString;
     function GetEnabled: boolean;
@@ -94,6 +96,7 @@ type
     procedure Fail(const Msg: string);
     procedure AssertEqual(const Msg: string; const Expected, Actual: boolean);
     procedure AssertEqual(const Msg: string; const Expected, Actual: integer);
+    procedure AssertEqual(const Msg: string; const Expected, Actual: int64);
     procedure AssertEqual(const Msg: string; const Expected, Actual: double);
     procedure AssertEqual(const Msg: string; const Expected, Actual: String);
     procedure AssertEqualUS(const Msg: string; const Expected, Actual: UnicodeString);
@@ -116,8 +119,10 @@ type
     procedure TestFuncResultDouble;
     procedure TestFuncResultUnicodeString;
     procedure TestFuncResultUTF8String;
-    procedure TestFuncResultBird;
-    // todo procedure TestFuncResultVariant;
+    procedure TestFuncResultObject;
+    procedure TestFuncResultVariant;
+    procedure TestFuncResultVariantNumbers;
+    procedure TestFuncResultVariantStrings;
 
     // function args
     // todo procedure TestFuncArgBoolean;
@@ -168,7 +173,10 @@ begin
   TestFuncResultDouble;
   TestFuncResultUnicodeString;
   TestFuncResultUTF8String;
-  TestFuncResultBird;
+  TestFuncResultObject;
+  TestFuncResultVariant;
+  TestFuncResultVariantNumbers;
+  TestFuncResultVariantStrings;
 
   exit;
 
@@ -356,21 +364,118 @@ begin
   AssertEqual('Bird.GetUTF8String ''🎉''','🎉',Bird.GetUTF8String);
 end;
 
-procedure TWasmApp.TestFuncResultBird;
+procedure TWasmApp.TestFuncResultObject;
 var
   Lisa: IJSBird;
 begin
-  Prefix:='TWasmApp.TestFuncResultBird';
-  Bird.Name:='TestFuncResultBird';
+  Prefix:='TWasmApp.TestFuncResultObject';
+  Bird.Name:='TestFuncResultObject';
   Bird.Child:=nil;
   AssertEqual('Bird.Child:=nil',nil,Bird.Child);
   AssertEqual('Bird.GetBird',nil,Bird.GetBird);
 
   Lisa:=Bird.CreateBird('Lisa');
-  AssertEqual('Lisa','TestFuncResultBird.Lisa',Lisa.Name);
+  AssertEqual('Lisa','TestFuncResultObject.Lisa',Lisa.Name);
   Bird.Child:=Lisa;
   AssertEqual('Bird.Child:=Lisa',Lisa,Bird.Child);
   AssertEqual('Bird.GetBird',Lisa,Bird.GetBird);
+end;
+
+procedure TWasmApp.TestFuncResultVariant;
+var
+  Value: Variant;
+begin
+  Prefix:='TWasmApp.TestFuncResultVariant';
+  Bird.Name:='TestFuncResultVariant';
+
+  Value:=Bird.Echo(nil);
+  AssertEqual('Bird.Echo(nil) VarType',varOleStr,VarType(Value));
+  //ToDo: add a simple widestringmanager
+  //if Value<>nil then
+  //  Fail('Bird.Echo(nil)');
+
+  Value:=Bird.Echo(true);
+  AssertEqual('Bird.Echo(true) VarType',varBoolean,VarType(Value));
+  AssertEqual('Bird.Echo(true)',true,Value);
+
+  Value:=Bird.Echo(false);
+  AssertEqual('Bird.Echo(false) VarType',varBoolean,VarType(Value));
+  AssertEqual('Bird.Echo(false)',false,Value);
+end;
+
+procedure TWasmApp.TestFuncResultVariantNumbers;
+var
+  Value: Variant;
+begin
+  Prefix:='TWasmApp.TestFuncResultVariantNumbers';
+  Bird.Name:='TestFuncResultVariantNumbers';
+
+  Value:=Bird.Echo(0);
+  AssertEqual('Bird.Echo(0) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(0)',0,Value);
+
+  Value:=Bird.Echo(127);
+  AssertEqual('Bird.Echo(127) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(127)',127,Value);
+
+  Value:=Bird.Echo(-127);
+  AssertEqual('Bird.Echo(-127) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(-127)',-127,Value);
+
+  Value:=Bird.Echo(128);
+  AssertEqual('Bird.Echo(128) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(128)',128,Value);
+
+  Value:=Bird.Echo(high(longint));
+  AssertEqual('Bird.Echo(high(longint)) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(high(longint))',high(longint),Value);
+
+  Value:=Bird.Echo(low(longint));
+  AssertEqual('Bird.Echo(low(longint)) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(low(longint))',low(longint),Value);
+
+  Value:=Bird.Echo(high(longword));
+  AssertEqual('Bird.Echo(high(longword)) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(high(longword))',high(longword),Value);
+
+  Value:=Bird.Echo(MaxSafeIntDouble);
+  AssertEqual('Bird.Echo(MaxSafeIntDouble) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(MaxSafeIntDouble)',double(MaxSafeIntDouble),Value);
+
+  Value:=Bird.Echo(MinSafeIntDouble);
+  AssertEqual('Bird.Echo(MinSafeIntDouble) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(MinSafeIntDouble)',double(MinSafeIntDouble),Value);
+
+  Value:=Bird.Echo(NaN);
+  AssertEqual('Bird.Echo(NaN) VarType',varDouble,VarType(Value));
+  if not IsNan(Value) then
+    Fail('Bird.Echo(NaN)');
+
+  Value:=Bird.Echo(Infinity);
+  AssertEqual('Bird.Echo(Infinity) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(Infinity)',double(Infinity),Value);
+
+  Value:=Bird.Echo(NegInfinity);
+  AssertEqual('Bird.Echo(NegInfinity) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(NegInfinity)',double(NegInfinity),Value);
+end;
+
+procedure TWasmApp.TestFuncResultVariantStrings;
+var
+  Value: Variant;
+begin
+  Prefix:='TWasmApp.TestFuncResultVariantStrings';
+  Bird.Name:='TestFuncResultVariantStrings';
+
+  // literals
+  //Value:=Bird.Echo('');
+  //AssertEqual('Bird.Echo(0) VarType',varDouble,VarType(Value));
+  //AssertEqual('Bird.Echo(0)',0,Value);
+
+  // unicodestring
+
+  // ansistring
+
 end;
 
 procedure TWasmApp.Fail(const Msg: string);
@@ -388,6 +493,13 @@ end;
 
 procedure TWasmApp.AssertEqual(const Msg: string; const Expected,
   Actual: integer);
+begin
+  if Expected=Actual then exit;
+  Fail(Msg+'. Expected '+IntToStr(Expected)+', but got '+IntToStr(Actual));
+end;
+
+procedure TWasmApp.AssertEqual(const Msg: string; const Expected, Actual: int64
+  );
 begin
   if Expected=Actual then exit;
   Fail(Msg+'. Expected '+IntToStr(Expected)+', but got '+IntToStr(Actual));
@@ -470,6 +582,11 @@ end;
 function TJSBird.GetBird: IJSBird;
 begin
   Result:=InvokeJSObjectResult('GetBird',[],TJSBird) as IJSBird;
+end;
+
+function TJSBird.Echo(const v: Variant): Variant;
+begin
+  Result:=InvokeJSVariantResult('Echo',[v]);
 end;
 
 function TJSBird.GetCaption: UnicodeString;

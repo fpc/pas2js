@@ -25,6 +25,7 @@ Type
     function GetInteger: integer;
     function GetString: string;
     function GetBird: TBird;
+    function Echo(const a: JSValue): JSValue;
     function CreateBird(const aName: string): TBird;
     procedure IncSize;
   end;
@@ -86,6 +87,11 @@ function TBird.GetBird: TBird;
 begin
   writeln('TBird.GetBird [',Name,'] ',ArgsToStr(JSArguments));
   Result:=Child;
+end;
+
+function TBird.Echo(const a: JSValue): JSValue;
+begin
+  Result:=a;
 end;
 
 function TBird.GetInteger: integer;

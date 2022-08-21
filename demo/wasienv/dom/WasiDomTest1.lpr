@@ -5,7 +5,12 @@ library WasiDomTest1;
 {$codepage UTF8}
 {$WARN 5028 off : Local $1 "$2" is not used}
 
+{off $DEFINE UseDucet}
+
 uses
+  {$IFDEF UseDucet}
+  unicodeducet, unicodedata, fpwidestring,
+  {$ENDIF}
   Math, SysUtils, Variants, JOB_Shared, JOB_Web, JOB_JS;
 
 type
@@ -157,9 +162,6 @@ var
   JSElem: IJSElement;
 begin
   Bird:=TJSBird.JOBCreateGlobal('Bird') as IJSBird;
-
-  TestFuncResultVariantObject;
-  exit;
 
   TestBooleanProperty;
   TestIntegerProperty;
@@ -389,6 +391,11 @@ var
 begin
   Prefix:='TWasmApp.TestFuncResultVariant';
   Bird.Name:='TestFuncResultVariant';
+
+  {$IFDEF UseDucet}
+  Value:=nil;
+  if Value<>nil then ;
+  {$ENDIF}
 
   Value:=Bird.Echo(Variants.Null);
   AssertEqual('Bird.Echo(Variant.Null) VarType',varNull,VarType(Value));
@@ -773,6 +780,9 @@ exports
 var
   Application: TWasmApp;
 begin
+  {$IFDEF UseDucet}
+  SetActiveCollation('DUCET');
+  {$ENDIF}
   Application:=TWasmApp.Create;
   Application.Run;
 end.

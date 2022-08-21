@@ -323,6 +323,7 @@ type
     function ReadJSPropertyLongInt(const aName: string): LongInt; virtual;
     function ReadJSPropertyInt64(const aName: string): Int64; virtual;
     function ReadJSPropertyValue(const aName: string): TJOB_JSValue; virtual;
+    function ReadJSPropertyVariant(const aName: string): Variant; virtual;
     // write a property
     procedure WriteJSPropertyBoolean(const aName: string; Value: Boolean); virtual;
     procedure WriteJSPropertyDouble(const aName: string; Value: Double); virtual;
@@ -332,6 +333,7 @@ type
     procedure WriteJSPropertyLongInt(const aName: string; Value: LongInt); virtual;
     procedure WriteJSPropertyInt64(const aName: string; Value: Int64); virtual;
     procedure WriteJSPropertyValue(const aName: string; Value: TJOB_JSValue); virtual;
+    procedure WriteJSPropertyVariant(const aName: string; const Value: Variant); virtual;
     // create a new object using the new-operator
     function NewJSObject(Const Args: Array of const; aResultClass: TJSObjectClass): TJSObject; virtual;
     // JS members
@@ -2592,6 +2594,8 @@ var
   var
     v: Variant;
     t: tvartype;
+    us: UnicodeString;
+    Intf: IJSObject;
   begin
     v:=Args[Index].VVariant^;
     t:=VarType(v);
@@ -2606,16 +2610,25 @@ var
       AddDouble(v);
     varOleStr:
       begin
-      if tvardata(v).volestr=nil then
-        Prep(1,JOBArgNil)
-      else
-        raise EJSInvoke.Create('Invoke js: [20220820185118] unsupported variant: '+IntToStr(t));
+        us:=v;
+        AddUnicodeString(us);
       end;
     varBoolean:
       if v then
         Prep(1,JOBArgTrue)
       else
         Prep(1,JOBArgFalse);
+    varString:
+      AddUTF8String(v);
+    varUnknown:
+      begin
+      if tvardata(v).vunknown=nil then
+        Prep(1,JOBArgNil)
+      else if VarSupports(v,IJSObject,Intf) then
+        AddObjectID(Intf.GetJSObjectID)
+      else
+        raise EJSInvoke.Create('Invoke js: [20220820210022] unsupported variant: '+IntToStr(t));
+      end
     else
       raise EJSInvoke.Create('Invoke js: [20220820185131] unsupported variant: '+IntToStr(t));
     end;
@@ -2929,7 +2942,7 @@ begin
   JOBResult_Undefined:
     Result:=Variants.Unassigned;
   JOBResult_Null:
-    Result:=nil;
+    Result:=Variants.Null;
   JOBResult_Boolean:
     Result:=p^<>0;
   JOBResult_Double:
@@ -3043,6 +3056,11 @@ begin
   Result:=InvokeJSValueResult(aName,[],jiGet);
 end;
 
+function TJSObject.ReadJSPropertyVariant(const aName: string): Variant;
+begin
+  Result:=InvokeJSVariantResult(aName,[],jiGet);
+end;
+
 procedure TJSObject.WriteJSPropertyBoolean(const aName: string; Value: Boolean);
 begin
   InvokeJSNoResult(aName,[Value],jiSet);
@@ -3083,6 +3101,12 @@ end;
 
 procedure TJSObject.WriteJSPropertyValue(const aName: string;
   Value: TJOB_JSValue);
+begin
+  InvokeJSNoResult(aName,[Value],jiSet);
+end;
+
+procedure TJSObject.WriteJSPropertyVariant(const aName: string;
+  const Value: Variant);
 begin
   InvokeJSNoResult(aName,[Value],jiSet);
 end;

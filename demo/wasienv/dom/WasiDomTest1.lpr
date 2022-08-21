@@ -53,6 +53,7 @@ type
   TJSBird = class(TJSObject,IJSBird)
   private
   public
+    class function Cast(Intf: IJSObject): IJSBird; overload;
     // functions
     procedure IncSize;
     function CreateBird(const aName: string): IJSBird;
@@ -121,22 +122,19 @@ type
     procedure TestFuncResultUTF8String;
     procedure TestFuncResultObject;
     procedure TestFuncResultVariant;
-    procedure TestFuncResultVariantNumbers;
+    procedure TestFuncResultVariantNumber;
     procedure TestFuncResultVariantStrings;
+    procedure TestFuncResultVariantObject;
 
     // function args
-    // todo procedure TestFuncArgBoolean;
-    // todo procedure TestFuncArgInteger;
-    // todo procedure TestFuncArgDouble;
-    // todo procedure TestFuncArgUnicodeString;
-    // todo procedure TestFuncArgUTF8String;
-    // todo procedure TestFuncArgBird;
     // todo procedure TestFuncArgMethod;
-    // todo procedure TestFuncArgVariant;
 
     // dictionaries
 
     // arrays
+    // todo: TestFuncResultVariantArray
+    // todo: TestFuncResultDoubleArray
+    // todo: TestFuncResultUnicodeStringArray
   end;
 
 
@@ -160,6 +158,9 @@ var
 begin
   Bird:=TJSBird.JOBCreateGlobal('Bird') as IJSBird;
 
+  TestFuncResultVariantObject;
+  exit;
+
   TestBooleanProperty;
   TestIntegerProperty;
   TestDoubleProperty;
@@ -175,8 +176,9 @@ begin
   TestFuncResultUTF8String;
   TestFuncResultObject;
   TestFuncResultVariant;
-  TestFuncResultVariantNumbers;
+  TestFuncResultVariantNumber;
   TestFuncResultVariantStrings;
+  TestFuncResultVariantObject;
 
   exit;
 
@@ -388,11 +390,10 @@ begin
   Prefix:='TWasmApp.TestFuncResultVariant';
   Bird.Name:='TestFuncResultVariant';
 
-  Value:=Bird.Echo(nil);
-  AssertEqual('Bird.Echo(nil) VarType',varOleStr,VarType(Value));
-  //ToDo: add a simple widestringmanager
-  //if Value<>nil then
-  //  Fail('Bird.Echo(nil)');
+  Value:=Bird.Echo(Variants.Null);
+  AssertEqual('Bird.Echo(Variant.Null) VarType',varNull,VarType(Value));
+  if Value<>Variants.Null then
+    Fail('Bird.Echo(Variant.Null)');
 
   Value:=Bird.Echo(true);
   AssertEqual('Bird.Echo(true) VarType',varBoolean,VarType(Value));
@@ -403,12 +404,12 @@ begin
   AssertEqual('Bird.Echo(false)',false,Value);
 end;
 
-procedure TWasmApp.TestFuncResultVariantNumbers;
+procedure TWasmApp.TestFuncResultVariantNumber;
 var
   Value: Variant;
 begin
-  Prefix:='TWasmApp.TestFuncResultVariantNumbers';
-  Bird.Name:='TestFuncResultVariantNumbers';
+  Prefix:='TWasmApp.TestFuncResultVariantNumber';
+  Bird.Name:='TestFuncResultVariantNumber';
 
   Value:=Bird.Echo(0);
   AssertEqual('Bird.Echo(0) VarType',varDouble,VarType(Value));
@@ -458,24 +459,130 @@ begin
   Value:=Bird.Echo(NegInfinity);
   AssertEqual('Bird.Echo(NegInfinity) VarType',varDouble,VarType(Value));
   AssertEqual('Bird.Echo(NegInfinity)',double(NegInfinity),Value);
+
+  Value:=Bird.Echo(0.3);
+  AssertEqual('Bird.Echo(0.3) VarType',varDouble,VarType(Value));
+  AssertEqual('Bird.Echo(0.3)',double(0.3),Value);
+
 end;
 
 procedure TWasmApp.TestFuncResultVariantStrings;
 var
   Value: Variant;
+  us: UnicodeString;
+  s, h: string;
 begin
-  Prefix:='TWasmApp.TestFuncResultVariantStrings';
-  Bird.Name:='TestFuncResultVariantStrings';
+  Prefix:='TWasmApp.TestFuncResultVariantString';
+  Bird.Name:='TestFuncResultVariantString';
 
   // literals
-  //Value:=Bird.Echo('');
-  //AssertEqual('Bird.Echo(0) VarType',varDouble,VarType(Value));
-  //AssertEqual('Bird.Echo(0)',0,Value);
+  Value:=Bird.Echo('');
+  AssertEqual('Bird.Echo('''') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo('''')','',Value);
+
+  Value:=Bird.Echo('a');
+  AssertEqual('Bird.Echo(''a'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(''a'')','a',Value);
+
+  Value:=Bird.Echo('abc');
+  AssertEqual('Bird.Echo(''abc'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(''abc'')','abc',Value);
+
+  Value:=Bird.Echo(#13);
+  AssertEqual('Bird.Echo(#13) VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(#13)',#13,Value);
+
+  Value:=Bird.Echo('ä');
+  AssertEqual('Bird.Echo(''ä'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(''ä'')','ä',Value);
+
+  Value:=Bird.Echo('🎉');
+  AssertEqual('Bird.Echo(''🎉'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(''🎉'')','🎉',Value);
 
   // unicodestring
+  us:='';
+  Value:=Bird.Echo(us);
+  AssertEqual('Bird.Echo(us:='''') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(us:='''')','',Value);
+
+  us:='a';
+  Value:=Bird.Echo(us);
+  AssertEqual('Bird.Echo(us:=''a'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(us:=''a'')','a',Value);
+
+  us:='abc';
+  Value:=Bird.Echo(us);
+  AssertEqual('Bird.Echo(us:=''abc'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(us:=''abc'')','abc',Value);
+
+  us:=#13;
+  Value:=Bird.Echo(us);
+  AssertEqual('Bird.Echo(us:=#13) VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(us:=#13)',#13,Value);
+
+  us:='ä';
+  Value:=Bird.Echo(us);
+  AssertEqual('Bird.Echo(us:=''ä'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(us:=''ä'')','ä',Value);
+
+  us:='🤯';
+  Value:=Bird.Echo(us);
+  AssertEqual('Bird.Echo(us:=''🤯'') VarType',varOleStr,VarType(Value));
+  AssertEqualUS('Bird.Echo(us:=''🤯'')','🤯',Value);
 
   // ansistring
+  s:='';
+  Value:=Bird.Echo(s);
+  AssertEqual('Bird.Echo(s:='''') VarType',varOleStr,VarType(Value));
+  AssertEqual('Bird.Echo(s:='''')','',Value);
 
+  s:='a';
+  Value:=Bird.Echo(s);
+  AssertEqual('Bird.Echo(s:=''a'') VarType',varOleStr,VarType(Value));
+  AssertEqual('Bird.Echo(s:=''a'')','a',Value);
+
+  s:='abc';
+  Value:=Bird.Echo(s);
+  AssertEqual('Bird.Echo(s:=''abc'') VarType',varOleStr,VarType(Value));
+  AssertEqual('Bird.Echo(s:=''abc'')','abc',Value);
+
+  s:=#13;
+  Value:=Bird.Echo(s);
+  AssertEqual('Bird.Echo(s:=#13) VarType',varOleStr,VarType(Value));
+  AssertEqual('Bird.Echo(s:=#13)',#13,Value);
+
+  s:='ä';
+  Value:=Bird.Echo(UTF8Decode(s));
+  AssertEqual('Bird.Echo(s:=''ä'') VarType',varOleStr,VarType(Value));
+  h:=UTF8Encode(Value);
+  AssertEqual('Bird.Echo(s:=''ä'')',s,h);
+
+  s:='🤯';
+  Value:=Bird.Echo(UTF8Decode(s));
+  AssertEqual('Bird.Echo(s:=''🤯'') VarType',varOleStr,VarType(Value));
+  h:=UTF8Encode(Value);
+  AssertEqual('Bird.Echo(s:=''🤯'')',s,h);
+end;
+
+procedure TWasmApp.TestFuncResultVariantObject;
+var
+  Value: Variant;
+  Lisa, Bart: IJSBird;
+begin
+  Prefix:='TWasmApp.TestFuncResultVariantObject';
+  Bird.Name:='TestFuncResultVariantObject';
+
+  Lisa:=nil;
+  Value:=Bird.Echo(Lisa);
+  AssertEqual('Bird.Echo(Lisa:=nil) VarType',varNull,VarType(Value));
+
+  Lisa:=Bird.CreateBird('Lisa');
+  AssertEqual('Lisa','TestFuncResultVariantObject.Lisa',Lisa.Name);
+  Value:=Bird.Echo(Lisa);
+  AssertEqual('Bird.Echo(Lisa) VarType',varUnknown,VarType(Value));
+  Bart:=TJSBird.Cast(Value);
+  AssertEqual('Bird.Echo(Lisa)',Lisa,Bart);
 end;
 
 procedure TWasmApp.Fail(const Msg: string);
@@ -543,6 +650,11 @@ begin
 end;
 
 { TBird }
+
+class function TJSBird.Cast(Intf: IJSObject): IJSBird;
+begin
+  Result:=TJSBird.JOBCast(Intf);
+end;
 
 procedure TJSBird.IncSize;
 begin

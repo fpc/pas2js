@@ -385,18 +385,18 @@ var
   NewId: TJOBObjectID;
 begin
   {$IFDEF VerboseJOB}
-  writeln('TJOBBridge.Invoke_JSValueResult START');
+  writeln('TJSObjectBridge.Invoke_JSValueResult START');
   {$ENDIF}
   // invoke
   Result:=Invoke_JSResult(ObjId,NameP,NameLen,Invoke,ArgsP,JSResult);
   {$IFDEF VerboseJOB}
-  writeln('TJOBBridge.Invoke_JSValueResult JSResult=',JSResult);
+  writeln('TJSObjectBridge.Invoke_JSValueResult JSResult=',JSResult);
   {$ENDIF}
   if Result<>JOBResult_Success then
     exit;
   Result:=GetJOBResult(JSResult);
   {$IFDEF VerboseJOB}
-  writeln('TJOBBridge.Invoke_JSValueResult Type=',Result);
+  writeln('TJSObjectBridge.Invoke_JSValueResult Type=',Result);
   {$ENDIF}
   // set result
   case Result of

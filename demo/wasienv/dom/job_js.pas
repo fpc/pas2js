@@ -137,6 +137,7 @@ type
     function GetString: UnicodeString;
     function GetObject(aResultClass: TJSObjectClass): TJSObject;
     function GetValue: TJOB_JSValue;
+    function GetVariant: Variant;
     function GetLongInt: longint;
     function GetMaxInt: int64;
 
@@ -146,10 +147,11 @@ type
     function AllocDouble(const d: double): PByte;
     function AllocString(const s: UnicodeString): PByte;
     function AllocNil: PByte;
-    function AllocIntf(Intf: IJSObject): PByte;
+    function AllocIntf(const Intf: IJSObject): PByte;
     function AllocObject(Obj: TJSObject): PByte;
     function AllocObjId(ObjId: TJOBObjectID): PByte;
-    function AllocJSValue(Value: TJOB_JSValue): PByte;
+    function AllocJSValue(const Value: TJOB_JSValue): PByte;
+    function AllocVariant(const Value: Variant): PByte;
   end;
 
   TJOBCallback = function(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -1926,6 +1928,67 @@ begin
   inc(Index);
 end;
 
+function TJOBCallbackHelper.GetVariant: Variant;
+var
+  ObjId, Len: LongWord;
+  Obj: TJSObject;
+  S: UnicodeString;
+begin
+  if (Index=Count) or (p^=JOBArgUndefined) then
+  begin
+    Result:=Variants.Unassigned;
+    exit;
+  end;
+  case p^ of
+  JOBArgTrue:
+    begin
+      Result:=true;
+      inc(p);
+    end;
+  JOBArgFalse:
+    begin
+      Result:=false;
+      inc(p);
+    end;
+  JOBArgDouble:
+    begin
+      inc(p);
+      Result:=PDouble(p)^;
+      inc(p,8);
+    end;
+  JOBArgUnicodeString:
+    begin
+      inc(p);
+      Len:=PLongWord(p)^;
+      inc(p,4);
+      S:='';
+      if Len>0 then
+      begin
+        SetLength(S,Len);
+        Move(p^,S[1],2*Len);
+        inc(p,2*Len);
+      end;
+      Result:=S;
+    end;
+  JOBArgNil:
+    begin
+      Result:=Variants.Null;
+      inc(p);
+    end;
+  JOBArgObject:
+    begin
+      inc(p);
+      ObjId:=PLongWord(p)^;
+      inc(p,4);
+      Obj:=TJSObject.JOBCreateFromID(ObjId);
+      Result:=Obj as IJSObject;
+    end;
+  else
+    raise EJSArgParse.Create(JOBArgNames[p^]);
+  end;
+  inc(Index);
+end;
+
 function TJOBCallbackHelper.GetLongInt: longint;
 var
   d: Double;
@@ -1995,7 +2058,7 @@ begin
   Result^:=JOBArgNil;
 end;
 
-function TJOBCallbackHelper.AllocIntf(Intf: IJSObject): PByte;
+function TJOBCallbackHelper.AllocIntf(const Intf: IJSObject): PByte;
 begin
   if Intf=nil then
     Result:=AllocNil
@@ -2018,7 +2081,7 @@ begin
   PJOBObjectID(Result+1)^:=ObjId;
 end;
 
-function TJOBCallbackHelper.AllocJSValue(Value: TJOB_JSValue): PByte;
+function TJOBCallbackHelper.AllocJSValue(const Value: TJOB_JSValue): PByte;
 begin
   if Value=nil then
     exit(AllocUndefined);
@@ -2030,6 +2093,39 @@ begin
     jjvkObject: Result:=AllocIntf(TJOB_Object(Value).Value);
   else
     raise EJSArgParse.Create('AllocJSValue unsupported: '+JOB_JSValueKindNames[Value.Kind]);
+  end;
+end;
+
+function TJOBCallbackHelper.AllocVariant(const Value: Variant): PByte;
+var
+  t: tvartype;
+  Intf: IJSObject;
+begin
+  t:=VarType(Value);
+  case t of
+  varEmpty:
+    Result:=AllocUndefined;
+  varNull:
+    Result:=AllocNil;
+  varSmallInt,varInteger,varByte,varWord,varShortInt:
+    Result:=AllocLongint(Value);
+  varLongWord,varCurrency,varInt64,varQWord,varSingle,varDouble,varDate:
+    Result:=AllocDouble(Value);
+  varOleStr,varString:
+    Result:=AllocString(Value);
+  varBoolean:
+    Result:=AllocBool(Value);
+  varUnknown:
+    begin
+    if tvardata(Value).vunknown=nil then
+      Result:=AllocNil
+    else if VarSupports(Value,IJSObject,Intf) then
+      Result:=AllocIntf(Intf)
+    else
+      raise EJSInvoke.Create('TJOBCallbackHelper.AllocVariant: [20220822103744] unsupported variant: '+IntToStr(t));
+    end
+  else
+    raise EJSInvoke.Create('TJOBCallbackHelper.AllocVariant: [20220822103751] unsupported variant: '+IntToStr(t));
   end;
 end;
 

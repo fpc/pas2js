@@ -721,7 +721,7 @@ begin
         View.setUint8(p,JOBArgUnicodeString);
         inc(p);
         s:=String(Arg);
-        View.setUint32(p,length(s));
+        View.setUint32(p,length(s),env.IsLittleEndian);
         inc(p,4);
         for j:=0 to length(s)-1 do
         begin
@@ -749,10 +749,26 @@ function TJSObjectBridge.EatCallbackResult(View: TJSDataView;
   ResultP: TWasmNativeInt): jsvalue;
 var
   p: TWasmNativeInt;
+
+  function EatString: JSValue;
+  var
+    Len: LongWord;
+    i: Integer;
+    a: TWordDynArray;
+  begin
+    Len:=View.getUInt32(p,env.IsLittleEndian);
+    inc(p,4);
+    SetLength(a,Len);
+    for i:=0 to Len-1 do begin
+      a[i]:=View.getUint16(p,env.IsLittleEndian);
+      inc(p,2);
+    end;
+    Result:=TJSFunction(@TJSString.fromCharCode).apply(nil,a);
+  end;
+
+var
   aType: Byte;
   ObjId: LongInt;
-  Len: LongWord;
-  aWords: TJSUint16Array;
 begin
   if ResultP=0 then
     exit(Undefined);
@@ -766,13 +782,7 @@ begin
     JOBArgFalse: Result:=false;
     JOBArgLongint: Result:=View.getInt32(p,env.IsLittleEndian);
     JOBArgDouble: Result:=View.getFloat64(p,env.IsLittleEndian);
-    JOBArgUnicodeString:
-      begin
-        Len:=View.getUInt32(p,env.IsLittleEndian);
-        inc(p);
-        aWords:=TJSUint16Array.New(View.buffer, p,Len);
-        Result:=TypedArrayToString(aWords);
-      end;
+    JOBArgUnicodeString: Result:=EatString;
     JOBArgNil: Result:=nil;
     JOBArgObject:
       begin

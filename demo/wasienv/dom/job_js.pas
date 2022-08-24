@@ -2045,11 +2045,11 @@ var
   l: SizeInt;
 begin
   l:=length(s);
-  GetMem(Result,5+l);
+  GetMem(Result,5+2*l);
   Result^:=JOBArgUnicodeString;
   PLongWord(Result+1)^:=l;
   if l>0 then
-    Move(s[1],Result[5],l);
+    Move(s[1],Result[5],2*l);
 end;
 
 function TJOBCallbackHelper.AllocNil: PByte;

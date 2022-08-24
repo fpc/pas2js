@@ -98,7 +98,9 @@ end;
 
 function TBird.EchoCall(const a: JSValue; const CB: TBirdCallback): JSValue;
 begin
+  writeln('TBird.EchoCall argument=',a);
   Result:=CB(a);
+  writeln('TBird.EchoCall Result=',Result);
 end;
 
 function TBird.GetInteger: integer;

@@ -39,7 +39,7 @@ type
     class function FromArray(TypeInfo: TTypeInfo; const Values: specialize TArray<TValue>): TValue; static;
     class function FromJSValue(v: JSValue): TValue; static;
     class function FromOrdinal(ATypeInfo: TTypeInfo; AValue: JSValue): TValue; static;
-    class procedure Make(ABuffer: JSValue; ATypeInfo: PTypeInfo; var Result: TValue); overload; static;
+    class procedure Make(const ABuffer: JSValue; const ATypeInfo: PTypeInfo; var Result: TValue); overload; static;
     generic class procedure Make<T>(const Value: T; var Result: TValue); overload; static;
 
     function AsBoolean: boolean;
@@ -207,6 +207,7 @@ type
     procedure LoadParameters;
   public
     function GetParameters: TRttiParameterArray;
+    function Invoke(const Instance: TValue; const Args: array of TValue): TValue;
 
     property IsAsyncCall: Boolean read GetIsAsyncCall;
     property IsClassMethod: Boolean read GetIsClassMethod;
@@ -244,6 +245,9 @@ type
     property IsReadable: boolean read GetIsReadable;
     property IsWritable: boolean read GetIsWritable;
     property Visibility: TMemberVisibility read GetVisibility;
+  end;
+
+  TRttiInstanceProperty = class(TRttiProperty)
   end;
 
   TRttiPropertyArray = specialize TArray<TRttiProperty>;
@@ -627,7 +631,7 @@ begin
   Make(Value, System.TypeInfo(T), Result);
 end;
 
-class procedure TValue.Make(ABuffer: JSValue; ATypeInfo: PTypeInfo; var Result: TValue);
+class procedure TValue.Make(const ABuffer: JSValue; const ATypeInfo: PTypeInfo; var Result: TValue);
 begin
   Result.FData := ABuffer;
   Result.FTypeInfo := ATypeInfo;
@@ -1729,6 +1733,26 @@ begin
     LoadParameters;
 
   Result := FParameters;
+end;
+
+function TRttiMethod.Invoke(const Instance: TValue; const Args: array of TValue): TValue;
+var
+  A: Integer;
+
+  ReturnHandle: PTypeInfo;
+
+  AArgs: TJSValueDynArray;
+
+begin
+  if Assigned(ReturnType) then
+    Result.FTypeInfo := ReturnType.Handle;
+
+  SetLength(AArgs, Length(Args));
+
+  for A := Low(Args) to High(Args) do
+    AArgs[A] := Args[A].AsJSValue;
+
+  Result.FData := TJSFunction(TJSObject(Instance.AsJSValue)[Name]).apply(TJSObject(Instance.AsJSValue), AArgs);
 end;
 
 { TRttiProperty }

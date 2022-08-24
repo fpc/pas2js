@@ -264,6 +264,7 @@ type
   private
     FJOBObjectID: TJOBObjectID;
     FJOBCastSrc: IJSObject;
+    FJOBObjectIDOwner: boolean;
   protected
     type
       TJOBInvokeNoResultFunc = function(
@@ -302,7 +303,8 @@ type
     class function Cast(Intf: IJSObject): IJSObject; overload;
     destructor Destroy; override;
     property JOBObjectID: TJOBObjectID read FJOBObjectID;
-    property JOBCastSrc: IJSObject read FJOBCastSrc; // nil means it is the owner, otherwise it is a typecast
+    property JOBObjectIDOwner: boolean read FJOBObjectIDOwner write FJOBObjectIDOwner;
+    property JOBCastSrc: IJSObject read FJOBCastSrc; // nil means it is the original, otherwise it is a typecast
     // call a function
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Boolean; virtual;
@@ -1859,6 +1861,7 @@ begin
       ObjId:=PLongWord(p)^;
       inc(p,4);
       Result:=aResultClass.JOBCreateFromID(ObjId);
+      Result.JOBObjectIDOwner:=false; // owned by caller (JS code in browser)
     end
   else
     raise EJSArgParse.Create(JOBArgNames[p^]);
@@ -1934,12 +1937,17 @@ var
   Obj: TJSObject;
   S: UnicodeString;
 begin
-  if (Index=Count) or (p^=JOBArgUndefined) then
+  if Index=Count then
   begin
     Result:=Variants.Unassigned;
     exit;
   end;
   case p^ of
+  JOBArgUndefined:
+    begin
+      Result:=Variants.Unassigned;
+      inc(p);
+    end;
   JOBArgTrue:
     begin
       Result:=true;
@@ -1981,6 +1989,7 @@ begin
       ObjId:=PLongWord(p)^;
       inc(p,4);
       Obj:=TJSObject.JOBCreateFromID(ObjId);
+      Obj.JOBObjectIDOwner:=false;
       Result:=Obj as IJSObject;
     end;
   else
@@ -2076,6 +2085,7 @@ end;
 
 function TJOBCallbackHelper.AllocObjId(ObjId: TJOBObjectID): PByte;
 begin
+  //writeln('TJOBCallbackHelper.AllocObjId ObjID=',ObjId);
   GetMem(Result,1+SizeOf(TJOBObjectID));
   Result^:=JOBArgObject;
   PJOBObjectID(Result+1)^:=ObjId;
@@ -2889,6 +2899,7 @@ end;
 constructor TJSObject.JOBCreateFromID(aID: TJOBObjectID);
 begin
   FJOBObjectID:=aID;
+  FJOBObjectIDOwner:=true;
 end;
 
 constructor TJSObject.JOBCreateGlobal(const aID: UnicodeString);
@@ -2896,6 +2907,7 @@ begin
   FJOBObjectID:=__job_get_global(PWideChar(aID),length(aID));
   if FJOBObjectID=0 then
     raise EJSObject.Create('JS object "'+String(aID)+'" is not registered');
+  FJOBObjectIDOwner:=true;
 end;
 
 class function TJSObject.Cast(Intf: IJSObject): IJSObject;
@@ -2907,7 +2919,7 @@ destructor TJSObject.Destroy;
 begin
   if FJOBCastSrc<>nil then
     FJOBCastSrc:=nil
-  else if JOBObjectID>=0 then
+  else if (JOBObjectID>=0) and JOBObjectIDOwner then
     __job_release_object(JOBObjectID);
   FJOBObjectID:=0;
   inherited Destroy;

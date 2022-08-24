@@ -9,6 +9,7 @@ interface
 
 type
   TJOBObjectID = NativeInt;
+  TJOBObjectIDArray = array of TJOBObjectID;
 
 // invoke results
 type

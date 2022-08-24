@@ -16,12 +16,14 @@ uses
 type
   EWasiTest = class(Exception);
 
+  IJSBird = interface;
   TJSBird = class;
 
   TBirdCallBoolean = function(const v: Boolean): Boolean of object;
   TBirdCallInteger = function(const v: integer): integer of object;
   TBirdCallDouble = function(const v: double): double of object;
   TBirdCallUnicodeString = function(const v: UnicodeString): UnicodeString of object;
+  TBirdCallBird = function(const v: IJSBird): IJSBird of object;
   TBirdCallVariant = function(const v: variant): variant of object;
 
   { IJSBird }
@@ -42,6 +44,7 @@ type
     function EchoInteger(const v: integer; const Call: TBirdCallInteger): integer;
     function EchoDouble(const v: Double; const Call: TBirdCallDouble): Double;
     function EchoUnicodeString(const v: UnicodeString; const Call: TBirdCallUnicodeString): UnicodeString;
+    function EchoBird(const v: IJSBird; const Call: TBirdCallBird): IJSBird;
     function EchoVariant(const v: Variant; const Call: TBirdCallVariant): Variant;
     // properties
     function GetCaption: UnicodeString;
@@ -84,6 +87,7 @@ type
     function EchoInteger(const v: integer; const Call: TBirdCallInteger): integer;
     function EchoDouble(const v: Double; const Call: TBirdCallDouble): Double;
     function EchoUnicodeString(const v: UnicodeString; const Call: TBirdCallUnicodeString): UnicodeString;
+    function EchoBird(const v: IJSBird; const Call: TBirdCallBird): IJSBird;
     function EchoVariant(const v: Variant; const Call: TBirdCallVariant): Variant;
     // properties
     function GetCaption: UnicodeString;
@@ -115,6 +119,7 @@ type
     function OnBirdCallInteger(const v: integer): integer;
     function OnBirdCallDouble(const v: double): double;
     function OnBirdCallUnicodeString(const v: UnicodeString): UnicodeString;
+    function OnBirdCallBird(const v: IJSBird): IJSBird;
     function OnBirdCallVariant(const v: Variant): Variant;
   public
     Prefix: string;
@@ -157,6 +162,7 @@ type
     procedure TestFuncArgMethod_Integer;
     procedure TestFuncArgMethod_Double;
     procedure TestFuncArgMethod_UnicodeString;
+    procedure TestFuncArgMethod_Object;
     procedure TestFuncArgMethod_Variant;
 
     // dictionaries
@@ -197,6 +203,17 @@ var
 begin
   v:=H.GetString;
   Result:=H.AllocString(TBirdCallUnicodeString(aMethod)(v));
+end;
+
+function JOBCallTBirdCallBird(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+var
+  v: IJSBird;
+begin
+  //writeln('JOBCallTBirdCallBird START');
+  v:=H.GetObject(TJSBird) as IJSBird;
+  //writeln('JOBCallTBirdCallBird ',v<>nil);
+  Result:=H.AllocIntf(TBirdCallBird(aMethod)(v));
+  //writeln('JOBCallTBirdCallBird ',ptruint(Result));
 end;
 
 function JOBCallTBirdCallVariant(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -242,6 +259,11 @@ begin
   Result:=v;
 end;
 
+function TWasmApp.OnBirdCallBird(const v: IJSBird): IJSBird;
+begin
+  Result:=v;
+end;
+
 function TWasmApp.OnBirdCallVariant(const v: Variant): Variant;
 begin
   Result:=v;
@@ -274,6 +296,7 @@ begin
   TestFuncArgMethod_Integer;
   TestFuncArgMethod_Double;
   TestFuncArgMethod_UnicodeString;
+  TestFuncArgMethod_Object;
   TestFuncArgMethod_Variant;
 end;
 
@@ -742,19 +765,15 @@ begin
   Prefix:='TWasmApp.TestFuncArgMethod_UnicodeString';
   Bird.Name:='TestFuncArgMethod_UnicodeString';
 
-  writeln('AAA1 TWasmApp.TestFuncArgMethod_UnicodeString ');
   v:=Bird.EchoUnicodeString('',@OnBirdCallUnicodeString);
   AssertEqualUS('Bird.EchoUnicodeString('''',...)','',v);
 
-  writeln('AAA2 TWasmApp.TestFuncArgMethod_UnicodeString ');
   v:=Bird.EchoUnicodeString('c',@OnBirdCallUnicodeString);
   AssertEqualUS('Bird.EchoUnicodeString(''c'',...)','c',v);
 
-  writeln('AAA3 TWasmApp.TestFuncArgMethod_UnicodeString ');
   v:=Bird.EchoUnicodeString('abc',@OnBirdCallUnicodeString);
   AssertEqualUS('Bird.EchoUnicodeString(''abc'',...)','abc',v);
 
-  writeln('AAA4 TWasmApp.TestFuncArgMethod_UnicodeString ');
   v:=Bird.EchoUnicodeString(#10,@OnBirdCallUnicodeString);
   AssertEqualUS('Bird.EchoUnicodeString(#10,...)',#10,v);
 
@@ -765,12 +784,39 @@ begin
   AssertEqualUS('Bird.EchoUnicodeString(''😄'',...)','😄',v);
 end;
 
+procedure TWasmApp.TestFuncArgMethod_Object;
+var
+  v, Lisa: IJSBird;
+begin
+  Prefix:='TWasmApp.TestFuncArgMethod_Object';
+  Bird.Name:='TestFuncArgMethod_Object';
+
+  v:=Bird.EchoBird(nil,@OnBirdCallBird);
+  AssertEqual('Bird.EchoBird(nil,...)',nil,v);
+
+  v:=Bird.EchoBird(Bird,@OnBirdCallBird);
+  AssertEqual('Bird.EchoBird(Bird,...)',Bird,v);
+
+  Lisa:=Bird.CreateBird('Lisa');
+  v:=Bird.EchoBird(Lisa,@OnBirdCallBird);
+  AssertEqual('Bird.EchoBird(Lisa,...)',Lisa,v);
+end;
+
 procedure TWasmApp.TestFuncArgMethod_Variant;
 var
   v: Variant;
 begin
   Prefix:='TWasmApp.TestFuncArgMethod_Variant;';
   Bird.Name:='TestFuncArgMethod_Variant;';
+
+  v:=Bird.EchoVariant(true,@OnBirdCallVariant);
+  AssertEqual('Bird.EchoVariant(true,...)',true,v);
+
+  v:=Bird.EchoVariant(false,@OnBirdCallVariant);
+  AssertEqual('Bird.EchoVariant(false,...)',false,v);
+
+//  v:=Bird.EchoVariant(Variants.Null,@OnBirdCallVariant);
+//  AssertEqual('Bird.EchoVariant(Variants.Null,...)',Variants.Null,v);
 
   v:=Bird.EchoVariant(0.5,@OnBirdCallVariant);
   AssertEqual('Bird.EchoVariant(0.5,...)',0.5,v);
@@ -939,6 +985,18 @@ begin
   m:=TJOB_Method.Create(TMethod(Call),@JOBCallTBirdCallUnicodeString);
   try
     Result:=InvokeJSUnicodeStringResult('EchoCall',[v,m]);
+  finally
+    m.Free;
+  end;
+end;
+
+function TJSBird.EchoBird(const v: IJSBird; const Call: TBirdCallBird): IJSBird;
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(Call),@JOBCallTBirdCallBird);
+  try
+    Result:=InvokeJSObjectResult('EchoCall',[v,m],TJSBird) as IJSBird;
   finally
     m.Free;
   end;

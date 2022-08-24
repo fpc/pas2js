@@ -31,7 +31,7 @@ Type
   Protected
     function Invoke_JSResult(ObjId: TJOBObjectID; NameP, NameLen, Invoke, ArgsP: NativeInt; out JSResult: JSValue): TJOBResult; virtual;
     function GetInvokeArguments(View: TJSDataView; ArgsP: NativeInt): TJSValueDynArray; virtual;
-    function CreateCallbackArgs(View: TJSDataView; const Args: TJSFunctionArguments): TWasmNativeInt; virtual;
+    function CreateCallbackArgs(View: TJSDataView; const Args: TJSFunctionArguments; TempObjIds: TJOBObjectIDArray): TWasmNativeInt; virtual;
     function EatCallbackResult(View: TJSDataView; ResultP: TWasmNativeInt): jsvalue; virtual;
     // exports
     function Get_GlobalID(NameP, NameLen: NativeInt): TJOBObjectID; virtual;
@@ -487,13 +487,14 @@ var
 
   function ReadWasmNativeInt: TWasmNativeInt;
   begin
-    Result:=View.getUint32(p,env.IsLittleEndian);
+    Result:=View.getInt32(p,env.IsLittleEndian);
     inc(p,4);
   end;
 
   function ReadArgMethod: TProxyFunc;
   var
     aCall, aData, aCode: TWasmNativeInt;
+    i: Integer;
   begin
     aCall:=ReadWasmNativeInt;
     aData:=ReadWasmNativeInt;
@@ -502,14 +503,21 @@ var
     Result:=function: jsvalue
       var
         Args, ResultP: TWasmNativeInt;
+        TempObjIds: TJOBObjectIDArray;
       begin
         //writeln('TJSObjectBridge called JS Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length);
-        Args:=CreateCallbackArgs(View,JSArguments);
-        ResultP:=CallbackHandler(aCall,aData,aCode,Args); // this frees Args, and may detach View
-        View:=getModuleMemoryDataView();
-        //writeln('TJSObjectBridge called Wasm Call=',aCall,' Data=',aData,' Code=',aCode,' ResultP=',ResultP);
-        Result:=EatCallbackResult(View,ResultP); // this frees ResultP
-        //writeln('TJSObjectBridge Result=',Result);
+        Args:=CreateCallbackArgs(View,JSArguments,TempObjIds);
+        try
+          ResultP:=CallbackHandler(aCall,aData,aCode,Args); // this frees Args, and may detach View
+          View:=getModuleMemoryDataView();
+          //writeln('TJSObjectBridge called Wasm Call=',aCall,' Data=',aData,' Code=',aCode,' ResultP=',ResultP);
+          Result:=EatCallbackResult(View,ResultP); // this frees ResultP
+          //writeln('TJSObjectBridge Result=',Result);
+        finally
+          //writeln('After CallbackHandler: TempObjIds=',length(TempObjIds),' ',TempObjIds);
+          for i:=0 to length(TempObjIds)-1 do
+            ReleaseObject(TempObjIds[i]);
+        end;
       end;
   end;
 
@@ -653,7 +661,8 @@ begin
 end;
 
 function TJSObjectBridge.CreateCallbackArgs(View: TJSDataView;
-  const Args: TJSFunctionArguments): TWasmNativeInt;
+  const Args: TJSFunctionArguments; TempObjIds: TJOBObjectIDArray
+  ): TWasmNativeInt;
 var
   i, Len, j: Integer;
   Arg: JSValue;
@@ -694,7 +703,7 @@ begin
   begin
     Arg:=Args[i];
     r:=GetJOBResult(Arg);
-    //writeln('TJSObjectBridge.CreateCallbackArgs ',i,'/',Args.Length,' r=',r);
+    writeln('TJSObjectBridge.CreateCallbackArgs ',i,'/',Args.Length,' r=',r);
     case r of
     JOBResult_Null:
       begin
@@ -735,7 +744,9 @@ begin
         View.setUint8(p,JOBArgObject);
         inc(p);
         NewId:=RegisterLocalObject(TJSObject(Arg));
-        View.setUint32(p, longword(NewId), env.IsLittleEndian);
+        TJSArray(TempObjIds).push(NewId);
+        writeln('TJSObjectBridge.CreateCallbackArgs Object ID=',NewID);
+        View.setInt32(p, NewId, env.IsLittleEndian);
         inc(p,4);
       end;
     else
@@ -788,6 +799,7 @@ begin
       begin
         ObjId:=View.getInt32(p,env.IsLittleEndian);
         Result:=FindObject(ObjId);
+        writeln('TJSObjectBridge.EatCallbackResult ObjID=',ObjId,' Result=',Result<>nil);
       end;
     else
       Result:=Undefined;

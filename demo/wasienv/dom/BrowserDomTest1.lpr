@@ -6,6 +6,7 @@ uses
   BrowserConsole, JS, Classes, SysUtils, Web, WasiEnv, WasiHostApp, JOB_Browser, JOB_Shared;
 
 Type
+  TBirdCallback = function(const v: JSValue): JSValue;
 
   { TBird }
 
@@ -26,6 +27,7 @@ Type
     function GetString: string;
     function GetBird: TBird;
     function Echo(const a: JSValue): JSValue;
+    function EchoCall(const a: JSValue; const CB: TBirdCallback): JSValue;
     function CreateBird(const aName: string): TBird;
     procedure IncSize;
   end;
@@ -92,6 +94,11 @@ end;
 function TBird.Echo(const a: JSValue): JSValue;
 begin
   Result:=a;
+end;
+
+function TBird.EchoCall(const a: JSValue; const CB: TBirdCallback): JSValue;
+begin
+  Result:=CB(a);
 end;
 
 function TBird.GetInteger: integer;

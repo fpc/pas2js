@@ -18,6 +18,10 @@ type
 
   TJSBird = class;
 
+  TBirdCallBoolean = function(const v: Boolean): Boolean of object;
+  TBirdCallInteger = function(const v: integer): integer of object;
+  TBirdCallVariant = function(const v: variant): variant of object;
+
   { IJSBird }
 
   IJSBird = interface(IJSObject)
@@ -32,6 +36,8 @@ type
     function GetUtf8String: String;
     function GetBird: IJSBird;
     function Echo(const v: Variant): Variant;
+    function EchoBoolean(const v: Boolean; const Call: TBirdCallBoolean): Boolean;
+    function EchoInteger(const v: integer; const Call: TBirdCallInteger): integer;
     // properties
     function GetCaption: UnicodeString;
     function GetEnabled: boolean;
@@ -69,6 +75,8 @@ type
     function GetUtf8String: String;
     function GetBird: IJSBird;
     function Echo(const v: Variant): Variant;
+    function EchoBoolean(const v: Boolean; const Call: TBirdCallBoolean): Boolean;
+    function EchoInteger(const v: integer; const Call: TBirdCallInteger): integer;
     // properties
     function GetCaption: UnicodeString;
     function GetEnabled: boolean;
@@ -95,6 +103,8 @@ type
   TWasmApp = class
   private
     function OnPlaygroundClick(Event: IJSEvent): boolean;
+    function OnBirdCallBoolean(const v: boolean): boolean;
+    function OnBirdCallInteger(const v: integer): integer;
   public
     Prefix: string;
     Bird: IJSBird;
@@ -128,11 +138,12 @@ type
     procedure TestFuncResultObject;
     procedure TestFuncResultVariant;
     procedure TestFuncResultVariantNumber;
-    procedure TestFuncResultVariantStrings;
+    procedure TestFuncResultVariantString;
     procedure TestFuncResultVariantObject;
 
-    // function args
-    // todo procedure TestFuncArgMethod;
+    // callbacks
+    procedure TestFuncArgMethod_Boolean;
+    procedure TestFuncArgMethod_Integer;
 
     // dictionaries
 
@@ -142,6 +153,21 @@ type
     // todo: TestFuncResultUnicodeStringArray
   end;
 
+function JOBCallTBirdCallBoolean(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+var
+  v: Boolean;
+begin
+  v:=H.GetBoolean;
+  Result:=H.AllocBool(TBirdCallBoolean(aMethod)(v));
+end;
+
+function JOBCallTBirdCallInteger(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
+var
+  v: LongInt;
+begin
+  v:=H.GetLongInt;
+  Result:=H.AllocLongint(TBirdCallInteger(aMethod)(v));
+end;
 
 { TApplication }
 
@@ -155,6 +181,16 @@ begin
   writeln('TWasmApp.OnPlaygroundClick typeof=',w);
 
   Result:=true;
+end;
+
+function TWasmApp.OnBirdCallBoolean(const v: boolean): boolean;
+begin
+  Result:=v;
+end;
+
+function TWasmApp.OnBirdCallInteger(const v: integer): integer;
+begin
+  Result:=v;
 end;
 
 procedure TWasmApp.Run;
@@ -179,8 +215,11 @@ begin
   TestFuncResultObject;
   TestFuncResultVariant;
   TestFuncResultVariantNumber;
-  TestFuncResultVariantStrings;
+  TestFuncResultVariantString;
   TestFuncResultVariantObject;
+
+  TestFuncArgMethod_Boolean;
+  TestFuncArgMethod_Integer;
 
   exit;
 
@@ -473,7 +512,7 @@ begin
 
 end;
 
-procedure TWasmApp.TestFuncResultVariantStrings;
+procedure TWasmApp.TestFuncResultVariantString;
 var
   Value: Variant;
   us: UnicodeString;
@@ -592,6 +631,37 @@ begin
   AssertEqual('Bird.Echo(Lisa)',Lisa,Bart);
 end;
 
+procedure TWasmApp.TestFuncArgMethod_Boolean;
+var
+  v: Boolean;
+begin
+  Prefix:='TWasmApp.TestFuncArgMethod_Boolean';
+  Bird.Name:='TestFuncArgMethod_Boolean';
+
+  v:=Bird.EchoBoolean(true,@OnBirdCallBoolean);
+  AssertEqual('Bird.EchoBoolean(true,...)',true,v);
+
+  v:=Bird.EchoBoolean(false,@OnBirdCallBoolean);
+  AssertEqual('Bird.EchoBoolean(false,...)',false,v);
+end;
+
+procedure TWasmApp.TestFuncArgMethod_Integer;
+var
+  v: Integer;
+begin
+  Prefix:='TWasmApp.TestFuncArgMethod_Integer';
+  Bird.Name:='TestFuncArgMethod_Integer';
+
+  v:=Bird.EchoInteger(13,@OnBirdCallInteger);
+  AssertEqual('Bird.EchoInteger(13,...)',13,v);
+
+  v:=Bird.EchoInteger(low(longint),@OnBirdCallInteger);
+  AssertEqual('Bird.EchoInteger(low(longint),...)',low(longint),v);
+
+  v:=Bird.EchoInteger(high(longint),@OnBirdCallInteger);
+  AssertEqual('Bird.EchoInteger(high(longint),...)',high(longint),v);
+end;
+
 procedure TWasmApp.Fail(const Msg: string);
 begin
   writeln('TWasmApp.Fail ',Prefix+': '+Msg);
@@ -706,6 +776,32 @@ end;
 function TJSBird.Echo(const v: Variant): Variant;
 begin
   Result:=InvokeJSVariantResult('Echo',[v]);
+end;
+
+function TJSBird.EchoBoolean(const v: Boolean; const Call: TBirdCallBoolean
+  ): Boolean;
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(Call),@JOBCallTBirdCallBoolean);
+  try
+    Result:=InvokeJSBooleanResult('EchoCall',[v,m]);
+  finally
+    m.Free;
+  end;
+end;
+
+function TJSBird.EchoInteger(const v: integer; const Call: TBirdCallInteger
+  ): integer;
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(Call),@JOBCallTBirdCallInteger);
+  try
+    Result:=InvokeJSLongIntResult('EchoCall',[v,m]);
+  finally
+    m.Free;
+  end;
 end;
 
 function TJSBird.GetCaption: UnicodeString;

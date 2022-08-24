@@ -2593,6 +2593,7 @@ var
     us: UnicodeString;
     l: SizeInt;
   begin
+    //writeln('AddUTF8String s="',s,'"');
     if s='' then
     begin
       AddUnicodeString(nil,0);
@@ -2705,6 +2706,7 @@ var
   begin
     v:=Args[Index].VVariant^;
     t:=VarType(v);
+    writeln('AddVariant Index=',Index,' VarType=',t);
     case t of
     varEmpty:
       Prep(1,JOBArgUndefined);
@@ -3040,13 +3042,13 @@ function TJSObject.InvokeJSVariantResult(const aName: string;
 var
   Buf: array[0..7] of byte;
   p: PByte;
-  aError: TJOBResult;
+  r: TJOBResult;
   Obj: TJSObject;
 begin
   FillByte(Buf[0],length(Buf),0);
   p:=@Buf[0];
-  aError:=InvokeJSOneResult(aName,Args,@__job_invoke_jsvalueresult,p,Invoke);
-  case aError of
+  r:=InvokeJSOneResult(aName,Args,@__job_invoke_jsvalueresult,p,Invoke);
+  case r of
   JOBResult_Undefined:
     Result:=Variants.Unassigned;
   JOBResult_Null:
@@ -3065,7 +3067,7 @@ begin
     end;
   else
     VarClear(Result);
-    InvokeJS_RaiseResultMismatchStr(aName,'jsvalue',JOBResult_Names[aError]);
+    InvokeJS_RaiseResultMismatchStr(aName,'jsvalue',JOBResult_Names[r]);
   end;
 end;
 

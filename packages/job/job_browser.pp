@@ -412,7 +412,7 @@ begin
     getModuleMemoryDataView().setFloat64(ResultP, double(JSResult), env.IsLittleEndian);
   JOBResult_String:
     begin
-      FStringResult:=String(JSResult);
+    FStringResult:=String(JSResult);
     getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
     end;
   JOBResult_Function,
@@ -528,6 +528,7 @@ var
   begin
     Len:=ReadWasmNativeInt;
     aWords:=TJSUint16Array.New(View.buffer, p,Len);
+    inc(p,Len*2);
     Result:=TypedArrayToString(aWords);
   end;
 
@@ -558,7 +559,7 @@ var
       aType:=View.getUInt8(p);
       inc(p);
       if aType<>JOBArgUnicodeString then
-        raise EJOBBridge.Create('dictionary name must be unicodestring, but was '+IntToStr(aType));
+        raise EJOBBridge.Create('20220825000909: dictionary name must be unicodestring, but was '+IntToStr(aType));
       CurName:=ReadUnicodeString;
       TJSObject(Result)[CurName]:=ReadValue;
     end;
@@ -594,6 +595,7 @@ var
     Obj: TJSObject;
   begin
     aType:=View.getUInt8(p);
+    //writeln('TJSObjectBridge.GetInvokeArguments.ReadValue aType=',aType,' p=',p);
     inc(p);
     case aType of
     JOBArgUndefined:
@@ -630,7 +632,7 @@ var
         ObjID:=ReadWasmNativeInt;
         Obj:=FindObject(ObjID);
         if Obj=nil then
-          raise EJOBBridge.Create('invalid JSObject '+IntToStr(ObjID));
+          raise EJOBBridge.Create('20220825000904: invalid JSObject '+IntToStr(ObjID));
         Result:=Obj;
       end;
     JOBArgMethod:
@@ -642,7 +644,7 @@ var
     JOBArgArrayOfDouble:
       Result:=ReadArgArrayOfDouble;
     else
-      raise EJOBBridge.Create('unknown arg type '+IntToStr(aType));
+      raise EJOBBridge.Create('20220825000852: unknown arg type '+IntToStr(aType));
     end;
   end;
 
@@ -652,6 +654,7 @@ var
 begin
   p:=ArgsP;
   Cnt:=View.getUInt8(p);
+  //writeln('TJSObjectBridge.GetInvokeArguments Cnt=',Cnt);
   inc(p);
   for i:=0 to Cnt-1 do
   begin

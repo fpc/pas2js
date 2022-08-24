@@ -974,7 +974,7 @@ function parseFloat(s: String): double; overload; external name 'parseFloat'; //
 
 function hasString(const v: JSValue): boolean; external name 'rtl.hasString';// isString(v) and v<>''
 function hasValue(const v: JSValue): boolean; assembler; // returns the JS definition of if(v): v is not false, undefined, null, 0, NaN, or the empty string. Note: JS if(new Boolean(false)) returns true.
-function &in(const keyName: String; const &object: TJSObject): Boolean; assembler;
+function jsIn(const keyName: String; const &object: TJSObject): Boolean; assembler;
 function isArray(const v: JSValue): boolean; external name 'rtl.isArray';
 function isBoolean(const v: JSValue): boolean; assembler;
 function isDate(const v: JSValue): boolean; assembler;
@@ -1059,7 +1059,7 @@ asm
   if(v){ return true; } else { return false; };
 end;
 
-function &in(const keyName: String; const &object: TJSObject): Boolean; assembler;
+function jsIn(const keyName: String; const &object: TJSObject): Boolean; assembler;
 asm
   return keyName in object;
 end;

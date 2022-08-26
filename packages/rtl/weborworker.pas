@@ -1001,6 +1001,24 @@ type
     property subtle : TJSSubtleCrypto Read Fsubtle;
   end;
 
+  TJSEventSourceOptions = class external name 'Object' (TJSObject)
+    withCredentials: boolean;
+  end;
+
+  TJSEventSource = class external name 'EventSource' (TJSEventTarget)
+  Private
+    FReadyState : Integer; external name 'readyState';
+    fURL : String; external name 'url';
+    fwithCredentials : Boolean; external name 'withCredentials';
+  Public
+    constructor new(aURL : String);
+    constructor new(aURL : String; options: TJSEventSourceOptions);
+    procedure close;
+    property readyState : Integer Read FReadyState;
+    property url : String Read fURL;
+    property withCredentials: boolean Read FwithCredentials;
+  end;
+
 
   { ----------------------------------------------------------------------
     Service Worker

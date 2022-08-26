@@ -345,6 +345,8 @@ Type
   TJSResponse = class;
   IJSHeaders = interface;
   TJSHeaders = class;
+  IJSRequest = interface;
+  TJSRequest = class;
   TJSEventListenerOptions = TJOB_Dictionary;
   TJSAddEventListenerOptions = TJOB_Dictionary;
   TJSGetRootNodeOptions = TJOB_Dictionary;
@@ -384,6 +386,7 @@ Type
   TJSImageBitmapOptions = TJOB_Dictionary;
   TJSMultiCacheQueryOptions = TJOB_Dictionary;
   TJSResponseInit = TJOB_Dictionary;
+  TJSRequestInit = TJOB_Dictionary;
   TVisibilityState = UnicodeString;
   TDocumentAutoplayPolicy = UnicodeString;
   TFlashClassification = UnicodeString;
@@ -411,15 +414,20 @@ Type
   TCacheStorageNamespace = UnicodeString;
   TResponseType = UnicodeString;
   THeadersGuardEnum = UnicodeString;
+  TRequestDestination = UnicodeString;
+  TRequestMode = UnicodeString;
+  TRequestCredentials = UnicodeString;
+  TRequestCache = UnicodeString;
+  TRequestRedirect = UnicodeString;
   TEventListener = function (event: IJSEvent): Boolean of object;
-  TEventHandlerNonNull = function (event: IJSEvent): TJOB_JSValue of object;
+  TEventHandlerNonNull = function (event: IJSEvent): Variant of object;
   TEventHandler = TEventHandlerNonNull;
   TOnBeforeUnloadEventHandlerNonNull = function (event: IJSEvent): UnicodeString of object;
   TOnBeforeUnloadEventHandler = TOnBeforeUnloadEventHandlerNonNull;
-  TOnErrorEventHandlerNonNull = function (event: TJOB_JSValue; const source: UnicodeString; lineno: LongWord; column: LongWord; error: TJOB_JSValue): TJOB_JSValue of object;
+  TOnErrorEventHandlerNonNull = function (const event: Variant; const source: UnicodeString; lineno: LongWord; column: LongWord; const error: Variant): Variant of object;
   TOnErrorEventHandler = TOnErrorEventHandlerNonNull;
   TApplicationCache = TJSOfflineResourceList;
-  TPromiseDocumentFlushedCallback = function : TJOB_JSValue of object;
+  TPromiseDocumentFlushedCallback = function : Variant of object;
   TCustomElementCreationCallback = procedure (const name: UnicodeString) of object;
   TLifecycleConnectedCallback = procedure  of object;
   TLifecycleDisconnectedCallback = procedure  of object;
@@ -430,23 +438,26 @@ Type
   TLifecycleFormDisabledCallback = procedure (disabled: Boolean) of object;
   TClipboardItems = IJSArray; // array of TJSClipboardItem
   // Union of DOMString, Blob
-  TClipboardItemDataType = TJOB_JSValue;
+  TClipboardItemDataType = Variant;
   // Union of HTMLCanvasElement, OffscreenCanvas
-  TCanvasSource = TJOB_JSValue;
+  TCanvasSource = Variant;
   TPrintCallback = procedure (ctx: IJSMozCanvasPrintState) of object;
   TBlobCallback = procedure (blob: IJSBlob) of object;
   // Union of OffscreenCanvasRenderingContext2D, ImageBitmapRenderingContext, WebGLRenderingContext, WebGL2RenderingContext, GPUCanvasContext
-  TOffscreenRenderingContext = TJOB_JSValue;
+  TOffscreenRenderingContext = Variant;
   // Union of BufferSource, Blob, USVString
-  TBlobPart = TJOB_JSValue;
+  TBlobPart = Variant;
   TFileSystemEntryCallback = procedure (entry: IJSFileSystemEntry) of object;
   // Union of CanvasImageSource, Blob, CanvasRenderingContext2D, ImageData
-  TImageBitmapSource = TJOB_JSValue;
+  TImageBitmapSource = Variant;
   TImagePixelLayout = IJSArray; // array of TJSChannelPixelLayout
   // Union of Blob, Directory, USVString
-  TFormDataEntryValue = TJOB_JSValue;
+  TFormDataEntryValue = Variant;
   // Union of sequence, record
-  THeadersInit = TJOB_JSValue;
+  THeadersInit = Variant;
+  // Union of Request, USVString
+  TRequestInfo = Variant;
+  TnsContentPolicyType = LongWord;
 
   { --------------------------------------------------------------------
     TJSEventListenerOptions
@@ -723,7 +734,7 @@ Type
     --------------------------------------------------------------------}
 
   TJSCSSStyleSheetInitRec = record
-    media: TJOB_JSValue;
+    media: Variant;
     disabled: Boolean;
     baseURL: UTF8String;
   end;
@@ -859,6 +870,23 @@ Type
     status: Word;
     statusText: UnicodeString;
     headers: THeadersInit;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSRequestInit
+    --------------------------------------------------------------------}
+
+  TJSRequestInitRec = record
+    method: UnicodeString;
+    headers: THeadersInit;
+    referrer: UnicodeString;
+    referrerPolicy: TReferrerPolicy;
+    mode: TRequestMode;
+    credentials: TRequestCredentials;
+    cache: TRequestCache;
+    redirect: TRequestRedirect;
+    integrity: UnicodeString;
+    mozErrors: Boolean;
   end;
 
   { --------------------------------------------------------------------
@@ -2151,43 +2179,43 @@ Type
     --------------------------------------------------------------------}
 
   IJSHistory = interface(IJSObject)
-    ['{D1662DAB-C089-3BB4-B798-0ADFC0728031}']
+    ['{D1662DB6-C3C1-3599-A5A3-E2DFC0728031}']
     function _Getlength_: LongWord;
     function _GetscrollRestoration: TScrollRestoration;
-    function _Getstate: TJOB_JSValue;
+    function _Getstate: Variant;
     procedure _SetscrollRestoration(const aValue: TScrollRestoration);
     procedure go(aDelta: Integer); overload;
     procedure go; overload;
     procedure back;
     procedure forward;
-    procedure pushState(aData: TJOB_JSValue; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
-    procedure pushState(aData: TJOB_JSValue; const aTitle: UnicodeString); overload;
-    procedure replaceState(aData: TJOB_JSValue; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
-    procedure replaceState(aData: TJOB_JSValue; const aTitle: UnicodeString); overload;
+    procedure pushState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
+    procedure pushState(const aData: Variant; const aTitle: UnicodeString); overload;
+    procedure replaceState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
+    procedure replaceState(const aData: Variant; const aTitle: UnicodeString); overload;
     property length_: LongWord read _Getlength_;
     property scrollRestoration: TScrollRestoration read _GetscrollRestoration write _SetscrollRestoration;
-    property state: TJOB_JSValue read _Getstate;
+    property state: Variant read _Getstate;
   end;
 
   TJSHistory = class(TJSObject,IJSHistory)
   Private
     function _Getlength_: LongWord;
     function _GetscrollRestoration: TScrollRestoration;
-    function _Getstate: TJOB_JSValue;
+    function _Getstate: Variant;
     procedure _SetscrollRestoration(const aValue: TScrollRestoration);
   Public
     procedure go(aDelta: Integer); overload;
     procedure go; overload;
     procedure back;
     procedure forward;
-    procedure pushState(aData: TJOB_JSValue; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
-    procedure pushState(aData: TJOB_JSValue; const aTitle: UnicodeString); overload;
-    procedure replaceState(aData: TJOB_JSValue; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
-    procedure replaceState(aData: TJOB_JSValue; const aTitle: UnicodeString); overload;
+    procedure pushState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
+    procedure pushState(const aData: Variant; const aTitle: UnicodeString); overload;
+    procedure replaceState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
+    procedure replaceState(const aData: Variant; const aTitle: UnicodeString); overload;
     class function Cast(Intf: IJSObject): IJSHistory;
     property length_: LongWord read _Getlength_;
     property scrollRestoration: TScrollRestoration read _GetscrollRestoration write _SetscrollRestoration;
-    property state: TJOB_JSValue read _Getstate;
+    property state: Variant read _Getstate;
   end;
 
   { --------------------------------------------------------------------
@@ -2197,7 +2225,7 @@ Type
   IJSCustomElementRegistry = interface(IJSObject)
     ['{50551E84-59A5-3976-9ECE-78DF21CD10F1}']
     procedure setElementCreationCallback(const aName: UnicodeString; const aCallback: TCustomElementCreationCallback);
-    function get(const aName: UnicodeString): TJOB_JSValue;
+    function get(const aName: UnicodeString): Variant;
     procedure upgrade(aRoot: IJSNode);
   end;
 
@@ -2205,7 +2233,7 @@ Type
   Private
   Public
     procedure setElementCreationCallback(const aName: UnicodeString; const aCallback: TCustomElementCreationCallback);
-    function get(const aName: UnicodeString): TJOB_JSValue;
+    function get(const aName: UnicodeString): Variant;
     procedure upgrade(aRoot: IJSNode);
     class function Cast(Intf: IJSObject): IJSCustomElementRegistry;
   end;
@@ -2235,7 +2263,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSNavigator = interface(IJSObject)
-    ['{EC31AA97-2FBB-3349-8E7A-B2E745FFA21D}']
+    ['{0FE2120F-0AF9-305D-A79C-770FB94061E6}']
     function _GetpdfViewerEnabled: Boolean;
     function _GetdoNotTrack: UnicodeString;
     function _GetglobalPrivacyControl: Boolean;
@@ -2265,6 +2293,8 @@ Type
     procedure setVibrationPermission(aPermitted: Boolean; aPersistent: Boolean); overload;
     procedure setVibrationPermission(aPermitted: Boolean); overload;
     function javaEnabled: Boolean;
+    function share(const aData: TJSShareData): IJSPromise; overload; // Promise<void>
+    function share: IJSPromise; overload; // Promise<void>
     function canShare(const aData: TJSShareData): Boolean; overload;
     function canShare: Boolean; overload;
     function taintEnabled: Boolean;
@@ -2329,6 +2359,8 @@ Type
     procedure setVibrationPermission(aPermitted: Boolean; aPersistent: Boolean); overload;
     procedure setVibrationPermission(aPermitted: Boolean); overload;
     function javaEnabled: Boolean;
+    function share(const aData: TJSShareData): IJSPromise; overload; // Promise<void>
+    function share: IJSPromise; overload; // Promise<void>
     function canShare(const aData: TJSShareData): Boolean; overload;
     function canShare: Boolean; overload;
     function taintEnabled: Boolean;
@@ -2759,9 +2791,10 @@ Type
     --------------------------------------------------------------------}
 
   IJSClipboardItem = interface(IJSObject)
-    ['{30F7800A-CF52-3002-A893-0A382C27AF19}']
+    ['{17F2DDE2-C5B3-34A6-AD62-082503019844}']
     function _GetpresentationStyle: TPresentationStyle;
     function _Gettypes: TUnicodeStringDynArray;
+    function getType(const aType_: UnicodeString): IJSPromise; // Promise<Blob>
     property presentationStyle: TPresentationStyle read _GetpresentationStyle;
     property types: TUnicodeStringDynArray read _Gettypes;
   end;
@@ -2771,6 +2804,7 @@ Type
     function _GetpresentationStyle: TPresentationStyle;
     function _Gettypes: TUnicodeStringDynArray;
   Public
+    function getType(const aType_: UnicodeString): IJSPromise; // Promise<Blob>
     class function Cast(Intf: IJSObject): IJSClipboardItem;
     property presentationStyle: TPresentationStyle read _GetpresentationStyle;
     property types: TUnicodeStringDynArray read _Gettypes;
@@ -2911,9 +2945,9 @@ Type
   IJSHTMLAllCollection = interface(IJSObject)
     ['{B22722E5-F868-3D8D-8C1A-551B6C97F66B}']
     function _Getlength_: LongWord;
-    function namedItem(const aName: UnicodeString): TJOB_JSValue;
-    function item(const aNameOrIndex: UnicodeString): TJOB_JSValue; overload;
-    function item: TJOB_JSValue; overload;
+    function namedItem(const aName: UnicodeString): Variant;
+    function item(const aNameOrIndex: UnicodeString): Variant; overload;
+    function item: Variant; overload;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -2921,9 +2955,9 @@ Type
   Private
     function _Getlength_: LongWord;
   Public
-    function namedItem(const aName: UnicodeString): TJOB_JSValue;
-    function item(const aNameOrIndex: UnicodeString): TJOB_JSValue; overload;
-    function item: TJOB_JSValue; overload;
+    function namedItem(const aName: UnicodeString): Variant;
+    function item(const aNameOrIndex: UnicodeString): Variant; overload;
+    function item: Variant; overload;
     class function Cast(Intf: IJSObject): IJSHTMLAllCollection;
     property length_: LongWord read _Getlength_;
   end;
@@ -4319,7 +4353,7 @@ Type
   TBlobPartDynArray = IJSArray; // array of TBlobPart
 
   IJSBlob = interface(IJSObject)
-    ['{3DBE6824-1548-3683-832A-6E8BE1C6CFAC}']
+    ['{17C0A871-D4CB-3D45-AAD3-B192AD326428}']
     function _Getsize: QWord;
     function _Gettype_: UnicodeString;
     function _GetblobImplType: UnicodeString;
@@ -4327,6 +4361,8 @@ Type
     function slice: IJSBlob; overload;
     function slice(aStart: Int64): IJSBlob; overload;
     function slice(aStart: Int64; aEnd_: Int64): IJSBlob; overload;
+    function text: IJSPromise; // Promise<USVString>
+    function arrayBuffer: IJSPromise; // Promise<ArrayBuffer>
     property size: QWord read _Getsize;
     property type_: UnicodeString read _Gettype_;
     property blobImplType: UnicodeString read _GetblobImplType;
@@ -4342,6 +4378,8 @@ Type
     function slice: IJSBlob; overload;
     function slice(aStart: Int64): IJSBlob; overload;
     function slice(aStart: Int64; aEnd_: Int64): IJSBlob; overload;
+    function text: IJSPromise; // Promise<USVString>
+    function arrayBuffer: IJSPromise; // Promise<ArrayBuffer>
     class function Cast(Intf: IJSObject): IJSBlob;
     property size: QWord read _Getsize;
     property type_: UnicodeString read _Gettype_;
@@ -4533,26 +4571,30 @@ Type
     --------------------------------------------------------------------}
 
   IJSWindowOrWorkerGlobalScope = interface(IJSObject)
-    ['{A638F512-23A4-3CE5-9F80-7BDB74A6E1BB}']
+    ['{F4157D46-BE2F-30B0-B211-9EEDB8E6FD87}']
     function _Getorigin: UnicodeString;
     function _GetcrossOriginIsolated: Boolean;
     function _GetisSecureContext: Boolean;
     function _Getcaches: IJSCacheStorage;
-    procedure reportError(aE: TJOB_JSValue);
+    procedure reportError(const aE: Variant);
     function btoa(const aBtoa: UnicodeString): UnicodeString;
     function atob(const _atob: UnicodeString): UnicodeString;
-    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
     function setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
-    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
     function setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
     procedure clearTimeout(aHandle: Integer); overload;
     procedure clearTimeout; overload;
-    function setInterval(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
     function setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
-    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
     function setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
     procedure clearInterval(aHandle: Integer); overload;
     procedure clearInterval; overload;
+    function fetch(aInput: IJSRequest; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
+    function fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
     property origin: UnicodeString read _Getorigin;
     property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
     property isSecureContext: Boolean read _GetisSecureContext;
@@ -4566,21 +4608,25 @@ Type
     function _GetisSecureContext: Boolean;
     function _Getcaches: IJSCacheStorage;
   Public
-    procedure reportError(aE: TJOB_JSValue);
+    procedure reportError(const aE: Variant);
     function btoa(const aBtoa: UnicodeString): UnicodeString;
     function atob(const _atob: UnicodeString): UnicodeString;
-    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
     function setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
-    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
     function setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
     procedure clearTimeout(aHandle: Integer); overload;
     procedure clearTimeout; overload;
-    function setInterval(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
     function setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
-    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
     function setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
     procedure clearInterval(aHandle: Integer); overload;
     procedure clearInterval; overload;
+    function fetch(aInput: IJSRequest; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
+    function fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
     class function Cast(Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
     property origin: UnicodeString read _Getorigin;
     property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
@@ -4593,12 +4639,16 @@ Type
     --------------------------------------------------------------------}
 
   IJSCacheStorage = interface(IJSObject)
-    ['{E6CE12C8-9006-3FF9-944A-1ED81AA2A621}']
+    ['{F92A12C8-9006-3FF9-94FA-0F62B48ACA3E}']
+    function has(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
+    function delete(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
   end;
 
   TJSCacheStorage = class(TJSObject,IJSCacheStorage)
   Private
   Public
+    function has(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
+    function delete(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
     class function Cast(Intf: IJSObject): IJSCacheStorage;
   end;
 
@@ -4607,7 +4657,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSResponse = interface(IJSObject)
-    ['{1C2F3A3B-95B8-328C-AF98-F7FD8DBAB69C}']
+    ['{445D908D-32B0-3AAF-86EC-448A570F0A7C}']
     function _Gettype_: TResponseType;
     function _Geturl: UnicodeString;
     function _Getredirected: Boolean;
@@ -4621,7 +4671,7 @@ Type
     function redirect(const aUrl: UnicodeString): IJSResponse; overload;
     function clone: IJSResponse;
     function cloneUnfiltered: IJSResponse;
-    function json: IJSPromise; overload;
+    function json: IJSPromise; // Promise<JSON>
     property type_: TResponseType read _Gettype_;
     property url: UnicodeString read _Geturl;
     property redirected: Boolean read _Getredirected;
@@ -4631,8 +4681,6 @@ Type
     property headers: IJSHeaders read _Getheaders;
     property hasCacheInfoChannel: Boolean read _GethasCacheInfoChannel;
   end;
-
-  { TJSResponse }
 
   TJSResponse = class(TJSObject,IJSResponse)
   Private
@@ -4650,7 +4698,7 @@ Type
     function redirect(const aUrl: UnicodeString): IJSResponse; overload;
     function clone: IJSResponse;
     function cloneUnfiltered: IJSResponse;
-    function json: IJSPromise; overload;
+    function json: IJSPromise; // Promise<JSON>
     class function Cast(Intf: IJSObject): IJSResponse;
     property type_: TResponseType read _Gettype_;
     property url: UnicodeString read _Geturl;
@@ -4692,6 +4740,72 @@ Type
     procedure set_(const aName: UnicodeString; const aValue: UnicodeString);
     class function Cast(Intf: IJSObject): IJSHeaders;
     property guard: THeadersGuardEnum read _Getguard write _Setguard;
+  end;
+
+  { --------------------------------------------------------------------
+    TJSRequest
+    --------------------------------------------------------------------}
+
+  IJSRequest = interface(IJSObject)
+    ['{9FBDBF75-4029-3E00-B9FA-225495299639}']
+    function _Getmethod: UnicodeString;
+    function _Geturl: UnicodeString;
+    function _Getheaders: IJSHeaders;
+    function _Getdestination: TRequestDestination;
+    function _Getreferrer: UnicodeString;
+    function _GetreferrerPolicy: TReferrerPolicy;
+    function _Getmode: TRequestMode;
+    function _Getcredentials: TRequestCredentials;
+    function _Getcache: TRequestCache;
+    function _Getredirect: TRequestRedirect;
+    function _Getintegrity: UnicodeString;
+    function _GetmozErrors: Boolean;
+    function clone: IJSRequest;
+    procedure overrideContentPolicyType(aContext: TnsContentPolicyType);
+    property method: UnicodeString read _Getmethod;
+    property url: UnicodeString read _Geturl;
+    property headers: IJSHeaders read _Getheaders;
+    property destination: TRequestDestination read _Getdestination;
+    property referrer: UnicodeString read _Getreferrer;
+    property referrerPolicy: TReferrerPolicy read _GetreferrerPolicy;
+    property mode: TRequestMode read _Getmode;
+    property credentials: TRequestCredentials read _Getcredentials;
+    property cache: TRequestCache read _Getcache;
+    property redirect: TRequestRedirect read _Getredirect;
+    property integrity: UnicodeString read _Getintegrity;
+    property mozErrors: Boolean read _GetmozErrors;
+  end;
+
+  TJSRequest = class(TJSObject,IJSRequest)
+  Private
+    function _Getmethod: UnicodeString;
+    function _Geturl: UnicodeString;
+    function _Getheaders: IJSHeaders;
+    function _Getdestination: TRequestDestination;
+    function _Getreferrer: UnicodeString;
+    function _GetreferrerPolicy: TReferrerPolicy;
+    function _Getmode: TRequestMode;
+    function _Getcredentials: TRequestCredentials;
+    function _Getcache: TRequestCache;
+    function _Getredirect: TRequestRedirect;
+    function _Getintegrity: UnicodeString;
+    function _GetmozErrors: Boolean;
+  Public
+    function clone: IJSRequest;
+    procedure overrideContentPolicyType(aContext: TnsContentPolicyType);
+    class function Cast(Intf: IJSObject): IJSRequest;
+    property method: UnicodeString read _Getmethod;
+    property url: UnicodeString read _Geturl;
+    property headers: IJSHeaders read _Getheaders;
+    property destination: TRequestDestination read _Getdestination;
+    property referrer: UnicodeString read _Getreferrer;
+    property referrerPolicy: TReferrerPolicy read _GetreferrerPolicy;
+    property mode: TRequestMode read _Getmode;
+    property credentials: TRequestCredentials read _Getcredentials;
+    property cache: TRequestCache read _Getcache;
+    property redirect: TRequestRedirect read _Getredirect;
+    property integrity: UnicodeString read _Getintegrity;
+    property mozErrors: Boolean read _GetmozErrors;
   end;
 
   { --------------------------------------------------------------------
@@ -4827,7 +4941,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSWindow = interface(IJSEventTarget)
-    ['{E4999E14-601D-3CE8-8B92-1F5E5AA3BFA6}']
+    ['{41E10BB0-D602-35BC-8A98-548238926CAE}']
     function _Getwindow: IJSWindowProxy;
     function _Getself_: IJSWindowProxy;
     function _Getdocument: IJSDocument;
@@ -4843,29 +4957,29 @@ Type
     function _Gettoolbar: IJSBarProp;
     function _Getstatus: UnicodeString;
     function _Getclosed: Boolean;
-    function _Getevent: TJOB_JSValue;
+    function _Getevent: Variant;
     function _Getframes: IJSWindowProxy;
     function _Getlength_: LongWord;
     function _Gettop: IJSWindowProxy;
-    function _Getopener: TJOB_JSValue;
+    function _Getopener: Variant;
     function _Getparent: IJSWindowProxy;
     function _GetframeElement: IJSElement;
     function _Getnavigator: IJSNavigator;
     function _GetclientInformation: IJSNavigator;
     function _GetapplicationCache: IJSOfflineResourceList;
     function _Getscreen: IJSScreen;
-    function _GetinnerWidth: TJOB_JSValue;
-    function _GetinnerHeight: TJOB_JSValue;
+    function _GetinnerWidth: Variant;
+    function _GetinnerHeight: Variant;
     function _GetscrollX: Double;
     function _GetpageXOffset: Double;
     function _GetscrollY: Double;
     function _GetpageYOffset: Double;
     function _GetscreenLeft: Double;
     function _GetscreenTop: Double;
-    function _GetscreenX: TJOB_JSValue;
-    function _GetscreenY: TJOB_JSValue;
-    function _GetouterWidth: TJOB_JSValue;
-    function _GetouterHeight: TJOB_JSValue;
+    function _GetscreenX: Variant;
+    function _GetscreenY: Variant;
+    function _GetouterWidth: Variant;
+    function _GetouterHeight: Variant;
     function _Getcontrollers: IJSXULControllers;
     function _GetrealFrameElement: IJSElement;
     function _GetdocShell: IJSnsIDocShell;
@@ -4881,22 +4995,26 @@ Type
     function _Getcontent: IJSObject;
     function _GetwindowUtils: IJSnsIDOMWindowUtils;
     function _GetclientPrincipal: IJSPrincipal;
-    function _Getsidebar: TJOB_JSValue;
+    function _Getsidebar: Variant;
     function _GetwindowState: Word;
     function _GetisFullyOccluded: Boolean;
     function _GetbrowserDOMWindow: IJSnsIBrowserDOMWindow;
     function _GetisChromeWindow: Boolean;
     function _GetsessionStorage: IJSStorage;
     function _GetlocalStorage: IJSStorage;
+    function _Getorigin: UnicodeString;
+    function _GetcrossOriginIsolated: Boolean;
+    function _GetisSecureContext: Boolean;
+    function _Getcaches: IJSCacheStorage;
     procedure _Setname(const aValue: UnicodeString);
     procedure _Setstatus(const aValue: UnicodeString);
-    procedure _Setopener(const aValue: TJOB_JSValue);
-    procedure _SetinnerWidth(const aValue: TJOB_JSValue);
-    procedure _SetinnerHeight(const aValue: TJOB_JSValue);
-    procedure _SetscreenX(const aValue: TJOB_JSValue);
-    procedure _SetscreenY(const aValue: TJOB_JSValue);
-    procedure _SetouterWidth(const aValue: TJOB_JSValue);
-    procedure _SetouterHeight(const aValue: TJOB_JSValue);
+    procedure _Setopener(const aValue: Variant);
+    procedure _SetinnerWidth(const aValue: Variant);
+    procedure _SetinnerHeight(const aValue: Variant);
+    procedure _SetscreenX(const aValue: Variant);
+    procedure _SetscreenY(const aValue: Variant);
+    procedure _SetouterWidth(const aValue: Variant);
+    procedure _SetouterHeight(const aValue: Variant);
     procedure _SetfullScreen(const aValue: Boolean);
     procedure _SetbrowserDOMWindow(const aValue: IJSnsIBrowserDOMWindow);
     procedure close;
@@ -4915,8 +5033,8 @@ Type
     function prompt: UnicodeString; overload;
     function prompt(const aMessage: UnicodeString): UnicodeString; overload;
     procedure print;
-    procedure postMessage(aMessage: TJOB_JSValue; const aOptions: TJSWindowPostMessageOptions); overload;
-    procedure postMessage(aMessage: TJOB_JSValue); overload;
+    procedure postMessage(const aMessage: Variant; const aOptions: TJSWindowPostMessageOptions); overload;
+    procedure postMessage(const aMessage: Variant); overload;
     procedure captureEvents;
     procedure releaseEvents;
     function getSelection: IJSSelection;
@@ -4956,11 +5074,11 @@ Type
     function find(const aStr: UnicodeString; aCaseSensitive: Boolean; aBackwards: Boolean; aWrapAround: Boolean; aWholeWord: Boolean; aSearchInFrames: Boolean): Boolean; overload;
     procedure dump(const aStr: UnicodeString);
     procedure setResizable(aResizable: Boolean);
-    function openDialog(const aUrl: UnicodeString; const aName: UnicodeString; const aOptions: UnicodeString; aExtraArguments: TJOB_JSValue): IJSWindowProxy{; ToDo:varargs}; overload;
+    function openDialog(const aUrl: UnicodeString; const aName: UnicodeString; const aOptions: UnicodeString; const aExtraArguments: Variant): IJSWindowProxy{; ToDo:varargs}; overload;
     function openDialog: IJSWindowProxy{; ToDo:varargs}; overload;
     function openDialog(const aUrl: UnicodeString): IJSWindowProxy{; ToDo:varargs}; overload;
     function openDialog(const aUrl: UnicodeString; const aName: UnicodeString): IJSWindowProxy{; ToDo:varargs}; overload;
-    function getInterface(aIid: TJOB_JSValue): TJOB_JSValue;
+    function getInterface(const aIid: Variant): Variant;
     function shouldReportForServiceWorkerScope(const aScope: UnicodeString): Boolean;
     procedure getAttention;
     procedure getAttentionWithCycleCount(aCycleCount: Integer);
@@ -4971,10 +5089,29 @@ Type
     function getWorkspaceID: UnicodeString;
     procedure moveToWorkspace(const aWorkspaceID: UnicodeString);
     procedure notifyDefaultButtonLoaded(aDefaultButton: IJSElement);
+    function promiseDocumentFlushed(const aCallback: TPromiseDocumentFlushedCallback): IJSPromise; // Promise<any>
     procedure cancelIdleCallback(aHandle: LongWord);
     function getRegionalPrefsLocales: TUnicodeStringDynArray;
     function getWebExposedLocales: TUnicodeStringDynArray;
-    function fetch(const URL: UnicodeString): IJSPromise;
+    procedure reportError(const aE: Variant);
+    function btoa(const aBtoa: UnicodeString): UnicodeString;
+    function atob(const a_atob: UnicodeString): UnicodeString;
+    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
+    function setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearTimeout(aHandle: Integer); overload;
+    procedure clearTimeout; overload;
+    function setInterval(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
+    function setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearInterval(aHandle: Integer); overload;
+    procedure clearInterval; overload;
+    function fetch(aInput: IJSRequest; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
+    function fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
     property window: IJSWindowProxy read _Getwindow;
     property self_: IJSWindowProxy read _Getself_;
     property document: IJSDocument read _Getdocument;
@@ -4990,29 +5127,29 @@ Type
     property toolbar: IJSBarProp read _Gettoolbar;
     property status: UnicodeString read _Getstatus write _Setstatus;
     property closed: Boolean read _Getclosed;
-    property event: TJOB_JSValue read _Getevent;
+    property event: Variant read _Getevent;
     property frames: IJSWindowProxy read _Getframes;
     property length_: LongWord read _Getlength_;
     property top: IJSWindowProxy read _Gettop;
-    property opener: TJOB_JSValue read _Getopener write _Setopener;
+    property opener: Variant read _Getopener write _Setopener;
     property parent: IJSWindowProxy read _Getparent;
     property frameElement: IJSElement read _GetframeElement;
     property navigator: IJSNavigator read _Getnavigator;
     property clientInformation: IJSNavigator read _GetclientInformation;
     property applicationCache: IJSOfflineResourceList read _GetapplicationCache;
     property screen: IJSScreen read _Getscreen;
-    property innerWidth: TJOB_JSValue read _GetinnerWidth write _SetinnerWidth;
-    property innerHeight: TJOB_JSValue read _GetinnerHeight write _SetinnerHeight;
+    property innerWidth: Variant read _GetinnerWidth write _SetinnerWidth;
+    property innerHeight: Variant read _GetinnerHeight write _SetinnerHeight;
     property scrollX: Double read _GetscrollX;
     property pageXOffset: Double read _GetpageXOffset;
     property scrollY: Double read _GetscrollY;
     property pageYOffset: Double read _GetpageYOffset;
     property screenLeft: Double read _GetscreenLeft;
     property screenTop: Double read _GetscreenTop;
-    property screenX: TJOB_JSValue read _GetscreenX write _SetscreenX;
-    property screenY: TJOB_JSValue read _GetscreenY write _SetscreenY;
-    property outerWidth: TJOB_JSValue read _GetouterWidth write _SetouterWidth;
-    property outerHeight: TJOB_JSValue read _GetouterHeight write _SetouterHeight;
+    property screenX: Variant read _GetscreenX write _SetscreenX;
+    property screenY: Variant read _GetscreenY write _SetscreenY;
+    property outerWidth: Variant read _GetouterWidth write _SetouterWidth;
+    property outerHeight: Variant read _GetouterHeight write _SetouterHeight;
     property controllers: IJSXULControllers read _Getcontrollers;
     property realFrameElement: IJSElement read _GetrealFrameElement;
     property docShell: IJSnsIDocShell read _GetdocShell;
@@ -5033,7 +5170,7 @@ Type
     property content: IJSObject read _Getcontent;
     property windowUtils: IJSnsIDOMWindowUtils read _GetwindowUtils;
     property clientPrincipal: IJSPrincipal read _GetclientPrincipal;
-    property sidebar: TJOB_JSValue read _Getsidebar;
+    property sidebar: Variant read _Getsidebar;
     property windowState: Word read _GetwindowState;
     property isFullyOccluded: Boolean read _GetisFullyOccluded;
     property browserDOMWindow: IJSnsIBrowserDOMWindow read _GetbrowserDOMWindow write _SetbrowserDOMWindow;
@@ -5152,9 +5289,11 @@ Type
     // property ongamepaddisconnected: TEventHandler read _Getongamepaddisconnected write _Setongamepaddisconnected;
     property sessionStorage: IJSStorage read _GetsessionStorage;
     property localStorage: IJSStorage read _GetlocalStorage;
+    property origin: UnicodeString read _Getorigin;
+    property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
+    property isSecureContext: Boolean read _GetisSecureContext;
+    property caches: IJSCacheStorage read _Getcaches;
   end;
-
-  { TJSWindow }
 
   TJSWindow = class(TJSEventTarget,IJSWindow)
   Private
@@ -5173,29 +5312,29 @@ Type
     function _Gettoolbar: IJSBarProp;
     function _Getstatus: UnicodeString;
     function _Getclosed: Boolean;
-    function _Getevent: TJOB_JSValue;
+    function _Getevent: Variant;
     function _Getframes: IJSWindowProxy;
     function _Getlength_: LongWord;
     function _Gettop: IJSWindowProxy;
-    function _Getopener: TJOB_JSValue;
+    function _Getopener: Variant;
     function _Getparent: IJSWindowProxy;
     function _GetframeElement: IJSElement;
     function _Getnavigator: IJSNavigator;
     function _GetclientInformation: IJSNavigator;
     function _GetapplicationCache: IJSOfflineResourceList;
     function _Getscreen: IJSScreen;
-    function _GetinnerWidth: TJOB_JSValue;
-    function _GetinnerHeight: TJOB_JSValue;
+    function _GetinnerWidth: Variant;
+    function _GetinnerHeight: Variant;
     function _GetscrollX: Double;
     function _GetpageXOffset: Double;
     function _GetscrollY: Double;
     function _GetpageYOffset: Double;
     function _GetscreenLeft: Double;
     function _GetscreenTop: Double;
-    function _GetscreenX: TJOB_JSValue;
-    function _GetscreenY: TJOB_JSValue;
-    function _GetouterWidth: TJOB_JSValue;
-    function _GetouterHeight: TJOB_JSValue;
+    function _GetscreenX: Variant;
+    function _GetscreenY: Variant;
+    function _GetouterWidth: Variant;
+    function _GetouterHeight: Variant;
     function _Getcontrollers: IJSXULControllers;
     function _GetrealFrameElement: IJSElement;
     function _GetdocShell: IJSnsIDocShell;
@@ -5211,22 +5350,26 @@ Type
     function _Getcontent: IJSObject;
     function _GetwindowUtils: IJSnsIDOMWindowUtils;
     function _GetclientPrincipal: IJSPrincipal;
-    function _Getsidebar: TJOB_JSValue;
+    function _Getsidebar: Variant;
     function _GetwindowState: Word;
     function _GetisFullyOccluded: Boolean;
     function _GetbrowserDOMWindow: IJSnsIBrowserDOMWindow;
     function _GetisChromeWindow: Boolean;
     function _GetsessionStorage: IJSStorage;
     function _GetlocalStorage: IJSStorage;
+    function _Getorigin: UnicodeString;
+    function _GetcrossOriginIsolated: Boolean;
+    function _GetisSecureContext: Boolean;
+    function _Getcaches: IJSCacheStorage;
     procedure _Setname(const aValue: UnicodeString);
     procedure _Setstatus(const aValue: UnicodeString);
-    procedure _Setopener(const aValue: TJOB_JSValue);
-    procedure _SetinnerWidth(const aValue: TJOB_JSValue);
-    procedure _SetinnerHeight(const aValue: TJOB_JSValue);
-    procedure _SetscreenX(const aValue: TJOB_JSValue);
-    procedure _SetscreenY(const aValue: TJOB_JSValue);
-    procedure _SetouterWidth(const aValue: TJOB_JSValue);
-    procedure _SetouterHeight(const aValue: TJOB_JSValue);
+    procedure _Setopener(const aValue: Variant);
+    procedure _SetinnerWidth(const aValue: Variant);
+    procedure _SetinnerHeight(const aValue: Variant);
+    procedure _SetscreenX(const aValue: Variant);
+    procedure _SetscreenY(const aValue: Variant);
+    procedure _SetouterWidth(const aValue: Variant);
+    procedure _SetouterHeight(const aValue: Variant);
     procedure _SetfullScreen(const aValue: Boolean);
     procedure _SetbrowserDOMWindow(const aValue: IJSnsIBrowserDOMWindow);
   Public
@@ -5252,8 +5395,8 @@ Type
     function prompt: UnicodeString; overload;
     function prompt(const aMessage: UnicodeString): UnicodeString; overload;
     procedure print;
-    procedure postMessage(aMessage: TJOB_JSValue; const aOptions: TJSWindowPostMessageOptions); overload;
-    procedure postMessage(aMessage: TJOB_JSValue); overload;
+    procedure postMessage(const aMessage: Variant; const aOptions: TJSWindowPostMessageOptions); overload;
+    procedure postMessage(const aMessage: Variant); overload;
     procedure captureEvents;
     procedure releaseEvents;
     function getSelection: IJSSelection;
@@ -5293,11 +5436,11 @@ Type
     function find(const aStr: UnicodeString; aCaseSensitive: Boolean; aBackwards: Boolean; aWrapAround: Boolean; aWholeWord: Boolean; aSearchInFrames: Boolean): Boolean; overload;
     procedure dump(const aStr: UnicodeString);
     procedure setResizable(aResizable: Boolean);
-    function openDialog(const aUrl: UnicodeString; const aName: UnicodeString; const aOptions: UnicodeString; aExtraArguments: TJOB_JSValue): IJSWindowProxy{; ToDo:varargs}; overload;
+    function openDialog(const aUrl: UnicodeString; const aName: UnicodeString; const aOptions: UnicodeString; const aExtraArguments: Variant): IJSWindowProxy{; ToDo:varargs}; overload;
     function openDialog: IJSWindowProxy{; ToDo:varargs}; overload;
     function openDialog(const aUrl: UnicodeString): IJSWindowProxy{; ToDo:varargs}; overload;
     function openDialog(const aUrl: UnicodeString; const aName: UnicodeString): IJSWindowProxy{; ToDo:varargs}; overload;
-    function getInterface(aIid: TJOB_JSValue): TJOB_JSValue;
+    function getInterface(const aIid: Variant): Variant;
     function shouldReportForServiceWorkerScope(const aScope: UnicodeString): Boolean;
     procedure getAttention;
     procedure getAttentionWithCycleCount(aCycleCount: Integer);
@@ -5308,10 +5451,29 @@ Type
     function getWorkspaceID: UnicodeString;
     procedure moveToWorkspace(const aWorkspaceID: UnicodeString);
     procedure notifyDefaultButtonLoaded(aDefaultButton: IJSElement);
+    function promiseDocumentFlushed(const aCallback: TPromiseDocumentFlushedCallback): IJSPromise; // Promise<any>
     procedure cancelIdleCallback(aHandle: LongWord);
     function getRegionalPrefsLocales: TUnicodeStringDynArray;
     function getWebExposedLocales: TUnicodeStringDynArray;
-    function fetch(const URL: UnicodeString): IJSPromise;
+    procedure reportError(const aE: Variant);
+    function btoa(const aBtoa: UnicodeString): UnicodeString;
+    function atob(const a_atob: UnicodeString): UnicodeString;
+    function setTimeout(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
+    function setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
+    function setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearTimeout(aHandle: Integer); overload;
+    procedure clearTimeout; overload;
+    function setInterval(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
+    function setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
+    function setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+    procedure clearInterval(aHandle: Integer); overload;
+    procedure clearInterval; overload;
+    function fetch(aInput: IJSRequest; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+    function fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
+    function fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
     class function Cast(Intf: IJSObject): IJSWindow;
     property window: IJSWindowProxy read _Getwindow;
     property self_: IJSWindowProxy read _Getself_;
@@ -5328,29 +5490,29 @@ Type
     property toolbar: IJSBarProp read _Gettoolbar;
     property status: UnicodeString read _Getstatus write _Setstatus;
     property closed: Boolean read _Getclosed;
-    property event: TJOB_JSValue read _Getevent;
+    property event: Variant read _Getevent;
     property frames: IJSWindowProxy read _Getframes;
     property length_: LongWord read _Getlength_;
     property top: IJSWindowProxy read _Gettop;
-    property opener: TJOB_JSValue read _Getopener write _Setopener;
+    property opener: Variant read _Getopener write _Setopener;
     property parent: IJSWindowProxy read _Getparent;
     property frameElement: IJSElement read _GetframeElement;
     property navigator: IJSNavigator read _Getnavigator;
     property clientInformation: IJSNavigator read _GetclientInformation;
     property applicationCache: IJSOfflineResourceList read _GetapplicationCache;
     property screen: IJSScreen read _Getscreen;
-    property innerWidth: TJOB_JSValue read _GetinnerWidth write _SetinnerWidth;
-    property innerHeight: TJOB_JSValue read _GetinnerHeight write _SetinnerHeight;
+    property innerWidth: Variant read _GetinnerWidth write _SetinnerWidth;
+    property innerHeight: Variant read _GetinnerHeight write _SetinnerHeight;
     property scrollX: Double read _GetscrollX;
     property pageXOffset: Double read _GetpageXOffset;
     property scrollY: Double read _GetscrollY;
     property pageYOffset: Double read _GetpageYOffset;
     property screenLeft: Double read _GetscreenLeft;
     property screenTop: Double read _GetscreenTop;
-    property screenX: TJOB_JSValue read _GetscreenX write _SetscreenX;
-    property screenY: TJOB_JSValue read _GetscreenY write _SetscreenY;
-    property outerWidth: TJOB_JSValue read _GetouterWidth write _SetouterWidth;
-    property outerHeight: TJOB_JSValue read _GetouterHeight write _SetouterHeight;
+    property screenX: Variant read _GetscreenX write _SetscreenX;
+    property screenY: Variant read _GetscreenY write _SetscreenY;
+    property outerWidth: Variant read _GetouterWidth write _SetouterWidth;
+    property outerHeight: Variant read _GetouterHeight write _SetouterHeight;
     property controllers: IJSXULControllers read _Getcontrollers;
     property realFrameElement: IJSElement read _GetrealFrameElement;
     property docShell: IJSnsIDocShell read _GetdocShell;
@@ -5371,7 +5533,7 @@ Type
     property content: IJSObject read _Getcontent;
     property windowUtils: IJSnsIDOMWindowUtils read _GetwindowUtils;
     property clientPrincipal: IJSPrincipal read _GetclientPrincipal;
-    property sidebar: TJOB_JSValue read _Getsidebar;
+    property sidebar: Variant read _Getsidebar;
     property windowState: Word read _GetwindowState;
     property isFullyOccluded: Boolean read _GetisFullyOccluded;
     property browserDOMWindow: IJSnsIBrowserDOMWindow read _GetbrowserDOMWindow write _SetbrowserDOMWindow;
@@ -5490,6 +5652,10 @@ Type
     // property ongamepaddisconnected: TEventHandler read _Getongamepaddisconnected write _Setongamepaddisconnected;
     property sessionStorage: IJSStorage read _GetsessionStorage;
     property localStorage: IJSStorage read _GetlocalStorage;
+    property origin: UnicodeString read _Getorigin;
+    property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
+    property isSecureContext: Boolean read _GetisSecureContext;
+    property caches: IJSCacheStorage read _Getcaches;
   end;
 
   { --------------------------------------------------------------------
@@ -5641,13 +5807,19 @@ Type
     --------------------------------------------------------------------}
 
   IJSClipboard = interface(IJSEventTarget)
-    ['{9D1D9F4C-E0C3-3B78-AFBB-9ABDACA26E5A}']
+    ['{711ED41E-9A81-3DDD-BE2E-093DD84B76B0}']
+    function read: IJSPromise; // Promise<ClipboardItems>
+    function readText: IJSPromise; // Promise<DOMString>
+    function writeText(const aData: UnicodeString): IJSPromise; // Promise<void>
     procedure onUserReactedToPasteMenuPopup(allowed: Boolean);
   end;
 
   TJSClipboard = class(TJSEventTarget,IJSClipboard)
   Private
   Public
+    function read: IJSPromise; // Promise<ClipboardItems>
+    function readText: IJSPromise; // Promise<DOMString>
+    function writeText(const aData: UnicodeString): IJSPromise; // Promise<void>
     procedure onUserReactedToPasteMenuPopup(allowed: Boolean);
     class function Cast(Intf: IJSObject): IJSClipboard;
   end;
@@ -5729,9 +5901,10 @@ Type
     --------------------------------------------------------------------}
 
   IJSScreenOrientation = interface(IJSEventTarget)
-    ['{60123529-C46F-3B2E-910C-471EFD441E19}']
+    ['{8C5CAD7D-AC64-38CA-962E-07734C04A74B}']
     function _Gettype_: TOrientationType;
     function _Getangle: Word;
+    function lock(aOrientation: TOrientationLockType): IJSPromise; // Promise<void>
     procedure unlock;
     property type_: TOrientationType read _Gettype_;
     property angle: Word read _Getangle;
@@ -5743,6 +5916,7 @@ Type
     function _Gettype_: TOrientationType;
     function _Getangle: Word;
   Public
+    function lock(aOrientation: TOrientationLockType): IJSPromise; // Promise<void>
     procedure unlock;
     class function Cast(Intf: IJSObject): IJSScreenOrientation;
     property type_: TOrientationType read _Gettype_;
@@ -6027,7 +6201,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSCSSStyleSheet = interface(IJSStyleSheet)
-    ['{CCE1DD0C-6115-383C-95A7-FE88E67443F3}']
+    ['{8F5005E2-679C-37CB-ACCD-97056E9EB5E3}']
     function _GetownerRule: IJSCSSRule;
     function _GetcssRules: IJSCSSRuleList;
     function _GetparsingMode: TCSSStyleSheetParsingMode;
@@ -6035,6 +6209,7 @@ Type
     function insertRule(const aRule: UTF8String; aIndex: LongWord): LongWord; overload;
     function insertRule(const aRule: UTF8String): LongWord; overload;
     procedure deleteRule(aIndex: LongWord);
+    function replace(const aText: UTF8String): IJSPromise; // Promise<CSSStyleSheet>
     procedure replaceSync(const aText: UTF8String);
     procedure removeRule(aIndex: LongWord); overload;
     procedure removeRule; overload;
@@ -6058,6 +6233,7 @@ Type
     function insertRule(const aRule: UTF8String; aIndex: LongWord): LongWord; overload;
     function insertRule(const aRule: UTF8String): LongWord; overload;
     procedure deleteRule(aIndex: LongWord);
+    function replace(const aText: UTF8String): IJSPromise; // Promise<CSSStyleSheet>
     procedure replaceSync(const aText: UTF8String);
     procedure removeRule(aIndex: LongWord); overload;
     procedure removeRule; overload;
@@ -6119,14 +6295,16 @@ Type
     --------------------------------------------------------------------}
 
   IJSOffscreenCanvas = interface(IJSEventTarget)
-    ['{6F1CFA6C-A57B-3962-973F-68AF3902ED2D}']
+    ['{C09FB54C-23E8-353D-A379-4E988B607FD8}']
     function _Getwidth: LongWord;
     function _Getheight: LongWord;
     procedure _Setwidth(const aValue: LongWord);
     procedure _Setheight(const aValue: LongWord);
-    function getContext(aContextId: TOffscreenRenderingContextId; aContextOptions: TJOB_JSValue): TOffscreenRenderingContext; overload;
+    function getContext(aContextId: TOffscreenRenderingContextId; const aContextOptions: Variant): TOffscreenRenderingContext; overload;
     function getContext(aContextId: TOffscreenRenderingContextId): TOffscreenRenderingContext; overload;
     function transferToImageBitmap: IJSImageBitmap;
+    function convertToBlob(const aOptions: TJSImageEncodeOptions): IJSPromise; overload; // Promise<Blob>
+    function convertToBlob: IJSPromise; overload; // Promise<Blob>
     property width: LongWord read _Getwidth write _Setwidth;
     property height: LongWord read _Getheight write _Setheight;
     // property oncontextlost: TEventHandler read _Getoncontextlost write _Setoncontextlost;
@@ -6140,9 +6318,11 @@ Type
     procedure _Setwidth(const aValue: LongWord);
     procedure _Setheight(const aValue: LongWord);
   Public
-    function getContext(aContextId: TOffscreenRenderingContextId; aContextOptions: TJOB_JSValue): TOffscreenRenderingContext; overload;
+    function getContext(aContextId: TOffscreenRenderingContextId; const aContextOptions: Variant): TOffscreenRenderingContext; overload;
     function getContext(aContextId: TOffscreenRenderingContextId): TOffscreenRenderingContext; overload;
     function transferToImageBitmap: IJSImageBitmap;
+    function convertToBlob(const aOptions: TJSImageEncodeOptions): IJSPromise; overload; // Promise<Blob>
+    function convertToBlob: IJSPromise; overload; // Promise<Blob>
     class function Cast(Intf: IJSObject): IJSOffscreenCanvas;
     property width: LongWord read _Getwidth write _Setwidth;
     property height: LongWord read _Getheight write _Setheight;
@@ -6227,7 +6407,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSDocument = interface(IJSNode)
-    ['{83571DA0-6FFE-34FA-83C8-C58C8170FB3C}']
+    ['{5ECFD3EB-5026-3D4D-8530-2A556377D25B}']
     function _Getimplementation_: IJSDOMImplementation;
     function _GetURL: UnicodeString;
     function _GetdocumentURI: UnicodeString;
@@ -6374,7 +6554,10 @@ Type
     procedure clear;
     procedure captureEvents;
     procedure releaseEvents;
+    function exitFullscreen: IJSPromise; // Promise<void>
+    function mozCancelFullScreen: IJSPromise; // Promise<void>
     procedure exitPointerLock;
+    function addCertException(aIsTemporary: Boolean): IJSPromise; // Promise<any>
     procedure reloadWithHttpsOnlyException;
     procedure enableStyleSheetsForSet(const aName: UnicodeString);
     function caretPositionFromPoint(aX: Single; aY: Single): IJSCaretPosition;
@@ -6383,8 +6566,14 @@ Type
     function createXULElement(const aLocalName: UnicodeString; const aOptions: UnicodeString): IJSElement; overload;
     function createXULElement(const aLocalName: UnicodeString): IJSElement; overload;
     function createXULElement(const aLocalName: UnicodeString; const aOptions: TJSElementCreationOptions): IJSElement; overload;
+    function blockParsing(aPromise: IJSPromise; const aOptions: TJSBlockParsingOptions): IJSPromise; overload; // Promise<any>
+    function blockParsing(aPromise: IJSPromise): IJSPromise; overload; // Promise<any>
     procedure blockUnblockOnload(aBlock: Boolean);
     function getSelection: IJSSelection;
+    function hasStorageAccess: IJSPromise; // Promise<boolean>
+    function requestStorageAccess: IJSPromise; // Promise<void>
+    function requestStorageAccessForOrigin(const aThirdPartyOrigin: UnicodeString; aRequireUserInteraction: Boolean): IJSPromise; overload; // Promise<void>
+    function requestStorageAccessForOrigin(const aThirdPartyOrigin: UnicodeString): IJSPromise; overload; // Promise<void>
     procedure notifyUserGestureActivation;
     procedure clearUserGestureActivation;
     function consumeTransientUserGestureActivation: Boolean;
@@ -6749,7 +6938,10 @@ Type
     procedure clear;
     procedure captureEvents;
     procedure releaseEvents;
+    function exitFullscreen: IJSPromise; // Promise<void>
+    function mozCancelFullScreen: IJSPromise; // Promise<void>
     procedure exitPointerLock;
+    function addCertException(aIsTemporary: Boolean): IJSPromise; // Promise<any>
     procedure reloadWithHttpsOnlyException;
     procedure enableStyleSheetsForSet(const aName: UnicodeString);
     function caretPositionFromPoint(aX: Single; aY: Single): IJSCaretPosition;
@@ -6758,8 +6950,14 @@ Type
     function createXULElement(const aLocalName: UnicodeString; const aOptions: UnicodeString): IJSElement; overload;
     function createXULElement(const aLocalName: UnicodeString): IJSElement; overload;
     function createXULElement(const aLocalName: UnicodeString; const aOptions: TJSElementCreationOptions): IJSElement; overload;
+    function blockParsing(aPromise: IJSPromise; const aOptions: TJSBlockParsingOptions): IJSPromise; overload; // Promise<any>
+    function blockParsing(aPromise: IJSPromise): IJSPromise; overload; // Promise<any>
     procedure blockUnblockOnload(aBlock: Boolean);
     function getSelection: IJSSelection;
+    function hasStorageAccess: IJSPromise; // Promise<boolean>
+    function requestStorageAccess: IJSPromise; // Promise<void>
+    function requestStorageAccessForOrigin(const aThirdPartyOrigin: UnicodeString; aRequireUserInteraction: Boolean): IJSPromise; overload; // Promise<void>
+    function requestStorageAccessForOrigin(const aThirdPartyOrigin: UnicodeString): IJSPromise; overload; // Promise<void>
     procedure notifyUserGestureActivation;
     procedure clearUserGestureActivation;
     function consumeTransientUserGestureActivation: Boolean;
@@ -7016,7 +7214,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSElement = interface(IJSNode)
-    ['{72733125-1779-3283-A7CC-978597375199}']
+    ['{2A74209A-853D-3D96-AF41-B7825F787948}']
     function _GetnamespaceURI: UnicodeString;
     function _Getprefix: UnicodeString;
     function _GetlocalName: UnicodeString;
@@ -7121,6 +7319,8 @@ Type
     function querySelector(const aSelectors: UTF8String): IJSElement;
     function querySelectorAll(const aSelectors: UTF8String): IJSNodeList;
     function attachShadow(const aShadowRootInitDict: TJSShadowRootInit): IJSShadowRoot;
+    function requestFullscreen: IJSPromise; // Promise<void>
+    function mozRequestFullScreen: IJSPromise; // Promise<void>
     procedure requestPointerLock;
     function hasGridFragments: Boolean;
     function getElementsWithGrid: TJSElementDynArray;
@@ -7295,6 +7495,8 @@ Type
     function querySelector(const aSelectors: UTF8String): IJSElement;
     function querySelectorAll(const aSelectors: UTF8String): IJSNodeList;
     function attachShadow(const aShadowRootInitDict: TJSShadowRootInit): IJSShadowRoot;
+    function requestFullscreen: IJSPromise; // Promise<void>
+    function mozRequestFullScreen: IJSPromise; // Promise<void>
     procedure requestPointerLock;
     function hasGridFragments: Boolean;
     function getElementsWithGrid: TJSElementDynArray;
@@ -8723,12 +8925,12 @@ Type
     procedure _Setwidth(const aValue: LongWord);
     procedure _Setheight(const aValue: LongWord);
     procedure _SetmozOpaque(const aValue: Boolean);
-    function getContext(const aContextId: UnicodeString; aContextOptions: TJOB_JSValue): IJSnsISupports; overload;
+    function getContext(const aContextId: UnicodeString; const aContextOptions: Variant): IJSnsISupports; overload;
     function getContext(const aContextId: UnicodeString): IJSnsISupports; overload;
-    function toDataURL(const aType_: UnicodeString; aEncoderOptions: TJOB_JSValue): UnicodeString; overload;
+    function toDataURL(const aType_: UnicodeString; const aEncoderOptions: Variant): UnicodeString; overload;
     function toDataURL: UnicodeString; overload;
     function toDataURL(const aType_: UnicodeString): UnicodeString; overload;
-    procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString; aEncoderOptions: TJOB_JSValue); overload;
+    procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString; const aEncoderOptions: Variant); overload;
     procedure toBlob(const aCallback: TBlobCallback); overload;
     procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString); overload;
     function MozGetIPCContext(const aContextId: UnicodeString): IJSnsISupports;
@@ -8748,12 +8950,12 @@ Type
     procedure _Setheight(const aValue: LongWord);
     procedure _SetmozOpaque(const aValue: Boolean);
   Public
-    function getContext(const aContextId: UnicodeString; aContextOptions: TJOB_JSValue): IJSnsISupports; overload;
+    function getContext(const aContextId: UnicodeString; const aContextOptions: Variant): IJSnsISupports; overload;
     function getContext(const aContextId: UnicodeString): IJSnsISupports; overload;
-    function toDataURL(const aType_: UnicodeString; aEncoderOptions: TJOB_JSValue): UnicodeString; overload;
+    function toDataURL(const aType_: UnicodeString; const aEncoderOptions: Variant): UnicodeString; overload;
     function toDataURL: UnicodeString; overload;
     function toDataURL(const aType_: UnicodeString): UnicodeString; overload;
-    procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString; aEncoderOptions: TJOB_JSValue); overload;
+    procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString; const aEncoderOptions: Variant); overload;
     procedure toBlob(const aCallback: TBlobCallback); overload;
     procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString); overload;
     function MozGetIPCContext(const aContextId: UnicodeString): IJSnsISupports;
@@ -8985,7 +9187,7 @@ Type
     --------------------------------------------------------------------}
 
   IJSHTMLImageElement = interface(IJSHTMLElement)
-    ['{162A22FC-FD97-3B4C-BFB1-C54764E54E4A}']
+    ['{D6324AF8-8C98-3172-AB86-AFE8C49A5877}']
     function _Getalt: UnicodeString;
     function _Getsrc: UnicodeString;
     function _Getsrcset: UnicodeString;
@@ -9034,6 +9236,7 @@ Type
     procedure _Setsizes(const aValue: UnicodeString);
     procedure _Setlowsrc(const aValue: UnicodeString);
     procedure _SetloadingEnabled(const aValue: Boolean);
+    function decode: IJSPromise; // Promise<void>
     procedure addObserver(aObserver: IJSimgINotificationObserver);
     procedure removeObserver(aObserver: IJSimgINotificationObserver);
     function getRequest(aRequestType: Integer): IJSimgIRequest;
@@ -9126,6 +9329,7 @@ Type
       CURRENT_REQUEST = 0;
       PENDING_REQUEST = 1;
   Public
+    function decode: IJSPromise; // Promise<void>
     procedure addObserver(aObserver: IJSimgINotificationObserver);
     procedure removeObserver(aObserver: IJSimgINotificationObserver);
     function getRequest(aRequestType: Integer): IJSimgIRequest;
@@ -10125,7 +10329,7 @@ var
   event: IJSEvent;
 begin
   event:=H.GetObject(TJSEvent) as IJSEvent;
-  Result:=H.AllocJSValue(TEventHandlerNonNull(aMethod)(event));
+  Result:=H.AllocVariant(TEventHandlerNonNull(aMethod)(event));
 end;
 
 function JOBCallTOnBeforeUnloadEventHandlerNonNull(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -10138,23 +10342,23 @@ end;
 
 function JOBCallTOnErrorEventHandlerNonNull(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
 var
-  event: TJOB_JSValue;
+  event: Variant;
   source: UnicodeString;
   lineno: LongWord;
   column: LongWord;
-  error: TJOB_JSValue;
+  error: Variant;
 begin
-  event:=H.GetValue;
+  event:=H.GetVariant;
   source:=H.GetString;
   lineno:=H.GetMaxInt;
   column:=H.GetMaxInt;
-  error:=H.GetValue;
-  Result:=H.AllocJSValue(TOnErrorEventHandlerNonNull(aMethod)(event,source,lineno,column,error));
+  error:=H.GetVariant;
+  Result:=H.AllocVariant(TOnErrorEventHandlerNonNull(aMethod)(event,source,lineno,column,error));
 end;
 
 function JOBCallTPromiseDocumentFlushedCallback(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
 begin
-  Result:=H.AllocJSValue(TPromiseDocumentFlushedCallback(aMethod)());
+  Result:=H.AllocVariant(TPromiseDocumentFlushedCallback(aMethod)());
 end;
 
 function JOBCallTCustomElementCreationCallback(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -11303,9 +11507,9 @@ begin
   Result:=ReadJSPropertyUnicodeString('scrollRestoration');
 end;
 
-function TJSHistory._Getstate: TJOB_JSValue;
+function TJSHistory._Getstate: Variant;
 begin
-  Result:=ReadJSPropertyValue('state');
+  Result:=ReadJSPropertyVariant('state');
 end;
 
 procedure TJSHistory._SetscrollRestoration(const aValue: TScrollRestoration);
@@ -11333,22 +11537,22 @@ begin
   InvokeJSNoResult('forward',[]);
 end;
 
-procedure TJSHistory.pushState(aData: TJOB_JSValue; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
+procedure TJSHistory.pushState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
 begin
   InvokeJSNoResult('pushState',[aData,aTitle,aUrl]);
 end;
 
-procedure TJSHistory.pushState(aData: TJOB_JSValue; const aTitle: UnicodeString); overload;
+procedure TJSHistory.pushState(const aData: Variant; const aTitle: UnicodeString); overload;
 begin
   InvokeJSNoResult('pushState',[aData,aTitle]);
 end;
 
-procedure TJSHistory.replaceState(aData: TJOB_JSValue; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
+procedure TJSHistory.replaceState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
 begin
   InvokeJSNoResult('replaceState',[aData,aTitle,aUrl]);
 end;
 
-procedure TJSHistory.replaceState(aData: TJOB_JSValue; const aTitle: UnicodeString); overload;
+procedure TJSHistory.replaceState(const aData: Variant; const aTitle: UnicodeString); overload;
 begin
   InvokeJSNoResult('replaceState',[aData,aTitle]);
 end;
@@ -11370,9 +11574,9 @@ begin
   end;
 end;
 
-function TJSCustomElementRegistry.get(const aName: UnicodeString): TJOB_JSValue;
+function TJSCustomElementRegistry.get(const aName: UnicodeString): Variant;
 begin
-  Result:=InvokeJSValueResult('get',[aName]);
+  Result:=InvokeJSVariantResult('get',[aName]);
 end;
 
 procedure TJSCustomElementRegistry.upgrade(aRoot: IJSNode);
@@ -11543,6 +11747,16 @@ end;
 function TJSNavigator.javaEnabled: Boolean;
 begin
   Result:=InvokeJSBooleanResult('javaEnabled',[]);
+end;
+
+function TJSNavigator.share(const aData: TJSShareData): IJSPromise; overload; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('share',[aData],TJSPromise) as IJSPromise;
+end;
+
+function TJSNavigator.share: IJSPromise; overload; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('share',[],TJSPromise) as IJSPromise;
 end;
 
 function TJSNavigator.canShare(const aData: TJSShareData): Boolean; overload;
@@ -12000,6 +12214,11 @@ begin
   Result:=ReadJSPropertyObject('types',TJSArray) as TUnicodeStringDynArray;
 end;
 
+function TJSClipboardItem.getType(const aType_: UnicodeString): IJSPromise; // Promise<Blob>
+begin
+  Result:=InvokeJSObjectResult('getType',[aType_],TJSPromise) as IJSPromise;
+end;
+
 class function TJSClipboardItem.Cast(Intf: IJSObject): IJSClipboardItem;
 begin
   Result:=TJSClipboardItem.JOBCast(Intf);
@@ -12120,19 +12339,19 @@ begin
   Result:=ReadJSPropertyInt64('length');
 end;
 
-function TJSHTMLAllCollection.namedItem(const aName: UnicodeString): TJOB_JSValue;
+function TJSHTMLAllCollection.namedItem(const aName: UnicodeString): Variant;
 begin
-  Result:=InvokeJSValueResult('namedItem',[aName]);
+  Result:=InvokeJSVariantResult('namedItem',[aName]);
 end;
 
-function TJSHTMLAllCollection.item(const aNameOrIndex: UnicodeString): TJOB_JSValue; overload;
+function TJSHTMLAllCollection.item(const aNameOrIndex: UnicodeString): Variant; overload;
 begin
-  Result:=InvokeJSValueResult('item',[aNameOrIndex]);
+  Result:=InvokeJSVariantResult('item',[aNameOrIndex]);
 end;
 
-function TJSHTMLAllCollection.item: TJOB_JSValue; overload;
+function TJSHTMLAllCollection.item: Variant; overload;
 begin
-  Result:=InvokeJSValueResult('item',[]);
+  Result:=InvokeJSVariantResult('item',[]);
 end;
 
 class function TJSHTMLAllCollection.Cast(Intf: IJSObject): IJSHTMLAllCollection;
@@ -13750,6 +13969,16 @@ begin
   Result:=InvokeJSObjectResult('slice',[aStart,aEnd_],TJSBlob) as IJSBlob;
 end;
 
+function TJSBlob.text: IJSPromise; // Promise<USVString>
+begin
+  Result:=InvokeJSObjectResult('text',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSBlob.arrayBuffer: IJSPromise; // Promise<ArrayBuffer>
+begin
+  Result:=InvokeJSObjectResult('arrayBuffer',[],TJSPromise) as IJSPromise;
+end;
+
 class function TJSBlob.Cast(Intf: IJSObject): IJSBlob;
 begin
   Result:=TJSBlob.JOBCast(Intf);
@@ -13867,7 +14096,7 @@ end;
 
 function TJSFormData.get(const aName: UnicodeString): TFormDataEntryValue;
 begin
-  Result:=InvokeJSValueResult('get',[aName]);
+  Result:=InvokeJSVariantResult('get',[aName]);
 end;
 
 function TJSFormData.getAll(const aName: UnicodeString): TFormDataEntryValueDynArray;
@@ -13925,7 +14154,7 @@ begin
   Result:=ReadJSPropertyObject('caches',TJSCacheStorage) as IJSCacheStorage;
 end;
 
-procedure TJSWindowOrWorkerGlobalScope.reportError(aE: TJOB_JSValue);
+procedure TJSWindowOrWorkerGlobalScope.reportError(const aE: Variant);
 begin
   InvokeJSNoResult('reportError',[aE]);
 end;
@@ -13940,7 +14169,7 @@ begin
   Result:=InvokeJSUnicodeStringResult('atob',[_atob]);
 end;
 
-function TJSWindowOrWorkerGlobalScope.setTimeout(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+function TJSWindowOrWorkerGlobalScope.setTimeout(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
 begin
   Result:=InvokeJSLongIntResult('setTimeout',[aHandler,aTimeout,arguments]);
 end;
@@ -13950,7 +14179,7 @@ begin
   Result:=InvokeJSLongIntResult('setTimeout',[aHandler]);
 end;
 
-function TJSWindowOrWorkerGlobalScope.setTimeout(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+function TJSWindowOrWorkerGlobalScope.setTimeout(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
 begin
   Result:=InvokeJSLongIntResult('setTimeout',[aHandler,aTimeout,aUnused]);
 end;
@@ -13970,7 +14199,7 @@ begin
   InvokeJSNoResult('clearTimeout',[]);
 end;
 
-function TJSWindowOrWorkerGlobalScope.setInterval(aHandler: IJSFunction; aTimeout: Integer; arguments: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+function TJSWindowOrWorkerGlobalScope.setInterval(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
 begin
   Result:=InvokeJSLongIntResult('setInterval',[aHandler,aTimeout,arguments]);
 end;
@@ -13980,7 +14209,7 @@ begin
   Result:=InvokeJSLongIntResult('setInterval',[aHandler]);
 end;
 
-function TJSWindowOrWorkerGlobalScope.setInterval(const aHandler: UnicodeString; aTimeout: Integer; aUnused: TJOB_JSValue): Integer{; ToDo:varargs}; overload;
+function TJSWindowOrWorkerGlobalScope.setInterval(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
 begin
   Result:=InvokeJSLongIntResult('setInterval',[aHandler,aTimeout,aUnused]);
 end;
@@ -14000,9 +14229,39 @@ begin
   InvokeJSNoResult('clearInterval',[]);
 end;
 
+function TJSWindowOrWorkerGlobalScope.fetch(aInput: IJSRequest; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput,aInit],TJSPromise) as IJSPromise;
+end;
+
+function TJSWindowOrWorkerGlobalScope.fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput,aInit],TJSPromise) as IJSPromise;
+end;
+
+function TJSWindowOrWorkerGlobalScope.fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput],TJSPromise) as IJSPromise;
+end;
+
+function TJSWindowOrWorkerGlobalScope.fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput],TJSPromise) as IJSPromise;
+end;
+
 class function TJSWindowOrWorkerGlobalScope.Cast(Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
 begin
   Result:=TJSWindowOrWorkerGlobalScope.JOBCast(Intf);
+end;
+
+function TJSCacheStorage.has(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
+begin
+  Result:=InvokeJSObjectResult('has',[aCacheName],TJSPromise) as IJSPromise;
+end;
+
+function TJSCacheStorage.delete(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
+begin
+  Result:=InvokeJSObjectResult('delete',[aCacheName],TJSPromise) as IJSPromise;
 end;
 
 class function TJSCacheStorage.Cast(Intf: IJSObject): IJSCacheStorage;
@@ -14075,7 +14334,7 @@ begin
   Result:=InvokeJSObjectResult('cloneUnfiltered',[],TJSResponse) as IJSResponse;
 end;
 
-function TJSResponse.json: IJSPromise;
+function TJSResponse.json: IJSPromise; // Promise<JSON>
 begin
   Result:=InvokeJSObjectResult('json',[],TJSPromise) as IJSPromise;
 end;
@@ -14123,6 +14382,81 @@ end;
 class function TJSHeaders.Cast(Intf: IJSObject): IJSHeaders;
 begin
   Result:=TJSHeaders.JOBCast(Intf);
+end;
+
+function TJSRequest._Getmethod: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('method');
+end;
+
+function TJSRequest._Geturl: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('url');
+end;
+
+function TJSRequest._Getheaders: IJSHeaders;
+begin
+  Result:=ReadJSPropertyObject('headers',TJSHeaders) as IJSHeaders;
+end;
+
+function TJSRequest._Getdestination: TRequestDestination;
+begin
+  Result:=ReadJSPropertyUnicodeString('destination');
+end;
+
+function TJSRequest._Getreferrer: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('referrer');
+end;
+
+function TJSRequest._GetreferrerPolicy: TReferrerPolicy;
+begin
+  Result:=ReadJSPropertyUnicodeString('referrerPolicy');
+end;
+
+function TJSRequest._Getmode: TRequestMode;
+begin
+  Result:=ReadJSPropertyUnicodeString('mode');
+end;
+
+function TJSRequest._Getcredentials: TRequestCredentials;
+begin
+  Result:=ReadJSPropertyUnicodeString('credentials');
+end;
+
+function TJSRequest._Getcache: TRequestCache;
+begin
+  Result:=ReadJSPropertyUnicodeString('cache');
+end;
+
+function TJSRequest._Getredirect: TRequestRedirect;
+begin
+  Result:=ReadJSPropertyUnicodeString('redirect');
+end;
+
+function TJSRequest._Getintegrity: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('integrity');
+end;
+
+function TJSRequest._GetmozErrors: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('mozErrors');
+end;
+
+function TJSRequest.clone: IJSRequest;
+begin
+  Result:=InvokeJSObjectResult('clone',[],TJSRequest) as IJSRequest;
+end;
+
+procedure TJSRequest.overrideContentPolicyType(aContext: TnsContentPolicyType);
+begin
+  InvokeJSNoResult('overrideContentPolicyType',[aContext]);
+end;
+
+class function TJSRequest.Cast(Intf: IJSObject): IJSRequest;
+begin
+  Result:=TJSRequest.JOBCast(Intf);
 end;
 
 function TJSNode._GetnodeType: Word;
@@ -14370,9 +14704,9 @@ begin
   Result:=ReadJSPropertyBoolean('closed');
 end;
 
-function TJSWindow._Getevent: TJOB_JSValue;
+function TJSWindow._Getevent: Variant;
 begin
-  Result:=ReadJSPropertyValue('event');
+  Result:=ReadJSPropertyVariant('event');
 end;
 
 function TJSWindow._Getframes: IJSWindowProxy;
@@ -14390,9 +14724,9 @@ begin
   Result:=ReadJSPropertyObject('top',TJSWindowProxy) as IJSWindowProxy;
 end;
 
-function TJSWindow._Getopener: TJOB_JSValue;
+function TJSWindow._Getopener: Variant;
 begin
-  Result:=ReadJSPropertyValue('opener');
+  Result:=ReadJSPropertyVariant('opener');
 end;
 
 function TJSWindow._Getparent: IJSWindowProxy;
@@ -14425,14 +14759,14 @@ begin
   Result:=ReadJSPropertyObject('screen',TJSScreen) as IJSScreen;
 end;
 
-function TJSWindow._GetinnerWidth: TJOB_JSValue;
+function TJSWindow._GetinnerWidth: Variant;
 begin
-  Result:=ReadJSPropertyValue('innerWidth');
+  Result:=ReadJSPropertyVariant('innerWidth');
 end;
 
-function TJSWindow._GetinnerHeight: TJOB_JSValue;
+function TJSWindow._GetinnerHeight: Variant;
 begin
-  Result:=ReadJSPropertyValue('innerHeight');
+  Result:=ReadJSPropertyVariant('innerHeight');
 end;
 
 function TJSWindow._GetscrollX: Double;
@@ -14465,24 +14799,24 @@ begin
   Result:=ReadJSPropertyDouble('screenTop');
 end;
 
-function TJSWindow._GetscreenX: TJOB_JSValue;
+function TJSWindow._GetscreenX: Variant;
 begin
-  Result:=ReadJSPropertyValue('screenX');
+  Result:=ReadJSPropertyVariant('screenX');
 end;
 
-function TJSWindow._GetscreenY: TJOB_JSValue;
+function TJSWindow._GetscreenY: Variant;
 begin
-  Result:=ReadJSPropertyValue('screenY');
+  Result:=ReadJSPropertyVariant('screenY');
 end;
 
-function TJSWindow._GetouterWidth: TJOB_JSValue;
+function TJSWindow._GetouterWidth: Variant;
 begin
-  Result:=ReadJSPropertyValue('outerWidth');
+  Result:=ReadJSPropertyVariant('outerWidth');
 end;
 
-function TJSWindow._GetouterHeight: TJOB_JSValue;
+function TJSWindow._GetouterHeight: Variant;
 begin
-  Result:=ReadJSPropertyValue('outerHeight');
+  Result:=ReadJSPropertyVariant('outerHeight');
 end;
 
 function TJSWindow._Getcontrollers: IJSXULControllers;
@@ -14560,9 +14894,9 @@ begin
   Result:=ReadJSPropertyObject('clientPrincipal',TJSPrincipal) as IJSPrincipal;
 end;
 
-function TJSWindow._Getsidebar: TJOB_JSValue;
+function TJSWindow._Getsidebar: Variant;
 begin
-  Result:=ReadJSPropertyValue('sidebar');
+  Result:=ReadJSPropertyVariant('sidebar');
 end;
 
 function TJSWindow._GetwindowState: Word;
@@ -14595,6 +14929,26 @@ begin
   Result:=ReadJSPropertyObject('localStorage',TJSStorage) as IJSStorage;
 end;
 
+function TJSWindow._Getorigin: UnicodeString;
+begin
+  Result:=ReadJSPropertyUnicodeString('origin');
+end;
+
+function TJSWindow._GetcrossOriginIsolated: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('crossOriginIsolated');
+end;
+
+function TJSWindow._GetisSecureContext: Boolean;
+begin
+  Result:=ReadJSPropertyBoolean('isSecureContext');
+end;
+
+function TJSWindow._Getcaches: IJSCacheStorage;
+begin
+  Result:=ReadJSPropertyObject('caches',TJSCacheStorage) as IJSCacheStorage;
+end;
+
 procedure TJSWindow._Setname(const aValue: UnicodeString);
 begin
   WriteJSPropertyUnicodeString('name',aValue);
@@ -14605,39 +14959,39 @@ begin
   WriteJSPropertyUnicodeString('status',aValue);
 end;
 
-procedure TJSWindow._Setopener(const aValue: TJOB_JSValue);
+procedure TJSWindow._Setopener(const aValue: Variant);
 begin
-  WriteJSPropertyValue('opener',aValue);
+  WriteJSPropertyVariant('opener',aValue);
 end;
 
-procedure TJSWindow._SetinnerWidth(const aValue: TJOB_JSValue);
+procedure TJSWindow._SetinnerWidth(const aValue: Variant);
 begin
-  WriteJSPropertyValue('innerWidth',aValue);
+  WriteJSPropertyVariant('innerWidth',aValue);
 end;
 
-procedure TJSWindow._SetinnerHeight(const aValue: TJOB_JSValue);
+procedure TJSWindow._SetinnerHeight(const aValue: Variant);
 begin
-  WriteJSPropertyValue('innerHeight',aValue);
+  WriteJSPropertyVariant('innerHeight',aValue);
 end;
 
-procedure TJSWindow._SetscreenX(const aValue: TJOB_JSValue);
+procedure TJSWindow._SetscreenX(const aValue: Variant);
 begin
-  WriteJSPropertyValue('screenX',aValue);
+  WriteJSPropertyVariant('screenX',aValue);
 end;
 
-procedure TJSWindow._SetscreenY(const aValue: TJOB_JSValue);
+procedure TJSWindow._SetscreenY(const aValue: Variant);
 begin
-  WriteJSPropertyValue('screenY',aValue);
+  WriteJSPropertyVariant('screenY',aValue);
 end;
 
-procedure TJSWindow._SetouterWidth(const aValue: TJOB_JSValue);
+procedure TJSWindow._SetouterWidth(const aValue: Variant);
 begin
-  WriteJSPropertyValue('outerWidth',aValue);
+  WriteJSPropertyVariant('outerWidth',aValue);
 end;
 
-procedure TJSWindow._SetouterHeight(const aValue: TJOB_JSValue);
+procedure TJSWindow._SetouterHeight(const aValue: Variant);
 begin
-  WriteJSPropertyValue('outerHeight',aValue);
+  WriteJSPropertyVariant('outerHeight',aValue);
 end;
 
 procedure TJSWindow._SetfullScreen(const aValue: Boolean);
@@ -14730,12 +15084,12 @@ begin
   InvokeJSNoResult('print',[]);
 end;
 
-procedure TJSWindow.postMessage(aMessage: TJOB_JSValue; const aOptions: TJSWindowPostMessageOptions); overload;
+procedure TJSWindow.postMessage(const aMessage: Variant; const aOptions: TJSWindowPostMessageOptions); overload;
 begin
   InvokeJSNoResult('postMessage',[aMessage,aOptions]);
 end;
 
-procedure TJSWindow.postMessage(aMessage: TJOB_JSValue); overload;
+procedure TJSWindow.postMessage(const aMessage: Variant); overload;
 begin
   InvokeJSNoResult('postMessage',[aMessage]);
 end;
@@ -14935,7 +15289,7 @@ begin
   InvokeJSNoResult('setResizable',[aResizable]);
 end;
 
-function TJSWindow.openDialog(const aUrl: UnicodeString; const aName: UnicodeString; const aOptions: UnicodeString; aExtraArguments: TJOB_JSValue): IJSWindowProxy{; ToDo:varargs}; overload;
+function TJSWindow.openDialog(const aUrl: UnicodeString; const aName: UnicodeString; const aOptions: UnicodeString; const aExtraArguments: Variant): IJSWindowProxy{; ToDo:varargs}; overload;
 begin
   Result:=InvokeJSObjectResult('openDialog',[aUrl,aName,aOptions,aExtraArguments],TJSWindowProxy) as IJSWindowProxy;
 end;
@@ -14955,9 +15309,9 @@ begin
   Result:=InvokeJSObjectResult('openDialog',[aUrl,aName],TJSWindowProxy) as IJSWindowProxy;
 end;
 
-function TJSWindow.getInterface(aIid: TJOB_JSValue): TJOB_JSValue;
+function TJSWindow.getInterface(const aIid: Variant): Variant;
 begin
-  Result:=InvokeJSValueResult('getInterface',[aIid]);
+  Result:=InvokeJSVariantResult('getInterface',[aIid]);
 end;
 
 function TJSWindow.shouldReportForServiceWorkerScope(const aScope: UnicodeString): Boolean;
@@ -15010,6 +15364,18 @@ begin
   InvokeJSNoResult('notifyDefaultButtonLoaded',[aDefaultButton]);
 end;
 
+function TJSWindow.promiseDocumentFlushed(const aCallback: TPromiseDocumentFlushedCallback): IJSPromise; // Promise<any>
+var
+  m: TJOB_Method;
+begin
+  m:=TJOB_Method.Create(TMethod(aCallback),@JOBCallTPromiseDocumentFlushedCallback);
+  try
+    Result:=InvokeJSObjectResult('promiseDocumentFlushed',[m],TJSPromise) as IJSPromise;
+  finally
+    m.free;
+  end;
+end;
+
 procedure TJSWindow.cancelIdleCallback(aHandle: LongWord);
 begin
   InvokeJSNoResult('cancelIdleCallback',[aHandle]);
@@ -15025,9 +15391,99 @@ begin
   Result:=InvokeJSObjectResult('getWebExposedLocales',[],TJSArray) as TUnicodeStringDynArray;
 end;
 
-function TJSWindow.fetch(const URL: UnicodeString): IJSPromise;
+procedure TJSWindow.reportError(const aE: Variant);
 begin
-  Result:=InvokeJSObjectResult('fetch',[URL],TJSPromise) as IJSPromise;
+  InvokeJSNoResult('reportError',[aE]);
+end;
+
+function TJSWindow.btoa(const aBtoa: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('btoa',[aBtoa]);
+end;
+
+function TJSWindow.atob(const a_atob: UnicodeString): UnicodeString;
+begin
+  Result:=InvokeJSUnicodeStringResult('atob',[a_atob]);
+end;
+
+function TJSWindow.setTimeout(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler,aTimeout,arguments]);
+end;
+
+function TJSWindow.setTimeout(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler]);
+end;
+
+function TJSWindow.setTimeout(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler,aTimeout,aUnused]);
+end;
+
+function TJSWindow.setTimeout(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setTimeout',[aHandler]);
+end;
+
+procedure TJSWindow.clearTimeout(aHandle: Integer); overload;
+begin
+  InvokeJSNoResult('clearTimeout',[aHandle]);
+end;
+
+procedure TJSWindow.clearTimeout; overload;
+begin
+  InvokeJSNoResult('clearTimeout',[]);
+end;
+
+function TJSWindow.setInterval(aHandler: IJSFunction; aTimeout: Integer; const arguments: Variant): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler,aTimeout,arguments]);
+end;
+
+function TJSWindow.setInterval(aHandler: IJSFunction): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler]);
+end;
+
+function TJSWindow.setInterval(const aHandler: UnicodeString; aTimeout: Integer; const aUnused: Variant): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler,aTimeout,aUnused]);
+end;
+
+function TJSWindow.setInterval(const aHandler: UnicodeString): Integer{; ToDo:varargs}; overload;
+begin
+  Result:=InvokeJSLongIntResult('setInterval',[aHandler]);
+end;
+
+procedure TJSWindow.clearInterval(aHandle: Integer); overload;
+begin
+  InvokeJSNoResult('clearInterval',[aHandle]);
+end;
+
+procedure TJSWindow.clearInterval; overload;
+begin
+  InvokeJSNoResult('clearInterval',[]);
+end;
+
+function TJSWindow.fetch(aInput: IJSRequest; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput,aInit],TJSPromise) as IJSPromise;
+end;
+
+function TJSWindow.fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput,aInit],TJSPromise) as IJSPromise;
+end;
+
+function TJSWindow.fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput],TJSPromise) as IJSPromise;
+end;
+
+function TJSWindow.fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
+begin
+  Result:=InvokeJSObjectResult('fetch',[aInput],TJSPromise) as IJSPromise;
 end;
 
 class function TJSWindow.Cast(Intf: IJSObject): IJSWindow;
@@ -15173,6 +15629,21 @@ end;
 class function TJSScreen.Cast(Intf: IJSObject): IJSScreen;
 begin
   Result:=TJSScreen.JOBCast(Intf);
+end;
+
+function TJSClipboard.read: IJSPromise; // Promise<ClipboardItems>
+begin
+  Result:=InvokeJSObjectResult('read',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSClipboard.readText: IJSPromise; // Promise<DOMString>
+begin
+  Result:=InvokeJSObjectResult('readText',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSClipboard.writeText(const aData: UnicodeString): IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('writeText',[aData],TJSPromise) as IJSPromise;
 end;
 
 procedure TJSClipboard.onUserReactedToPasteMenuPopup(allowed: Boolean);
@@ -15323,6 +15794,11 @@ end;
 function TJSScreenOrientation._Getangle: Word;
 begin
   Result:=ReadJSPropertyLongInt('angle');
+end;
+
+function TJSScreenOrientation.lock(aOrientation: TOrientationLockType): IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('lock',[aOrientation],TJSPromise) as IJSPromise;
 end;
 
 procedure TJSScreenOrientation.unlock;
@@ -15860,6 +16336,11 @@ begin
   InvokeJSNoResult('deleteRule',[aIndex]);
 end;
 
+function TJSCSSStyleSheet.replace(const aText: UTF8String): IJSPromise; // Promise<CSSStyleSheet>
+begin
+  Result:=InvokeJSObjectResult('replace',[aText],TJSPromise) as IJSPromise;
+end;
+
 procedure TJSCSSStyleSheet.replaceSync(const aText: UTF8String);
 begin
   InvokeJSNoResult('replaceSync',[aText]);
@@ -15975,19 +16456,29 @@ begin
   WriteJSPropertyDouble('height',aValue);
 end;
 
-function TJSOffscreenCanvas.getContext(aContextId: TOffscreenRenderingContextId; aContextOptions: TJOB_JSValue): TOffscreenRenderingContext; overload;
+function TJSOffscreenCanvas.getContext(aContextId: TOffscreenRenderingContextId; const aContextOptions: Variant): TOffscreenRenderingContext; overload;
 begin
-  Result:=InvokeJSValueResult('getContext',[aContextId,aContextOptions]);
+  Result:=InvokeJSVariantResult('getContext',[aContextId,aContextOptions]);
 end;
 
 function TJSOffscreenCanvas.getContext(aContextId: TOffscreenRenderingContextId): TOffscreenRenderingContext; overload;
 begin
-  Result:=InvokeJSValueResult('getContext',[aContextId]);
+  Result:=InvokeJSVariantResult('getContext',[aContextId]);
 end;
 
 function TJSOffscreenCanvas.transferToImageBitmap: IJSImageBitmap;
 begin
   Result:=InvokeJSObjectResult('transferToImageBitmap',[],TJSImageBitmap) as IJSImageBitmap;
+end;
+
+function TJSOffscreenCanvas.convertToBlob(const aOptions: TJSImageEncodeOptions): IJSPromise; overload; // Promise<Blob>
+begin
+  Result:=InvokeJSObjectResult('convertToBlob',[aOptions],TJSPromise) as IJSPromise;
+end;
+
+function TJSOffscreenCanvas.convertToBlob: IJSPromise; overload; // Promise<Blob>
+begin
+  Result:=InvokeJSObjectResult('convertToBlob',[],TJSPromise) as IJSPromise;
 end;
 
 class function TJSOffscreenCanvas.Cast(Intf: IJSObject): IJSOffscreenCanvas;
@@ -16775,9 +17266,24 @@ begin
   InvokeJSNoResult('releaseEvents',[]);
 end;
 
+function TJSDocument.exitFullscreen: IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('exitFullscreen',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSDocument.mozCancelFullScreen: IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('mozCancelFullScreen',[],TJSPromise) as IJSPromise;
+end;
+
 procedure TJSDocument.exitPointerLock;
 begin
   InvokeJSNoResult('exitPointerLock',[]);
+end;
+
+function TJSDocument.addCertException(aIsTemporary: Boolean): IJSPromise; // Promise<any>
+begin
+  Result:=InvokeJSObjectResult('addCertException',[aIsTemporary],TJSPromise) as IJSPromise;
 end;
 
 procedure TJSDocument.reloadWithHttpsOnlyException;
@@ -16820,6 +17326,16 @@ begin
   Result:=InvokeJSObjectResult('createXULElement',[aLocalName,aOptions],TJSElement) as IJSElement;
 end;
 
+function TJSDocument.blockParsing(aPromise: IJSPromise; const aOptions: TJSBlockParsingOptions): IJSPromise; overload; // Promise<any>
+begin
+  Result:=InvokeJSObjectResult('blockParsing',[aPromise,aOptions],TJSPromise) as IJSPromise;
+end;
+
+function TJSDocument.blockParsing(aPromise: IJSPromise): IJSPromise; overload; // Promise<any>
+begin
+  Result:=InvokeJSObjectResult('blockParsing',[aPromise],TJSPromise) as IJSPromise;
+end;
+
 procedure TJSDocument.blockUnblockOnload(aBlock: Boolean);
 begin
   InvokeJSNoResult('blockUnblockOnload',[aBlock]);
@@ -16828,6 +17344,26 @@ end;
 function TJSDocument.getSelection: IJSSelection;
 begin
   Result:=InvokeJSObjectResult('getSelection',[],TJSSelection) as IJSSelection;
+end;
+
+function TJSDocument.hasStorageAccess: IJSPromise; // Promise<boolean>
+begin
+  Result:=InvokeJSObjectResult('hasStorageAccess',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSDocument.requestStorageAccess: IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('requestStorageAccess',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSDocument.requestStorageAccessForOrigin(const aThirdPartyOrigin: UnicodeString; aRequireUserInteraction: Boolean): IJSPromise; overload; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('requestStorageAccessForOrigin',[aThirdPartyOrigin,aRequireUserInteraction],TJSPromise) as IJSPromise;
+end;
+
+function TJSDocument.requestStorageAccessForOrigin(const aThirdPartyOrigin: UnicodeString): IJSPromise; overload; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('requestStorageAccessForOrigin',[aThirdPartyOrigin],TJSPromise) as IJSPromise;
 end;
 
 procedure TJSDocument.notifyUserGestureActivation;
@@ -17515,6 +18051,16 @@ end;
 function TJSElement.attachShadow(const aShadowRootInitDict: TJSShadowRootInit): IJSShadowRoot;
 begin
   Result:=InvokeJSObjectResult('attachShadow',[aShadowRootInitDict],TJSShadowRoot) as IJSShadowRoot;
+end;
+
+function TJSElement.requestFullscreen: IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('requestFullscreen',[],TJSPromise) as IJSPromise;
+end;
+
+function TJSElement.mozRequestFullScreen: IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('mozRequestFullScreen',[],TJSPromise) as IJSPromise;
 end;
 
 procedure TJSElement.requestPointerLock;
@@ -18977,7 +19523,7 @@ begin
   WriteJSPropertyBoolean('mozOpaque',aValue);
 end;
 
-function TJSHTMLCanvasElement.getContext(const aContextId: UnicodeString; aContextOptions: TJOB_JSValue): IJSnsISupports; overload;
+function TJSHTMLCanvasElement.getContext(const aContextId: UnicodeString; const aContextOptions: Variant): IJSnsISupports; overload;
 begin
   Result:=InvokeJSObjectResult('getContext',[aContextId,aContextOptions],TJSnsISupports) as IJSnsISupports;
 end;
@@ -18987,7 +19533,7 @@ begin
   Result:=InvokeJSObjectResult('getContext',[aContextId],TJSnsISupports) as IJSnsISupports;
 end;
 
-function TJSHTMLCanvasElement.toDataURL(const aType_: UnicodeString; aEncoderOptions: TJOB_JSValue): UnicodeString; overload;
+function TJSHTMLCanvasElement.toDataURL(const aType_: UnicodeString; const aEncoderOptions: Variant): UnicodeString; overload;
 begin
   Result:=InvokeJSUnicodeStringResult('toDataURL',[aType_,aEncoderOptions]);
 end;
@@ -19002,7 +19548,7 @@ begin
   Result:=InvokeJSUnicodeStringResult('toDataURL',[aType_]);
 end;
 
-procedure TJSHTMLCanvasElement.toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString; aEncoderOptions: TJOB_JSValue); overload;
+procedure TJSHTMLCanvasElement.toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString; const aEncoderOptions: Variant); overload;
 var
   m: TJOB_Method;
 begin
@@ -19591,6 +20137,11 @@ end;
 procedure TJSHTMLImageElement._SetloadingEnabled(const aValue: Boolean);
 begin
   WriteJSPropertyBoolean('loadingEnabled',aValue);
+end;
+
+function TJSHTMLImageElement.decode: IJSPromise; // Promise<void>
+begin
+  Result:=InvokeJSObjectResult('decode',[],TJSPromise) as IJSPromise;
 end;
 
 procedure TJSHTMLImageElement.addObserver(aObserver: IJSimgINotificationObserver);

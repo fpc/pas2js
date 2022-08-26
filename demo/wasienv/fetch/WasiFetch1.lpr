@@ -5,7 +5,7 @@ library WasiFetch1;
 {$codepage UTF8}
 
 uses
-  SysUtils, JOB_Shared, JOB_Web, JOB_JS;
+  SysUtils, JOB_Shared, JOB_Web, JOB_JS, Variants;
 
 type
 
@@ -13,37 +13,30 @@ type
 
   TWasmApp = class
   private
-    function OnAccepted(const aValue: TJOB_JSValue): TJOB_JSValue;
+    function OnAccepted(const aValue: Variant): Variant;
     function OnButtonClick(Event: IJSEvent): boolean;
-    function OnJSONFailed(const aValue: TJOB_JSValue): TJOB_JSValue;
-    function OnJSONReceived(const aValue: TJOB_JSValue): TJOB_JSValue;
-    function OnRejected(const aValue: TJOB_JSValue): TJOB_JSValue;
+    function OnJSONFailed(const aValue: Variant): Variant;
+    function OnJSONReceived(const aValue: Variant): Variant;
+    function OnRejected(const aValue: Variant): Variant;
   public
     procedure Run;
   end;
 
 { TApplication }
 
-function TWasmApp.OnAccepted(const aValue: TJOB_JSValue): TJOB_JSValue;
+function TWasmApp.OnAccepted(const aValue: Variant): Variant;
 var
   Obj: IJSObject;
   Response: IJSResponse;
-  p: IJSPromise;
 begin
-  Result:=TJOB_Boolean.Create(false);
-  writeln('TWasmApp.OnAccepted ',aValue.AsString);
-  if aValue.Kind<>jjvkObject then
-  begin
-    writeln('TWasmApp.OnAccepted Expected object, but got '+JOB_JSValueKindNames[aValue.Kind]);
-    exit;
-  end;
-  Obj:=TJOB_Object(aValue).Value;
-  if Obj=nil then
-  begin
-    writeln('TWasmApp.OnAccepted Expected object, but got nil');
-    exit;
-  end;
+  Result:=false;
+  writeln('TWasmApp.OnAccepted START');
 
+  if not VarSupports(aValue,IJSObject,Obj) then
+  begin
+    writeln('TWasmApp.OnAccepted Expected object, but got '+VarTypeAsText(aValue));
+    exit;
+  end;
   Response:=TJSResponse.Cast(Obj);
   writeln('TWasmApp.OnAccepted Response: ok=',Response.ok);
   writeln('TWasmApp.OnAccepted Response: status=',Response.status);
@@ -51,58 +44,52 @@ begin
   writeln('TWasmApp.OnAccepted Response: redirected=',Response.redirected);
   writeln('TWasmApp.OnAccepted Response: URL="',Response.url,'"');
 
-  p:=Response.InvokeJSObjectResult('json',[],TJSPromise) as IJSPromise;
-  p._then(@OnJSONReceived,@OnJSONFailed);
+  Response.json._then(@OnJSONReceived,@OnJSONFailed);
 
-  TJOB_Boolean(Result).Value:=true;
+  Result:=true;
 end;
 
 function TWasmApp.OnButtonClick(Event: IJSEvent): boolean;
-var
-  p: IJSPromise;
 begin
   writeln('TWasmApp.OnButtonClick ');
   if Event=nil then ;
 
-  JSWindow.Alert('You triggered TWasmApp.OnButtonClick');
+  // JSWindow.Alert('You triggered TWasmApp.OnButtonClick');
 
-  p:=JSWindow.InvokeJSObjectResult('fetch',['Example.json'],TJSPromise) as IJSPromise;
-  p._then(@OnAccepted,@OnRejected);
-  //JSWindow.fetch('Example.json')._then(@OnAccepted,@OnRejected);
+  JSWindow.fetch('Example.json')._then(@OnAccepted,@OnRejected);
   Result:=true;
 end;
 
-function TWasmApp.OnJSONFailed(const aValue: TJOB_JSValue): TJOB_JSValue;
+function TWasmApp.OnJSONFailed(const aValue: Variant): Variant;
 begin
-  Result:=TJOB_Boolean.Create(true);
+  writeln('TWasmApp.OnJSONFailed');
+  Result:=true;
 end;
 
-function TWasmApp.OnJSONReceived(const aValue: TJOB_JSValue): TJOB_JSValue;
+function TWasmApp.OnJSONReceived(const aValue: Variant): Variant;
 var
   Obj: IJSObject;
 begin
-  Result:=TJOB_Boolean.Create(true);
-
-  if aValue.Kind<>jjvkObject then
+  writeln('TWasmApp.OnJSONReceived START');
+  Result:=true;
+  if not VarSupports(aValue,IJSObject,Obj) then
   begin
-    writeln('TWasmApp.OnJSONReceived Expected object, but got '+JOB_JSValueKindNames[aValue.Kind]);
+    writeln('TWasmApp.OnJSONReceived not an IJSObject');
+    writeln('TWasmApp.OnJSONReceived Expected object, but got '+VarTypeAsText(aValue));
     exit;
   end;
-  Obj:=TJOB_Object(aValue).Value;
-  if Obj=nil then
-  begin
-    writeln('TWasmApp.OnJSONReceived Expected object, but got nil');
-    exit;
-  end;
-
-  writeln('TWasmApp.OnJSONReceived Obj.name=',Obj.Properties['name'].AsString);
-  writeln('TWasmApp.OnJSONReceived Obj.value=',Obj.Properties['value'].AsString);
+  writeln('TWasmApp.OnJSONReceived Obj.name=',Obj.Properties['name']);
+  writeln('TWasmApp.OnJSONReceived Obj.value=',Obj.Properties['value']);
 end;
 
-function TWasmApp.OnRejected(const aValue: TJOB_JSValue): TJOB_JSValue;
+function TWasmApp.OnRejected(const aValue: Variant): Variant;
 begin
-  writeln('TWasmApp.OnRejected ',aValue.AsString);
-  Result:=TJOB_Boolean.Create(true);
+  writeln('TWasmApp.OnRejected START');
+  if VarIsStr(aValue) then
+    writeln('TWasmApp.OnRejected ',aValue)
+  else
+    writeln('TWasmApp.OnRejected ',VarTypeAsText(aValue));
+  Result:=true;
 end;
 
 procedure TWasmApp.Run;

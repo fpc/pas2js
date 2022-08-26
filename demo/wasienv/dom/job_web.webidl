@@ -667,10 +667,10 @@ partial interface Document {
   [BinaryName="fullscreenEnabled", NeedsCallerType]
   readonly attribute boolean mozFullScreenEnabled;
 
-// Mattias:   [NewObject]
-//  Promise<void> exitFullscreen();
-// Mattias:   [NewObject, BinaryName="exitFullscreen"]
-//  Promise<void> mozCancelFullScreen();
+  [NewObject]
+  Promise<void> exitFullscreen();
+  [NewObject, BinaryName="exitFullscreen"]
+  Promise<void> mozCancelFullScreen();
 
   // Events handlers
   attribute EventHandler onfullscreenchange;
@@ -689,8 +689,8 @@ partial interface Document {
 
 // Mozilla-internal document extensions specific to error pages.
 partial interface Document {
-// Mattias:   [Func="Document::CallerIsTrustedAboutCertError", NewObject]
-//  Promise<any> addCertException(boolean isTemporary);
+  [Func="Document::CallerIsTrustedAboutCertError", NewObject]
+  Promise<any> addCertException(boolean isTemporary);
 
   [Func="Document::CallerIsTrustedAboutHttpsOnlyError"]
   void reloadWithHttpsOnlyException();
@@ -818,9 +818,9 @@ partial interface Document {
   [ChromeOnly] readonly attribute nsILoadGroup? documentLoadGroup;
 
   // Blocks the initial document parser until the given promise is settled.
-// Mattias:   [ChromeOnly, NewObject]
-//  Promise<any> blockParsing(Promise<any> promise,
-//                            optional BlockParsingOptions options = {});
+  [ChromeOnly, NewObject]
+  Promise<any> blockParsing(Promise<any> promise,
+                            optional BlockParsingOptions options = {});
 
   [Func="nsContentUtils::IsPDFJS", BinaryName="blockUnblockOnloadForPDFJS"]
   void blockUnblockOnload(boolean block);
@@ -910,18 +910,18 @@ partial interface Document {
 
 // https://github.com/whatwg/html/issues/3338
 partial interface Document {
-// Mattias:   [Pref="dom.storage_access.enabled", NewObject]
-//  Promise<boolean> hasStorageAccess();
-// Mattias:   [Pref="dom.storage_access.enabled", NewObject]
-//  Promise<void> requestStorageAccess();
+  [Pref="dom.storage_access.enabled", NewObject]
+  Promise<boolean> hasStorageAccess();
+  [Pref="dom.storage_access.enabled", NewObject]
+  Promise<void> requestStorageAccess();
 };
 
 // A privileged API to give chrome privileged code and the content script of the
 // webcompat extension the ability to request the storage access for a given
 // third party.
 partial interface Document {
-// Mattias:   [Func="Document::CallerCanAccessPrivilegeSSA", NewObject]
-//  Promise<void> requestStorageAccessForOrigin(DOMString thirdPartyOrigin, optional boolean requireUserInteraction = true);
+  [Func="Document::CallerCanAccessPrivilegeSSA", NewObject]
+  Promise<void> requestStorageAccessForOrigin(DOMString thirdPartyOrigin, optional boolean requireUserInteraction = true);
 };
 
 enum DocumentAutoplayPolicy {
@@ -1624,10 +1624,10 @@ Element includes ParentNode;
 
 // https://fullscreen.spec.whatwg.org/#api
 partial interface Element {
-// Mattias:   [NewObject, NeedsCallerType]
-//  Promise<void> requestFullscreen();
-// Mattias:   [NewObject, BinaryName="requestFullscreen", NeedsCallerType, Deprecated="MozRequestFullScreenDeprecatedPrefix"]
-//  Promise<void> mozRequestFullScreen();
+  [NewObject, NeedsCallerType]
+  Promise<void> requestFullscreen();
+  [NewObject, BinaryName="requestFullscreen", NeedsCallerType, Deprecated="MozRequestFullScreenDeprecatedPrefix"]
+  Promise<void> mozRequestFullScreen();
 
   // Events handlers
   attribute EventHandler onfullscreenchange;
@@ -2838,8 +2838,8 @@ partial interface Window {
    * @param {function} callback
    * @returns {Promise}
    */
-// Mattias:   [NewObject, Func="nsGlobalWindowInner::IsPrivilegedChromeWindow"]
-//  Promise<any> promiseDocumentFlushed(PromiseDocumentFlushedCallback callback);
+  [NewObject, Func="nsGlobalWindowInner::IsPrivilegedChromeWindow"]
+  Promise<any> promiseDocumentFlushed(PromiseDocumentFlushedCallback callback);
 
   [ChromeOnly]
   readonly attribute boolean isChromeWindow;
@@ -2871,7 +2871,7 @@ partial interface Window {
 };
 #endif
 
-// Mattias: Window includes WindowOrWorkerGlobalScope;
+Window includes WindowOrWorkerGlobalScope;
 
 partial interface Window {
 // Mattias:   [Throws, Func="nsGlobalWindowInner::IsRequestIdleCallbackEnabled"]
@@ -3190,7 +3190,7 @@ interface CustomElementRegistry {
   [ChromeOnly, Throws]
   void setElementCreationCallback(DOMString name, CustomElementCreationCallback callback);
   any get(DOMString name);
-// Mattias:   [Throws]
+// Mattias:  [Throws]
 //  Promise<CustomElementConstructor> whenDefined(DOMString name);
   [CEReactions] void upgrade(Node root);
 };
@@ -3565,8 +3565,8 @@ partial interface Navigator {
 
 // https://wicg.github.io/web-share/#navigator-interface
 partial interface Navigator {
-// Mattias:   [SecureContext, NewObject, Func="Navigator::HasShareSupport"]
-//  Promise<void> share(optional ShareData data = {});
+  [SecureContext, NewObject, Func="Navigator::HasShareSupport"]
+  Promise<void> share(optional ShareData data = {});
   [SecureContext, Func="Navigator::HasShareSupport"]
   boolean canShare(optional ShareData data = {});
 };
@@ -3957,16 +3957,16 @@ typedef sequence<ClipboardItem> ClipboardItems;
 
 [SecureContext, Exposed=Window]
 interface Clipboard : EventTarget {
-// Mattias:   [Pref="dom.events.asyncClipboard.clipboardItem", NewObject, NeedsSubjectPrincipal]
-//  Promise<ClipboardItems> read();
-// Mattias:   [Func="Clipboard::ReadTextEnabled", NewObject, NeedsSubjectPrincipal]
-//  Promise<DOMString> readText();
+  [Pref="dom.events.asyncClipboard.clipboardItem", NewObject, NeedsSubjectPrincipal]
+  Promise<ClipboardItems> read();
+  [Func="Clipboard::ReadTextEnabled", NewObject, NeedsSubjectPrincipal]
+  Promise<DOMString> readText();
 
-// Mattias:   [Pref="dom.events.asyncClipboard.clipboardItem", NewObject, NeedsSubjectPrincipal]
+// Mattias:  [Pref="dom.events.asyncClipboard.clipboardItem", NewObject, NeedsSubjectPrincipal]
 //  Promise<void> write(ClipboardItems data);
 
-// Mattias:   [NewObject, NeedsSubjectPrincipal]
-//  Promise<void> writeText(DOMString data);
+  [NewObject, NeedsSubjectPrincipal]
+  Promise<void> writeText(DOMString data);
 };
 
 partial interface Clipboard {
@@ -4000,8 +4000,8 @@ interface ClipboardItem {
   [Frozen, Cached, Pure]
   readonly attribute sequence<DOMString> types;
 
-// Mattias:   [NewObject]
-//  Promise<Blob> getType(DOMString type);
+  [NewObject]
+  Promise<Blob> getType(DOMString type);
 };
 
 enum PresentationStyle { "unspecified", "inline", "attachment" };
@@ -4157,8 +4157,8 @@ enum OrientationLockType {
 
 [Exposed=Window]
 interface ScreenOrientation : EventTarget {
-// Mattias:   [NewObject]
-//  Promise<void> lock(OrientationLockType orientation);
+  [NewObject]
+  Promise<void> lock(OrientationLockType orientation);
   [Throws]
   void unlock();
   [Throws, NeedsCallerType]
@@ -5332,8 +5332,8 @@ interface CSSStyleSheet : StyleSheet {
   unsigned long insertRule(UTF8String rule, optional unsigned long index = 0);
   [Throws, NeedsSubjectPrincipal]
   void deleteRule(unsigned long index);
-// Mattias:   [NewObject, Pref="layout.css.constructable-stylesheets.enabled"]
-//  Promise<CSSStyleSheet> replace(UTF8String text);
+  [NewObject, Pref="layout.css.constructable-stylesheets.enabled"]
+  Promise<CSSStyleSheet> replace(UTF8String text);
   [Throws, Pref="layout.css.constructable-stylesheets.enabled"]
   void replaceSync(UTF8String text);
 
@@ -6066,8 +6066,8 @@ interface HTMLImageElement : HTMLElement {
   readonly attribute unsigned long naturalWidth;
   readonly attribute unsigned long naturalHeight;
   readonly attribute boolean complete;
-// Mattias:            [NewObject]
-//           Promise<void> decode();
+           [NewObject]
+           Promise<void> decode();
 // Mattias:            [NewObject, ChromeOnly]
 //           Promise<sequence<ImageText>> recognizeCurrentImageText();
 };
@@ -6752,8 +6752,8 @@ interface OffscreenCanvas : EventTarget {
 
   [Throws]
   ImageBitmap transferToImageBitmap();
-// Mattias:   [NewObject]
-//  Promise<Blob> convertToBlob(optional ImageEncodeOptions options = {});
+  [NewObject]
+  Promise<Blob> convertToBlob(optional ImageEncodeOptions options = {});
 
   attribute EventHandler oncontextlost;
   attribute EventHandler oncontextrestored;
@@ -6798,8 +6798,8 @@ interface Blob {
 
   // read from the Blob.
 // Mattias:   [NewObject, Throws] ReadableStream stream();
-// Mattias:   [NewObject] Promise<USVString> text();
-// Mattias:   [NewObject] Promise<ArrayBuffer> arrayBuffer();
+  [NewObject] Promise<USVString> text();
+  [NewObject] Promise<ArrayBuffer> arrayBuffer();
 };
 
 enum EndingType { "transparent", "native" };
@@ -7539,8 +7539,8 @@ interface mixin WindowOrWorkerGlobalScope {
 
 // https://fetch.spec.whatwg.org/#fetch-method
 partial interface mixin WindowOrWorkerGlobalScope {
-// Mattias:  [NewObject, NeedsCallerType]
-//  Promise<Response> fetch(RequestInfo input, optional RequestInit init = {});
+  [NewObject, NeedsCallerType]
+  Promise<Response> fetch(RequestInfo input, optional RequestInit init = {});
 };
 
 // https://w3c.github.io/webappsec-secure-contexts/#monkey-patching-global-object
@@ -7585,12 +7585,12 @@ interface CacheStorage {
 
 // Mattias:  [NewObject]
 //  Promise<Response> match(RequestInfo request, optional MultiCacheQueryOptions options = {});
-// Mattias:  [NewObject]
-//  Promise<boolean> has(DOMString cacheName);
-// Mattias:  [NewObject]
+  [NewObject]
+  Promise<boolean> has(DOMString cacheName);
+// Mattias:    [NewObject]
 //  Promise<Cache> open(DOMString cacheName);
-// Mattias:  [NewObject]
-//  Promise<boolean> delete(DOMString cacheName);
+  [NewObject]
+  Promise<boolean> delete(DOMString cacheName);
 // Mattias:  [NewObject]
 //  Promise<sequence<DOMString>> keys();
 };
@@ -7623,7 +7623,7 @@ interface Response {
 
   [NewObject] static Response error();
   [Throws,
-   NewObject] static Response redirect(USVString url, optional unsigned short status = 302);
+  NewObject] static Response redirect(USVString url, optional unsigned short status = 302);
 
   readonly attribute ResponseType type;
 
@@ -7641,6 +7641,8 @@ interface Response {
 
   // For testing only.
   [ChromeOnly] readonly attribute boolean hasCacheInfoChannel;
+
+  Promise<JSON> json();
 };
 // Mattias: Response includes Body;
 
@@ -7694,3 +7696,83 @@ interface Headers {
   // Note: Must be set prior to populating headers or will throw.
   [ChromeOnly, SetterThrows] attribute HeadersGuardEnum guard;
 };
+/* -*- Mode: IDL; tab-width: 1; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this file,
+ * You can obtain one at http://mozilla.org/MPL/2.0/.
+ *
+ * The origin of this IDL file is
+ * https://fetch.spec.whatwg.org/#request-class
+ */
+
+typedef (Request or USVString) RequestInfo;
+typedef unsigned long nsContentPolicyType;
+
+[Exposed=(Window,Worker)]
+interface Request {
+  [Throws]
+  constructor(RequestInfo input, optional RequestInit init = {});
+
+  readonly attribute ByteString method;
+  readonly attribute USVString url;
+  [SameObject, BinaryName="headers_"] readonly attribute Headers headers;
+
+  readonly attribute RequestDestination destination;
+  readonly attribute USVString referrer;
+  [BinaryName="referrerPolicy_"]
+  readonly attribute ReferrerPolicy referrerPolicy;
+  readonly attribute RequestMode mode;
+  readonly attribute RequestCredentials credentials;
+  readonly attribute RequestCache cache;
+  readonly attribute RequestRedirect redirect;
+  readonly attribute DOMString integrity;
+
+  // If a main-thread fetch() promise rejects, the error passed will be a
+  // nsresult code.
+  [ChromeOnly]
+  readonly attribute boolean mozErrors;
+
+// Mattias:  [BinaryName="getOrCreateSignal"]
+//  readonly attribute AbortSignal signal;
+
+  [Throws,
+   NewObject] Request clone();
+
+  // Bug 1124638 - Allow chrome callers to set the context.
+  [ChromeOnly]
+  void overrideContentPolicyType(nsContentPolicyType context);
+};
+// Mattias: Request includes Body;
+
+dictionary RequestInit {
+  ByteString method;
+  HeadersInit headers;
+// Mattias:  BodyInit? body;
+  USVString referrer;
+  ReferrerPolicy referrerPolicy;
+  RequestMode mode;
+  RequestCredentials credentials;
+  RequestCache cache;
+  RequestRedirect redirect;
+  DOMString integrity;
+
+  [ChromeOnly]
+  boolean mozErrors;
+
+// Mattias:  AbortSignal? signal;
+
+// Mattias:  [Pref="dom.fetchObserver.enabled"]
+//  ObserverCallback observe;
+};
+
+enum RequestDestination {
+  "",
+  "audio", "audioworklet", "document", "embed", "font", "frame", "iframe",
+  "image", "manifest", "object", "paintworklet", "report", "script",
+  "sharedworker", "style",  "track", "video", "worker", "xslt"
+};
+
+enum RequestMode { "same-origin", "no-cors", "cors", "navigate" };
+enum RequestCredentials { "omit", "same-origin", "include" };
+enum RequestCache { "default", "no-store", "reload", "no-cache", "force-cache", "only-if-cached" };
+enum RequestRedirect { "follow", "error", "manual" };

@@ -189,6 +189,9 @@ begin
     Result:=TJOBObjectID(NewId);
     FLocalObjects[Result]:=Obj;
   end;
+  {$IFDEF VerboseJOB}
+  writeln('TJSObjectBridge.RegisterLocalObject ',Result);
+  {$ENDIF}
 end;
 
 procedure TJSObjectBridge.SetWasiExports(const AValue: TWASIExports);
@@ -212,7 +215,7 @@ var
   fn: JSValue;
 begin
   {$IFDEF VerboseJOB}
-  writeln('TJOBBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',NameP,' FuncNameLen=',NameLen,' ArgsP=',ArgsP,' Invoke=',Invoke);
+  writeln('TJSObjectBridge.Invoke_JSResult ObjId=',ObjId,' FuncNameP=',NameP,' FuncNameLen=',NameLen,' ArgsP=',ArgsP,' Invoke=',Invoke);
   {$ENDIF}
 
   Obj:=FindObject(ObjId);
@@ -221,10 +224,10 @@ begin
 
   View:=getModuleMemoryDataView();
   aBytes:=TJSUint8Array.New(View.buffer, NameP, NameLen);
-  //writeln('TJOBBridge.Invoke_JSResult aBytes=',aBytes);
+  //writeln('TJSObjectBridge.Invoke_JSResult aBytes=',aBytes);
   PropName:=TypedArrayToString(aBytes);
   {$IFDEF VerboseJOB}
-  writeln('TJOBBridge.Invoke_JSResult PropName="',PropName,'"');
+  writeln('TJSObjectBridge.Invoke_JSResult PropName="',PropName,'"');
   {$ENDIF}
 
   case Invoke of
@@ -347,7 +350,7 @@ begin
     exit(GetJOBResult(JSResult));
   Result:=JOBResult_String;
   FStringResult:=String(JSResult);
-  //writeln('TJOBBridge.Invoke_StringResult FStringResult="',FStringResult,'"');
+  //writeln('TJSObjectBridge.Invoke_StringResult FStringResult="',FStringResult,'"');
 
   // set result length
   getModuleMemoryDataView().setInt32(ResultP, length(FStringResult), env.IsLittleEndian);
@@ -445,7 +448,7 @@ end;
 function TJSObjectBridge.ReleaseObject(ObjId: TJOBObjectID): TJOBResult;
 begin
   {$IFDEF VerboseJOB}
-  writeln('TJOBBridge.ReleaseObject ',ObjId);
+  writeln('TJSObjectBridge.ReleaseObject ',ObjId);
   {$ENDIF}
   if ObjId<0 then
     raise EJOBBridge.Create('cannot release a global object');
@@ -505,16 +508,27 @@ var
         Args, ResultP: TWasmNativeInt;
         TempObjIds: TJOBObjectIDArray;
       begin
-        //writeln('TJSObjectBridge called JS Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length);
+        {$IFDEF VerboseJOBCallback}
+        writeln('TJSObjectBridge Callback: JS Method Call=',aCall,' Data=',aData,' Code=',aCode,' Args=',JSArguments.length,' converting args for wasm...');
+        {$ENDIF}
         Args:=CreateCallbackArgs(View,JSArguments,TempObjIds);
         try
+          {$IFDEF VerboseJOBCallback}
+          writeln('TJSObjectBridge Callback: calling Wasm...');
+          {$ENDIF}
           ResultP:=CallbackHandler(aCall,aData,aCode,Args); // this frees Args, and may detach View
           View:=getModuleMemoryDataView();
-          //writeln('TJSObjectBridge called Wasm Call=',aCall,' Data=',aData,' Code=',aCode,' ResultP=',ResultP);
+          {$IFDEF VerboseJOBCallback}
+          writeln('TJSObjectBridge Callback: called Wasm Call=',aCall,' Data=',aData,' Code=',aCode,' ResultP=',ResultP,' getting Result...');
+          {$ENDIF}
           Result:=EatCallbackResult(View,ResultP); // this frees ResultP
-          //writeln('TJSObjectBridge Result=',Result);
+          {$IFDEF VerboseJOBCallback}
+          writeln('TJSObjectBridge Callback: Result=',Result);
+          {$ENDIF}
         finally
-          //writeln('After CallbackHandler: TempObjIds=',length(TempObjIds),' ',TempObjIds);
+          {$IFDEF VerboseJOBCallback}
+          writeln('TJSObjectBridge Callback: cleaning up TempObjIds=',length(TempObjIds),' ',TempObjIds);
+          {$ENDIF}
           for i:=0 to length(TempObjIds)-1 do
             ReleaseObject(TempObjIds[i]);
         end;
@@ -659,7 +673,7 @@ begin
   for i:=0 to Cnt-1 do
   begin
     Result[i]:=ReadValue;
-    //writeln('TJOBBridge.GetInvokeArguments ',i,'/',Cnt,' = ',Result[i]);
+    //writeln('TJSObjectBridge.GetInvokeArguments ',i,'/',Cnt,' = ',Result[i]);
   end;
 end;
 

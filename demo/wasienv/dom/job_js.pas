@@ -214,8 +214,8 @@ type
     function GetJSObjectID: TJOBObjectID;
     function GetJSObjectCastSrc: IJSObject;
     function GetPascalClassName: string;
-    function GetProperties(const PropName: String): TJOB_JSValue; virtual;
-    procedure SetProperties(const PropName: String; const AValue: TJOB_JSValue); virtual;
+    function GetProperties(const PropName: String): Variant; virtual;
+    procedure SetProperties(const PropName: String; const AValue: Variant); virtual;
     // call a function
     procedure InvokeJSNoResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall); virtual;
     function InvokeJSBooleanResult(const aName: string; Const Args: Array of const; Invoke: TJOBInvokeType = jiCall): Boolean; virtual;
@@ -254,8 +254,8 @@ type
     function toLocaleString: UnicodeString; virtual; overload;
     function toString: String; override; overload;
     function toUString: UnicodeString; virtual; overload;
-    function valueOf: TJOB_JSValue; virtual; overload;
-    property Properties[const PropName: String]: TJOB_JSValue read GetProperties write SetProperties; default;
+    function valueOf: Variant; virtual; overload;
+    property Properties[const PropName: String]: Variant read GetProperties write SetProperties; default;
   end;
 
   { TJSObject }
@@ -285,8 +285,8 @@ type
     function GetJSObjectID: TJOBObjectID;
     function GetJSObjectCastSrc: IJSObject;
     function GetPascalClassName: string;
-    function GetProperties(const PropName: String): TJOB_JSValue; virtual;
-    procedure SetProperties(const PropName: String; const AValue: TJOB_JSValue); virtual;
+    function GetProperties(const PropName: String): Variant; virtual;
+    procedure SetProperties(const PropName: String; const AValue: Variant); virtual;
     function FetchString(Len: NativeInt): UnicodeString;
     function InvokeJSNoResultFunc(const aName: string; Const Args: Array of const;
       const InvokeFunc: TJOBInvokeNoResultFunc; Invoke: TJOBInvokeType): TJOBResult;
@@ -349,8 +349,8 @@ type
     function toLocaleString: UnicodeString; virtual; overload;
     function toString: String; override; overload;
     function toUString: UnicodeString; virtual; overload;
-    function valueOf: TJOB_JSValue; virtual; overload;
-    property Properties[const PropName: String]: TJOB_JSValue read GetProperties write SetProperties; default;
+    function valueOf: Variant; virtual; overload;
+    property Properties[const PropName: String]: Variant read GetProperties write SetProperties; default;
   end;
 
   { IJSSet }
@@ -835,7 +835,7 @@ type
     class function Cast(Intf: IJSObject): IJSError; overload;
   end;
 
-  TJSPromiseResolver = function(const aValue: TJOB_JSValue): TJOB_JSValue of object;
+  TJSPromiseResolver = function(const aValue: Variant): Variant of object;
   TJSPromiseExecutor = procedure(const OnResolve, OnReject: TJSPromiseResolver) of object;
   TJSPromiseFinallyHandler = procedure of object;
 
@@ -843,20 +843,11 @@ type
 
   IJSPromise = interface(IJSObject)
     ['{2BFE673B-B5D4-4F31-96CD-5E1A60EFBE26}']
-    function all(const arg: IJSArray): IJSPromise; overload;
-    function all(const arg: TJOB_JSValue): IJSPromise; overload;
-    function allSettled(const arg: IJSArray): IJSPromise; overload;
-    function allSettled(const arg: TJOB_JSValue): IJSPromise; overload;
-    function race(const arg: IJSArray): IJSPromise; overload;
-    function race(const arg: TJOB_JSValue): IJSPromise; overload;
-    function reject(const reason: UnicodeString): IJSPromise; overload;
-    function reject(const reason: TJOB_JSValue): IJSPromise; overload;
-    function resolve(const value: boolean): IJSPromise; overload;
-    function resolve(const value: longint): IJSPromise; overload;
-    function resolve(const value: double): IJSPromise; overload;
-    function resolve(const value: IJSObject): IJSPromise; overload;
-    function resolve(const value: UnicodeString): IJSPromise; overload;
-    function resolve(const value: TJOB_JSValue): IJSPromise; overload;
+    function all(const arg: Variant): IJSPromise; overload;
+    function allSettled(const arg: Variant): IJSPromise; overload;
+    function race(const arg: Variant): IJSPromise; overload;
+    function reject(const reason: Variant): IJSPromise; overload;
+    function resolve(const value: Variant): IJSPromise; overload;
     function resolve: IJSPromise; overload;
     function _then(const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
     function _then(const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
@@ -869,20 +860,11 @@ type
   TJSPromise = class(TJSObject,IJSPromise)
   public
     //class function Create(const Executor: TJSPromiseExecutor): IJSPromise; overload;
-    function all(const arg: IJSArray): IJSPromise; overload;
-    function all(const arg: TJOB_JSValue): IJSPromise; overload;
-    function allSettled(const arg: IJSArray): IJSPromise; overload;
-    function allSettled(const arg: TJOB_JSValue): IJSPromise; overload;
-    function race(const arg: IJSArray): IJSPromise; overload;
-    function race(const arg: TJOB_JSValue): IJSPromise; overload;
-    function reject(const reason: UnicodeString): IJSPromise; overload;
-    function reject(const reason: TJOB_JSValue): IJSPromise; overload;
-    function resolve(const value: boolean): IJSPromise; overload;
-    function resolve(const value: longint): IJSPromise; overload;
-    function resolve(const value: double): IJSPromise; overload;
-    function resolve(const value: IJSObject): IJSPromise; overload;
-    function resolve(const value: UnicodeString): IJSPromise; overload;
-    function resolve(const value: TJOB_JSValue): IJSPromise; overload;
+    function all(const arg: Variant): IJSPromise; overload;
+    function allSettled(const arg: Variant): IJSPromise; overload;
+    function race(const arg: Variant): IJSPromise; overload;
+    function reject(const reason: Variant): IJSPromise; overload;
+    function resolve(const value: Variant): IJSPromise; overload;
     function resolve: IJSPromise; overload;
     function _then(const OnAccepted: TJSPromiseResolver): IJSPromise; overload;
     function _then(const OnAccepted, OnRejected: TJSPromiseResolver) : IJSPromise; overload;
@@ -1151,14 +1133,10 @@ end;
 
 function JOBCallTJSPromiseResolver(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
 var
-  aValue: TJOB_JSValue;
+  aValue: Variant;
 begin
-  aValue:=H.GetValue;
-  try
-    Result:=H.AllocJSValue(TJSPromiseResolver(aMethod)(aValue));
-  finally
-    aValue.Free;
-  end;
+  aValue:=H.GetVariant;
+  Result:=H.AllocVariant(TJSPromiseResolver(aMethod)(aValue));
 end;
 
 function JOBCallTJSPromiseFinallyHandler(const aMethod: TMethod; var H: TJOBCallbackHelper): PByte;
@@ -1183,72 +1161,27 @@ end;
 
 { TJSPromise }
 
-function TJSPromise.all(const arg: IJSArray): IJSPromise;
+function TJSPromise.all(const arg: Variant): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('all',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.all(const arg: TJOB_JSValue): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('all',[arg],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.allSettled(const arg: IJSArray): IJSPromise;
+function TJSPromise.allSettled(const arg: Variant): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('allSettled',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.allSettled(const arg: TJOB_JSValue): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('allSettled',[arg],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.race(const arg: IJSArray): IJSPromise;
+function TJSPromise.race(const arg: Variant): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('race',[arg],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.race(const arg: TJOB_JSValue): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('race',[arg],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.reject(const reason: UnicodeString): IJSPromise;
+function TJSPromise.reject(const reason: Variant): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('reject',[reason],TJSPromise) as IJSPromise;
 end;
 
-function TJSPromise.reject(const reason: TJOB_JSValue): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('reject',[reason],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.resolve(const value: boolean): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.resolve(const value: longint): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.resolve(const value: double): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.resolve(const value: IJSObject): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.resolve(const value: UnicodeString): IJSPromise;
-begin
-  Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
-end;
-
-function TJSPromise.resolve(const value: TJOB_JSValue): IJSPromise;
+function TJSPromise.resolve(const value: Variant): IJSPromise;
 begin
   Result:=InvokeJSObjectResult('resolve',[value],TJSPromise) as IJSPromise;
 end;
@@ -2356,15 +2289,15 @@ begin
   Result:=ClassName;
 end;
 
-function TJSObject.GetProperties(const PropName: String): TJOB_JSValue;
+function TJSObject.GetProperties(const PropName: String): Variant;
 begin
-  Result:=ReadJSPropertyValue(PropName);
+  Result:=ReadJSPropertyVariant(PropName);
 end;
 
 procedure TJSObject.SetProperties(const PropName: String;
-  const AValue: TJOB_JSValue);
+  const AValue: Variant);
 begin
-  WriteJSPropertyValue(PropName,AValue);
+  WriteJSPropertyVariant(PropName,AValue);
 end;
 
 function TJSObject.FetchString(Len: NativeInt): UnicodeString;
@@ -3268,9 +3201,9 @@ begin
   Result:=InvokeJSUnicodeStringResult('toString',[]);
 end;
 
-function TJSObject.valueOf: TJOB_JSValue;
+function TJSObject.valueOf: Variant;
 begin
-  Result:=InvokeJSValueResult('valueOf',[]);
+  Result:=InvokeJSVariantResult('valueOf',[]);
 end;
 
 { TJSDate }

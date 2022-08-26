@@ -85,9 +85,11 @@
 -Jirtl.js
 -Jc
 -Jminclude
--dVerboseJOB"/>
-      <OtherDefines Count="1">
+-dVerboseJOB
+-dVerboseJOBCallback"/>
+      <OtherDefines Count="2">
         <Define0 Value="VerboseJOB"/>
+        <Define1 Value="VerboseJOBCallback"/>
       </OtherDefines>
       <CompilerPath Value="$(pas2js)"/>
     </Other>

@@ -57,7 +57,7 @@ begin
   Response:=TJSResponse.Cast(Obj);
   if not Response.ok then
   begin
-    DoError('TFetchJSONHelper.OnAccepted Response not ok, status=');
+    DoError('TFetchJSONHelper.OnAccepted Response not ok, status='+string(Response.statusText));
     exit;
   end;
 

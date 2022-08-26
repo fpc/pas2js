@@ -5,91 +5,137 @@ library WasiFetch1;
 {$codepage UTF8}
 
 uses
-  SysUtils, JOB_Shared, JOB_Web, JOB_JS, Variants;
+  SysUtils, Classes, JOB_Shared, JOB_Web, JOB_JS, Variants;
 
 type
+
+  { TFetchJSONHelper }
+
+  TFetchJSONHelper = class
+  protected
+    function OnAccepted(const aValue: Variant): Variant; virtual;
+    function OnRejected(const aValue: Variant): Variant; virtual;
+    function OnJSONFailed(const aValue: Variant): Variant; virtual;
+    function OnJSONReceived(const aValue: Variant): Variant; virtual;
+    procedure DoError(const Msg: string); virtual;
+  public
+    URL: UnicodeString;
+    Received: IJSObject; // result parsed from received JSON
+    ErrorMsg: string;
+    OnError: TNotifyEvent;
+    OnReceived: TNotifyEvent;
+    constructor Create(const TheURL: UnicodeString; const OnReceivedEvent: TNotifyEvent; const OnErrorEvent: TNotifyEvent);
+  end;
 
   { TWasmApp }
 
   TWasmApp = class
   private
-    function OnAccepted(const aValue: Variant): Variant;
+    FExampleFetch: TFetchJSONHelper;
     function OnButtonClick(Event: IJSEvent): boolean;
-    function OnJSONFailed(const aValue: Variant): Variant;
-    function OnJSONReceived(const aValue: Variant): Variant;
-    function OnRejected(const aValue: Variant): Variant;
+    procedure OnExampleFetchError(Sender: TObject);
+    procedure OnExampleReceived(Sender: TObject);
   public
     procedure Run;
   end;
 
-{ TApplication }
+{ TFetchJSONHelper }
 
-function TWasmApp.OnAccepted(const aValue: Variant): Variant;
+function TFetchJSONHelper.OnAccepted(const aValue: Variant): Variant;
 var
   Obj: IJSObject;
   Response: IJSResponse;
 begin
   Result:=false;
-  writeln('TWasmApp.OnAccepted START');
+  writeln('TFetchJSONHelper.OnAccepted START');
 
   if not VarSupports(aValue,IJSObject,Obj) then
   begin
-    writeln('TWasmApp.OnAccepted Expected object, but got '+VarTypeAsText(aValue));
+    DoError('TFetchJSONHelper.OnAccepted Expected object, but got '+VarTypeAsText(aValue));
     exit;
   end;
   Response:=TJSResponse.Cast(Obj);
-  writeln('TWasmApp.OnAccepted Response: ok=',Response.ok);
-  writeln('TWasmApp.OnAccepted Response: status=',Response.status);
-  writeln('TWasmApp.OnAccepted Response: statusText="',Response.statusText,'"');
-  writeln('TWasmApp.OnAccepted Response: redirected=',Response.redirected);
-  writeln('TWasmApp.OnAccepted Response: URL="',Response.url,'"');
+  if not Response.ok then
+  begin
+    DoError('TFetchJSONHelper.OnAccepted Response not ok, status=');
+    exit;
+  end;
 
   Response.json._then(@OnJSONReceived,@OnJSONFailed);
 
   Result:=true;
 end;
 
+function TFetchJSONHelper.OnRejected(const aValue: Variant): Variant;
+begin
+  Result:=true;
+  DoError('TFetchJSONHelper.OnRejected '+VarTypeAsText(aValue));
+end;
+
+function TFetchJSONHelper.OnJSONFailed(const aValue: Variant): Variant;
+begin
+  Result:=true;
+  DoError('TFetchJSONHelper.OnJSONFailed '+VarTypeAsText(aValue));
+end;
+
+function TFetchJSONHelper.OnJSONReceived(const aValue: Variant): Variant;
+begin
+  Result:=true;
+  if not VarSupports(aValue,IJSObject,Received) then
+  begin
+    DoError('TWasmApp.OnJSONReceived Expected object, but got '+VarTypeAsText(aValue));
+    exit;
+  end;
+
+  if Assigned(OnReceived) then
+    OnReceived(Self);
+end;
+
+procedure TFetchJSONHelper.DoError(const Msg: string);
+begin
+  writeln('TFetchJSONHelper.DoError ',Msg);
+  ErrorMsg:=Msg;
+  if Assigned(OnError) then
+    OnError(Self);
+end;
+
+constructor TFetchJSONHelper.Create(const TheURL: UnicodeString;
+  const OnReceivedEvent: TNotifyEvent; const OnErrorEvent: TNotifyEvent);
+begin
+  URL:=TheURL;
+  OnError:=OnErrorEvent;
+  OnReceived:=OnReceivedEvent;
+  JSWindow.fetch(URL)._then(@OnAccepted,@OnRejected);
+end;
+
+{ TApplication }
+
 function TWasmApp.OnButtonClick(Event: IJSEvent): boolean;
 begin
+  Result:=true;
   writeln('TWasmApp.OnButtonClick ');
   if Event=nil then ;
 
   // JSWindow.Alert('You triggered TWasmApp.OnButtonClick');
 
-  JSWindow.fetch('Example.json')._then(@OnAccepted,@OnRejected);
-  Result:=true;
+  FExampleFetch:=TFetchJSONHelper.Create('Example.json',@OnExampleReceived,@OnExampleFetchError);
 end;
 
-function TWasmApp.OnJSONFailed(const aValue: Variant): Variant;
+procedure TWasmApp.OnExampleFetchError(Sender: TObject);
 begin
-  writeln('TWasmApp.OnJSONFailed');
-  Result:=true;
+  FExampleFetch.Free;
 end;
 
-function TWasmApp.OnJSONReceived(const aValue: Variant): Variant;
+procedure TWasmApp.OnExampleReceived(Sender: TObject);
 var
-  Obj: IJSObject;
+  Example: IJSObject;
+  aName, aValue: unicodestring;
 begin
-  writeln('TWasmApp.OnJSONReceived START');
-  Result:=true;
-  if not VarSupports(aValue,IJSObject,Obj) then
-  begin
-    writeln('TWasmApp.OnJSONReceived not an IJSObject');
-    writeln('TWasmApp.OnJSONReceived Expected object, but got '+VarTypeAsText(aValue));
-    exit;
-  end;
-  writeln('TWasmApp.OnJSONReceived Obj.name=',Obj.Properties['name']);
-  writeln('TWasmApp.OnJSONReceived Obj.value=',Obj.Properties['value']);
-end;
-
-function TWasmApp.OnRejected(const aValue: Variant): Variant;
-begin
-  writeln('TWasmApp.OnRejected START');
-  if VarIsStr(aValue) then
-    writeln('TWasmApp.OnRejected ',aValue)
-  else
-    writeln('TWasmApp.OnRejected ',VarTypeAsText(aValue));
-  Result:=true;
+  Example:=FExampleFetch.Received;
+  aName:=Example.Properties['name'];
+  aValue:=Example.Properties['value'];
+  JSWindow.Alert('Example Name="'+aName+'" Value="'+aValue+'"');
+  FExampleFetch.free;
 end;
 
 procedure TWasmApp.Run;

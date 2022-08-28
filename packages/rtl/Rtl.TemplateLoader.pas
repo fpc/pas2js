@@ -75,6 +75,7 @@ Type
     procedure SetTemplate(const aName : String; const AValue: String);
     procedure SetPreload(AValue: TPreLoadTemplateItemList);
   Protected
+    procedure NotifyEvents(aName: string);
     function CheckTemplateResource(const aName: string): string; virtual;
     Procedure TemplateLoaded(const aName,aTemplate : String); virtual;
     Procedure Loaded; override;
@@ -138,7 +139,10 @@ Function GlobalTemplates : TCustomTemplateLoader;
 
 begin
   if _loader=Nil then
+    begin
     _loader:=TCustomTemplateLoader.Create(Nil);
+    _loader.Name:='GlobalTemplates';
+    end;
   Result:=_Loader;
 end;
 
@@ -288,13 +292,20 @@ end;
 
 procedure TCustomTemplateLoader.TemplateLoaded(const aName, aTemplate: String);
 
-Var
-  Idx : Integer;
 
 begin
   FTemplates[LowerCase(aName)]:=aTemplate;
   if Assigned(FOnLoad) then
     FOnLoad(Self,aName);
+  NotifyEvents(aName);
+end;
+
+procedure TCustomTemplateLoader.NotifyEvents(aName : string);
+
+Var
+  Idx : Integer;
+
+begin
   Idx:=IndexOfTemplateEvent(aName);
   While Idx<>-1 do
     begin
@@ -356,11 +367,14 @@ begin
   if Templates[aName]<>'' then
     aEvent(Self,aName)
   else
-     begin
-     N.Name:=aname;
-     N.Event:=aEvent;
-     FNotifications:=Concat(FNotifications,[N]);
-     end;
+   begin
+   N.Name:=aName;
+   N.Event:=aEvent;
+   FNotifications:=Concat(FNotifications,[N]);
+   // Can happen
+   if Templates[aName]<>'' then
+     NotifyEvents(aName)
+   end;
 end;
 
 procedure TCustomTemplateLoader.RemoveRemplate(const aName: String);

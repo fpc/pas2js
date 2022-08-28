@@ -6,7 +6,7 @@ unit webworker;
 interface
 
 uses
-  JS, types, weborworker;
+  JS, weborworker;
 
 Type
 
@@ -77,8 +77,8 @@ Type
     FName: String; external name 'name';
   Public
     Procedure close;
-    Procedure PostMessage(aMessage : JSValue); overload;
-    Procedure PostMessage(aMessage : JSValue; TransferableObjects : Array of JSValue); overload;
+    Procedure postMessage(aMessage : JSValue); overload;
+    Procedure postMessage(aMessage : JSValue; TransferableObjects : Array of JSValue); overload;
     Property name : String Read FName;
   end;
 

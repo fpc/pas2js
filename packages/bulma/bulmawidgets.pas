@@ -85,13 +85,13 @@ Type
     Function GetTemplateHTML: String; override;
     Procedure RefreshReferences; override;
     procedure Loaded; override;
-    Function HTMLTag : String; override;
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
     procedure GetValues(aList: TStrings);
     Procedure Show;
     Procedure Hide;
+    Function HTMLTag : String; override;
     Property Showing : Boolean Read FShowing;
     // Id of the modal toplevel element. If not set, the first child is used.
   Published
@@ -128,6 +128,8 @@ Type
 
   // Single toast message
 
+  { TBaseBulmaToastWidget }
+
   TBaseBulmaToastWidget = Class(TCustomWebWidget)
   private
     FAnimate: Boolean;
@@ -154,11 +156,12 @@ Type
     FElement : TJSHTMLElement;
     function BodyHTML: String; virtual;
     function HeaderHTML: String; virtual;
-    Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement;
   Public
+    Class Function DefaultParentElement : TJSHTMLElement; override;
     Constructor Create(aOwner : TComponent); override;
-    Procedure Refresh;
+    Function DoRenderHTML(aParent, aElement: TJSHTMLElement): TJSHTMLElement; override;
     procedure Hide;
+    function HtmlTag : String; override;
   Protected
     Property Header : String Read FHeader Write SetHeader;
     Property Body : String Read FBody Write SetBody;
@@ -721,6 +724,15 @@ begin
   Result:=Result+'</p>'
 end;
 
+class function TBaseBulmaToastWidget.DefaultParentElement : TJSHTMLElement;
+begin
+  Result:=Nil;
+  if Toasts.ParentID<>'' then
+    Result:=TJSHTMLElement(Document.getElementById(Toasts.ParentID))
+  else
+    Result:=TJSHTMLElement(Document.Body);
+end;
+
 
 function TBaseBulmaToastWidget.BodyHTML: String;
 
@@ -735,6 +747,8 @@ function TBaseBulmaToastWidget.DoRenderHTML(aParent, aElement: TJSHTMLElement): 
 
 Var
   S : String;
+  Opts : TJSObject;
+  aDelay : NativeInt;
 Begin
   S:=ContextualNames[Contextual];
   if S<>'' then
@@ -743,6 +757,20 @@ Begin
   Result.ClassName:='message is-small is-light '+S;
   Result.Style.CSSText:='min-width: '+IntToStr(MinWidth)+'px;';
   Result.InnerHTML:={HeaderHTML+}BodyHTML;
+  aDelay:=FHideDelay;
+  if Not AutoHide then // we let it display for 1 day
+    aDelay:=24*3600*1000;
+  Opts:=New([
+    'message', aElement,
+      'type', S,
+      'single', single,
+      'animate',FAnimate,
+      'dismissible', CloseButton ,
+      'position',ToastPositionNames[Position],
+      'duration',aDelay,
+      'extraClasses','is-light'
+    ]);
+  TBulmaToast.toast(Opts);
 end;
 
 constructor TBaseBulmaToastWidget.Create(aOwner: TComponent);
@@ -759,33 +787,11 @@ begin
 
 end;
 
-
-procedure TBaseBulmaToastWidget.Refresh;
-Var
-  S : String;
-  Opts : TJSObject;
-  aDelay : NativeInt;
-
-Begin
-  S:=ContextualNames[Contextual];
-  if S<>'' then
-    S:='is-'+S;
-  FElement:=TToastManager.CreateElement('article');
-  aDelay:=FHideDelay;
-  if Not AutoHide then // we let it display for 1 day
-    aDelay:=24*3600*1000;
-  DoRenderHTML(Nil,FElement);
-  Opts:=New([
-    'message', FElement,
-    'type', S,
-    'single', single,
-    'animate',FAnimate,
-    'dismissible', CloseButton ,
-    'position',ToastPositionNames[Position],
-    'duration',aDelay,
-    'extraClasses','is-light'
-  ]);
-  TBulmaToast.toast(Opts);
+function TBaseBulmaToastWidget.HtmlTag: String;
+begin
+  Result:='article';
 end;
+
+
 
 end.

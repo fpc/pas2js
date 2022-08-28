@@ -24,6 +24,7 @@ type
     function GetLocation: String; override;
   public
     Constructor Create(aOwner: TComponent); override;
+    Destructor destroy; override;
     procedure GetEnvironmentList(List: TStrings; NamesOnly: Boolean); override;
     procedure ShowException(E: Exception); override;
     procedure HandleException(Sender: TObject); override;
@@ -39,6 +40,7 @@ implementation
 var
   EnvNames: TJSObject;
   Params : TStringDynArray;
+  AppInstance : TBrowserApplication;
 
 procedure ReloadEnvironmentStrings;
 
@@ -107,6 +109,14 @@ end;
 
 { TBrowserApplication }
 
+function DoFindGlobalComponent(const aName: string): TComponent;
+begin
+  if Assigned(AppInstance) then
+    Result:=AppInstance.FindComponent(aName)
+  else
+    Result:=Nil;
+end;
+
 function TBrowserApplication.GetHTMLElement(aID: String): TJSHTMLElement;
 begin
   Result:=TJSHTMLElement(Document.getElementById(aID));
@@ -145,6 +155,19 @@ constructor TBrowserApplication.Create(aOwner: TComponent);
 begin
   inherited Create(aOwner);
   ShowExceptions:=True;
+  if AppInstance=Nil then
+     begin
+     AppInstance:=Self;
+     RegisterFindGlobalComponentProc(@DoFindGlobalComponent);
+     end;
+
+end;
+
+destructor TBrowserApplication.destroy;
+begin
+  if AppInstance=Self then
+    AppInstance:=Nil;
+  inherited destroy;
 end;
 
 procedure TBrowserApplication.GetEnvironmentList(List: TStrings;

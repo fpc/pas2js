@@ -297,10 +297,10 @@ type
     procedure InvokeJS_RaiseResultMismatchStr(const aName: string; const Expected, Actual: string); virtual;
     function CreateInvokeJSArgs(const Args: array of const): PByte; virtual;
   public
-    constructor JOBCast(Intf: IJSObject); overload;
+    constructor JOBCast(const Intf: IJSObject); overload;
     constructor JOBCreateFromID(aID: TJOBObjectID); virtual; // use this only for the owner (it will release it on free)
     constructor JOBCreateGlobal(const aID: UnicodeString); virtual;
-    class function Cast(Intf: IJSObject): IJSObject; overload;
+    class function Cast(const Intf: IJSObject): IJSObject; overload;
     destructor Destroy; override;
     property JOBObjectID: TJOBObjectID read FJOBObjectID;
     property JOBObjectIDOwner: boolean read FJOBObjectIDOwner write FJOBObjectIDOwner;
@@ -363,7 +363,7 @@ type
 
   TJSSet = class(TJSObject,IJSSet)
   public
-    class function Cast(Intf: IJSObject): IJSSet; overload;
+    class function Cast(const Intf: IJSObject): IJSSet; overload;
   end;
 
   { IJSMap }
@@ -376,7 +376,7 @@ type
 
   TJSMap = class(TJSObject,IJSMap)
   public
-    class function Cast(Intf: IJSObject): IJSMap; overload;
+    class function Cast(const Intf: IJSObject): IJSMap; overload;
   end;
 
   { IJSFunction }
@@ -406,7 +406,7 @@ type
     property name: UnicodeString read _GetName write _SetName;
     property prototyp: IJSFunction read _GetPrototyp;
     property length: NativeInt read _GetLength;
-    class function Cast(Intf: IJSObject): IJSFunction; overload;
+    class function Cast(const Intf: IJSObject): IJSFunction; overload;
   end;
 
   { IJSDate }
@@ -423,7 +423,7 @@ type
 
   TJSDate = class(TJSObject,IJSDate)
   public
-    class function Cast(Intf: IJSObject): IJSDate; overload;
+    class function Cast(const Intf: IJSObject): IJSDate; overload;
     function Create(aYear: NativeInt; aMonth: NativeInt; aDayOfMonth: NativeInt = 1;
       TheHours: NativeInt = 0; TheMinutes: NativeInt = 0; TheSeconds: NativeInt = 0;
       TheMilliseconds: NativeInt = 0): IJSDate;
@@ -480,7 +480,7 @@ type
     property multiline: Boolean Read _GetMultiLine write _SetMultiline;
     property source: UnicodeString Read _GetSource write _SetSource;
     property unicode: boolean Read _GetUnicode write _SetUnicode;
-    class function Cast(Intf: IJSObject): IJSRegExp; overload;
+    class function Cast(const Intf: IJSObject): IJSRegExp; overload;
   end;
 
   { IJSString }
@@ -493,7 +493,7 @@ type
 
   TJSString = class(TJSObject,IJSString)
   public
-    class function Cast(Intf: IJSObject): IJSString; overload;
+    class function Cast(const Intf: IJSObject): IJSString; overload;
   end;
 
   { IJSArray }
@@ -623,7 +623,7 @@ type
     //function values: TJSIterator;
     Property Length: NativeInt Read _GetLength Write _SetLength;
     property Elements[Index: NativeInt]: TJOB_JSValue read _GetElements write _SetElements; default;
-    class function Cast(Intf: IJSObject): IJSArray; overload;
+    class function Cast(const Intf: IJSObject): IJSArray; overload;
   end;
 
   { IJSArrayBuffer }
@@ -636,7 +636,7 @@ type
 
   TJSArrayBuffer = class(TJSObject,IJSArrayBuffer)
   public
-    class function Cast(Intf: IJSObject): IJSArrayBuffer; overload;
+    class function Cast(const Intf: IJSObject): IJSArrayBuffer; overload;
   end;
 
   { IJSTypedArray }
@@ -649,7 +649,7 @@ type
 
   TJSTypedArray = class(TJSObject,IJSTypedArray)
   public
-    class function Cast(Intf: IJSObject): IJSTypedArray; overload;
+    class function Cast(const Intf: IJSObject): IJSTypedArray; overload;
   end;
 
   { IJSInt8Array }
@@ -662,7 +662,7 @@ type
 
   TJSInt8Array = class(TJSTypedArray,IJSInt8Array)
   public
-    class function Cast(Intf: IJSObject): IJSInt8Array; overload;
+    class function Cast(const Intf: IJSObject): IJSInt8Array; overload;
   end;
 
   { IJSUint8Array }
@@ -675,7 +675,7 @@ type
 
   TJSUint8Array = class(TJSTypedArray,IJSUint8Array)
   public
-    class function Cast(Intf: IJSObject): IJSUint8Array; overload;
+    class function Cast(const Intf: IJSObject): IJSUint8Array; overload;
   end;
 
   { IJSUint8ClampedArray }
@@ -688,7 +688,7 @@ type
 
   TJSUint8ClampedArray = class(TJSTypedArray,IJSUint8ClampedArray)
   public
-    class function Cast(Intf: IJSObject): IJSUint8ClampedArray; overload;
+    class function Cast(const Intf: IJSObject): IJSUint8ClampedArray; overload;
   end;
 
   { IJSInt16Array }
@@ -701,7 +701,7 @@ type
 
   TJSInt16Array = class(TJSTypedArray,IJSInt16Array)
   public
-    class function Cast(Intf: IJSObject): IJSInt16Array; overload;
+    class function Cast(const Intf: IJSObject): IJSInt16Array; overload;
   end;
 
   { IJSUint16Array }
@@ -714,7 +714,7 @@ type
 
   TJSUint16Array = class(TJSTypedArray,IJSUint16Array)
   public
-    class function Cast(Intf: IJSObject): IJSUint16Array; overload;
+    class function Cast(const Intf: IJSObject): IJSUint16Array; overload;
   end;
 
   { IJSInt32Array }
@@ -727,7 +727,7 @@ type
 
   TJSInt32Array = class(TJSTypedArray,IJSInt32Array)
   public
-    class function Cast(Intf: IJSObject): IJSInt32Array; overload;
+    class function Cast(const Intf: IJSObject): IJSInt32Array; overload;
   end;
 
   { IJSUint32Array }
@@ -740,7 +740,7 @@ type
 
   TJSUint32Array = class(TJSTypedArray,IJSUint32Array)
   public
-    class function Cast(Intf: IJSObject): IJSUint32Array; overload;
+    class function Cast(const Intf: IJSObject): IJSUint32Array; overload;
   end;
 
   { IJSFloat32Array }
@@ -753,7 +753,7 @@ type
 
   TJSFloat32Array = class(TJSTypedArray,IJSFloat32Array)
   public
-    class function Cast(Intf: IJSObject): IJSFloat32Array; overload;
+    class function Cast(const Intf: IJSObject): IJSFloat32Array; overload;
   end;
 
   { IJSFloat64Array }
@@ -766,7 +766,7 @@ type
 
   TJSFloat64Array = class(TJSTypedArray,IJSFloat64Array)
   public
-    class function Cast(Intf: IJSObject): IJSFloat64Array; overload;
+    class function Cast(const Intf: IJSObject): IJSFloat64Array; overload;
   end;
 
   { IJSBufferSource }
@@ -779,7 +779,7 @@ type
 
   TJSBufferSource = class(TJSObject,IJSBufferSource)
   public
-    class function Cast(Intf: IJSObject): IJSBufferSource; overload;
+    class function Cast(const Intf: IJSObject): IJSBufferSource; overload;
   end;
 
   { IJSDataView }
@@ -792,7 +792,7 @@ type
 
   TJSDataView = class(TJSObject,IJSDataView)
   public
-    class function Cast(Intf: IJSObject): IJSDataView; overload;
+    class function Cast(const Intf: IJSObject): IJSDataView; overload;
   end;
 
   { IJSJSON }
@@ -819,7 +819,7 @@ type
     function stringify(aValue,aReplacer: TJOB_JSValue): UnicodeString; overload;
     function stringify(aValue,aReplacer: TJOB_JSValue; space:  NativeInt): UnicodeString; overload;
     function stringify(aValue,aReplacer: TJOB_JSValue; const space: UnicodeString): UnicodeString; overload;
-    class function Cast(Intf: IJSObject): IJSJSON; overload;
+    class function Cast(const Intf: IJSObject): IJSJSON; overload;
   end;
 
   { IJSError }
@@ -832,7 +832,7 @@ type
 
   TJSError = class(TJSObject,IJSError)
   public
-    class function Cast(Intf: IJSObject): IJSError; overload;
+    class function Cast(const Intf: IJSObject): IJSError; overload;
   end;
 
   TJSPromiseResolver = function(const aValue: Variant): Variant of object;
@@ -883,7 +883,7 @@ type
 
   TJSTextDecoder = class(TJSObject,IJSTextDecoder)
   public
-    class function Cast(Intf: IJSObject): IJSTextDecoder; overload;
+    class function Cast(const Intf: IJSObject): IJSTextDecoder; overload;
   end;
 
   { IJSTextEncoder }
@@ -896,7 +896,7 @@ type
 
   TJSTextEncoder = class(TJSObject,IJSTextEncoder)
   public
-    class function Cast(Intf: IJSObject): IJSTextEncoder; overload;
+    class function Cast(const Intf: IJSObject): IJSTextEncoder; overload;
   end;
 
 var
@@ -1147,14 +1147,14 @@ end;
 
 { TJSTextEncoder }
 
-class function TJSTextEncoder.Cast(Intf: IJSObject): IJSTextEncoder;
+class function TJSTextEncoder.Cast(const Intf: IJSObject): IJSTextEncoder;
 begin
   Result:=TJSTextEncoder.Cast(Intf);
 end;
 
 { TJSTextDecoder }
 
-class function TJSTextDecoder.Cast(Intf: IJSObject): IJSTextDecoder;
+class function TJSTextDecoder.Cast(const Intf: IJSObject): IJSTextDecoder;
 begin
   Result:=TJSTextDecoder.Cast(Intf);
 end;
@@ -1250,7 +1250,7 @@ end;
 
 { TJSError }
 
-class function TJSError.Cast(Intf: IJSObject): IJSError;
+class function TJSError.Cast(const Intf: IJSObject): IJSError;
 begin
   Result:=TJSError.Cast(Intf);
 end;
@@ -1289,98 +1289,99 @@ begin
   Result:=InvokeJSUnicodeStringResult('stringify',[aValue,aReplacer,space]);
 end;
 
-class function TJSJSON.Cast(Intf: IJSObject): IJSJSON;
+class function TJSJSON.Cast(const Intf: IJSObject): IJSJSON;
 begin
   Result:=TJSJSON.Cast(Intf);
 end;
 
 { TJSDataView }
 
-class function TJSDataView.Cast(Intf: IJSObject): IJSDataView;
+class function TJSDataView.Cast(const Intf: IJSObject): IJSDataView;
 begin
   Result:=TJSDataView.Cast(Intf);
 end;
 
 { TJSBufferSource }
 
-class function TJSBufferSource.Cast(Intf: IJSObject): IJSBufferSource;
+class function TJSBufferSource.Cast(const Intf: IJSObject): IJSBufferSource;
 begin
   Result:=TJSBufferSource.Cast(Intf);
 end;
 
 { TJSFloat64Array }
 
-class function TJSFloat64Array.Cast(Intf: IJSObject): IJSFloat64Array;
+class function TJSFloat64Array.Cast(const Intf: IJSObject): IJSFloat64Array;
 begin
   Result:=TJSFloat64Array.Cast(Intf);
 end;
 
 { TJSFloat32Array }
 
-class function TJSFloat32Array.Cast(Intf: IJSObject): IJSFloat32Array;
+class function TJSFloat32Array.Cast(const Intf: IJSObject): IJSFloat32Array;
 begin
   Result:=TJSFloat32Array.Cast(Intf);
 end;
 
 { TJSUint32Array }
 
-class function TJSUint32Array.Cast(Intf: IJSObject): IJSUint32Array;
+class function TJSUint32Array.Cast(const Intf: IJSObject): IJSUint32Array;
 begin
   Result:=TJSUint32Array.Cast(Intf);
 end;
 
 { TJSInt32Array }
 
-class function TJSInt32Array.Cast(Intf: IJSObject): IJSInt32Array;
+class function TJSInt32Array.Cast(const Intf: IJSObject): IJSInt32Array;
 begin
   Result:=TJSInt32Array.Cast(Intf);
 end;
 
 { TJSUint16Array }
 
-class function TJSUint16Array.Cast(Intf: IJSObject): IJSUint16Array;
+class function TJSUint16Array.Cast(const Intf: IJSObject): IJSUint16Array;
 begin
   Result:=TJSUint16Array.Cast(Intf);
 end;
 
 { TJSInt16Array }
 
-class function TJSInt16Array.Cast(Intf: IJSObject): IJSInt16Array;
+class function TJSInt16Array.Cast(const Intf: IJSObject): IJSInt16Array;
 begin
   Result:=TJSInt16Array.Cast(Intf);
 end;
 
 { TJSUint8ClampedArray }
 
-class function TJSUint8ClampedArray.Cast(Intf: IJSObject): IJSUint8ClampedArray;
+class function TJSUint8ClampedArray.Cast(const Intf: IJSObject
+  ): IJSUint8ClampedArray;
 begin
   Result:=TJSUint8ClampedArray.Cast(Intf);
 end;
 
 { TJSUInt8Array }
 
-class function TJSUInt8Array.Cast(Intf: IJSObject): IJSUInt8Array;
+class function TJSUint8Array.Cast(const Intf: IJSObject): IJSUint8Array;
 begin
   Result:=TJSUInt8Array.Cast(Intf);
 end;
 
 { TJSInt8Array }
 
-class function TJSInt8Array.Cast(Intf: IJSObject): IJSInt8Array;
+class function TJSInt8Array.Cast(const Intf: IJSObject): IJSInt8Array;
 begin
   Result:=TJSInt8Array.Cast(Intf);
 end;
 
 { TJSTypedArray }
 
-class function TJSTypedArray.Cast(Intf: IJSObject): IJSTypedArray;
+class function TJSTypedArray.Cast(const Intf: IJSObject): IJSTypedArray;
 begin
   Result:=TJSTypedArray.Cast(Intf);
 end;
 
 { TJSArrayBuffer }
 
-class function TJSArrayBuffer.Cast(Intf: IJSObject): IJSArrayBuffer;
+class function TJSArrayBuffer.Cast(const Intf: IJSObject): IJSArrayBuffer;
 begin
   Result:=TJSArrayBuffer.Cast(Intf);
 end;
@@ -1536,14 +1537,14 @@ begin
   Result:=InvokeJSMaxIntResult('unshift',[]);
 end;
 
-class function TJSArray.Cast(Intf: IJSObject): IJSArray;
+class function TJSArray.Cast(const Intf: IJSObject): IJSArray;
 begin
   Result:=TJSArray.Cast(Intf);
 end;
 
 { TJSString }
 
-class function TJSString.Cast(Intf: IJSObject): IJSString;
+class function TJSString.Cast(const Intf: IJSObject): IJSString;
 begin
   Result:=TJSString.Cast(Intf);
 end;
@@ -1620,7 +1621,7 @@ begin
   Result:=InvokeJSBooleanResult('test',[aString]);
 end;
 
-class function TJSRegExp.Cast(Intf: IJSObject): IJSRegExp;
+class function TJSRegExp.Cast(const Intf: IJSObject): IJSRegExp;
 begin
   Result:=TJSRegExp.Cast(Intf);
 end;
@@ -1647,21 +1648,21 @@ begin
   WriteJSPropertyUnicodeString('length',AValue);
 end;
 
-class function TJSFunction.Cast(Intf: IJSObject): IJSFunction;
+class function TJSFunction.Cast(const Intf: IJSObject): IJSFunction;
 begin
   Result:=TJSFunction.Cast(Intf);
 end;
 
 { TJSMap }
 
-class function TJSMap.Cast(Intf: IJSObject): IJSMap;
+class function TJSMap.Cast(const Intf: IJSObject): IJSMap;
 begin
   Result:=TJSMap.Cast(Intf);
 end;
 
 { TJSSet }
 
-class function TJSSet.Cast(Intf: IJSObject): IJSSet;
+class function TJSSet.Cast(const Intf: IJSObject): IJSSet;
 begin
   Result:=TJSSet.Cast(Intf);
 end;
@@ -2823,7 +2824,7 @@ begin
   {$ENDIF}
 end;
 
-constructor TJSObject.JOBCast(Intf: IJSObject);
+constructor TJSObject.JOBCast(const Intf: IJSObject);
 begin
   FJOBObjectID:=Intf.GetJSObjectID;
   FJOBCastSrc:=Intf.GetJSObjectCastSrc;
@@ -2845,7 +2846,7 @@ begin
   FJOBObjectIDOwner:=true;
 end;
 
-class function TJSObject.Cast(Intf: IJSObject): IJSObject;
+class function TJSObject.Cast(const Intf: IJSObject): IJSObject;
 begin
   Result:=JOBCast(Intf);
 end;
@@ -3208,7 +3209,7 @@ end;
 
 { TJSDate }
 
-class function TJSDate.Cast(Intf: IJSObject): IJSDate;
+class function TJSDate.Cast(const Intf: IJSObject): IJSDate;
 begin
   Result:=TJSDate.JOBCast(Intf);
 end;

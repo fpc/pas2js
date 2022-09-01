@@ -920,7 +920,7 @@ Type
     procedure removeEventListener(const aType_: UnicodeString; const aListener: TEventListener; const aOptions: TJSEventListenerOptions); overload;
     function dispatchEvent(aEvent: IJSEvent): Boolean;
     procedure setEventHandler(const aType_: UnicodeString; const aHandler: TEventHandler);
-    class function Cast(Intf: IJSObject): IJSEventTarget;
+    class function Cast(const Intf: IJSObject): IJSEventTarget;
   end;
 
   { --------------------------------------------------------------------
@@ -993,7 +993,7 @@ Type
     procedure initEvent(const aType_: UnicodeString; aBubbles: Boolean; aCancelable: Boolean); overload;
     procedure initEvent(const aType_: UnicodeString); overload;
     procedure initEvent(const aType_: UnicodeString; aBubbles: Boolean); overload;
-    class function Cast(Intf: IJSObject): IJSEvent;
+    class function Cast(const Intf: IJSObject): IJSEvent;
     property type_: UnicodeString read _Gettype_;
     property target: IJSEventTarget read _Gettarget;
     property srcElement: IJSEventTarget read _GetsrcElement;
@@ -1107,7 +1107,7 @@ Type
   TJSGlobalEventHandlers = class(TJSObject,IJSGlobalEventHandlers)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSGlobalEventHandlers;
+    class function Cast(const Intf: IJSObject): IJSGlobalEventHandlers;
     // property onabort: TEventHandler read _Getonabort write _Setonabort;
     // property onblur: TEventHandler read _Getonblur write _Setonblur;
     // property onfocus: TEventHandler read _Getonfocus write _Setonfocus;
@@ -1228,7 +1228,7 @@ Type
   TJSWindowEventHandlers = class(TJSObject,IJSWindowEventHandlers)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSWindowEventHandlers;
+    class function Cast(const Intf: IJSObject): IJSWindowEventHandlers;
     // property onafterprint: TEventHandler read _Getonafterprint write _Setonafterprint;
     // property onbeforeprint: TEventHandler read _Getonbeforeprint write _Setonbeforeprint;
     // property onbeforeunload: TOnBeforeUnloadEventHandler read _Getonbeforeunload write _Setonbeforeunload;
@@ -1263,7 +1263,7 @@ Type
   TJSDocumentAndElementEventHandlers = class(TJSObject,IJSDocumentAndElementEventHandlers)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSDocumentAndElementEventHandlers;
+    class function Cast(const Intf: IJSObject): IJSDocumentAndElementEventHandlers;
     // property oncopy: TEventHandler read _Getoncopy write _Setoncopy;
     // property oncut: TEventHandler read _Getoncut write _Setoncut;
     // property onpaste: TEventHandler read _Getonpaste write _Setonpaste;
@@ -1281,7 +1281,7 @@ Type
   TJSOnErrorEventHandlerForNodes = class(TJSObject,IJSOnErrorEventHandlerForNodes)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSOnErrorEventHandlerForNodes;
+    class function Cast(const Intf: IJSObject): IJSOnErrorEventHandlerForNodes;
     // property onerror: TEventHandler read _Getonerror write _Setonerror;
   end;
 
@@ -1297,7 +1297,7 @@ Type
   TJSOnErrorEventHandlerForWindow = class(TJSObject,IJSOnErrorEventHandlerForWindow)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSOnErrorEventHandlerForWindow;
+    class function Cast(const Intf: IJSObject): IJSOnErrorEventHandlerForWindow;
     // property onerror: TOnErrorEventHandler read _Getonerror write _Setonerror;
   end;
 
@@ -1312,7 +1312,7 @@ Type
   TJSContentSecurityPolicy = class(TJSObject,IJSContentSecurityPolicy)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSContentSecurityPolicy;
+    class function Cast(const Intf: IJSObject): IJSContentSecurityPolicy;
   end;
 
   { --------------------------------------------------------------------
@@ -1326,7 +1326,7 @@ Type
   TJSPrincipal = class(TJSObject,IJSPrincipal)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSPrincipal;
+    class function Cast(const Intf: IJSObject): IJSPrincipal;
   end;
 
   { --------------------------------------------------------------------
@@ -1340,7 +1340,7 @@ Type
   TJSWindowProxy = class(TJSObject,IJSWindowProxy)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSWindowProxy;
+    class function Cast(const Intf: IJSObject): IJSWindowProxy;
   end;
 
   { --------------------------------------------------------------------
@@ -1354,7 +1354,7 @@ Type
   TJSnsISupports = class(TJSObject,IJSnsISupports)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsISupports;
+    class function Cast(const Intf: IJSObject): IJSnsISupports;
   end;
 
   { --------------------------------------------------------------------
@@ -1368,7 +1368,7 @@ Type
   TJSURI = class(TJSObject,IJSURI)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSURI;
+    class function Cast(const Intf: IJSObject): IJSURI;
   end;
 
   { --------------------------------------------------------------------
@@ -1382,7 +1382,7 @@ Type
   TJSnsIDocShell = class(TJSObject,IJSnsIDocShell)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIDocShell;
+    class function Cast(const Intf: IJSObject): IJSnsIDocShell;
   end;
 
   { --------------------------------------------------------------------
@@ -1396,7 +1396,7 @@ Type
   TJSnsILoadGroup = class(TJSObject,IJSnsILoadGroup)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsILoadGroup;
+    class function Cast(const Intf: IJSObject): IJSnsILoadGroup;
   end;
 
   { --------------------------------------------------------------------
@@ -1410,7 +1410,7 @@ Type
   TJSnsIReferrerInfo = class(TJSObject,IJSnsIReferrerInfo)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIReferrerInfo;
+    class function Cast(const Intf: IJSObject): IJSnsIReferrerInfo;
   end;
 
   { --------------------------------------------------------------------
@@ -1424,7 +1424,7 @@ Type
   TJSnsICookieJarSettings = class(TJSObject,IJSnsICookieJarSettings)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsICookieJarSettings;
+    class function Cast(const Intf: IJSObject): IJSnsICookieJarSettings;
   end;
 
   { --------------------------------------------------------------------
@@ -1438,7 +1438,7 @@ Type
   TJSnsIPermissionDelegateHandler = class(TJSObject,IJSnsIPermissionDelegateHandler)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIPermissionDelegateHandler;
+    class function Cast(const Intf: IJSObject): IJSnsIPermissionDelegateHandler;
   end;
 
   { --------------------------------------------------------------------
@@ -1452,7 +1452,7 @@ Type
   TJSXULCommandDispatcher = class(TJSObject,IJSXULCommandDispatcher)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSXULCommandDispatcher;
+    class function Cast(const Intf: IJSObject): IJSXULCommandDispatcher;
   end;
 
   { --------------------------------------------------------------------
@@ -1466,7 +1466,7 @@ Type
   TJSXPathExpression = class(TJSObject,IJSXPathExpression)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSXPathExpression;
+    class function Cast(const Intf: IJSObject): IJSXPathExpression;
   end;
 
   { --------------------------------------------------------------------
@@ -1508,7 +1508,7 @@ Type
     procedure append(aNodes: IJSNode){; ToDo:varargs}; overload;
     procedure replaceChildren(const aNodes: UnicodeString){; ToDo:varargs}; overload;
     procedure replaceChildren(aNodes: IJSNode){; ToDo:varargs}; overload;
-    class function Cast(Intf: IJSObject): IJSParentNode;
+    class function Cast(const Intf: IJSObject): IJSParentNode;
     property children: IJSHTMLCollection read _Getchildren;
     property firstElementChild: IJSElement read _GetfirstElementChild;
     property lastElementChild: IJSElement read _GetlastElementChild;
@@ -1526,7 +1526,7 @@ Type
   TJSFontFaceSource = class(TJSObject,IJSFontFaceSource)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSFontFaceSource;
+    class function Cast(const Intf: IJSObject): IJSFontFaceSource;
   end;
 
   { --------------------------------------------------------------------
@@ -1563,7 +1563,7 @@ Type
     function elementsFromPoint(aX: Single; aY: Single): TJSElementDynArray;
     function nodeFromPoint(aX: Single; aY: Single): IJSNode;
     function nodesFromPoint(aX: Single; aY: Single): TJSNodeDynArray;
-    class function Cast(Intf: IJSObject): IJSDocumentOrShadowRoot;
+    class function Cast(const Intf: IJSObject): IJSDocumentOrShadowRoot;
     property activeElement: IJSElement read _GetactiveElement;
     property pointerLockElement: IJSElement read _GetpointerLockElement;
     property fullscreenElement: IJSElement read _GetfullscreenElement;
@@ -1593,7 +1593,7 @@ Type
     function createDocument(const aNamespace: UnicodeString; const aQualifiedName: UnicodeString): IJSDocument; overload;
     function createHTMLDocument(const aTitle: UnicodeString): IJSDocument; overload;
     function createHTMLDocument: IJSDocument; overload;
-    class function Cast(Intf: IJSObject): IJSDOMImplementation;
+    class function Cast(const Intf: IJSObject): IJSDOMImplementation;
   end;
 
   { --------------------------------------------------------------------
@@ -1621,7 +1621,7 @@ Type
     procedure replaceWith(const aNodes: UnicodeString){; ToDo:varargs}; overload;
     procedure replaceWith(aNodes: IJSNode){; ToDo:varargs}; overload;
     procedure remove;
-    class function Cast(Intf: IJSObject): IJSChildNode;
+    class function Cast(const Intf: IJSObject): IJSChildNode;
   end;
 
   { --------------------------------------------------------------------
@@ -1641,7 +1641,7 @@ Type
     function _GetpreviousElementSibling: IJSElement;
     function _GetnextElementSibling: IJSElement;
   Public
-    class function Cast(Intf: IJSObject): IJSNonDocumentTypeChildNode;
+    class function Cast(const Intf: IJSObject): IJSNonDocumentTypeChildNode;
     property previousElementSibling: IJSElement read _GetpreviousElementSibling;
     property nextElementSibling: IJSElement read _GetnextElementSibling;
   end;
@@ -1657,7 +1657,7 @@ Type
   TJSnsIScreen = class(TJSObject,IJSnsIScreen)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIScreen;
+    class function Cast(const Intf: IJSObject): IJSnsIScreen;
   end;
 
   { --------------------------------------------------------------------
@@ -1685,7 +1685,7 @@ Type
     procedure focus(const aOptions: TJSFocusOptions); overload;
     procedure focus; overload;
     procedure blur;
-    class function Cast(Intf: IJSObject): IJSHTMLOrForeignElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLOrForeignElement;
     property dataset: IJSDOMStringMap read _Getdataset;
     property tabIndex: Integer read _GettabIndex write _SettabIndex;
   end;
@@ -1704,7 +1704,7 @@ Type
   Private
     function _Getstyle: IJSCSSStyleDeclaration;
   Public
-    class function Cast(Intf: IJSObject): IJSElementCSSInlineStyle;
+    class function Cast(const Intf: IJSObject): IJSElementCSSInlineStyle;
     property style: IJSCSSStyleDeclaration read _Getstyle;
   end;
 
@@ -1726,7 +1726,7 @@ Type
   Public
     function item(aIndex: LongWord): IJSElement;
     function namedItem(const aName: UnicodeString): IJSElement;
-    class function Cast(Intf: IJSObject): IJSHTMLCollection;
+    class function Cast(const Intf: IJSObject): IJSHTMLCollection;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -1792,7 +1792,7 @@ Type
     procedure replace(const aUrl: UnicodeString);
     procedure reload(aForceget: Boolean); overload;
     procedure reload; overload;
-    class function Cast(Intf: IJSObject): IJSLocation;
+    class function Cast(const Intf: IJSObject): IJSLocation;
     property href: UnicodeString read _Gethref write _Sethref;
     property origin: UnicodeString read _Getorigin;
     property protocol: UnicodeString read _Getprotocol write _Setprotocol;
@@ -1820,7 +1820,7 @@ Type
     function _Getlength_: LongWord;
   Public
     function item(aIndex: LongWord): IJSNode;
-    class function Cast(Intf: IJSObject): IJSNodeList;
+    class function Cast(const Intf: IJSObject): IJSNodeList;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -1842,7 +1842,7 @@ Type
   Public
     function item(aIndex: LongWord): UnicodeString;
     function contains(const aString_: UnicodeString): Boolean;
-    class function Cast(Intf: IJSObject): IJSDOMStringList;
+    class function Cast(const Intf: IJSObject): IJSDOMStringList;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -1865,7 +1865,7 @@ Type
     function _Getoffset: LongWord;
   Public
     function getClientRect: IJSDOMRect;
-    class function Cast(Intf: IJSObject): IJSCaretPosition;
+    class function Cast(const Intf: IJSObject): IJSCaretPosition;
     property offsetNode: IJSNode read _GetoffsetNode;
     property offset: LongWord read _Getoffset;
   end;
@@ -1905,7 +1905,7 @@ Type
     function toggle(const aToken: UnicodeString; aForce: Boolean): Boolean; overload;
     function toggle(const aToken: UnicodeString): Boolean; overload;
     function supports(const aToken: UnicodeString): Boolean;
-    class function Cast(Intf: IJSObject): IJSDOMTokenList;
+    class function Cast(const Intf: IJSObject): IJSDOMTokenList;
     property length_: LongWord read _Getlength_;
     property value: UnicodeString read _Getvalue write _Setvalue;
   end;
@@ -1938,7 +1938,7 @@ Type
     function getNamedItemNS(const aNamespaceURI: UnicodeString; const aLocalName: UnicodeString): IJSAttr;
     function setNamedItemNS(arg: IJSAttr): IJSAttr;
     function removeNamedItemNS(const aNamespaceURI: UnicodeString; const aLocalName: UnicodeString): IJSAttr;
-    class function Cast(Intf: IJSObject): IJSNamedNodeMap;
+    class function Cast(const Intf: IJSObject): IJSNamedNodeMap;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -1953,7 +1953,7 @@ Type
   TJSDOMStringMap = class(TJSObject,IJSDOMStringMap)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSDOMStringMap;
+    class function Cast(const Intf: IJSObject): IJSDOMStringMap;
   end;
 
   { --------------------------------------------------------------------
@@ -1994,7 +1994,7 @@ Type
     procedure setProperty(const aProperty_: UTF8String; const aValue: UTF8String; const aPriority: UTF8String); overload;
     procedure setProperty(const aProperty_: UTF8String; const aValue: UTF8String); overload;
     function removeProperty(const aProperty_: UTF8String): UTF8String;
-    class function Cast(Intf: IJSObject): IJSCSSStyleDeclaration;
+    class function Cast(const Intf: IJSObject): IJSCSSStyleDeclaration;
     property cssText: UTF8String read _GetcssText write _SetcssText;
     property length_: LongWord read _Getlength_;
     property parentRule: IJSCSSRule read _GetparentRule;
@@ -2011,7 +2011,7 @@ Type
   TJSnsIBrowserDOMWindow = class(TJSObject,IJSnsIBrowserDOMWindow)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIBrowserDOMWindow;
+    class function Cast(const Intf: IJSObject): IJSnsIBrowserDOMWindow;
   end;
 
   { --------------------------------------------------------------------
@@ -2025,7 +2025,7 @@ Type
   TJSXULControllers = class(TJSObject,IJSXULControllers)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSXULControllers;
+    class function Cast(const Intf: IJSObject): IJSXULControllers;
   end;
 
   { --------------------------------------------------------------------
@@ -2039,7 +2039,7 @@ Type
   TJSnsIDOMWindowUtils = class(TJSObject,IJSnsIDOMWindowUtils)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIDOMWindowUtils;
+    class function Cast(const Intf: IJSObject): IJSnsIDOMWindowUtils;
   end;
 
   { --------------------------------------------------------------------
@@ -2053,7 +2053,7 @@ Type
   TJSnsIPrintSettings = class(TJSObject,IJSnsIPrintSettings)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIPrintSettings;
+    class function Cast(const Intf: IJSObject): IJSnsIPrintSettings;
   end;
 
   { --------------------------------------------------------------------
@@ -2070,7 +2070,7 @@ Type
   Private
     function _GetsessionStorage: IJSStorage;
   Public
-    class function Cast(Intf: IJSObject): IJSWindowSessionStorage;
+    class function Cast(const Intf: IJSObject): IJSWindowSessionStorage;
     property sessionStorage: IJSStorage read _GetsessionStorage;
   end;
 
@@ -2088,7 +2088,7 @@ Type
   Private
     function _GetlocalStorage: IJSStorage;
   Public
-    class function Cast(Intf: IJSObject): IJSWindowLocalStorage;
+    class function Cast(const Intf: IJSObject): IJSWindowLocalStorage;
     property localStorage: IJSStorage read _GetlocalStorage;
   end;
 
@@ -2139,7 +2139,7 @@ Type
     function _GetrotationAngle: Single;
     function _Getforce: Single;
   Public
-    class function Cast(Intf: IJSObject): IJSTouch;
+    class function Cast(const Intf: IJSObject): IJSTouch;
     property identifier: Integer read _Getidentifier;
     property target: IJSEventTarget read _Gettarget;
     property screenX: Integer read _GetscreenX;
@@ -2170,7 +2170,7 @@ Type
     function _Getlength_: LongWord;
   Public
     function item(aIndex: LongWord): IJSTouch;
-    class function Cast(Intf: IJSObject): IJSTouchList;
+    class function Cast(const Intf: IJSObject): IJSTouchList;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -2212,7 +2212,7 @@ Type
     procedure pushState(const aData: Variant; const aTitle: UnicodeString); overload;
     procedure replaceState(const aData: Variant; const aTitle: UnicodeString; const aUrl: UnicodeString); overload;
     procedure replaceState(const aData: Variant; const aTitle: UnicodeString); overload;
-    class function Cast(Intf: IJSObject): IJSHistory;
+    class function Cast(const Intf: IJSObject): IJSHistory;
     property length_: LongWord read _Getlength_;
     property scrollRestoration: TScrollRestoration read _GetscrollRestoration write _SetscrollRestoration;
     property state: Variant read _Getstate;
@@ -2235,7 +2235,7 @@ Type
     procedure setElementCreationCallback(const aName: UnicodeString; const aCallback: TCustomElementCreationCallback);
     function get(const aName: UnicodeString): Variant;
     procedure upgrade(aRoot: IJSNode);
-    class function Cast(Intf: IJSObject): IJSCustomElementRegistry;
+    class function Cast(const Intf: IJSObject): IJSCustomElementRegistry;
   end;
 
   { --------------------------------------------------------------------
@@ -2254,7 +2254,7 @@ Type
     function _Getvisible: Boolean;
     procedure _Setvisible(const aValue: Boolean);
   Public
-    class function Cast(Intf: IJSObject): IJSBarProp;
+    class function Cast(const Intf: IJSObject): IJSBarProp;
     property visible: Boolean read _Getvisible write _Setvisible;
   end;
 
@@ -2366,7 +2366,7 @@ Type
     function taintEnabled: Boolean;
     procedure checkProtocolHandlerAllowed(const aScheme: UnicodeString; aHandlerURI: IJSURI; aDocumentURI: IJSURI);
     procedure registerProtocolHandler(const aScheme: UnicodeString; const aUrl: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSNavigator;
+    class function Cast(const Intf: IJSObject): IJSNavigator;
     property pdfViewerEnabled: Boolean read _GetpdfViewerEnabled;
     property doNotTrack: UnicodeString read _GetdoNotTrack;
     property globalPrivacyControl: Boolean read _GetglobalPrivacyControl;
@@ -2425,7 +2425,7 @@ Type
     function _Getproduct: UnicodeString;
   Public
     function taintEnabled: Boolean;
-    class function Cast(Intf: IJSObject): IJSNavigatorID;
+    class function Cast(const Intf: IJSObject): IJSNavigatorID;
     property appCodeName: UnicodeString read _GetappCodeName;
     property appName: UnicodeString read _GetappName;
     property appVersion: UnicodeString read _GetappVersion;
@@ -2451,7 +2451,7 @@ Type
     function _Getlanguage: UnicodeString;
     function _Getlanguages: TUnicodeStringDynArray;
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorLanguage;
+    class function Cast(const Intf: IJSObject): IJSNavigatorLanguage;
     property language: UnicodeString read _Getlanguage;
     property languages: TUnicodeStringDynArray read _Getlanguages;
   end;
@@ -2470,7 +2470,7 @@ Type
   Private
     function _GetonLine: Boolean;
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorOnLine;
+    class function Cast(const Intf: IJSObject): IJSNavigatorOnLine;
     property onLine: Boolean read _GetonLine;
   end;
 
@@ -2489,7 +2489,7 @@ Type
   Public
     procedure checkProtocolHandlerAllowed(const aScheme: UnicodeString; aHandlerURI: IJSURI; aDocumentURI: IJSURI);
     procedure registerProtocolHandler(const aScheme: UnicodeString; const aUrl: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSNavigatorContentUtils;
+    class function Cast(const Intf: IJSObject): IJSNavigatorContentUtils;
   end;
 
   { --------------------------------------------------------------------
@@ -2503,7 +2503,7 @@ Type
   TJSNavigatorStorage = class(TJSObject,IJSNavigatorStorage)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorStorage;
+    class function Cast(const Intf: IJSObject): IJSNavigatorStorage;
   end;
 
   { --------------------------------------------------------------------
@@ -2517,7 +2517,7 @@ Type
   TJSNavigatorStorageUtils = class(TJSObject,IJSNavigatorStorageUtils)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorStorageUtils;
+    class function Cast(const Intf: IJSObject): IJSNavigatorStorageUtils;
   end;
 
   { --------------------------------------------------------------------
@@ -2531,7 +2531,7 @@ Type
   TJSNavigatorGeolocation = class(TJSObject,IJSNavigatorGeolocation)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorGeolocation;
+    class function Cast(const Intf: IJSObject): IJSNavigatorGeolocation;
   end;
 
   { --------------------------------------------------------------------
@@ -2548,7 +2548,7 @@ Type
   Private
     function _GethardwareConcurrency: QWord;
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorConcurrentHardware;
+    class function Cast(const Intf: IJSObject): IJSNavigatorConcurrentHardware;
     property hardwareConcurrency: QWord read _GethardwareConcurrency;
   end;
 
@@ -2566,7 +2566,7 @@ Type
   Private
     function _Getwebdriver: Boolean;
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorAutomationInformation;
+    class function Cast(const Intf: IJSObject): IJSNavigatorAutomationInformation;
     property webdriver: Boolean read _Getwebdriver;
   end;
 
@@ -2581,7 +2581,7 @@ Type
   TJSNavigatorLocks = class(TJSObject,IJSNavigatorLocks)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSNavigatorLocks;
+    class function Cast(const Intf: IJSObject): IJSNavigatorLocks;
   end;
 
   { --------------------------------------------------------------------
@@ -2627,7 +2627,7 @@ Type
     procedure beginExplicitSnapshot;
     procedure checkpointExplicitSnapshot;
     procedure endExplicitSnapshot;
-    class function Cast(Intf: IJSObject): IJSStorage;
+    class function Cast(const Intf: IJSObject): IJSStorage;
     property length_: LongWord read _Getlength_;
     property isSessionOnly: Boolean read _GetisSessionOnly;
     property hasSnapshot: Boolean read _GethasSnapshot;
@@ -2733,7 +2733,7 @@ Type
     procedure scrollIntoView(aRegion: SmallInt; aIsSynchronous: Boolean; aVPercent: SmallInt; aHPercent: SmallInt);
     procedure setColors(const aForegroundColor: UnicodeString; const aBackgroundColor: UnicodeString; const aAltForegroundColor: UnicodeString; const aAltBackgroundColor: UnicodeString);
     procedure resetColors;
-    class function Cast(Intf: IJSObject): IJSSelection;
+    class function Cast(const Intf: IJSObject): IJSSelection;
     property anchorNode: IJSNode read _GetanchorNode;
     property anchorOffset: LongWord read _GetanchorOffset;
     property focusNode: IJSNode read _GetfocusNode;
@@ -2757,7 +2757,7 @@ Type
   TJSnsISelectionListener = class(TJSObject,IJSnsISelectionListener)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsISelectionListener;
+    class function Cast(const Intf: IJSObject): IJSnsISelectionListener;
   end;
 
   { --------------------------------------------------------------------
@@ -2780,7 +2780,7 @@ Type
     function _Getmax: Double;
     function _GetmaxAverage: Double;
   Public
-    class function Cast(Intf: IJSObject): IJSScreenLuminance;
+    class function Cast(const Intf: IJSObject): IJSScreenLuminance;
     property min: Double read _Getmin;
     property max: Double read _Getmax;
     property maxAverage: Double read _GetmaxAverage;
@@ -2805,7 +2805,7 @@ Type
     function _Gettypes: TUnicodeStringDynArray;
   Public
     function getType(const aType_: UnicodeString): IJSPromise; // Promise<Blob>
-    class function Cast(Intf: IJSObject): IJSClipboardItem;
+    class function Cast(const Intf: IJSObject): IJSClipboardItem;
     property presentationStyle: TPresentationStyle read _GetpresentationStyle;
     property types: TUnicodeStringDynArray read _Gettypes;
   end;
@@ -2836,7 +2836,7 @@ Type
     function _GetendOffset: LongWord;
     function _Getcollapsed: Boolean;
   Public
-    class function Cast(Intf: IJSObject): IJSAbstractRange;
+    class function Cast(const Intf: IJSObject): IJSAbstractRange;
     property startContainer: IJSNode read _GetstartContainer;
     property startOffset: LongWord read _GetstartOffset;
     property endContainer: IJSNode read _GetendContainer;
@@ -2860,7 +2860,7 @@ Type
     function _Getlength_: LongWord;
   Public
     function item(aIndex: LongWord): IJSDOMRect;
-    class function Cast(Intf: IJSObject): IJSDOMRectList;
+    class function Cast(const Intf: IJSObject): IJSDOMRectList;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -2905,7 +2905,7 @@ Type
     function fromRect(const aOther: TJSDOMRectInit): IJSDOMRectReadOnly; overload;
     function fromRect: IJSDOMRectReadOnly; overload;
     function toJSON: IJSObject;
-    class function Cast(Intf: IJSObject): IJSDOMRectReadOnly;
+    class function Cast(const Intf: IJSObject): IJSDOMRectReadOnly;
     property x: Double read _Getx;
     property y: Double read _Gety;
     property width: Double read _Getwidth;
@@ -2931,7 +2931,7 @@ Type
   TJSTouchEventHandlers = class(TJSObject,IJSTouchEventHandlers)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSTouchEventHandlers;
+    class function Cast(const Intf: IJSObject): IJSTouchEventHandlers;
     // property ontouchstart: TEventHandler read _Getontouchstart write _Setontouchstart;
     // property ontouchend: TEventHandler read _Getontouchend write _Setontouchend;
     // property ontouchmove: TEventHandler read _Getontouchmove write _Setontouchmove;
@@ -2958,7 +2958,7 @@ Type
     function namedItem(const aName: UnicodeString): Variant;
     function item(const aNameOrIndex: UnicodeString): Variant; overload;
     function item: Variant; overload;
-    class function Cast(Intf: IJSObject): IJSHTMLAllCollection;
+    class function Cast(const Intf: IJSObject): IJSHTMLAllCollection;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -2973,7 +2973,7 @@ Type
   TJSMenuBuilder = class(TJSObject,IJSMenuBuilder)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSMenuBuilder;
+    class function Cast(const Intf: IJSObject): IJSMenuBuilder;
   end;
 
   { --------------------------------------------------------------------
@@ -3044,7 +3044,7 @@ Type
     procedure setValidity(const aFlags: TJSValidityStateFlags; const aMessage: UnicodeString); overload;
     function checkValidity: Boolean;
     function reportValidity: Boolean;
-    class function Cast(Intf: IJSObject): IJSElementInternals;
+    class function Cast(const Intf: IJSObject): IJSElementInternals;
     property shadowRoot: IJSShadowRoot read _GetshadowRoot;
     property form: IJSHTMLFormElement read _Getform;
     property willValidate: Boolean read _GetwillValidate;
@@ -3098,7 +3098,7 @@ Type
     function _GetcustomError: Boolean;
     function _Getvalid: Boolean;
   Public
-    class function Cast(Intf: IJSObject): IJSValidityState;
+    class function Cast(const Intf: IJSObject): IJSValidityState;
     property valueMissing: Boolean read _GetvalueMissing;
     property typeMismatch: Boolean read _GettypeMismatch;
     property patternMismatch: Boolean read _GetpatternMismatch;
@@ -3123,7 +3123,7 @@ Type
   TJSSVGViewSpec = class(TJSObject,IJSSVGViewSpec)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSSVGViewSpec;
+    class function Cast(const Intf: IJSObject): IJSSVGViewSpec;
   end;
 
   { --------------------------------------------------------------------
@@ -3143,7 +3143,7 @@ Type
     function _GetviewBox: IJSSVGAnimatedRect;
     function _GetpreserveAspectRatio: IJSSVGAnimatedPreserveAspectRatio;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGFitToViewBox;
+    class function Cast(const Intf: IJSObject): IJSSVGFitToViewBox;
     property viewBox: IJSSVGAnimatedRect read _GetviewBox;
     property preserveAspectRatio: IJSSVGAnimatedPreserveAspectRatio read _GetpreserveAspectRatio;
   end;
@@ -3169,7 +3169,7 @@ Type
       SVG_ZOOMANDPAN_DISABLE = 1;
       SVG_ZOOMANDPAN_MAGNIFY = 2;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGZoomAndPan;
+    class function Cast(const Intf: IJSObject): IJSSVGZoomAndPan;
     property zoomAndPan: Word read _GetzoomAndPan write _SetzoomAndPan;
   end;
 
@@ -3213,7 +3213,7 @@ Type
       DOCUMENT_RULE = 13;
       FONT_FEATURE_VALUES_RULE = 14;
   Public
-    class function Cast(Intf: IJSObject): IJSCSSRule;
+    class function Cast(const Intf: IJSObject): IJSCSSRule;
     property type_: Word read _Gettype_;
     property cssText: UTF8String read _GetcssText write _SetcssText;
     property parentRule: IJSCSSRule read _GetparentRule;
@@ -3237,7 +3237,7 @@ Type
     function _GetbaseVal: IJSSVGLength;
     function _GetanimVal: IJSSVGLength;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGAnimatedLength;
+    class function Cast(const Intf: IJSObject): IJSSVGAnimatedLength;
     property baseVal: IJSSVGLength read _GetbaseVal;
     property animVal: IJSSVGLength read _GetanimVal;
   end;
@@ -3267,7 +3267,7 @@ Type
   Public
     function matrixTransform(const aMatrix: TJSDOMMatrix2DInit): IJSSVGPoint; overload;
     function matrixTransform: IJSSVGPoint; overload;
-    class function Cast(Intf: IJSObject): IJSSVGPoint;
+    class function Cast(const Intf: IJSObject): IJSSVGPoint;
     property x: Single read _Getx write _Setx;
     property y: Single read _Gety write _Sety;
   end;
@@ -3288,7 +3288,7 @@ Type
     function _Getvalue: Single;
     procedure _Setvalue(const aValue: Single);
   Public
-    class function Cast(Intf: IJSObject): IJSSVGNumber;
+    class function Cast(const Intf: IJSObject): IJSSVGNumber;
     property value: Single read _Getvalue write _Setvalue;
   end;
 
@@ -3338,7 +3338,7 @@ Type
   Public
     procedure newValueSpecifiedUnits(aUnitType: Word; aValueInSpecifiedUnits: Single);
     procedure convertToSpecifiedUnits(aUnitType: Word);
-    class function Cast(Intf: IJSObject): IJSSVGLength;
+    class function Cast(const Intf: IJSObject): IJSSVGLength;
     property unitType: Word read _GetunitType;
     property value: Single read _Getvalue write _Setvalue;
     property valueInSpecifiedUnits: Single read _GetvalueInSpecifiedUnits write _SetvalueInSpecifiedUnits;
@@ -3385,7 +3385,7 @@ Type
   Public
     procedure newValueSpecifiedUnits(aUnitType: Word; aValueInSpecifiedUnits: Single);
     procedure convertToSpecifiedUnits(aUnitType: Word);
-    class function Cast(Intf: IJSObject): IJSSVGAngle;
+    class function Cast(const Intf: IJSObject): IJSSVGAngle;
     property unitType: Word read _GetunitType;
     property value: Single read _Getvalue write _Setvalue;
     property valueInSpecifiedUnits: Single read _GetvalueInSpecifiedUnits write _SetvalueInSpecifiedUnits;
@@ -3455,7 +3455,7 @@ Type
     function flipY: IJSSVGMatrix;
     function skewX(angle: Single): IJSSVGMatrix;
     function skewY(angle: Single): IJSSVGMatrix;
-    class function Cast(Intf: IJSObject): IJSSVGMatrix;
+    class function Cast(const Intf: IJSObject): IJSSVGMatrix;
     property a: Single read _Geta write _Seta;
     property b: Single read _Getb write _Setb;
     property c: Single read _Getc write _Setc;
@@ -3495,7 +3495,7 @@ Type
     procedure _Setwidth(const aValue: Single);
     procedure _Setheight(const aValue: Single);
   Public
-    class function Cast(Intf: IJSObject): IJSSVGRect;
+    class function Cast(const Intf: IJSObject): IJSSVGRect;
     property x: Single read _Getx write _Setx;
     property y: Single read _Gety write _Sety;
     property width: Single read _Getwidth write _Setwidth;
@@ -3545,7 +3545,7 @@ Type
     procedure setRotate(_angle: Single; aCx: Single; aCy: Single);
     procedure setSkewX(_angle: Single);
     procedure setSkewY(_angle: Single);
-    class function Cast(Intf: IJSObject): IJSSVGTransform;
+    class function Cast(const Intf: IJSObject): IJSSVGTransform;
     property type_: Word read _Gettype_;
     property matrix: IJSSVGMatrix read _Getmatrix;
     property angle: Single read _Getangle;
@@ -3726,7 +3726,7 @@ Type
     function transformPoint(const aPoint: TJSDOMPointInit): IJSDOMPoint; overload;
     function transformPoint: IJSDOMPoint; overload;
     function toJSON: IJSObject;
-    class function Cast(Intf: IJSObject): IJSDOMMatrixReadOnly;
+    class function Cast(const Intf: IJSObject): IJSDOMMatrixReadOnly;
     property a: Double read _Geta;
     property b: Double read _Getb;
     property c: Double read _Getc;
@@ -3770,7 +3770,7 @@ Type
     function _GetbaseVal: IJSSVGRect;
     function _GetanimVal: IJSSVGRect;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGAnimatedRect;
+    class function Cast(const Intf: IJSObject): IJSSVGAnimatedRect;
     property baseVal: IJSSVGRect read _GetbaseVal;
     property animVal: IJSSVGRect read _GetanimVal;
   end;
@@ -3792,7 +3792,7 @@ Type
     function _GetbaseVal: IJSSVGPreserveAspectRatio;
     function _GetanimVal: IJSSVGPreserveAspectRatio;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGAnimatedPreserveAspectRatio;
+    class function Cast(const Intf: IJSObject): IJSSVGAnimatedPreserveAspectRatio;
     property baseVal: IJSSVGPreserveAspectRatio read _GetbaseVal;
     property animVal: IJSSVGPreserveAspectRatio read _GetanimVal;
   end;
@@ -3830,7 +3830,7 @@ Type
     function matrixTransform(const aMatrix: TJSDOMMatrixInit): IJSDOMPoint; overload;
     function matrixTransform: IJSDOMPoint; overload;
     function toJSON: IJSObject;
-    class function Cast(Intf: IJSObject): IJSDOMPointReadOnly;
+    class function Cast(const Intf: IJSObject): IJSDOMPointReadOnly;
     property x: Double read _Getx;
     property y: Double read _Gety;
     property z: Double read _Getz;
@@ -3874,7 +3874,7 @@ Type
       SVG_MEETORSLICE_MEET = 1;
       SVG_MEETORSLICE_SLICE = 2;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGPreserveAspectRatio;
+    class function Cast(const Intf: IJSObject): IJSSVGPreserveAspectRatio;
     property align: Word read _Getalign write _Setalign;
     property meetOrSlice: Word read _GetmeetOrSlice write _SetmeetOrSlice;
   end;
@@ -3895,7 +3895,7 @@ Type
     function _Getlength_: LongWord;
   Public
     function item(aIndex: LongWord): IJSCSSRule;
-    class function Cast(Intf: IJSObject): IJSCSSRuleList;
+    class function Cast(const Intf: IJSObject): IJSCSSRuleList;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -3916,7 +3916,7 @@ Type
     function _GetrequiredExtensions: IJSSVGStringList;
     function _GetsystemLanguage: IJSSVGStringList;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGTests;
+    class function Cast(const Intf: IJSObject): IJSSVGTests;
     property requiredExtensions: IJSSVGStringList read _GetrequiredExtensions;
     property systemLanguage: IJSSVGStringList read _GetsystemLanguage;
   end;
@@ -3938,7 +3938,7 @@ Type
     function _GetbaseVal: IJSSVGTransformList;
     function _GetanimVal: IJSSVGTransformList;
   Public
-    class function Cast(Intf: IJSObject): IJSSVGAnimatedTransformList;
+    class function Cast(const Intf: IJSObject): IJSSVGAnimatedTransformList;
     property baseVal: IJSSVGTransformList read _GetbaseVal;
     property animVal: IJSSVGTransformList read _GetanimVal;
   end;
@@ -3974,7 +3974,7 @@ Type
     function replaceItem(const aNewItem: UnicodeString; aIndex: LongWord): UnicodeString;
     function removeItem(aIndex: LongWord): UnicodeString;
     function appendItem(const aNewItem: UnicodeString): UnicodeString;
-    class function Cast(Intf: IJSObject): IJSSVGStringList;
+    class function Cast(const Intf: IJSObject): IJSSVGStringList;
     property length_: LongWord read _Getlength_;
     property numberOfItems: LongWord read _GetnumberOfItems;
   end;
@@ -4016,7 +4016,7 @@ Type
     function createSVGTransformFromMatrix(const aMatrix: TJSDOMMatrix2DInit): IJSSVGTransform; overload;
     function createSVGTransformFromMatrix: IJSSVGTransform; overload;
     function consolidate: IJSSVGTransform;
-    class function Cast(Intf: IJSObject): IJSSVGTransformList;
+    class function Cast(const Intf: IJSObject): IJSSVGTransformList;
     property numberOfItems: LongWord read _GetnumberOfItems;
     property length_: LongWord read _Getlength_;
   end;
@@ -4040,7 +4040,7 @@ Type
     function _GetanimVal: UnicodeString;
     procedure _SetbaseVal(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSSVGAnimatedString;
+    class function Cast(const Intf: IJSObject): IJSSVGAnimatedString;
     property baseVal: UnicodeString read _GetbaseVal write _SetbaseVal;
     property animVal: UnicodeString read _GetanimVal;
   end;
@@ -4088,7 +4088,7 @@ Type
     function _Getconstructed: Boolean;
     procedure _Setdisabled(const aValue: Boolean);
   Public
-    class function Cast(Intf: IJSObject): IJSStyleSheet;
+    class function Cast(const Intf: IJSObject): IJSStyleSheet;
     property type_: UnicodeString read _Gettype_;
     property href: UnicodeString read _Gethref;
     property ownerNode: IJSNode read _GetownerNode;
@@ -4117,7 +4117,7 @@ Type
     function _Getcontext: IJSnsISupports;
   Public
     procedure done;
-    class function Cast(Intf: IJSObject): IJSMozCanvasPrintState;
+    class function Cast(const Intf: IJSObject): IJSMozCanvasPrintState;
     property context: IJSnsISupports read _Getcontext;
   end;
 
@@ -4132,7 +4132,7 @@ Type
   TJSimgINotificationObserver = class(TJSObject,IJSimgINotificationObserver)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSimgINotificationObserver;
+    class function Cast(const Intf: IJSObject): IJSimgINotificationObserver;
   end;
 
   { --------------------------------------------------------------------
@@ -4146,7 +4146,7 @@ Type
   TJSimgIRequest = class(TJSObject,IJSimgIRequest)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSimgIRequest;
+    class function Cast(const Intf: IJSObject): IJSimgIRequest;
   end;
 
   { --------------------------------------------------------------------
@@ -4160,7 +4160,7 @@ Type
   TJSnsIStreamListener = class(TJSObject,IJSnsIStreamListener)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIStreamListener;
+    class function Cast(const Intf: IJSObject): IJSnsIStreamListener;
   end;
 
   { --------------------------------------------------------------------
@@ -4202,7 +4202,7 @@ Type
     function getRequestType(aRequest: IJSimgIRequest): Integer;
     procedure forceReload(aNotify: Boolean); overload;
     procedure forceReload; overload;
-    class function Cast(Intf: IJSObject): IJSMozImageLoadingContent;
+    class function Cast(const Intf: IJSObject): IJSMozImageLoadingContent;
     property loadingEnabled: Boolean read _GetloadingEnabled write _SetloadingEnabled;
     property currentURI: IJSURI read _GetcurrentURI;
     property currentRequestFinalURI: IJSURI read _GetcurrentRequestFinalURI;
@@ -4230,7 +4230,7 @@ Type
     function _GetisInputEventTarget: Boolean;
   Public
     procedure setUserInput(const aInput: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSMozEditableElement;
+    class function Cast(const Intf: IJSObject): IJSMozEditableElement;
     property editor: IJSnsIEditor read _Geteditor;
     property hasEditor: Boolean read _GethasEditor;
     property isInputEventTarget: Boolean read _GetisInputEventTarget;
@@ -4247,7 +4247,7 @@ Type
   TJSnsIEditor = class(TJSObject,IJSnsIEditor)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIEditor;
+    class function Cast(const Intf: IJSObject): IJSnsIEditor;
   end;
 
   { --------------------------------------------------------------------
@@ -4314,7 +4314,7 @@ Type
     procedure _Setsearch(const aValue: UnicodeString);
     procedure _Sethash(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLHyperlinkElementUtils;
+    class function Cast(const Intf: IJSObject): IJSHTMLHyperlinkElementUtils;
     property href: UnicodeString read _Gethref write _Sethref;
     property origin: UnicodeString read _Getorigin;
     property protocol: UnicodeString read _Getprotocol write _Setprotocol;
@@ -4342,7 +4342,7 @@ Type
   Private
     function _Getsheet: IJSStyleSheet;
   Public
-    class function Cast(Intf: IJSObject): IJSLinkStyle;
+    class function Cast(const Intf: IJSObject): IJSLinkStyle;
     property sheet: IJSStyleSheet read _Getsheet;
   end;
 
@@ -4380,7 +4380,7 @@ Type
     function slice(aStart: Int64; aEnd_: Int64): IJSBlob; overload;
     function text: IJSPromise; // Promise<USVString>
     function arrayBuffer: IJSPromise; // Promise<ArrayBuffer>
-    class function Cast(Intf: IJSObject): IJSBlob;
+    class function Cast(const Intf: IJSObject): IJSBlob;
     property size: QWord read _Getsize;
     property type_: UnicodeString read _Gettype_;
     property blobImplType: UnicodeString read _GetblobImplType;
@@ -4402,7 +4402,7 @@ Type
     function _Getlength_: LongWord;
   Public
     function item(aIndex: LongWord): IJSFile;
-    class function Cast(Intf: IJSObject): IJSFileList;
+    class function Cast(const Intf: IJSObject): IJSFileList;
     property length_: LongWord read _Getlength_;
   end;
 
@@ -4417,7 +4417,7 @@ Type
   TJSnsIFile = class(TJSObject,IJSnsIFile)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSnsIFile;
+    class function Cast(const Intf: IJSObject): IJSnsIFile;
   end;
 
   { --------------------------------------------------------------------
@@ -4437,7 +4437,7 @@ Type
     function _Getname: UnicodeString;
     function _Getroot: IJSFileSystemDirectoryEntry;
   Public
-    class function Cast(Intf: IJSObject): IJSFileSystem;
+    class function Cast(const Intf: IJSObject): IJSFileSystem;
     property name: UnicodeString read _Getname;
     property root: IJSFileSystemDirectoryEntry read _Getroot;
   end;
@@ -4468,7 +4468,7 @@ Type
     function _GetfullPath: UnicodeString;
     function _Getfilesystem: IJSFileSystem;
   Public
-    class function Cast(Intf: IJSObject): IJSFileSystemEntry;
+    class function Cast(const Intf: IJSObject): IJSFileSystemEntry;
     property isFile: Boolean read _GetisFile;
     property isDirectory: Boolean read _GetisDirectory;
     property name: UnicodeString read _Getname;
@@ -4495,7 +4495,7 @@ Type
     function _Getheight: LongWord;
   Public
     procedure close;
-    class function Cast(Intf: IJSObject): IJSImageBitmap;
+    class function Cast(const Intf: IJSObject): IJSImageBitmap;
     property width: LongWord read _Getwidth;
     property height: LongWord read _Getheight;
   end;
@@ -4511,7 +4511,7 @@ Type
   TJSFileSystemDirectoryReader = class(TJSObject,IJSFileSystemDirectoryReader)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSFileSystemDirectoryReader;
+    class function Cast(const Intf: IJSObject): IJSFileSystemDirectoryReader;
   end;
 
   { --------------------------------------------------------------------
@@ -4547,7 +4547,7 @@ Type
     procedure set_(const aName: UnicodeString; aValue: IJSBlob; const aFilename: UnicodeString); overload;
     procedure set_(const aName: UnicodeString; aValue: IJSBlob); overload;
     procedure set_(const aName: UnicodeString; const aValue: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSFormData;
+    class function Cast(const Intf: IJSObject): IJSFormData;
   end;
 
   { --------------------------------------------------------------------
@@ -4562,7 +4562,7 @@ Type
   TJSAbstractWorker = class(TJSObject,IJSAbstractWorker)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSAbstractWorker;
+    class function Cast(const Intf: IJSObject): IJSAbstractWorker;
     // property onerror: TEventHandler read _Getonerror write _Setonerror;
   end;
 
@@ -4627,7 +4627,7 @@ Type
     function fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
     function fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
     function fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
-    class function Cast(Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
+    class function Cast(const Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
     property origin: UnicodeString read _Getorigin;
     property crossOriginIsolated: Boolean read _GetcrossOriginIsolated;
     property isSecureContext: Boolean read _GetisSecureContext;
@@ -4649,7 +4649,7 @@ Type
   Public
     function has(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
     function delete(const aCacheName: UnicodeString): IJSPromise; // Promise<boolean>
-    class function Cast(Intf: IJSObject): IJSCacheStorage;
+    class function Cast(const Intf: IJSObject): IJSCacheStorage;
   end;
 
   { --------------------------------------------------------------------
@@ -4699,7 +4699,7 @@ Type
     function clone: IJSResponse;
     function cloneUnfiltered: IJSResponse;
     function json: IJSPromise; // Promise<JSON>
-    class function Cast(Intf: IJSObject): IJSResponse;
+    class function Cast(const Intf: IJSObject): IJSResponse;
     property type_: TResponseType read _Gettype_;
     property url: UnicodeString read _Geturl;
     property redirected: Boolean read _Getredirected;
@@ -4738,7 +4738,7 @@ Type
     function get(const aName: UnicodeString): UnicodeString;
     function has(const aName: UnicodeString): Boolean;
     procedure set_(const aName: UnicodeString; const aValue: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSHeaders;
+    class function Cast(const Intf: IJSObject): IJSHeaders;
     property guard: THeadersGuardEnum read _Getguard write _Setguard;
   end;
 
@@ -4793,7 +4793,7 @@ Type
   Public
     function clone: IJSRequest;
     procedure overrideContentPolicyType(aContext: TnsContentPolicyType);
-    class function Cast(Intf: IJSObject): IJSRequest;
+    class function Cast(const Intf: IJSObject): IJSRequest;
     property method: UnicodeString read _Getmethod;
     property url: UnicodeString read _Geturl;
     property headers: IJSHeaders read _Getheaders;
@@ -4919,7 +4919,7 @@ Type
     function appendChild(aNode: IJSNode): IJSNode;
     function replaceChild(aNode: IJSNode; aChild: IJSNode): IJSNode;
     function removeChild(aChild: IJSNode): IJSNode;
-    class function Cast(Intf: IJSObject): IJSNode;
+    class function Cast(const Intf: IJSObject): IJSNode;
     property nodeType: Word read _GetnodeType;
     property nodeName: UnicodeString read _GetnodeName;
     property baseURI: UnicodeString read _GetbaseURI;
@@ -5474,7 +5474,7 @@ Type
     function fetch(const aInput: UnicodeString; const aInit: TJSRequestInit): IJSPromise; overload; // Promise<Response>
     function fetch(const aInput: UnicodeString): IJSPromise; overload; // Promise<Response>
     function fetch(aInput: IJSRequest): IJSPromise; overload; // Promise<Response>
-    class function Cast(Intf: IJSObject): IJSWindow;
+    class function Cast(const Intf: IJSObject): IJSWindow;
     property window: IJSWindowProxy read _Getwindow;
     property self_: IJSWindowProxy read _Getself_;
     property document: IJSDocument read _Getdocument;
@@ -5709,7 +5709,7 @@ Type
     function mozItem(aIndex: LongWord): UnicodeString;
     procedure mozAdd(const aUri: UnicodeString);
     procedure mozRemove(const aUri: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSOfflineResourceList;
+    class function Cast(const Intf: IJSObject): IJSOfflineResourceList;
     property status: Word read _Getstatus;
     // property onchecking: TEventHandler read _Getonchecking write _Setonchecking;
     // property onerror: TEventHandler read _Getonerror write _Setonerror;
@@ -5783,7 +5783,7 @@ Type
   Public
     function mozLockOrientation(const aOrientation: UnicodeString): Boolean;
     procedure mozUnlockOrientation;
-    class function Cast(Intf: IJSObject): IJSScreen;
+    class function Cast(const Intf: IJSObject): IJSScreen;
     property availWidth: Integer read _GetavailWidth;
     property availHeight: Integer read _GetavailHeight;
     property width: Integer read _Getwidth;
@@ -5821,7 +5821,7 @@ Type
     function readText: IJSPromise; // Promise<DOMString>
     function writeText(const aData: UnicodeString): IJSPromise; // Promise<void>
     procedure onUserReactedToPasteMenuPopup(allowed: Boolean);
-    class function Cast(Intf: IJSObject): IJSClipboard;
+    class function Cast(const Intf: IJSObject): IJSClipboard;
   end;
 
   { --------------------------------------------------------------------
@@ -5892,7 +5892,7 @@ Type
     function createContextualFragment(const aFragment: UnicodeString): IJSDocumentFragment;
     function getClientRects: IJSDOMRectList;
     function getBoundingClientRect: IJSDOMRect;
-    class function Cast(Intf: IJSObject): IJSRange;
+    class function Cast(const Intf: IJSObject): IJSRange;
     property commonAncestorContainer: IJSNode read _GetcommonAncestorContainer;
   end;
 
@@ -5918,7 +5918,7 @@ Type
   Public
     function lock(aOrientation: TOrientationLockType): IJSPromise; // Promise<void>
     procedure unlock;
-    class function Cast(Intf: IJSObject): IJSScreenOrientation;
+    class function Cast(const Intf: IJSObject): IJSScreenOrientation;
     property type_: TOrientationType read _Gettype_;
     property angle: Word read _Getangle;
     // property onchange: TEventHandler read _Getonchange write _Setonchange;
@@ -5959,7 +5959,7 @@ Type
   Public
     function fromRect(const aOther: TJSDOMRectInit): IJSDOMRect; overload;
     function fromRect: IJSDOMRect; overload;
-    class function Cast(Intf: IJSObject): IJSDOMRect;
+    class function Cast(const Intf: IJSObject): IJSDOMRect;
     property x: Double read _Getx write _Setx;
     property y: Double read _Gety write _Sety;
     property width: Double read _Getwidth write _Setwidth;
@@ -6171,7 +6171,7 @@ Type
     function skewYSelf: IJSDOMMatrix; overload;
     function invertSelf: IJSDOMMatrix;
     function setMatrixValue(const aTransformList: UTF8String): IJSDOMMatrix;
-    class function Cast(Intf: IJSObject): IJSDOMMatrix;
+    class function Cast(const Intf: IJSObject): IJSDOMMatrix;
     property a: Double read _Geta write _Seta;
     property b: Double read _Getb write _Setb;
     property c: Double read _Getc write _Setc;
@@ -6241,7 +6241,7 @@ Type
     function addRule: Integer; overload;
     function addRule(const aSelector: UTF8String): Integer; overload;
     function addRule(const aSelector: UTF8String; const aStyle: UTF8String): Integer; overload;
-    class function Cast(Intf: IJSObject): IJSCSSStyleSheet;
+    class function Cast(const Intf: IJSObject): IJSCSSStyleSheet;
     property ownerRule: IJSCSSRule read _GetownerRule;
     property cssRules: IJSCSSRuleList read _GetcssRules;
     property parsingMode: TCSSStyleSheetParsingMode read _GetparsingMode;
@@ -6283,7 +6283,7 @@ Type
   Public
     function fromPoint(const aOther: TJSDOMPointInit): IJSDOMPoint; overload;
     function fromPoint: IJSDOMPoint; overload;
-    class function Cast(Intf: IJSObject): IJSDOMPoint;
+    class function Cast(const Intf: IJSObject): IJSDOMPoint;
     property x: Double read _Getx write _Setx;
     property y: Double read _Gety write _Sety;
     property z: Double read _Getz write _Setz;
@@ -6323,7 +6323,7 @@ Type
     function transferToImageBitmap: IJSImageBitmap;
     function convertToBlob(const aOptions: TJSImageEncodeOptions): IJSPromise; overload; // Promise<Blob>
     function convertToBlob: IJSPromise; overload; // Promise<Blob>
-    class function Cast(Intf: IJSObject): IJSOffscreenCanvas;
+    class function Cast(const Intf: IJSObject): IJSOffscreenCanvas;
     property width: LongWord read _Getwidth write _Setwidth;
     property height: LongWord read _Getheight write _Setheight;
     // property oncontextlost: TEventHandler read _Getoncontextlost write _Setoncontextlost;
@@ -6353,7 +6353,7 @@ Type
     function _GetwebkitRelativePath: UnicodeString;
     function _GetmozFullPath: UnicodeString;
   Public
-    class function Cast(Intf: IJSObject): IJSFile;
+    class function Cast(const Intf: IJSObject): IJSFile;
     property name: UnicodeString read _Getname;
     property lastModified: Int64 read _GetlastModified;
     property webkitRelativePath: UnicodeString read _GetwebkitRelativePath;
@@ -6373,7 +6373,7 @@ Type
   Private
   Public
     function createReader: IJSFileSystemDirectoryReader;
-    class function Cast(Intf: IJSObject): IJSFileSystemDirectoryEntry;
+    class function Cast(const Intf: IJSObject): IJSFileSystemDirectoryEntry;
   end;
 
   { --------------------------------------------------------------------
@@ -6395,7 +6395,7 @@ Type
     function _GetscriptURL: UnicodeString;
     function _Getstate: TServiceWorkerState;
   Public
-    class function Cast(Intf: IJSObject): IJSServiceWorker;
+    class function Cast(const Intf: IJSObject): IJSServiceWorker;
     property scriptURL: UnicodeString read _GetscriptURL;
     property state: TServiceWorkerState read _Getstate;
     // property onstatechange: TEventHandler read _Getonstatechange write _Setonstatechange;
@@ -6978,7 +6978,7 @@ Type
     function elementsFromPoint(aX: Single; aY: Single): TJSElementDynArray;
     function nodeFromPoint(aX: Single; aY: Single): IJSNode;
     function nodesFromPoint(aX: Single; aY: Single): TJSNodeDynArray;
-    class function Cast(Intf: IJSObject): IJSDocument;
+    class function Cast(const Intf: IJSObject): IJSDocument;
     property implementation_: IJSDOMImplementation read _Getimplementation_;
     property URL: UnicodeString read _GetURL;
     property documentURI: UnicodeString read _GetdocumentURI;
@@ -7203,7 +7203,7 @@ Type
     procedure replaceWith(const aNodes: UnicodeString){; ToDo:varargs}; overload;
     procedure replaceWith(aNodes: IJSNode){; ToDo:varargs}; overload;
     procedure remove;
-    class function Cast(Intf: IJSObject): IJSDocumentType;
+    class function Cast(const Intf: IJSObject): IJSDocumentType;
     property name: UnicodeString read _Getname;
     property publicId: UnicodeString read _GetpublicId;
     property systemId: UnicodeString read _GetsystemId;
@@ -7519,7 +7519,7 @@ Type
     procedure append(aNodes: IJSNode){; ToDo:varargs}; overload;
     procedure replaceChildren(const aNodes: UnicodeString){; ToDo:varargs}; overload;
     procedure replaceChildren(aNodes: IJSNode){; ToDo:varargs}; overload;
-    class function Cast(Intf: IJSObject): IJSElement;
+    class function Cast(const Intf: IJSObject): IJSElement;
     property namespaceURI: UnicodeString read _GetnamespaceURI;
     property prefix: UnicodeString read _Getprefix;
     property localName: UnicodeString read _GetlocalName;
@@ -7610,7 +7610,7 @@ Type
     procedure append(aNodes: IJSNode){; ToDo:varargs}; overload;
     procedure replaceChildren(const aNodes: UnicodeString){; ToDo:varargs}; overload;
     procedure replaceChildren(aNodes: IJSNode){; ToDo:varargs}; overload;
-    class function Cast(Intf: IJSObject): IJSDocumentFragment;
+    class function Cast(const Intf: IJSObject): IJSDocumentFragment;
     property children: IJSHTMLCollection read _Getchildren;
     property firstElementChild: IJSElement read _GetfirstElementChild;
     property lastElementChild: IJSElement read _GetlastElementChild;
@@ -7651,7 +7651,7 @@ Type
     function _GetownerElement: IJSElement;
     procedure _Setvalue(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSAttr;
+    class function Cast(const Intf: IJSObject): IJSAttr;
     property localName: UnicodeString read _GetlocalName;
     property value: UnicodeString read _Getvalue write _Setvalue;
     property name: UnicodeString read _Getname;
@@ -7710,7 +7710,7 @@ Type
     procedure replaceWith(const aNodes: UnicodeString){; ToDo:varargs}; overload;
     procedure replaceWith(aNodes: IJSNode){; ToDo:varargs}; overload;
     procedure remove;
-    class function Cast(Intf: IJSObject): IJSCharacterData;
+    class function Cast(const Intf: IJSObject): IJSCharacterData;
     property data: UnicodeString read _Getdata write _Setdata;
     property length_: LongWord read _Getlength_;
     property previousElementSibling: IJSElement read _GetpreviousElementSibling;
@@ -7733,7 +7733,7 @@ Type
     function _GetwholeText: UnicodeString;
   Public
     function splitText(aOffset: LongWord): IJSText;
-    class function Cast(Intf: IJSObject): IJSText;
+    class function Cast(const Intf: IJSObject): IJSText;
     property wholeText: UnicodeString read _GetwholeText;
   end;
 
@@ -7748,7 +7748,7 @@ Type
   TJSComment = class(TJSCharacterData,IJSComment)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSComment;
+    class function Cast(const Intf: IJSObject): IJSComment;
   end;
 
   { --------------------------------------------------------------------
@@ -7985,7 +7985,7 @@ Type
     procedure focus(const aOptions: TJSFocusOptions); overload;
     procedure focus; overload;
     procedure blur;
-    class function Cast(Intf: IJSObject): IJSHTMLElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLElement;
     property title: UnicodeString read _Gettitle write _Settitle;
     property lang: UnicodeString read _Getlang write _Setlang;
     property dir: UnicodeString read _Getdir write _Setdir;
@@ -8174,7 +8174,7 @@ Type
     function elementsFromPoint(aX: Single; aY: Single): TJSElementDynArray;
     function nodeFromPoint(aX: Single; aY: Single): IJSNode;
     function nodesFromPoint(aX: Single; aY: Single): TJSNodeDynArray;
-    class function Cast(Intf: IJSObject): IJSShadowRoot;
+    class function Cast(const Intf: IJSObject): IJSShadowRoot;
     property mode: TShadowRootMode read _Getmode;
     property delegatesFocus: Boolean read _GetdelegatesFocus;
     property slotAssignment: TSlotAssignmentMode read _GetslotAssignment;
@@ -8328,7 +8328,7 @@ Type
     procedure focus(const aOptions: TJSFocusOptions); overload;
     procedure focus; overload;
     procedure blur;
-    class function Cast(Intf: IJSObject): IJSSVGElement;
+    class function Cast(const Intf: IJSObject): IJSSVGElement;
     property id: UnicodeString read _Getid write _Setid;
     property ownerSVGElement: IJSSVGSVGElement read _GetownerSVGElement;
     property viewportElement: IJSSVGElement read _GetviewportElement;
@@ -8446,7 +8446,7 @@ Type
   TJSCDATASection = class(TJSText,IJSCDATASection)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSCDATASection;
+    class function Cast(const Intf: IJSObject): IJSCDATASection;
   end;
 
   { --------------------------------------------------------------------
@@ -8460,7 +8460,7 @@ Type
   TJSHTMLUnknownElement = class(TJSHTMLElement,IJSHTMLUnknownElement)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLUnknownElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLUnknownElement;
   end;
 
   { --------------------------------------------------------------------
@@ -8474,7 +8474,7 @@ Type
   TJSHTMLHeadElement = class(TJSHTMLElement,IJSHTMLHeadElement)
   Private
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLHeadElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLHeadElement;
   end;
 
   { --------------------------------------------------------------------
@@ -8509,7 +8509,7 @@ Type
     procedure sendShowEvent;
     function createBuilder: IJSMenuBuilder;
     procedure build(aBuilder: IJSMenuBuilder);
-    class function Cast(Intf: IJSObject): IJSHTMLMenuElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLMenuElement;
     property type_: UnicodeString read _Gettype_ write _Settype_;
     property label_: UnicodeString read _Getlabel_ write _Setlabel_;
     property compact: Boolean read _Getcompact write _Setcompact;
@@ -8589,7 +8589,7 @@ Type
     procedure reset;
     function checkValidity: Boolean;
     function reportValidity: Boolean;
-    class function Cast(Intf: IJSObject): IJSHTMLFormElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLFormElement;
     property acceptCharset: UnicodeString read _GetacceptCharset write _SetacceptCharset;
     property action: UnicodeString read _Getaction write _Setaction;
     property autocomplete: UnicodeString read _Getautocomplete write _Setautocomplete;
@@ -8644,7 +8644,7 @@ Type
     function getCTM: IJSSVGMatrix;
     function getScreenCTM: IJSSVGMatrix;
     function getTransformToElement(aElement: IJSSVGGraphicsElement): IJSSVGMatrix;
-    class function Cast(Intf: IJSObject): IJSSVGGraphicsElement;
+    class function Cast(const Intf: IJSObject): IJSSVGGraphicsElement;
     property autofocus: Boolean read _Getautofocus write _Setautofocus;
     property transform: IJSSVGAnimatedTransformList read _Gettransform;
     property nearestViewportElement: IJSSVGElement read _GetnearestViewportElement;
@@ -8785,7 +8785,7 @@ Type
     procedure _Setsearch(const aValue: UnicodeString);
     procedure _Sethash(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLAnchorElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLAnchorElement;
     property target: UnicodeString read _Gettarget write _Settarget;
     property download: UnicodeString read _Getdownload write _Setdownload;
     property ping: UnicodeString read _Getping write _Setping;
@@ -8895,7 +8895,7 @@ Type
     function checkValidity: Boolean;
     function reportValidity: Boolean;
     procedure setCustomValidity(const aError: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSHTMLButtonElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLButtonElement;
     property autofocus: Boolean read _Getautofocus write _Setautofocus;
     property disabled: Boolean read _Getdisabled write _Setdisabled;
     property form: IJSHTMLFormElement read _Getform;
@@ -8960,7 +8960,7 @@ Type
     procedure toBlob(const aCallback: TBlobCallback; const aType_: UnicodeString); overload;
     function MozGetIPCContext(const aContextId: UnicodeString): IJSnsISupports;
     function transferControlToOffscreen: IJSOffscreenCanvas;
-    class function Cast(Intf: IJSObject): IJSHTMLCanvasElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLCanvasElement;
     property width: LongWord read _Getwidth write _Setwidth;
     property height: LongWord read _Getheight write _Setheight;
     property mozOpaque: Boolean read _GetmozOpaque write _SetmozOpaque;
@@ -8983,7 +8983,7 @@ Type
     function _Getalign: UnicodeString;
     procedure _Setalign(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLDivElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLDivElement;
     property align: UnicodeString read _Getalign write _Setalign;
   end;
 
@@ -9058,7 +9058,7 @@ Type
     function getRequestType(aRequest: IJSimgIRequest): Integer;
     procedure forceReload(aNotify: Boolean); overload;
     procedure forceReload; overload;
-    class function Cast(Intf: IJSObject): IJSHTMLEmbedElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLEmbedElement;
     property src: UnicodeString read _Getsrc write _Setsrc;
     property type_: UnicodeString read _Gettype_ write _Settype_;
     property width: UnicodeString read _Getwidth write _Setwidth;
@@ -9162,7 +9162,7 @@ Type
     procedure _Setallow(const aValue: UnicodeString);
   Public
     function getSVGDocument: IJSDocument;
-    class function Cast(Intf: IJSObject): IJSHTMLIFrameElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLIFrameElement;
     property src: UnicodeString read _Getsrc write _Setsrc;
     property srcdoc: UnicodeString read _Getsrcdoc write _Setsrcdoc;
     property name: UnicodeString read _Getname write _Setname;
@@ -9336,7 +9336,7 @@ Type
     function getRequestType(aRequest: IJSimgIRequest): Integer;
     procedure forceReload(aNotify: Boolean); overload;
     procedure forceReload; overload;
-    class function Cast(Intf: IJSObject): IJSHTMLImageElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLImageElement;
     property alt: UnicodeString read _Getalt write _Setalt;
     property src: UnicodeString read _Getsrc write _Setsrc;
     property srcset: UnicodeString read _Getsrcset write _Setsrcset;
@@ -9722,7 +9722,7 @@ Type
     function getRequestType(aRequest: IJSimgIRequest): Integer;
     procedure forceReload(aNotify: Boolean); overload;
     procedure forceReload; overload;
-    class function Cast(Intf: IJSObject): IJSHTMLInputElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLInputElement;
     property accept: UnicodeString read _Getaccept write _Setaccept;
     property alt: UnicodeString read _Getalt write _Setalt;
     property autocomplete: UnicodeString read _Getautocomplete write _Setautocomplete;
@@ -9807,7 +9807,7 @@ Type
     function _Getcontrol: IJSHTMLElement;
     procedure _SethtmlFor(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLLabelElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLLabelElement;
     property form: IJSHTMLFormElement read _Getform;
     property htmlFor: UnicodeString read _GethtmlFor write _SethtmlFor;
     property control: IJSHTMLElement read _Getcontrol;
@@ -9908,7 +9908,7 @@ Type
     procedure _Setintegrity(const aValue: UnicodeString);
     procedure _Setas_(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLLinkElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLLinkElement;
     property disabled: Boolean read _Getdisabled write _Setdisabled;
     property href: UnicodeString read _Gethref write _Sethref;
     property crossOrigin: UnicodeString read _GetcrossOrigin write _SetcrossOrigin;
@@ -9976,7 +9976,7 @@ Type
     procedure _Setvalue(const aValue: UnicodeString);
     procedure _Settext(const aValue: UnicodeString);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLOptionElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLOptionElement;
     property disabled: Boolean read _Getdisabled write _Setdisabled;
     property form: IJSHTMLFormElement read _Getform;
     property label_: UnicodeString read _Getlabel_ write _Setlabel_;
@@ -10014,7 +10014,7 @@ Type
     procedure _Setvalue(const aValue: Double);
     procedure _Setmax(const aValue: Double);
   Public
-    class function Cast(Intf: IJSObject): IJSHTMLProgressElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLProgressElement;
     property value: Double read _Getvalue write _Setvalue;
     property max: Double read _Getmax write _Setmax;
     property position: Double read _Getposition;
@@ -10175,7 +10175,7 @@ Type
     procedure setSelectionRange(aStart: LongWord; aEnd_: LongWord; const aDirection: UnicodeString); overload;
     procedure setSelectionRange(aStart: LongWord; aEnd_: LongWord); overload;
     procedure setUserInput(const aInput: UnicodeString);
-    class function Cast(Intf: IJSObject): IJSHTMLTextAreaElement;
+    class function Cast(const Intf: IJSObject): IJSHTMLTextAreaElement;
     property autocomplete: UnicodeString read _Getautocomplete write _Setautocomplete;
     property autofocus: Boolean read _Getautofocus write _Setautofocus;
     property cols: LongWord read _Getcols write _Setcols;
@@ -10297,7 +10297,7 @@ Type
     function createSVGTransformFromMatrix(const aMatrix: TJSDOMMatrix2DInit): IJSSVGTransform; overload;
     function createSVGTransformFromMatrix: IJSSVGTransform; overload;
     function getElementById(const aElementId: UnicodeString): IJSElement;
-    class function Cast(Intf: IJSObject): IJSSVGSVGElement;
+    class function Cast(const Intf: IJSObject): IJSSVGSVGElement;
     property x: IJSSVGAnimatedLength read _Getx;
     property y: IJSSVGAnimatedLength read _Gety;
     property width: IJSSVGAnimatedLength read _Getwidth;
@@ -10572,7 +10572,7 @@ begin
   end;
 end;
 
-class function TJSEventTarget.Cast(Intf: IJSObject): IJSEventTarget;
+class function TJSEventTarget.Cast(const Intf: IJSObject): IJSEventTarget;
 begin
   Result:=TJSEventTarget.JOBCast(Intf);
 end;
@@ -10677,92 +10677,92 @@ begin
   InvokeJSNoResult('initEvent',[aType_,aBubbles]);
 end;
 
-class function TJSEvent.Cast(Intf: IJSObject): IJSEvent;
+class function TJSEvent.Cast(const Intf: IJSObject): IJSEvent;
 begin
   Result:=TJSEvent.JOBCast(Intf);
 end;
 
-class function TJSGlobalEventHandlers.Cast(Intf: IJSObject): IJSGlobalEventHandlers;
+class function TJSGlobalEventHandlers.Cast(const Intf: IJSObject): IJSGlobalEventHandlers;
 begin
   Result:=TJSGlobalEventHandlers.JOBCast(Intf);
 end;
 
-class function TJSWindowEventHandlers.Cast(Intf: IJSObject): IJSWindowEventHandlers;
+class function TJSWindowEventHandlers.Cast(const Intf: IJSObject): IJSWindowEventHandlers;
 begin
   Result:=TJSWindowEventHandlers.JOBCast(Intf);
 end;
 
-class function TJSDocumentAndElementEventHandlers.Cast(Intf: IJSObject): IJSDocumentAndElementEventHandlers;
+class function TJSDocumentAndElementEventHandlers.Cast(const Intf: IJSObject): IJSDocumentAndElementEventHandlers;
 begin
   Result:=TJSDocumentAndElementEventHandlers.JOBCast(Intf);
 end;
 
-class function TJSOnErrorEventHandlerForNodes.Cast(Intf: IJSObject): IJSOnErrorEventHandlerForNodes;
+class function TJSOnErrorEventHandlerForNodes.Cast(const Intf: IJSObject): IJSOnErrorEventHandlerForNodes;
 begin
   Result:=TJSOnErrorEventHandlerForNodes.JOBCast(Intf);
 end;
 
-class function TJSOnErrorEventHandlerForWindow.Cast(Intf: IJSObject): IJSOnErrorEventHandlerForWindow;
+class function TJSOnErrorEventHandlerForWindow.Cast(const Intf: IJSObject): IJSOnErrorEventHandlerForWindow;
 begin
   Result:=TJSOnErrorEventHandlerForWindow.JOBCast(Intf);
 end;
 
-class function TJSContentSecurityPolicy.Cast(Intf: IJSObject): IJSContentSecurityPolicy;
+class function TJSContentSecurityPolicy.Cast(const Intf: IJSObject): IJSContentSecurityPolicy;
 begin
   Result:=TJSContentSecurityPolicy.JOBCast(Intf);
 end;
 
-class function TJSPrincipal.Cast(Intf: IJSObject): IJSPrincipal;
+class function TJSPrincipal.Cast(const Intf: IJSObject): IJSPrincipal;
 begin
   Result:=TJSPrincipal.JOBCast(Intf);
 end;
 
-class function TJSWindowProxy.Cast(Intf: IJSObject): IJSWindowProxy;
+class function TJSWindowProxy.Cast(const Intf: IJSObject): IJSWindowProxy;
 begin
   Result:=TJSWindowProxy.JOBCast(Intf);
 end;
 
-class function TJSnsISupports.Cast(Intf: IJSObject): IJSnsISupports;
+class function TJSnsISupports.Cast(const Intf: IJSObject): IJSnsISupports;
 begin
   Result:=TJSnsISupports.JOBCast(Intf);
 end;
 
-class function TJSURI.Cast(Intf: IJSObject): IJSURI;
+class function TJSURI.Cast(const Intf: IJSObject): IJSURI;
 begin
   Result:=TJSURI.JOBCast(Intf);
 end;
 
-class function TJSnsIDocShell.Cast(Intf: IJSObject): IJSnsIDocShell;
+class function TJSnsIDocShell.Cast(const Intf: IJSObject): IJSnsIDocShell;
 begin
   Result:=TJSnsIDocShell.JOBCast(Intf);
 end;
 
-class function TJSnsILoadGroup.Cast(Intf: IJSObject): IJSnsILoadGroup;
+class function TJSnsILoadGroup.Cast(const Intf: IJSObject): IJSnsILoadGroup;
 begin
   Result:=TJSnsILoadGroup.JOBCast(Intf);
 end;
 
-class function TJSnsIReferrerInfo.Cast(Intf: IJSObject): IJSnsIReferrerInfo;
+class function TJSnsIReferrerInfo.Cast(const Intf: IJSObject): IJSnsIReferrerInfo;
 begin
   Result:=TJSnsIReferrerInfo.JOBCast(Intf);
 end;
 
-class function TJSnsICookieJarSettings.Cast(Intf: IJSObject): IJSnsICookieJarSettings;
+class function TJSnsICookieJarSettings.Cast(const Intf: IJSObject): IJSnsICookieJarSettings;
 begin
   Result:=TJSnsICookieJarSettings.JOBCast(Intf);
 end;
 
-class function TJSnsIPermissionDelegateHandler.Cast(Intf: IJSObject): IJSnsIPermissionDelegateHandler;
+class function TJSnsIPermissionDelegateHandler.Cast(const Intf: IJSObject): IJSnsIPermissionDelegateHandler;
 begin
   Result:=TJSnsIPermissionDelegateHandler.JOBCast(Intf);
 end;
 
-class function TJSXULCommandDispatcher.Cast(Intf: IJSObject): IJSXULCommandDispatcher;
+class function TJSXULCommandDispatcher.Cast(const Intf: IJSObject): IJSXULCommandDispatcher;
 begin
   Result:=TJSXULCommandDispatcher.JOBCast(Intf);
 end;
 
-class function TJSXPathExpression.Cast(Intf: IJSObject): IJSXPathExpression;
+class function TJSXPathExpression.Cast(const Intf: IJSObject): IJSXPathExpression;
 begin
   Result:=TJSXPathExpression.JOBCast(Intf);
 end;
@@ -10827,12 +10827,12 @@ begin
   InvokeJSNoResult('replaceChildren',[aNodes]);
 end;
 
-class function TJSParentNode.Cast(Intf: IJSObject): IJSParentNode;
+class function TJSParentNode.Cast(const Intf: IJSObject): IJSParentNode;
 begin
   Result:=TJSParentNode.JOBCast(Intf);
 end;
 
-class function TJSFontFaceSource.Cast(Intf: IJSObject): IJSFontFaceSource;
+class function TJSFontFaceSource.Cast(const Intf: IJSObject): IJSFontFaceSource;
 begin
   Result:=TJSFontFaceSource.JOBCast(Intf);
 end;
@@ -10877,7 +10877,7 @@ begin
   Result:=InvokeJSObjectResult('nodesFromPoint',[aX,aY],TJSArray) as TJSNodeDynArray;
 end;
 
-class function TJSDocumentOrShadowRoot.Cast(Intf: IJSObject): IJSDocumentOrShadowRoot;
+class function TJSDocumentOrShadowRoot.Cast(const Intf: IJSObject): IJSDocumentOrShadowRoot;
 begin
   Result:=TJSDocumentOrShadowRoot.JOBCast(Intf);
 end;
@@ -10912,7 +10912,7 @@ begin
   Result:=InvokeJSObjectResult('createHTMLDocument',[],TJSDocument) as IJSDocument;
 end;
 
-class function TJSDOMImplementation.Cast(Intf: IJSObject): IJSDOMImplementation;
+class function TJSDOMImplementation.Cast(const Intf: IJSObject): IJSDOMImplementation;
 begin
   Result:=TJSDOMImplementation.JOBCast(Intf);
 end;
@@ -10952,7 +10952,7 @@ begin
   InvokeJSNoResult('remove',[]);
 end;
 
-class function TJSChildNode.Cast(Intf: IJSObject): IJSChildNode;
+class function TJSChildNode.Cast(const Intf: IJSObject): IJSChildNode;
 begin
   Result:=TJSChildNode.JOBCast(Intf);
 end;
@@ -10967,12 +10967,12 @@ begin
   Result:=ReadJSPropertyObject('nextElementSibling',TJSElement) as IJSElement;
 end;
 
-class function TJSNonDocumentTypeChildNode.Cast(Intf: IJSObject): IJSNonDocumentTypeChildNode;
+class function TJSNonDocumentTypeChildNode.Cast(const Intf: IJSObject): IJSNonDocumentTypeChildNode;
 begin
   Result:=TJSNonDocumentTypeChildNode.JOBCast(Intf);
 end;
 
-class function TJSnsIScreen.Cast(Intf: IJSObject): IJSnsIScreen;
+class function TJSnsIScreen.Cast(const Intf: IJSObject): IJSnsIScreen;
 begin
   Result:=TJSnsIScreen.JOBCast(Intf);
 end;
@@ -11007,7 +11007,7 @@ begin
   InvokeJSNoResult('blur',[]);
 end;
 
-class function TJSHTMLOrForeignElement.Cast(Intf: IJSObject): IJSHTMLOrForeignElement;
+class function TJSHTMLOrForeignElement.Cast(const Intf: IJSObject): IJSHTMLOrForeignElement;
 begin
   Result:=TJSHTMLOrForeignElement.JOBCast(Intf);
 end;
@@ -11017,7 +11017,7 @@ begin
   Result:=ReadJSPropertyObject('style',TJSCSSStyleDeclaration) as IJSCSSStyleDeclaration;
 end;
 
-class function TJSElementCSSInlineStyle.Cast(Intf: IJSObject): IJSElementCSSInlineStyle;
+class function TJSElementCSSInlineStyle.Cast(const Intf: IJSObject): IJSElementCSSInlineStyle;
 begin
   Result:=TJSElementCSSInlineStyle.JOBCast(Intf);
 end;
@@ -11037,7 +11037,7 @@ begin
   Result:=InvokeJSObjectResult('namedItem',[aName],TJSElement) as IJSElement;
 end;
 
-class function TJSHTMLCollection.Cast(Intf: IJSObject): IJSHTMLCollection;
+class function TJSHTMLCollection.Cast(const Intf: IJSObject): IJSHTMLCollection;
 begin
   Result:=TJSHTMLCollection.JOBCast(Intf);
 end;
@@ -11147,7 +11147,7 @@ begin
   InvokeJSNoResult('reload',[]);
 end;
 
-class function TJSLocation.Cast(Intf: IJSObject): IJSLocation;
+class function TJSLocation.Cast(const Intf: IJSObject): IJSLocation;
 begin
   Result:=TJSLocation.JOBCast(Intf);
 end;
@@ -11162,7 +11162,7 @@ begin
   Result:=InvokeJSObjectResult('item',[aIndex],TJSNode) as IJSNode;
 end;
 
-class function TJSNodeList.Cast(Intf: IJSObject): IJSNodeList;
+class function TJSNodeList.Cast(const Intf: IJSObject): IJSNodeList;
 begin
   Result:=TJSNodeList.JOBCast(Intf);
 end;
@@ -11182,7 +11182,7 @@ begin
   Result:=InvokeJSBooleanResult('contains',[aString_]);
 end;
 
-class function TJSDOMStringList.Cast(Intf: IJSObject): IJSDOMStringList;
+class function TJSDOMStringList.Cast(const Intf: IJSObject): IJSDOMStringList;
 begin
   Result:=TJSDOMStringList.JOBCast(Intf);
 end;
@@ -11202,7 +11202,7 @@ begin
   Result:=InvokeJSObjectResult('getClientRect',[],TJSDOMRect) as IJSDOMRect;
 end;
 
-class function TJSCaretPosition.Cast(Intf: IJSObject): IJSCaretPosition;
+class function TJSCaretPosition.Cast(const Intf: IJSObject): IJSCaretPosition;
 begin
   Result:=TJSCaretPosition.JOBCast(Intf);
 end;
@@ -11262,7 +11262,7 @@ begin
   Result:=InvokeJSBooleanResult('supports',[aToken]);
 end;
 
-class function TJSDOMTokenList.Cast(Intf: IJSObject): IJSDOMTokenList;
+class function TJSDOMTokenList.Cast(const Intf: IJSObject): IJSDOMTokenList;
 begin
   Result:=TJSDOMTokenList.JOBCast(Intf);
 end;
@@ -11307,12 +11307,12 @@ begin
   Result:=InvokeJSObjectResult('removeNamedItemNS',[aNamespaceURI,aLocalName],TJSAttr) as IJSAttr;
 end;
 
-class function TJSNamedNodeMap.Cast(Intf: IJSObject): IJSNamedNodeMap;
+class function TJSNamedNodeMap.Cast(const Intf: IJSObject): IJSNamedNodeMap;
 begin
   Result:=TJSNamedNodeMap.JOBCast(Intf);
 end;
 
-class function TJSDOMStringMap.Cast(Intf: IJSObject): IJSDOMStringMap;
+class function TJSDOMStringMap.Cast(const Intf: IJSObject): IJSDOMStringMap;
 begin
   Result:=TJSDOMStringMap.JOBCast(Intf);
 end;
@@ -11372,27 +11372,27 @@ begin
   Result:=InvokeJSUTF8StringResult('removeProperty',[aProperty_]);
 end;
 
-class function TJSCSSStyleDeclaration.Cast(Intf: IJSObject): IJSCSSStyleDeclaration;
+class function TJSCSSStyleDeclaration.Cast(const Intf: IJSObject): IJSCSSStyleDeclaration;
 begin
   Result:=TJSCSSStyleDeclaration.JOBCast(Intf);
 end;
 
-class function TJSnsIBrowserDOMWindow.Cast(Intf: IJSObject): IJSnsIBrowserDOMWindow;
+class function TJSnsIBrowserDOMWindow.Cast(const Intf: IJSObject): IJSnsIBrowserDOMWindow;
 begin
   Result:=TJSnsIBrowserDOMWindow.JOBCast(Intf);
 end;
 
-class function TJSXULControllers.Cast(Intf: IJSObject): IJSXULControllers;
+class function TJSXULControllers.Cast(const Intf: IJSObject): IJSXULControllers;
 begin
   Result:=TJSXULControllers.JOBCast(Intf);
 end;
 
-class function TJSnsIDOMWindowUtils.Cast(Intf: IJSObject): IJSnsIDOMWindowUtils;
+class function TJSnsIDOMWindowUtils.Cast(const Intf: IJSObject): IJSnsIDOMWindowUtils;
 begin
   Result:=TJSnsIDOMWindowUtils.JOBCast(Intf);
 end;
 
-class function TJSnsIPrintSettings.Cast(Intf: IJSObject): IJSnsIPrintSettings;
+class function TJSnsIPrintSettings.Cast(const Intf: IJSObject): IJSnsIPrintSettings;
 begin
   Result:=TJSnsIPrintSettings.JOBCast(Intf);
 end;
@@ -11402,7 +11402,7 @@ begin
   Result:=ReadJSPropertyObject('sessionStorage',TJSStorage) as IJSStorage;
 end;
 
-class function TJSWindowSessionStorage.Cast(Intf: IJSObject): IJSWindowSessionStorage;
+class function TJSWindowSessionStorage.Cast(const Intf: IJSObject): IJSWindowSessionStorage;
 begin
   Result:=TJSWindowSessionStorage.JOBCast(Intf);
 end;
@@ -11412,7 +11412,7 @@ begin
   Result:=ReadJSPropertyObject('localStorage',TJSStorage) as IJSStorage;
 end;
 
-class function TJSWindowLocalStorage.Cast(Intf: IJSObject): IJSWindowLocalStorage;
+class function TJSWindowLocalStorage.Cast(const Intf: IJSObject): IJSWindowLocalStorage;
 begin
   Result:=TJSWindowLocalStorage.JOBCast(Intf);
 end;
@@ -11477,7 +11477,7 @@ begin
   Result:=ReadJSPropertyDouble('force');
 end;
 
-class function TJSTouch.Cast(Intf: IJSObject): IJSTouch;
+class function TJSTouch.Cast(const Intf: IJSObject): IJSTouch;
 begin
   Result:=TJSTouch.JOBCast(Intf);
 end;
@@ -11492,7 +11492,7 @@ begin
   Result:=InvokeJSObjectResult('item',[aIndex],TJSTouch) as IJSTouch;
 end;
 
-class function TJSTouchList.Cast(Intf: IJSObject): IJSTouchList;
+class function TJSTouchList.Cast(const Intf: IJSObject): IJSTouchList;
 begin
   Result:=TJSTouchList.JOBCast(Intf);
 end;
@@ -11557,7 +11557,7 @@ begin
   InvokeJSNoResult('replaceState',[aData,aTitle]);
 end;
 
-class function TJSHistory.Cast(Intf: IJSObject): IJSHistory;
+class function TJSHistory.Cast(const Intf: IJSObject): IJSHistory;
 begin
   Result:=TJSHistory.JOBCast(Intf);
 end;
@@ -11584,7 +11584,7 @@ begin
   InvokeJSNoResult('upgrade',[aRoot]);
 end;
 
-class function TJSCustomElementRegistry.Cast(Intf: IJSObject): IJSCustomElementRegistry;
+class function TJSCustomElementRegistry.Cast(const Intf: IJSObject): IJSCustomElementRegistry;
 begin
   Result:=TJSCustomElementRegistry.JOBCast(Intf);
 end;
@@ -11599,7 +11599,7 @@ begin
   WriteJSPropertyBoolean('visible',aValue);
 end;
 
-class function TJSBarProp.Cast(Intf: IJSObject): IJSBarProp;
+class function TJSBarProp.Cast(const Intf: IJSObject): IJSBarProp;
 begin
   Result:=TJSBarProp.JOBCast(Intf);
 end;
@@ -11784,7 +11784,7 @@ begin
   InvokeJSNoResult('registerProtocolHandler',[aScheme,aUrl]);
 end;
 
-class function TJSNavigator.Cast(Intf: IJSObject): IJSNavigator;
+class function TJSNavigator.Cast(const Intf: IJSObject): IJSNavigator;
 begin
   Result:=TJSNavigator.JOBCast(Intf);
 end;
@@ -11824,7 +11824,7 @@ begin
   Result:=InvokeJSBooleanResult('taintEnabled',[]);
 end;
 
-class function TJSNavigatorID.Cast(Intf: IJSObject): IJSNavigatorID;
+class function TJSNavigatorID.Cast(const Intf: IJSObject): IJSNavigatorID;
 begin
   Result:=TJSNavigatorID.JOBCast(Intf);
 end;
@@ -11839,7 +11839,7 @@ begin
   Result:=ReadJSPropertyObject('languages',TJSArray) as TUnicodeStringDynArray;
 end;
 
-class function TJSNavigatorLanguage.Cast(Intf: IJSObject): IJSNavigatorLanguage;
+class function TJSNavigatorLanguage.Cast(const Intf: IJSObject): IJSNavigatorLanguage;
 begin
   Result:=TJSNavigatorLanguage.JOBCast(Intf);
 end;
@@ -11849,7 +11849,7 @@ begin
   Result:=ReadJSPropertyBoolean('onLine');
 end;
 
-class function TJSNavigatorOnLine.Cast(Intf: IJSObject): IJSNavigatorOnLine;
+class function TJSNavigatorOnLine.Cast(const Intf: IJSObject): IJSNavigatorOnLine;
 begin
   Result:=TJSNavigatorOnLine.JOBCast(Intf);
 end;
@@ -11864,22 +11864,22 @@ begin
   InvokeJSNoResult('registerProtocolHandler',[aScheme,aUrl]);
 end;
 
-class function TJSNavigatorContentUtils.Cast(Intf: IJSObject): IJSNavigatorContentUtils;
+class function TJSNavigatorContentUtils.Cast(const Intf: IJSObject): IJSNavigatorContentUtils;
 begin
   Result:=TJSNavigatorContentUtils.JOBCast(Intf);
 end;
 
-class function TJSNavigatorStorage.Cast(Intf: IJSObject): IJSNavigatorStorage;
+class function TJSNavigatorStorage.Cast(const Intf: IJSObject): IJSNavigatorStorage;
 begin
   Result:=TJSNavigatorStorage.JOBCast(Intf);
 end;
 
-class function TJSNavigatorStorageUtils.Cast(Intf: IJSObject): IJSNavigatorStorageUtils;
+class function TJSNavigatorStorageUtils.Cast(const Intf: IJSObject): IJSNavigatorStorageUtils;
 begin
   Result:=TJSNavigatorStorageUtils.JOBCast(Intf);
 end;
 
-class function TJSNavigatorGeolocation.Cast(Intf: IJSObject): IJSNavigatorGeolocation;
+class function TJSNavigatorGeolocation.Cast(const Intf: IJSObject): IJSNavigatorGeolocation;
 begin
   Result:=TJSNavigatorGeolocation.JOBCast(Intf);
 end;
@@ -11889,7 +11889,7 @@ begin
   Result:=ReadJSPropertyInt64('hardwareConcurrency');
 end;
 
-class function TJSNavigatorConcurrentHardware.Cast(Intf: IJSObject): IJSNavigatorConcurrentHardware;
+class function TJSNavigatorConcurrentHardware.Cast(const Intf: IJSObject): IJSNavigatorConcurrentHardware;
 begin
   Result:=TJSNavigatorConcurrentHardware.JOBCast(Intf);
 end;
@@ -11899,12 +11899,12 @@ begin
   Result:=ReadJSPropertyBoolean('webdriver');
 end;
 
-class function TJSNavigatorAutomationInformation.Cast(Intf: IJSObject): IJSNavigatorAutomationInformation;
+class function TJSNavigatorAutomationInformation.Cast(const Intf: IJSObject): IJSNavigatorAutomationInformation;
 begin
   Result:=TJSNavigatorAutomationInformation.JOBCast(Intf);
 end;
 
-class function TJSNavigatorLocks.Cast(Intf: IJSObject): IJSNavigatorLocks;
+class function TJSNavigatorLocks.Cast(const Intf: IJSObject): IJSNavigatorLocks;
 begin
   Result:=TJSNavigatorLocks.JOBCast(Intf);
 end;
@@ -11979,7 +11979,7 @@ begin
   InvokeJSNoResult('endExplicitSnapshot',[]);
 end;
 
-class function TJSStorage.Cast(Intf: IJSObject): IJSStorage;
+class function TJSStorage.Cast(const Intf: IJSObject): IJSStorage;
 begin
   Result:=TJSStorage.JOBCast(Intf);
 end;
@@ -12174,12 +12174,12 @@ begin
   InvokeJSNoResult('resetColors',[]);
 end;
 
-class function TJSSelection.Cast(Intf: IJSObject): IJSSelection;
+class function TJSSelection.Cast(const Intf: IJSObject): IJSSelection;
 begin
   Result:=TJSSelection.JOBCast(Intf);
 end;
 
-class function TJSnsISelectionListener.Cast(Intf: IJSObject): IJSnsISelectionListener;
+class function TJSnsISelectionListener.Cast(const Intf: IJSObject): IJSnsISelectionListener;
 begin
   Result:=TJSnsISelectionListener.JOBCast(Intf);
 end;
@@ -12199,7 +12199,7 @@ begin
   Result:=ReadJSPropertyDouble('maxAverage');
 end;
 
-class function TJSScreenLuminance.Cast(Intf: IJSObject): IJSScreenLuminance;
+class function TJSScreenLuminance.Cast(const Intf: IJSObject): IJSScreenLuminance;
 begin
   Result:=TJSScreenLuminance.JOBCast(Intf);
 end;
@@ -12219,7 +12219,7 @@ begin
   Result:=InvokeJSObjectResult('getType',[aType_],TJSPromise) as IJSPromise;
 end;
 
-class function TJSClipboardItem.Cast(Intf: IJSObject): IJSClipboardItem;
+class function TJSClipboardItem.Cast(const Intf: IJSObject): IJSClipboardItem;
 begin
   Result:=TJSClipboardItem.JOBCast(Intf);
 end;
@@ -12249,7 +12249,7 @@ begin
   Result:=ReadJSPropertyBoolean('collapsed');
 end;
 
-class function TJSAbstractRange.Cast(Intf: IJSObject): IJSAbstractRange;
+class function TJSAbstractRange.Cast(const Intf: IJSObject): IJSAbstractRange;
 begin
   Result:=TJSAbstractRange.JOBCast(Intf);
 end;
@@ -12264,7 +12264,7 @@ begin
   Result:=InvokeJSObjectResult('item',[aIndex],TJSDOMRect) as IJSDOMRect;
 end;
 
-class function TJSDOMRectList.Cast(Intf: IJSObject): IJSDOMRectList;
+class function TJSDOMRectList.Cast(const Intf: IJSObject): IJSDOMRectList;
 begin
   Result:=TJSDOMRectList.JOBCast(Intf);
 end;
@@ -12324,12 +12324,12 @@ begin
   Result:=InvokeJSObjectResult('toJSON',[],TJSObject) as IJSObject;
 end;
 
-class function TJSDOMRectReadOnly.Cast(Intf: IJSObject): IJSDOMRectReadOnly;
+class function TJSDOMRectReadOnly.Cast(const Intf: IJSObject): IJSDOMRectReadOnly;
 begin
   Result:=TJSDOMRectReadOnly.JOBCast(Intf);
 end;
 
-class function TJSTouchEventHandlers.Cast(Intf: IJSObject): IJSTouchEventHandlers;
+class function TJSTouchEventHandlers.Cast(const Intf: IJSObject): IJSTouchEventHandlers;
 begin
   Result:=TJSTouchEventHandlers.JOBCast(Intf);
 end;
@@ -12354,12 +12354,12 @@ begin
   Result:=InvokeJSVariantResult('item',[]);
 end;
 
-class function TJSHTMLAllCollection.Cast(Intf: IJSObject): IJSHTMLAllCollection;
+class function TJSHTMLAllCollection.Cast(const Intf: IJSObject): IJSHTMLAllCollection;
 begin
   Result:=TJSHTMLAllCollection.JOBCast(Intf);
 end;
 
-class function TJSMenuBuilder.Cast(Intf: IJSObject): IJSMenuBuilder;
+class function TJSMenuBuilder.Cast(const Intf: IJSObject): IJSMenuBuilder;
 begin
   Result:=TJSMenuBuilder.JOBCast(Intf);
 end;
@@ -12489,7 +12489,7 @@ begin
   Result:=InvokeJSBooleanResult('reportValidity',[]);
 end;
 
-class function TJSElementInternals.Cast(Intf: IJSObject): IJSElementInternals;
+class function TJSElementInternals.Cast(const Intf: IJSObject): IJSElementInternals;
 begin
   Result:=TJSElementInternals.JOBCast(Intf);
 end;
@@ -12549,12 +12549,12 @@ begin
   Result:=ReadJSPropertyBoolean('valid');
 end;
 
-class function TJSValidityState.Cast(Intf: IJSObject): IJSValidityState;
+class function TJSValidityState.Cast(const Intf: IJSObject): IJSValidityState;
 begin
   Result:=TJSValidityState.JOBCast(Intf);
 end;
 
-class function TJSSVGViewSpec.Cast(Intf: IJSObject): IJSSVGViewSpec;
+class function TJSSVGViewSpec.Cast(const Intf: IJSObject): IJSSVGViewSpec;
 begin
   Result:=TJSSVGViewSpec.JOBCast(Intf);
 end;
@@ -12569,7 +12569,7 @@ begin
   Result:=ReadJSPropertyObject('preserveAspectRatio',TJSSVGAnimatedPreserveAspectRatio) as IJSSVGAnimatedPreserveAspectRatio;
 end;
 
-class function TJSSVGFitToViewBox.Cast(Intf: IJSObject): IJSSVGFitToViewBox;
+class function TJSSVGFitToViewBox.Cast(const Intf: IJSObject): IJSSVGFitToViewBox;
 begin
   Result:=TJSSVGFitToViewBox.JOBCast(Intf);
 end;
@@ -12584,7 +12584,7 @@ begin
   WriteJSPropertyLongInt('zoomAndPan',aValue);
 end;
 
-class function TJSSVGZoomAndPan.Cast(Intf: IJSObject): IJSSVGZoomAndPan;
+class function TJSSVGZoomAndPan.Cast(const Intf: IJSObject): IJSSVGZoomAndPan;
 begin
   Result:=TJSSVGZoomAndPan.JOBCast(Intf);
 end;
@@ -12614,7 +12614,7 @@ begin
   WriteJSPropertyUTF8String('cssText',aValue);
 end;
 
-class function TJSCSSRule.Cast(Intf: IJSObject): IJSCSSRule;
+class function TJSCSSRule.Cast(const Intf: IJSObject): IJSCSSRule;
 begin
   Result:=TJSCSSRule.JOBCast(Intf);
 end;
@@ -12629,7 +12629,7 @@ begin
   Result:=ReadJSPropertyObject('animVal',TJSSVGLength) as IJSSVGLength;
 end;
 
-class function TJSSVGAnimatedLength.Cast(Intf: IJSObject): IJSSVGAnimatedLength;
+class function TJSSVGAnimatedLength.Cast(const Intf: IJSObject): IJSSVGAnimatedLength;
 begin
   Result:=TJSSVGAnimatedLength.JOBCast(Intf);
 end;
@@ -12664,7 +12664,7 @@ begin
   Result:=InvokeJSObjectResult('matrixTransform',[],TJSSVGPoint) as IJSSVGPoint;
 end;
 
-class function TJSSVGPoint.Cast(Intf: IJSObject): IJSSVGPoint;
+class function TJSSVGPoint.Cast(const Intf: IJSObject): IJSSVGPoint;
 begin
   Result:=TJSSVGPoint.JOBCast(Intf);
 end;
@@ -12679,7 +12679,7 @@ begin
   WriteJSPropertyDouble('value',aValue);
 end;
 
-class function TJSSVGNumber.Cast(Intf: IJSObject): IJSSVGNumber;
+class function TJSSVGNumber.Cast(const Intf: IJSObject): IJSSVGNumber;
 begin
   Result:=TJSSVGNumber.JOBCast(Intf);
 end;
@@ -12729,7 +12729,7 @@ begin
   InvokeJSNoResult('convertToSpecifiedUnits',[aUnitType]);
 end;
 
-class function TJSSVGLength.Cast(Intf: IJSObject): IJSSVGLength;
+class function TJSSVGLength.Cast(const Intf: IJSObject): IJSSVGLength;
 begin
   Result:=TJSSVGLength.JOBCast(Intf);
 end;
@@ -12779,7 +12779,7 @@ begin
   InvokeJSNoResult('convertToSpecifiedUnits',[aUnitType]);
 end;
 
-class function TJSSVGAngle.Cast(Intf: IJSObject): IJSSVGAngle;
+class function TJSSVGAngle.Cast(const Intf: IJSObject): IJSSVGAngle;
 begin
   Result:=TJSSVGAngle.JOBCast(Intf);
 end;
@@ -12899,7 +12899,7 @@ begin
   Result:=InvokeJSObjectResult('skewY',[angle],TJSSVGMatrix) as IJSSVGMatrix;
 end;
 
-class function TJSSVGMatrix.Cast(Intf: IJSObject): IJSSVGMatrix;
+class function TJSSVGMatrix.Cast(const Intf: IJSObject): IJSSVGMatrix;
 begin
   Result:=TJSSVGMatrix.JOBCast(Intf);
 end;
@@ -12944,7 +12944,7 @@ begin
   WriteJSPropertyDouble('height',aValue);
 end;
 
-class function TJSSVGRect.Cast(Intf: IJSObject): IJSSVGRect;
+class function TJSSVGRect.Cast(const Intf: IJSObject): IJSSVGRect;
 begin
   Result:=TJSSVGRect.JOBCast(Intf);
 end;
@@ -12999,7 +12999,7 @@ begin
   InvokeJSNoResult('setSkewY',[_angle]);
 end;
 
-class function TJSSVGTransform.Cast(Intf: IJSObject): IJSSVGTransform;
+class function TJSSVGTransform.Cast(const Intf: IJSObject): IJSSVGTransform;
 begin
   Result:=TJSSVGTransform.JOBCast(Intf);
 end;
@@ -13349,7 +13349,7 @@ begin
   Result:=InvokeJSObjectResult('toJSON',[],TJSObject) as IJSObject;
 end;
 
-class function TJSDOMMatrixReadOnly.Cast(Intf: IJSObject): IJSDOMMatrixReadOnly;
+class function TJSDOMMatrixReadOnly.Cast(const Intf: IJSObject): IJSDOMMatrixReadOnly;
 begin
   Result:=TJSDOMMatrixReadOnly.JOBCast(Intf);
 end;
@@ -13364,7 +13364,7 @@ begin
   Result:=ReadJSPropertyObject('animVal',TJSSVGRect) as IJSSVGRect;
 end;
 
-class function TJSSVGAnimatedRect.Cast(Intf: IJSObject): IJSSVGAnimatedRect;
+class function TJSSVGAnimatedRect.Cast(const Intf: IJSObject): IJSSVGAnimatedRect;
 begin
   Result:=TJSSVGAnimatedRect.JOBCast(Intf);
 end;
@@ -13379,7 +13379,7 @@ begin
   Result:=ReadJSPropertyObject('animVal',TJSSVGPreserveAspectRatio) as IJSSVGPreserveAspectRatio;
 end;
 
-class function TJSSVGAnimatedPreserveAspectRatio.Cast(Intf: IJSObject): IJSSVGAnimatedPreserveAspectRatio;
+class function TJSSVGAnimatedPreserveAspectRatio.Cast(const Intf: IJSObject): IJSSVGAnimatedPreserveAspectRatio;
 begin
   Result:=TJSSVGAnimatedPreserveAspectRatio.JOBCast(Intf);
 end;
@@ -13429,7 +13429,7 @@ begin
   Result:=InvokeJSObjectResult('toJSON',[],TJSObject) as IJSObject;
 end;
 
-class function TJSDOMPointReadOnly.Cast(Intf: IJSObject): IJSDOMPointReadOnly;
+class function TJSDOMPointReadOnly.Cast(const Intf: IJSObject): IJSDOMPointReadOnly;
 begin
   Result:=TJSDOMPointReadOnly.JOBCast(Intf);
 end;
@@ -13454,7 +13454,7 @@ begin
   WriteJSPropertyLongInt('meetOrSlice',aValue);
 end;
 
-class function TJSSVGPreserveAspectRatio.Cast(Intf: IJSObject): IJSSVGPreserveAspectRatio;
+class function TJSSVGPreserveAspectRatio.Cast(const Intf: IJSObject): IJSSVGPreserveAspectRatio;
 begin
   Result:=TJSSVGPreserveAspectRatio.JOBCast(Intf);
 end;
@@ -13469,7 +13469,7 @@ begin
   Result:=InvokeJSObjectResult('item',[aIndex],TJSCSSRule) as IJSCSSRule;
 end;
 
-class function TJSCSSRuleList.Cast(Intf: IJSObject): IJSCSSRuleList;
+class function TJSCSSRuleList.Cast(const Intf: IJSObject): IJSCSSRuleList;
 begin
   Result:=TJSCSSRuleList.JOBCast(Intf);
 end;
@@ -13484,7 +13484,7 @@ begin
   Result:=ReadJSPropertyObject('systemLanguage',TJSSVGStringList) as IJSSVGStringList;
 end;
 
-class function TJSSVGTests.Cast(Intf: IJSObject): IJSSVGTests;
+class function TJSSVGTests.Cast(const Intf: IJSObject): IJSSVGTests;
 begin
   Result:=TJSSVGTests.JOBCast(Intf);
 end;
@@ -13499,7 +13499,7 @@ begin
   Result:=ReadJSPropertyObject('animVal',TJSSVGTransformList) as IJSSVGTransformList;
 end;
 
-class function TJSSVGAnimatedTransformList.Cast(Intf: IJSObject): IJSSVGAnimatedTransformList;
+class function TJSSVGAnimatedTransformList.Cast(const Intf: IJSObject): IJSSVGAnimatedTransformList;
 begin
   Result:=TJSSVGAnimatedTransformList.JOBCast(Intf);
 end;
@@ -13549,7 +13549,7 @@ begin
   Result:=InvokeJSUnicodeStringResult('appendItem',[aNewItem]);
 end;
 
-class function TJSSVGStringList.Cast(Intf: IJSObject): IJSSVGStringList;
+class function TJSSVGStringList.Cast(const Intf: IJSObject): IJSSVGStringList;
 begin
   Result:=TJSSVGStringList.JOBCast(Intf);
 end;
@@ -13614,7 +13614,7 @@ begin
   Result:=InvokeJSObjectResult('consolidate',[],TJSSVGTransform) as IJSSVGTransform;
 end;
 
-class function TJSSVGTransformList.Cast(Intf: IJSObject): IJSSVGTransformList;
+class function TJSSVGTransformList.Cast(const Intf: IJSObject): IJSSVGTransformList;
 begin
   Result:=TJSSVGTransformList.JOBCast(Intf);
 end;
@@ -13634,7 +13634,7 @@ begin
   WriteJSPropertyUnicodeString('baseVal',aValue);
 end;
 
-class function TJSSVGAnimatedString.Cast(Intf: IJSObject): IJSSVGAnimatedString;
+class function TJSSVGAnimatedString.Cast(const Intf: IJSObject): IJSSVGAnimatedString;
 begin
   Result:=TJSSVGAnimatedString.JOBCast(Intf);
 end;
@@ -13694,7 +13694,7 @@ begin
   WriteJSPropertyBoolean('disabled',aValue);
 end;
 
-class function TJSStyleSheet.Cast(Intf: IJSObject): IJSStyleSheet;
+class function TJSStyleSheet.Cast(const Intf: IJSObject): IJSStyleSheet;
 begin
   Result:=TJSStyleSheet.JOBCast(Intf);
 end;
@@ -13709,22 +13709,22 @@ begin
   InvokeJSNoResult('done',[]);
 end;
 
-class function TJSMozCanvasPrintState.Cast(Intf: IJSObject): IJSMozCanvasPrintState;
+class function TJSMozCanvasPrintState.Cast(const Intf: IJSObject): IJSMozCanvasPrintState;
 begin
   Result:=TJSMozCanvasPrintState.JOBCast(Intf);
 end;
 
-class function TJSimgINotificationObserver.Cast(Intf: IJSObject): IJSimgINotificationObserver;
+class function TJSimgINotificationObserver.Cast(const Intf: IJSObject): IJSimgINotificationObserver;
 begin
   Result:=TJSimgINotificationObserver.JOBCast(Intf);
 end;
 
-class function TJSimgIRequest.Cast(Intf: IJSObject): IJSimgIRequest;
+class function TJSimgIRequest.Cast(const Intf: IJSObject): IJSimgIRequest;
 begin
   Result:=TJSimgIRequest.JOBCast(Intf);
 end;
 
-class function TJSnsIStreamListener.Cast(Intf: IJSObject): IJSnsIStreamListener;
+class function TJSnsIStreamListener.Cast(const Intf: IJSObject): IJSnsIStreamListener;
 begin
   Result:=TJSnsIStreamListener.JOBCast(Intf);
 end;
@@ -13779,7 +13779,7 @@ begin
   InvokeJSNoResult('forceReload',[]);
 end;
 
-class function TJSMozImageLoadingContent.Cast(Intf: IJSObject): IJSMozImageLoadingContent;
+class function TJSMozImageLoadingContent.Cast(const Intf: IJSObject): IJSMozImageLoadingContent;
 begin
   Result:=TJSMozImageLoadingContent.JOBCast(Intf);
 end;
@@ -13804,12 +13804,12 @@ begin
   InvokeJSNoResult('setUserInput',[aInput]);
 end;
 
-class function TJSMozEditableElement.Cast(Intf: IJSObject): IJSMozEditableElement;
+class function TJSMozEditableElement.Cast(const Intf: IJSObject): IJSMozEditableElement;
 begin
   Result:=TJSMozEditableElement.JOBCast(Intf);
 end;
 
-class function TJSnsIEditor.Cast(Intf: IJSObject): IJSnsIEditor;
+class function TJSnsIEditor.Cast(const Intf: IJSObject): IJSnsIEditor;
 begin
   Result:=TJSnsIEditor.JOBCast(Intf);
 end;
@@ -13919,7 +13919,7 @@ begin
   WriteJSPropertyUnicodeString('hash',aValue);
 end;
 
-class function TJSHTMLHyperlinkElementUtils.Cast(Intf: IJSObject): IJSHTMLHyperlinkElementUtils;
+class function TJSHTMLHyperlinkElementUtils.Cast(const Intf: IJSObject): IJSHTMLHyperlinkElementUtils;
 begin
   Result:=TJSHTMLHyperlinkElementUtils.JOBCast(Intf);
 end;
@@ -13929,7 +13929,7 @@ begin
   Result:=ReadJSPropertyObject('sheet',TJSStyleSheet) as IJSStyleSheet;
 end;
 
-class function TJSLinkStyle.Cast(Intf: IJSObject): IJSLinkStyle;
+class function TJSLinkStyle.Cast(const Intf: IJSObject): IJSLinkStyle;
 begin
   Result:=TJSLinkStyle.JOBCast(Intf);
 end;
@@ -13979,7 +13979,7 @@ begin
   Result:=InvokeJSObjectResult('arrayBuffer',[],TJSPromise) as IJSPromise;
 end;
 
-class function TJSBlob.Cast(Intf: IJSObject): IJSBlob;
+class function TJSBlob.Cast(const Intf: IJSObject): IJSBlob;
 begin
   Result:=TJSBlob.JOBCast(Intf);
 end;
@@ -13994,12 +13994,12 @@ begin
   Result:=InvokeJSObjectResult('item',[aIndex],TJSFile) as IJSFile;
 end;
 
-class function TJSFileList.Cast(Intf: IJSObject): IJSFileList;
+class function TJSFileList.Cast(const Intf: IJSObject): IJSFileList;
 begin
   Result:=TJSFileList.JOBCast(Intf);
 end;
 
-class function TJSnsIFile.Cast(Intf: IJSObject): IJSnsIFile;
+class function TJSnsIFile.Cast(const Intf: IJSObject): IJSnsIFile;
 begin
   Result:=TJSnsIFile.JOBCast(Intf);
 end;
@@ -14014,7 +14014,7 @@ begin
   Result:=ReadJSPropertyObject('root',TJSFileSystemDirectoryEntry) as IJSFileSystemDirectoryEntry;
 end;
 
-class function TJSFileSystem.Cast(Intf: IJSObject): IJSFileSystem;
+class function TJSFileSystem.Cast(const Intf: IJSObject): IJSFileSystem;
 begin
   Result:=TJSFileSystem.JOBCast(Intf);
 end;
@@ -14044,7 +14044,7 @@ begin
   Result:=ReadJSPropertyObject('filesystem',TJSFileSystem) as IJSFileSystem;
 end;
 
-class function TJSFileSystemEntry.Cast(Intf: IJSObject): IJSFileSystemEntry;
+class function TJSFileSystemEntry.Cast(const Intf: IJSObject): IJSFileSystemEntry;
 begin
   Result:=TJSFileSystemEntry.JOBCast(Intf);
 end;
@@ -14064,12 +14064,12 @@ begin
   InvokeJSNoResult('close',[]);
 end;
 
-class function TJSImageBitmap.Cast(Intf: IJSObject): IJSImageBitmap;
+class function TJSImageBitmap.Cast(const Intf: IJSObject): IJSImageBitmap;
 begin
   Result:=TJSImageBitmap.JOBCast(Intf);
 end;
 
-class function TJSFileSystemDirectoryReader.Cast(Intf: IJSObject): IJSFileSystemDirectoryReader;
+class function TJSFileSystemDirectoryReader.Cast(const Intf: IJSObject): IJSFileSystemDirectoryReader;
 begin
   Result:=TJSFileSystemDirectoryReader.JOBCast(Intf);
 end;
@@ -14124,12 +14124,12 @@ begin
   InvokeJSNoResult('set',[aName,aValue]);
 end;
 
-class function TJSFormData.Cast(Intf: IJSObject): IJSFormData;
+class function TJSFormData.Cast(const Intf: IJSObject): IJSFormData;
 begin
   Result:=TJSFormData.JOBCast(Intf);
 end;
 
-class function TJSAbstractWorker.Cast(Intf: IJSObject): IJSAbstractWorker;
+class function TJSAbstractWorker.Cast(const Intf: IJSObject): IJSAbstractWorker;
 begin
   Result:=TJSAbstractWorker.JOBCast(Intf);
 end;
@@ -14249,7 +14249,7 @@ begin
   Result:=InvokeJSObjectResult('fetch',[aInput],TJSPromise) as IJSPromise;
 end;
 
-class function TJSWindowOrWorkerGlobalScope.Cast(Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
+class function TJSWindowOrWorkerGlobalScope.Cast(const Intf: IJSObject): IJSWindowOrWorkerGlobalScope;
 begin
   Result:=TJSWindowOrWorkerGlobalScope.JOBCast(Intf);
 end;
@@ -14264,7 +14264,7 @@ begin
   Result:=InvokeJSObjectResult('delete',[aCacheName],TJSPromise) as IJSPromise;
 end;
 
-class function TJSCacheStorage.Cast(Intf: IJSObject): IJSCacheStorage;
+class function TJSCacheStorage.Cast(const Intf: IJSObject): IJSCacheStorage;
 begin
   Result:=TJSCacheStorage.JOBCast(Intf);
 end;
@@ -14339,7 +14339,7 @@ begin
   Result:=InvokeJSObjectResult('json',[],TJSPromise) as IJSPromise;
 end;
 
-class function TJSResponse.Cast(Intf: IJSObject): IJSResponse;
+class function TJSResponse.Cast(const Intf: IJSObject): IJSResponse;
 begin
   Result:=TJSResponse.JOBCast(Intf);
 end;
@@ -14379,7 +14379,7 @@ begin
   InvokeJSNoResult('set',[aName,aValue]);
 end;
 
-class function TJSHeaders.Cast(Intf: IJSObject): IJSHeaders;
+class function TJSHeaders.Cast(const Intf: IJSObject): IJSHeaders;
 begin
   Result:=TJSHeaders.JOBCast(Intf);
 end;
@@ -14454,7 +14454,7 @@ begin
   InvokeJSNoResult('overrideContentPolicyType',[aContext]);
 end;
 
-class function TJSRequest.Cast(Intf: IJSObject): IJSRequest;
+class function TJSRequest.Cast(const Intf: IJSObject): IJSRequest;
 begin
   Result:=TJSRequest.JOBCast(Intf);
 end;
@@ -14624,7 +14624,7 @@ begin
   Result:=InvokeJSObjectResult('removeChild',[aChild],TJSNode) as IJSNode;
 end;
 
-class function TJSNode.Cast(Intf: IJSObject): IJSNode;
+class function TJSNode.Cast(const Intf: IJSObject): IJSNode;
 begin
   Result:=TJSNode.JOBCast(Intf);
 end;
@@ -15486,7 +15486,7 @@ begin
   Result:=InvokeJSObjectResult('fetch',[aInput],TJSPromise) as IJSPromise;
 end;
 
-class function TJSWindow.Cast(Intf: IJSObject): IJSWindow;
+class function TJSWindow.Cast(const Intf: IJSObject): IJSWindow;
 begin
   Result:=TJSWindow.JOBCast(Intf);
 end;
@@ -15541,7 +15541,7 @@ begin
   InvokeJSNoResult('mozRemove',[aUri]);
 end;
 
-class function TJSOfflineResourceList.Cast(Intf: IJSObject): IJSOfflineResourceList;
+class function TJSOfflineResourceList.Cast(const Intf: IJSObject): IJSOfflineResourceList;
 begin
   Result:=TJSOfflineResourceList.JOBCast(Intf);
 end;
@@ -15626,7 +15626,7 @@ begin
   InvokeJSNoResult('mozUnlockOrientation',[]);
 end;
 
-class function TJSScreen.Cast(Intf: IJSObject): IJSScreen;
+class function TJSScreen.Cast(const Intf: IJSObject): IJSScreen;
 begin
   Result:=TJSScreen.JOBCast(Intf);
 end;
@@ -15651,7 +15651,7 @@ begin
   InvokeJSNoResult('onUserReactedToPasteMenuPopup',[allowed]);
 end;
 
-class function TJSClipboard.Cast(Intf: IJSObject): IJSClipboard;
+class function TJSClipboard.Cast(const Intf: IJSObject): IJSClipboard;
 begin
   Result:=TJSClipboard.JOBCast(Intf);
 end;
@@ -15781,7 +15781,7 @@ begin
   Result:=InvokeJSObjectResult('getBoundingClientRect',[],TJSDOMRect) as IJSDOMRect;
 end;
 
-class function TJSRange.Cast(Intf: IJSObject): IJSRange;
+class function TJSRange.Cast(const Intf: IJSObject): IJSRange;
 begin
   Result:=TJSRange.JOBCast(Intf);
 end;
@@ -15806,7 +15806,7 @@ begin
   InvokeJSNoResult('unlock',[]);
 end;
 
-class function TJSScreenOrientation.Cast(Intf: IJSObject): IJSScreenOrientation;
+class function TJSScreenOrientation.Cast(const Intf: IJSObject): IJSScreenOrientation;
 begin
   Result:=TJSScreenOrientation.JOBCast(Intf);
 end;
@@ -15861,7 +15861,7 @@ begin
   Result:=InvokeJSObjectResult('fromRect',[],TJSDOMRect) as IJSDOMRect;
 end;
 
-class function TJSDOMRect.Cast(Intf: IJSObject): IJSDOMRect;
+class function TJSDOMRect.Cast(const Intf: IJSObject): IJSDOMRect;
 begin
   Result:=TJSDOMRect.JOBCast(Intf);
 end;
@@ -16296,7 +16296,7 @@ begin
   Result:=InvokeJSObjectResult('setMatrixValue',[aTransformList],TJSDOMMatrix) as IJSDOMMatrix;
 end;
 
-class function TJSDOMMatrix.Cast(Intf: IJSObject): IJSDOMMatrix;
+class function TJSDOMMatrix.Cast(const Intf: IJSObject): IJSDOMMatrix;
 begin
   Result:=TJSDOMMatrix.JOBCast(Intf);
 end;
@@ -16376,7 +16376,7 @@ begin
   Result:=InvokeJSLongIntResult('addRule',[aSelector,aStyle]);
 end;
 
-class function TJSCSSStyleSheet.Cast(Intf: IJSObject): IJSCSSStyleSheet;
+class function TJSCSSStyleSheet.Cast(const Intf: IJSObject): IJSCSSStyleSheet;
 begin
   Result:=TJSCSSStyleSheet.JOBCast(Intf);
 end;
@@ -16431,7 +16431,7 @@ begin
   Result:=InvokeJSObjectResult('fromPoint',[],TJSDOMPoint) as IJSDOMPoint;
 end;
 
-class function TJSDOMPoint.Cast(Intf: IJSObject): IJSDOMPoint;
+class function TJSDOMPoint.Cast(const Intf: IJSObject): IJSDOMPoint;
 begin
   Result:=TJSDOMPoint.JOBCast(Intf);
 end;
@@ -16481,7 +16481,7 @@ begin
   Result:=InvokeJSObjectResult('convertToBlob',[],TJSPromise) as IJSPromise;
 end;
 
-class function TJSOffscreenCanvas.Cast(Intf: IJSObject): IJSOffscreenCanvas;
+class function TJSOffscreenCanvas.Cast(const Intf: IJSObject): IJSOffscreenCanvas;
 begin
   Result:=TJSOffscreenCanvas.JOBCast(Intf);
 end;
@@ -16506,7 +16506,7 @@ begin
   Result:=ReadJSPropertyUnicodeString('mozFullPath');
 end;
 
-class function TJSFile.Cast(Intf: IJSObject): IJSFile;
+class function TJSFile.Cast(const Intf: IJSObject): IJSFile;
 begin
   Result:=TJSFile.JOBCast(Intf);
 end;
@@ -16516,7 +16516,7 @@ begin
   Result:=InvokeJSObjectResult('createReader',[],TJSFileSystemDirectoryReader) as IJSFileSystemDirectoryReader;
 end;
 
-class function TJSFileSystemDirectoryEntry.Cast(Intf: IJSObject): IJSFileSystemDirectoryEntry;
+class function TJSFileSystemDirectoryEntry.Cast(const Intf: IJSObject): IJSFileSystemDirectoryEntry;
 begin
   Result:=TJSFileSystemDirectoryEntry.JOBCast(Intf);
 end;
@@ -16531,7 +16531,7 @@ begin
   Result:=ReadJSPropertyUnicodeString('state');
 end;
 
-class function TJSServiceWorker.Cast(Intf: IJSObject): IJSServiceWorker;
+class function TJSServiceWorker.Cast(const Intf: IJSObject): IJSServiceWorker;
 begin
   Result:=TJSServiceWorker.JOBCast(Intf);
 end;
@@ -17473,7 +17473,7 @@ begin
   Result:=InvokeJSObjectResult('nodesFromPoint',[aX,aY],TJSArray) as TJSNodeDynArray;
 end;
 
-class function TJSDocument.Cast(Intf: IJSObject): IJSDocument;
+class function TJSDocument.Cast(const Intf: IJSObject): IJSDocument;
 begin
   Result:=TJSDocument.JOBCast(Intf);
 end;
@@ -17528,7 +17528,7 @@ begin
   InvokeJSNoResult('remove',[]);
 end;
 
-class function TJSDocumentType.Cast(Intf: IJSObject): IJSDocumentType;
+class function TJSDocumentType.Cast(const Intf: IJSObject): IJSDocumentType;
 begin
   Result:=TJSDocumentType.JOBCast(Intf);
 end;
@@ -18173,7 +18173,7 @@ begin
   InvokeJSNoResult('replaceChildren',[aNodes]);
 end;
 
-class function TJSElement.Cast(Intf: IJSObject): IJSElement;
+class function TJSElement.Cast(const Intf: IJSObject): IJSElement;
 begin
   Result:=TJSElement.JOBCast(Intf);
 end;
@@ -18253,7 +18253,7 @@ begin
   InvokeJSNoResult('replaceChildren',[aNodes]);
 end;
 
-class function TJSDocumentFragment.Cast(Intf: IJSObject): IJSDocumentFragment;
+class function TJSDocumentFragment.Cast(const Intf: IJSObject): IJSDocumentFragment;
 begin
   Result:=TJSDocumentFragment.JOBCast(Intf);
 end;
@@ -18298,7 +18298,7 @@ begin
   WriteJSPropertyUnicodeString('value',aValue);
 end;
 
-class function TJSAttr.Cast(Intf: IJSObject): IJSAttr;
+class function TJSAttr.Cast(const Intf: IJSObject): IJSAttr;
 begin
   Result:=TJSAttr.JOBCast(Intf);
 end;
@@ -18388,7 +18388,7 @@ begin
   InvokeJSNoResult('remove',[]);
 end;
 
-class function TJSCharacterData.Cast(Intf: IJSObject): IJSCharacterData;
+class function TJSCharacterData.Cast(const Intf: IJSObject): IJSCharacterData;
 begin
   Result:=TJSCharacterData.JOBCast(Intf);
 end;
@@ -18403,12 +18403,12 @@ begin
   Result:=InvokeJSObjectResult('splitText',[aOffset],TJSText) as IJSText;
 end;
 
-class function TJSText.Cast(Intf: IJSObject): IJSText;
+class function TJSText.Cast(const Intf: IJSObject): IJSText;
 begin
   Result:=TJSText.JOBCast(Intf);
 end;
 
-class function TJSComment.Cast(Intf: IJSObject): IJSComment;
+class function TJSComment.Cast(const Intf: IJSObject): IJSComment;
 begin
   Result:=TJSComment.JOBCast(Intf);
 end;
@@ -18658,7 +18658,7 @@ begin
   InvokeJSNoResult('blur',[]);
 end;
 
-class function TJSHTMLElement.Cast(Intf: IJSObject): IJSHTMLElement;
+class function TJSHTMLElement.Cast(const Intf: IJSObject): IJSHTMLElement;
 begin
   Result:=TJSHTMLElement.JOBCast(Intf);
 end;
@@ -18763,7 +18763,7 @@ begin
   Result:=InvokeJSObjectResult('nodesFromPoint',[aX,aY],TJSArray) as TJSNodeDynArray;
 end;
 
-class function TJSShadowRoot.Cast(Intf: IJSObject): IJSShadowRoot;
+class function TJSShadowRoot.Cast(const Intf: IJSObject): IJSShadowRoot;
 begin
   Result:=TJSShadowRoot.JOBCast(Intf);
 end;
@@ -18833,22 +18833,22 @@ begin
   InvokeJSNoResult('blur',[]);
 end;
 
-class function TJSSVGElement.Cast(Intf: IJSObject): IJSSVGElement;
+class function TJSSVGElement.Cast(const Intf: IJSObject): IJSSVGElement;
 begin
   Result:=TJSSVGElement.JOBCast(Intf);
 end;
 
-class function TJSCDATASection.Cast(Intf: IJSObject): IJSCDATASection;
+class function TJSCDATASection.Cast(const Intf: IJSObject): IJSCDATASection;
 begin
   Result:=TJSCDATASection.JOBCast(Intf);
 end;
 
-class function TJSHTMLUnknownElement.Cast(Intf: IJSObject): IJSHTMLUnknownElement;
+class function TJSHTMLUnknownElement.Cast(const Intf: IJSObject): IJSHTMLUnknownElement;
 begin
   Result:=TJSHTMLUnknownElement.JOBCast(Intf);
 end;
 
-class function TJSHTMLHeadElement.Cast(Intf: IJSObject): IJSHTMLHeadElement;
+class function TJSHTMLHeadElement.Cast(const Intf: IJSObject): IJSHTMLHeadElement;
 begin
   Result:=TJSHTMLHeadElement.JOBCast(Intf);
 end;
@@ -18898,7 +18898,7 @@ begin
   InvokeJSNoResult('build',[aBuilder]);
 end;
 
-class function TJSHTMLMenuElement.Cast(Intf: IJSObject): IJSHTMLMenuElement;
+class function TJSHTMLMenuElement.Cast(const Intf: IJSObject): IJSHTMLMenuElement;
 begin
   Result:=TJSHTMLMenuElement.JOBCast(Intf);
 end;
@@ -19033,7 +19033,7 @@ begin
   Result:=InvokeJSBooleanResult('reportValidity',[]);
 end;
 
-class function TJSHTMLFormElement.Cast(Intf: IJSObject): IJSHTMLFormElement;
+class function TJSHTMLFormElement.Cast(const Intf: IJSObject): IJSHTMLFormElement;
 begin
   Result:=TJSHTMLFormElement.JOBCast(Intf);
 end;
@@ -19098,7 +19098,7 @@ begin
   Result:=InvokeJSObjectResult('getTransformToElement',[aElement],TJSSVGMatrix) as IJSSVGMatrix;
 end;
 
-class function TJSSVGGraphicsElement.Cast(Intf: IJSObject): IJSSVGGraphicsElement;
+class function TJSSVGGraphicsElement.Cast(const Intf: IJSObject): IJSSVGGraphicsElement;
 begin
   Result:=TJSSVGGraphicsElement.JOBCast(Intf);
 end;
@@ -19343,7 +19343,7 @@ begin
   WriteJSPropertyUnicodeString('hash',aValue);
 end;
 
-class function TJSHTMLAnchorElement.Cast(Intf: IJSObject): IJSHTMLAnchorElement;
+class function TJSHTMLAnchorElement.Cast(const Intf: IJSObject): IJSHTMLAnchorElement;
 begin
   Result:=TJSHTMLAnchorElement.JOBCast(Intf);
 end;
@@ -19488,7 +19488,7 @@ begin
   InvokeJSNoResult('setCustomValidity',[aError]);
 end;
 
-class function TJSHTMLButtonElement.Cast(Intf: IJSObject): IJSHTMLButtonElement;
+class function TJSHTMLButtonElement.Cast(const Intf: IJSObject): IJSHTMLButtonElement;
 begin
   Result:=TJSHTMLButtonElement.JOBCast(Intf);
 end;
@@ -19594,7 +19594,7 @@ begin
   Result:=InvokeJSObjectResult('transferControlToOffscreen',[],TJSOffscreenCanvas) as IJSOffscreenCanvas;
 end;
 
-class function TJSHTMLCanvasElement.Cast(Intf: IJSObject): IJSHTMLCanvasElement;
+class function TJSHTMLCanvasElement.Cast(const Intf: IJSObject): IJSHTMLCanvasElement;
 begin
   Result:=TJSHTMLCanvasElement.JOBCast(Intf);
 end;
@@ -19609,7 +19609,7 @@ begin
   WriteJSPropertyUnicodeString('align',aValue);
 end;
 
-class function TJSHTMLDivElement.Cast(Intf: IJSObject): IJSHTMLDivElement;
+class function TJSHTMLDivElement.Cast(const Intf: IJSObject): IJSHTMLDivElement;
 begin
   Result:=TJSHTMLDivElement.JOBCast(Intf);
 end;
@@ -19729,7 +19729,7 @@ begin
   InvokeJSNoResult('forceReload',[]);
 end;
 
-class function TJSHTMLEmbedElement.Cast(Intf: IJSObject): IJSHTMLEmbedElement;
+class function TJSHTMLEmbedElement.Cast(const Intf: IJSObject): IJSHTMLEmbedElement;
 begin
   Result:=TJSHTMLEmbedElement.JOBCast(Intf);
 end;
@@ -19894,7 +19894,7 @@ begin
   Result:=InvokeJSObjectResult('getSVGDocument',[],TJSDocument) as IJSDocument;
 end;
 
-class function TJSHTMLIFrameElement.Cast(Intf: IJSObject): IJSHTMLIFrameElement;
+class function TJSHTMLIFrameElement.Cast(const Intf: IJSObject): IJSHTMLIFrameElement;
 begin
   Result:=TJSHTMLIFrameElement.JOBCast(Intf);
 end;
@@ -20174,7 +20174,7 @@ begin
   InvokeJSNoResult('forceReload',[]);
 end;
 
-class function TJSHTMLImageElement.Cast(Intf: IJSObject): IJSHTMLImageElement;
+class function TJSHTMLImageElement.Cast(const Intf: IJSObject): IJSHTMLImageElement;
 begin
   Result:=TJSHTMLImageElement.JOBCast(Intf);
 end;
@@ -20874,7 +20874,7 @@ begin
   InvokeJSNoResult('forceReload',[]);
 end;
 
-class function TJSHTMLInputElement.Cast(Intf: IJSObject): IJSHTMLInputElement;
+class function TJSHTMLInputElement.Cast(const Intf: IJSObject): IJSHTMLInputElement;
 begin
   Result:=TJSHTMLInputElement.JOBCast(Intf);
 end;
@@ -20899,7 +20899,7 @@ begin
   WriteJSPropertyUnicodeString('htmlFor',aValue);
 end;
 
-class function TJSHTMLLabelElement.Cast(Intf: IJSObject): IJSHTMLLabelElement;
+class function TJSHTMLLabelElement.Cast(const Intf: IJSObject): IJSHTMLLabelElement;
 begin
   Result:=TJSHTMLLabelElement.JOBCast(Intf);
 end;
@@ -21069,7 +21069,7 @@ begin
   WriteJSPropertyUnicodeString('as',aValue);
 end;
 
-class function TJSHTMLLinkElement.Cast(Intf: IJSObject): IJSHTMLLinkElement;
+class function TJSHTMLLinkElement.Cast(const Intf: IJSObject): IJSHTMLLinkElement;
 begin
   Result:=TJSHTMLLinkElement.JOBCast(Intf);
 end;
@@ -21144,7 +21144,7 @@ begin
   WriteJSPropertyUnicodeString('text',aValue);
 end;
 
-class function TJSHTMLOptionElement.Cast(Intf: IJSObject): IJSHTMLOptionElement;
+class function TJSHTMLOptionElement.Cast(const Intf: IJSObject): IJSHTMLOptionElement;
 begin
   Result:=TJSHTMLOptionElement.JOBCast(Intf);
 end;
@@ -21179,7 +21179,7 @@ begin
   WriteJSPropertyDouble('max',aValue);
 end;
 
-class function TJSHTMLProgressElement.Cast(Intf: IJSObject): IJSHTMLProgressElement;
+class function TJSHTMLProgressElement.Cast(const Intf: IJSObject): IJSHTMLProgressElement;
 begin
   Result:=TJSHTMLProgressElement.JOBCast(Intf);
 end;
@@ -21469,7 +21469,7 @@ begin
   InvokeJSNoResult('setUserInput',[aInput]);
 end;
 
-class function TJSHTMLTextAreaElement.Cast(Intf: IJSObject): IJSHTMLTextAreaElement;
+class function TJSHTMLTextAreaElement.Cast(const Intf: IJSObject): IJSHTMLTextAreaElement;
 begin
   Result:=TJSHTMLTextAreaElement.JOBCast(Intf);
 end;
@@ -21634,7 +21634,7 @@ begin
   Result:=InvokeJSObjectResult('getElementById',[aElementId],TJSElement) as IJSElement;
 end;
 
-class function TJSSVGSVGElement.Cast(Intf: IJSObject): IJSSVGSVGElement;
+class function TJSSVGSVGElement.Cast(const Intf: IJSObject): IJSSVGSVGElement;
 begin
   Result:=TJSSVGSVGElement.JOBCast(Intf);
 end;

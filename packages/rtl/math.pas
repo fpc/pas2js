@@ -97,7 +97,7 @@ function IMul(const A, B: Integer): Integer; external name 'Math.imul'; // not o
 function Log10(const A: Double): Double; external name 'Math.log10';
 function Log1p(const A: Double): Double; external name 'Math.log1p'; // not on IE
 function Log2(const A: Double): Double; external name 'Math.log2'; // not on IE
-function LogN(const A, Base: Double): Double; 
+function LogN(const Base, N: Double): Double; 
 function Power(const Base, Exponent: Double): Double; external name 'Math.pow';
 // ln, round, sqrt, trunc, cos, sin, arctan, round, exp are in unit system
 function Ceil(const A: Double): Integer;
@@ -343,10 +343,10 @@ begin
   C:=Cos(A);
 end;
 
-function LogN(const A, Base: Double): Double; 
+function LogN(const Base,N: Double): Double; 
 
 begin
-  Result:=Ln(A)/Ln(Base);
+  Result:=Ln(N)/Ln(Base);
 end;
 
 function lnxp1(x: double): double;

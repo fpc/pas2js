@@ -14,24 +14,27 @@ Type
   TBrowserWASIHostApplication = class(TBrowserApplication)
   private
     FHost : TWASIHost;
-    FOnConsoleRead: TConsoleReadEvent;
-    FOnConsoleWrite: TConsoleWriteEvent;
     FPredefinedConsoleInput: TStrings;
     function GetAfterStart: TAfterStartEvent;
     function GetBeforeStart: TBeforeStartEvent;
     function GetEnv: TPas2JSWASIEnvironment;
     function GetExported: TWASIExports;
     function GetMemoryDescriptor: TJSWebAssemblyMemoryDescriptor;
+    function GetOnConsoleRead: TConsoleReadEvent;
+    function GetOnConsoleWrite: TConsoleWriteEvent;
     function GetRunEntryFunction: String;
     function GetTableDescriptor: TJSWebAssemblyTableDescriptor;
     procedure SetAfterStart(AValue: TAfterStartEvent);
     procedure SetBeforeStart(AValue: TBeforeStartEvent);
     procedure SetMemoryDescriptor(AValue: TJSWebAssemblyMemoryDescriptor);
+    procedure SetOnConsoleRead(AValue: TConsoleReadEvent);
+    procedure SetOnConsoleWrite(AValue: TConsoleWriteEvent);
     procedure SetPredefinedConsoleInput(AValue: TStrings);
     procedure SetRunEntryFunction(AValue: String);
     procedure SetTableDescriptor(AValue: TJSWebAssemblyTableDescriptor);
   protected
     function CreateHost: TWASIHost; virtual;
+    Property Host : TWASIHost Read FHost;
   public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
@@ -56,9 +59,9 @@ Type
     // Default console input
     Property PredefinedConsoleInput : TStrings Read FPredefinedConsoleInput Write SetPredefinedConsoleInput;
     // Called when reading from console (stdin). If not set, PredefinedConsoleinput is used.
-    property OnConsoleRead : TConsoleReadEvent Read FOnConsoleRead Write FOnConsoleRead;
+    property OnConsoleRead : TConsoleReadEvent Read GetOnConsoleRead Write SetOnConsoleRead;
     // Called when writing to console (stdout). If not set, console.log is used.
-    property OnConsoleWrite : TConsoleWriteEvent Read FOnConsoleWrite Write FOnConsoleWrite;
+    property OnConsoleWrite : TConsoleWriteEvent Read GetOnConsoleWrite Write SetOnConsoleWrite;
   end;
 
   // For backwards compatibility
@@ -94,6 +97,16 @@ begin
   Result:=FHost.MemoryDescriptor;
 end;
 
+function TBrowserWASIHostApplication.GetOnConsoleRead: TConsoleReadEvent;
+begin
+  Result:=FHost.OnConsoleRead;
+end;
+
+function TBrowserWASIHostApplication.GetOnConsoleWrite: TConsoleWriteEvent;
+begin
+  Result:=FHost.OnConsoleWrite;
+end;
+
 function TBrowserWASIHostApplication.GetRunEntryFunction: String;
 begin
   Result:=FHost.RunEntryFunction;
@@ -120,6 +133,18 @@ begin
   FHost.MemoryDescriptor:=aValue;
 end;
 
+procedure TBrowserWASIHostApplication.SetOnConsoleRead(AValue: TConsoleReadEvent
+  );
+begin
+  FHost.OnConsoleRead:=aValue
+end;
+
+procedure TBrowserWASIHostApplication.SetOnConsoleWrite(
+  AValue: TConsoleWriteEvent);
+begin
+  FHost.OnConsoleWrite:=aValue;
+end;
+
 procedure TBrowserWASIHostApplication.SetPredefinedConsoleInput(AValue: TStrings);
 begin
   FHost.PredefinedConsoleInput:=aValue;
@@ -139,7 +164,7 @@ end;
 function TBrowserWASIHostApplication.CreateHost : TWASIHost;
 
 begin
-  Result:=TWASIHost.Create(Nil);
+  Result:=TWASIHost.Create(Self);
 end;
 
 constructor TBrowserWASIHostApplication.Create(aOwner: TComponent);

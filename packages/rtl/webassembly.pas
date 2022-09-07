@@ -6,7 +6,7 @@ unit webassembly;
 interface
 
 uses
-  js, Weborworker;
+  js;
 
 Type
   { TJSWebAssemblyMemory }
@@ -36,7 +36,7 @@ Type
     FMemory : TJSWebAssemblyMemory; external name 'memory';
     function GetFun(aName : String): TJSFunction; external name '[]';
   public
-    Property Memory : TJSWebAssemblyMemory Read FMemory;
+    Property Memory : TJSWebAssemblyMemory Read FMemory Write fMemory;
     Property functions [aName : String] : TJSFunction read GetFun; default;
   end;
 
@@ -80,9 +80,9 @@ Type
     Class Function instantiate(Buffer : TJSWebAssemblyModule; ImportObject :  TJSObject) : TJSPromise; overload;
     Class Function instantiate(Buffer : TJSWebAssemblyModule) : TJSPromise; overload;
     Class Function compile(Buffer : TJSArrayBuffer): TJSPromise;
-    Class Function compileStreaming(source : TJSResponse): TJSPromise;
-    Class Function instantiateStreaming(source : TJSResponse; ImportObject :  TJSObject) : TJSPromise; overload;
-    Class Function instantiateStreaming(source : TJSResponse) : TJSPromise; overload;
+    Class Function compileStreaming(source : TJSObject): TJSPromise;
+    Class Function instantiateStreaming(source : TJSObject; ImportObject :  TJSObject) : TJSPromise; overload;
+    Class Function instantiateStreaming(source : TJSObject) : TJSPromise; overload;
     Class Function validate(Buffer : TJSArrayBuffer): Boolean;
   end;
 

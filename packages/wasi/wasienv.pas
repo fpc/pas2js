@@ -4,7 +4,8 @@ unit wasienv;
 {$mode ObjFPC}
 {$modeswitch externalclass}
 {$INTERFACES CORBA}
-
+{$WARN 5024 off}
+{$WARN 4501 off}
 interface
 
 uses
@@ -327,10 +328,12 @@ type
     FOnStdOutputWrite: TWASIWriteEvent;
     FImportExtensions : TFPList;
     FWASIImportName : string;
+    FMemory : TJSWebAssemblyMemory;
     function GetConsoleInputBuffer: TJSUint8Array;
     function GetFileBuffer(FD: NativeInt): TJSUint8Array;
     function GetImportObject: TJSObject;
     function getiovs(view: TJSDataView; iovs, iovsLen: NativeInt): TJSArray;
+    function GetMemory: TJSWebassemblyMemory;
     procedure SetInstance(AValue: TJSWebAssemblyInstance);
   Protected
     Class Var UTF8TextDecoder: TJSTextDecoder;
@@ -392,6 +395,8 @@ type
     function sock_recv() : NativeInt; virtual;
     function sock_send() : NativeInt; virtual;
     function sock_shutdown() : NativeInt; virtual;
+  Protected
+    Procedure SetMemory(aMemory : TJSWebAssemblyMemory);
   Public
     class constructor init;
     Constructor Create;
@@ -414,6 +419,7 @@ type
     Property OnGetConsoleInputBuffer : TGetConsoleInputBufferEvent Read FOnGetConsoleInputBuffer Write FOnGetConsoleInputBuffer;
     Property OnGetConsoleInputString : TGetConsoleInputStringEvent Read FOnGetConsoleInputString Write FOnGetConsoleInputString;
     Property Instance : TJSWebAssemblyInstance Read Finstance Write SetInstance;
+    Property Memory : TJSWebassemblyMemory Read GetMemory;
     Property Exitcode : Nativeint Read FExitCode;
     // Default is set to the one expected by FPC runtime: wasi_snapshot_preview1
     Property WASIImportName : String Read FWASIImportName Write FWASIImportName;
@@ -434,11 +440,25 @@ type
     Property Env : TPas2JSWASIEnvironment Read FEnv;
   end;
 
+  TRunWebassemblyProc = reference to Procedure(aExports : TWASIExports);
   TWebAssemblyStartDescriptor = record
+    // Module
+    Module : TJSWebAssemblyModule;
+    // memory to use
     Memory : TJSWebAssemblyMemory;
+    // Table to use
     Table : TJSWebAssemblyTable;
+    // Exports of module
     Exported : TWASIExports;
+    // Imports of module
+    Imports : TJSOBject;
+    // Instance
     Instance : TJSWebAssemblyInstance;
+    // Procedure to actually run a function.
+    CallRun : TRunWebassemblyProc;
+    // After run, if an exception occurred, this is filled with error class/message.
+    RunExceptionClass : String;
+    RunExceptionMessage : String;
   end;
 
 
@@ -448,6 +468,8 @@ type
   TBeforeStartEvent = Procedure (Sender : TObject; aDescriptor : TWebAssemblyStartDescriptor; var aAllowRun : Boolean) of object;
   TAfterStartEvent = Procedure (Sender : TObject; aDescriptor : TWebAssemblyStartDescriptor) of object;
 
+  TFailEvent =  Procedure (Sender : TObject; aFail : JSValue) of object;
+
   TConsoleReadEvent = Procedure(Sender : TObject; Var AInput : String) of object;
   TConsoleWriteEvent = Procedure (Sender : TObject; aOutput : string) of object;
 
@@ -455,10 +477,15 @@ type
 
   TWASIHost = Class(TComponent)
   Private
+    FAfterInstantation: TNotifyEvent;
     FAfterStart: TAfterStartEvent;
+    FBeforeInstantation: TNotifyEvent;
     FBeforeStart: TBeforeStartEvent;
     FEnv: TPas2JSWASIEnvironment;
     FExported: TWASIExports;
+    FOnInstantiateFail: TFailEvent;
+    FOnLoadFail: TFailEvent;
+    FPreparedStartDescriptor: TWebAssemblyStartDescriptor;
     FMemoryDescriptor : TJSWebAssemblyMemoryDescriptor;
     FOnConsoleRead: TConsoleReadEvent;
     FOnConsoleWrite: TConsoleWriteEvent;
@@ -466,21 +493,51 @@ type
     FReadLineCount : Integer;
     FRunEntryFunction: String;
     FTableDescriptor : TJSWebAssemblyTableDescriptor;
+    function GetStartDescriptorReady: Boolean;
+    function GetUseSharedMemory: Boolean;
     procedure SetPredefinedConsoleInput(AValue: TStrings);
+    procedure SetUseSharedMemory(AValue: Boolean);
   protected
+    // Called after instantiation was OK.
+    Procedure DoAfterInstantiate; virtual;
+    // Called before instantiation starts.
+    Procedure DoBeforeInstantiate; virtual;
+    // Called when loading fails
+    Procedure DoLoadFail(aError : JSValue); virtual;
+    // Called when instantiating fails
+    Procedure DoInstantiateFail(aError : JSValue); virtual;
+    // Prepare start descriptor
+    Procedure PrepareWebAssemblyInstance(aDescr: TWebAssemblyStartDescriptor); virtual;
+    // Call the run function on an instantiated webassembly
+    function RunWebAssemblyInstance(aBeforeStart: TBeforeStartCallback; aAfterStart: TAfterStartCallback; aRun : TRunWebassemblyProc): Boolean; virtual; overload;
+    // Prepare and run web assembly instance.
+    function RunWebAssemblyInstance(aDescr: TWebAssemblyStartDescriptor; aBeforeStart: TBeforeStartCallback; aAfterStart: TAfterStartCallback): Boolean; overload;
+    // Standard Input/Output reads
     procedure DoStdRead(Sender: TObject; var AInput: string); virtual;
     procedure DoStdWrite(Sender: TObject; const aOutput: String); virtual;
+    // Load file from path ans instantiate a webassembly from it.
     function CreateWebAssembly(aPath: string; aImportObject: TJSObject): TJSPromise; virtual;
+    // Create a WASI environment. Called during constructor, override to customize.
     Function CreateWasiEnvironment : TPas2JSWASIEnvironment; virtual;
+    // Create Standard webassembly table description
     function GetTable: TJSWebAssemblyTable; virtual;
+    // Create tandard webassembly memory.
     function GetMemory: TJSWebAssemblyMemory; virtual;
   public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    // Will call OnConsoleWrite or write to console
+    procedure WriteOutput(const aOutput: String); virtual;
+    // Get prepared descriptor
+    Property PreparedStartDescriptor : TWebAssemblyStartDescriptor Read FPreparedStartDescriptor;
+    // Initialize a start descriptor.
+    function InitStartDescriptor(aMemory: TJSWebAssemblyMemory; aTable: TJSWebAssemblyTable; aImportObj: TJSObject): TWebAssemblyStartDescriptor;
     // Load and start webassembly. If DoRun is true, then Webassembly entry point is called.
     // If aBeforeStart is specified, then it is called prior to calling run, and can disable running.
     // If aAfterStart is specified, then it is called after calling run. It is not called if running was disabled.
-    Procedure StartWebAssembly(aPath: string; DoRun : Boolean = True;  aBeforeStart : TBeforeStartCallback = Nil; aAfterStart : TAfterStartCallback = Nil);
+    Procedure StartWebAssembly(aPath: string; DoRun: Boolean;  aBeforeStart: TBeforeStartCallback; aAfterStart: TAfterStartCallback);
+    // Run the prepared descriptor
+    Procedure RunPreparedDescriptor;
     // Initial memory descriptor
     Property MemoryDescriptor : TJSWebAssemblyMemoryDescriptor Read FMemoryDescriptor Write FMemoryDescriptor;
     // Import/export table descriptor
@@ -489,8 +546,11 @@ type
     Property WasiEnvironment : TPas2JSWASIEnvironment Read FEnv;
     // Exported functions. Also available in start descriptor.
     Property Exported : TWASIExports Read FExported;
+    // Is the descriptor prepared ?
+    Property StartDescriptorReady : Boolean Read GetStartDescriptorReady;
     // Default console input
     Property PredefinedConsoleInput : TStrings Read FPredefinedConsoleInput Write SetPredefinedConsoleInput;
+
     // Name of function to run. If empty, the FPC default _start is used.
     Property RunEntryFunction : String Read FRunEntryFunction Write FRunEntryFunction;
     // Called after webassembly start was run. Not called if webassembly was not run.
@@ -501,6 +561,17 @@ type
     property OnConsoleRead : TConsoleReadEvent Read FOnConsoleRead Write FOnConsoleRead;
     // Called when writing to console (stdout). If not set, console.log is used.
     property OnConsoleWrite : TConsoleWriteEvent Read FOnConsoleWrite Write FOnConsoleWrite;
+    // Called when fetch of the wasm module fails.
+    Property OnLoadFail : TFailEvent Read FOnLoadFail Write FOnLoadFail;
+    // Called when instantiation of the wasm module fails.
+    Property OnInstantiateFail : TFailEvent Read FOnInstantiateFail Write FOnInstantiateFail;
+    // Use Shared memory for webassembly instances ?
+    Property UseSharedMemory : Boolean Read GetUseSharedMemory Write SetUseSharedMemory;
+    // Executed after instantiation
+    Property AfterInstantation : TNotifyEvent Read FAfterInstantation Write FAfterInstantation;
+    // Executed before instantiation
+    Property BeforeInstantation : TNotifyEvent Read FBeforeInstantation Write FBeforeInstantation;
+
   end;
 
 implementation
@@ -534,30 +605,139 @@ begin
   FPredefinedConsoleInput.Assign(AValue);
 end;
 
+function TWASIHost.GetUseSharedMemory: Boolean;
+begin
+  Result:=FMemoryDescriptor.shared;
+  if isUndefined(Result) then
+    Result:=False;
+end;
+
+function TWASIHost.GetStartDescriptorReady: Boolean;
+begin
+  With FPreparedStartDescriptor do
+    Result:=Assigned(Memory) and Assigned(Module);
+end;
+
+procedure TWASIHost.SetUseSharedMemory(AValue: Boolean);
+begin
+  FMemoryDescriptor.shared:=aValue;
+end;
+
+procedure TWASIHost.DoAfterInstantiate;
+begin
+  If Assigned(FAfterInstantation) then
+    FAfterInstantation(Self);
+end;
+
+procedure TWASIHost.DoBeforeInstantiate;
+begin
+  If Assigned(FBeforeInstantation) then
+    FBeforeInstantation(Self);
+end;
+
+procedure TWASIHost.DoLoadFail(aError: JSValue);
+begin
+  If Assigned(FOnLoadFail) then
+    FOnLoadFail(Self,aError);
+end;
+
+procedure TWASIHost.DoInstantiateFail(aError: JSValue);
+begin
+  If Assigned(FOnInstantiateFail) then
+    FOnInstantiateFail(Self,aError);
+end;
+
+procedure TWASIHost.PrepareWebAssemblyInstance(
+  aDescr: TWebAssemblyStartDescriptor);
+begin
+  FPreparedStartDescriptor:=aDescr;
+  FExported:=aDescr.Exported;
+  WasiEnvironment.Instance:=aDescr.Instance;
+  WasiEnvironment.SetMemory(aDescr.Memory);
+  // We do this here, so in the event, the FPreparedStartDescriptor Is ready.
+  DoAfterInstantiate;
+end;
+
+function TWASIHost.RunWebAssemblyInstance(aBeforeStart: TBeforeStartCallback; aAfterStart: TAfterStartCallback; aRun : TRunWebassemblyProc): Boolean;
+
+begin
+  Result:=True;
+  // Writeln('Entering RunWebAssemblyInstance');
+  if Assigned(aBeforeStart) then
+    Result:=aBeforeStart(Self,FPreparedStartDescriptor);
+  if Assigned(FBeforeStart) then
+    FBeforeStart(Self,FPreparedStartDescriptor,Result);
+  if not Result then
+    exit;
+  try
+    if aRun=Nil then
+      aRun:=FPreparedStartDescriptor.CallRun;
+    aRun(FPreparedStartDescriptor.Exported);
+    if Assigned(aAfterStart) then
+      aAfterStart(Self,FPreparedStartDescriptor);
+    if Assigned(FAfterStart) then
+      FAfterStart(Self,FPreparedStartDescriptor)
+  except
+    On E : exception do
+      begin
+      FPreparedStartDescriptor.RunExceptionClass:=E.ClassName;
+      FPreparedStartDescriptor.RunExceptionMessage:=E.Message;
+      end;
+    On JE : TJSError do
+      begin
+      FPreparedStartDescriptor.RunExceptionClass:=jsTypeOf(JE);
+      FPreparedStartDescriptor.RunExceptionMessage:=JE.Message;
+      end;
+    On OE : TJSObject do
+      begin
+      FPreparedStartDescriptor.RunExceptionClass:=jsTypeOf(OE);
+      FPreparedStartDescriptor.RunExceptionMessage:=TJSJSON.Stringify(OE);
+      end;
+  end;
+end;
+
 procedure TWASIHost.DoStdWrite(Sender: TObject; const aOutput: String);
 begin
-  if assigned(FOnConsoleWrite) then
-    FOnConsoleWrite(Self,aOutput)
-  else
-    Console.log('Webassembly output: ', aOutput);
+  WriteOutput(aOutput);
 end;
 
 function TWASIHost.CreateWebAssembly(aPath: string; aImportObject: TJSObject
   ): TJSPromise;
 
+  Function InstantiateOK(Res : JSValue) : JSValue;
+
+  begin
+    Result:=res;
+  end;
+
+  Function InstantiateFail(Res : JSValue) : JSValue;
+
+  begin
+    Result:=False;
+    DoInstantiateFail(res);
+  end;
+
+
   Function ArrayOK(res2 : jsValue) : JSValue;
 
   begin
-    Result:=TJSWebAssembly.instantiate(TJSArrayBuffer(res2),aImportObject);
+    DoBeforeInstantiate;
+    Result:=TJSWebAssembly.instantiate(TJSArrayBuffer(res2),aImportObject)._then(@InstantiateOK,@InstantiateFail);
   end;
 
   function fetchOK(res : jsValue) : JSValue;
   begin
-    Result:=TJSResponse(Res).arrayBuffer._then(@ArrayOK,Nil)
+    Result:=TJSResponse(Res).arrayBuffer._then(@ArrayOK,Nil);
+  end;
+
+  function DoFail(res : jsValue) : JSValue;
+  begin
+    Result:=False;
+    DoLoadFail(res);
   end;
 
 begin
-  Result:=fetch(aPath)._then(@fetchOK);
+  Result:=fetch(aPath)._then(@fetchOK,@DoFail).Catch(@DoFail);
 end;
 
 function TWASIHost.CreateWasiEnvironment: TPas2JSWASIEnvironment;
@@ -598,39 +778,48 @@ begin
   inherited Destroy;
 end;
 
-procedure TWASIHost.StartWebAssembly(aPath: string; DoRun: Boolean;
-  aBeforeStart: TBeforeStartCallback; aAfterStart: TAfterStartCallback);
+procedure TWASIHost.WriteOutput(const aOutput: String);
+begin
+  if assigned(FOnConsoleWrite) then
+    FOnConsoleWrite(Self,aOutput)
+  else
+    Writeln(aOutput);
+end;
+
+
+function TWASIHost.RunWebAssemblyInstance(aDescr: TWebAssemblyStartDescriptor;
+  aBeforeStart: TBeforeStartCallback;
+  aAfterStart: TAfterStartCallback): Boolean;
+
+begin
+  Result:=RunWebAssemblyInstance(aBeforeStart,aAfterStart,Nil);
+end;
+
+procedure TWASIHost.StartWebAssembly(aPath: string; DoRun: Boolean; aBeforeStart: TBeforeStartCallback; aAfterStart: TAfterStartCallback);
+
 Var
-  ImportObj : TJSObject;
-  Res : TWebAssemblyStartDescriptor;
+  WASD : TWebAssemblyStartDescriptor;
 
   function InitEnv(aValue: JSValue): JSValue;
 
   Var
-    Module : TJSInstantiateResult absolute aValue;
+    InstResult : TJSInstantiateResult absolute aValue;
 
   begin
     Result:=True;
-    Res.Instance:=Module.Instance;
-    Res.Exported:=TWASIExports(TJSObject(Module.Instance.exports_));
-    // These 2 prevent running different instances simultaneously.
-    FExported:=Res.Exported;
-    WasiEnvironment.Instance:=Module.Instance;
-    if Assigned(aBeforeStart) then
-      DoRun:=aBeforeStart(Self,Res) and DoRun;
-    if Assigned(FBeforeStart) then
-      FBeforeStart(Self,Res,DoRun);
-    if DoRun then
+    WASD.Instance:=InstResult.Instance;
+    WASD.Module:=InstResult.Module;
+    WASD.Exported:=TWASIExports(TJSObject(WASD.Instance.exports_));
+    WASD.CallRun:=Procedure(aExports : TWASIExports)
       begin
       if FRunEntryFunction='' then
-        Res.Exported.Start
+        aExports.Start
       else
-        TProcedure(Res.Exported[RunEntryFunction])();
-      if Assigned(aAfterStart) then
-        aAfterStart(Self,Res);
-      if Assigned(FAfterStart) then
-        FAfterStart(Self,Res)
+        TProcedure(aExports[RunEntryFunction])();
       end;
+    PrepareWebAssemblyInstance(WASD);
+    if DoRun then
+      RunWebAssemblyInstance(aBeforeStart,aAfterStart,Nil);
   end;
 
   function DoFail(aValue: JSValue): JSValue;
@@ -643,16 +832,32 @@ Var
 
 begin
   FReadLineCount:=0;
-  Res.Memory:=GetMemory;
-  Res.Table:=GetTable;
-  ImportObj:=new([
-    'js', new([
-      'mem', Res.Memory,
-      'tbl', Res.Table
-    ])
+  // Clear current descriptor.
+  FPreparedStartDescriptor:=Default(TWebAssemblyStartDescriptor);
+  WASD:=InitStartDescriptor(GetMemory,GetTable,Nil);
+  CreateWebAssembly(aPath,WASD.Imports)._then(@initEnv,@DoFail).catch(@DoFail);
+end;
+
+procedure TWASIHost.RunPreparedDescriptor;
+begin
+  RunWebAssemblyInstance(Nil,Nil,Nil)
+end;
+
+function TWASIHost.InitStartDescriptor(aMemory: TJSWebAssemblyMemory;
+  aTable: TJSWebAssemblyTable; aImportObj: TJSObject
+  ): TWebAssemblyStartDescriptor;
+
+begin
+  Result.Memory:=aMemory;
+  Result.Table:=aTable;
+  if Not assigned(aImportObj) then
+    aImportObj:=TJSObject.New;
+  aImportObj['env']:=new([
+    'memory', Result.Memory,
+    'tbl', Result.Table
   ]);
-  FEnv.AddImports(ImportObj);
-  CreateWebAssembly(aPath,ImportObj)._then(@initEnv,@DoFail)
+  FEnv.AddImports(aImportObj);
+  Result.Imports:=aImportObj;
 end;
 
 function TImportExtension.getModuleMemoryDataView : TJSDataView;  
@@ -711,7 +916,7 @@ end;
 
 function TPas2JSWASIEnvironment.getModuleMemoryDataView: TJSDataView;
 begin
-  Result:=TJSDataView.New(FModuleInstanceExports.memory.buffer);
+  Result:=TJSDataView.New(Memory.buffer);
 end;
 
 function TPas2JSWASIEnvironment.fd_prestat_get(fd, bufPtr: NativeInt
@@ -813,6 +1018,8 @@ begin
   if Finstance=AValue then Exit;
   Finstance:=AValue;
   FModuleInstanceExports:=Finstance.exports_;
+  if Not Assigned(FMemory) and Assigned(FModuleInstanceExports.Memory) then
+    FMemory:=FModuleInstanceExports.Memory;
 end;
 
 function TPas2JSWASIEnvironment.GetTime(aClockID: NativeInt): NativeInt;
@@ -873,9 +1080,17 @@ begin
     ptr:=iovs + i * 8;
     buf:=view.getUint32(ptr, IsLittleEndian);
     bufLen:=view.getUint32(ptr + 4, IsLittleEndian);
-    ArrayBuf:=TJSUint8Array.New(FModuleInstanceExports.memory.buffer, buf, bufLen);
+    ArrayBuf:=TJSUint8Array.New(Memory.buffer, buf, bufLen);
     Result.Push(ArrayBuf);
     end;
+end;
+
+function TPas2JSWASIEnvironment.GetMemory: TJSWebassemblyMemory;
+begin
+  if Assigned(FMemory) then
+    Result:=FMemory
+  else
+    Result:= FModuleInstanceExports.Memory;
 end;
 
 function TPas2JSWASIEnvironment.fd_write(fd, iovs, iovsLen, nwritten: NativeInt): NativeInt;
@@ -1087,6 +1302,11 @@ function TPas2JSWASIEnvironment.sock_shutdown: NativeInt;
 begin
   console.log('Unimplemented: TPas2JSWASIEnvironment.sock_shutdown');
   Result:=WASI_ENOSYS;
+end;
+
+procedure TPas2JSWASIEnvironment.SetMemory(aMemory: TJSWebAssemblyMemory);
+begin
+  FMemory:=aMemory;
 end;
 
 class constructor TPas2JSWASIEnvironment.init;

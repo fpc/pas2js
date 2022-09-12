@@ -89,9 +89,6 @@ type
   { TRTTIContext }
 
   TRTTIContext = record
-  private
-    FPool: TJSObject; // maps 'modulename.typename' to TRTTIType
-    FReferenceCount: Integer;
   public
     class function Create: TRTTIContext; static;
     procedure Free;
@@ -367,6 +364,7 @@ type
     function GetBaseType : TRttiType; override;
   public
     constructor Create(AParent: TRttiObject; ATypeInfo: PTypeInfo); override;
+
     property BaseType : TRttiInterfaceType read GetAncestorType;
     property Ancestor: TRttiInterfaceType read GetAncestorType;
     property GUID: TGUID read GetGUID;
@@ -487,8 +485,27 @@ function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;
 
 implementation
 
+type
+  TRttiPoolTypes = class
+  private
+    FReferenceCount: Integer;
+    FTypes: TJSObject; // maps 'modulename.typename' to TRTTIType
+  public
+    constructor Create;
+
+    destructor Destroy; override;
+
+    function FindType(const AQualifiedName: String): TRttiType;
+    function GetType(const ATypeInfo: PTypeInfo): TRTTIType; overload;
+    function GetType(const AClass: TClass): TRTTIType; overload;
+
+    class function AcquireContext: TJSObject; static;
+
+    class procedure ReleaseContext; static;
+  end;
+
 var
-  GRttiContext: TRTTIContext;
+  Pool: TRttiPoolTypes;
   pas: TJSObject; external name 'pas';
 
 procedure CreateVirtualCorbaInterface(InterfaceTypeInfo: Pointer;
@@ -510,6 +527,149 @@ asm
   IntfVar.set(i);
 end;
 
+{ TRttiPoolTypes }
+
+constructor TRttiPoolTypes.Create;
+begin
+  inherited;
+
+  FTypes := TJSObject.new;
+end;
+
+destructor TRttiPoolTypes.Destroy;
+var
+  Key: String;
+
+  RttiObject: TRttiType;
+
+begin
+  for key in FTypes do
+    if FTypes.hasOwnProperty(key) then
+    begin
+      RttiObject := TRttiType(FTypes[key]);
+
+      RttiObject.Free;
+    end;
+end;
+
+function TRttiPoolTypes.FindType(const AQualifiedName: String): TRttiType;
+var
+  ModuleName, TypeName: String;
+
+  Module: TTypeInfoModule;
+
+  TypeFound: PTypeInfo;
+
+begin
+  if FTypes.hasOwnProperty(AQualifiedName) then
+    Result := TRttiType(FTypes[AQualifiedName])
+  else
+  begin
+    Result := nil;
+
+    for ModuleName in TJSObject.Keys(pas) do
+      if AQualifiedName.StartsWith(ModuleName + '.') then
+      begin
+        Module := TTypeInfoModule(pas[ModuleName]);
+        TypeName := Copy(AQualifiedName, Length(ModuleName) + 2, Length(AQualifiedName));
+
+        if Module.RTTI.HasOwnProperty(TypeName) then
+        begin
+          TypeFound := PTypeInfo(Module.RTTI[TypeName]);
+
+          Exit(GetType(TypeFound));
+        end;
+      end;
+  end;
+end;
+
+function TRttiPoolTypes.GetType(const ATypeInfo: PTypeInfo): TRTTIType;
+var
+  RttiTypeClass: array[TTypeKind] of TRttiTypeClass = (
+    nil, // tkUnknown
+    TRttiOrdinalType, // tkInteger
+    TRttiOrdinalType, // tkChar
+    TRttiType, // tkString
+    TRttiEnumerationType, // tkEnumeration
+    TRttiType, // tkSet
+    TRttiType, // tkDouble
+    TRttiType, // tkBool
+    TRttiType, // tkProcVar
+    TRttiType, // tkMethod
+    TRttiType, // tkArray
+    TRttiDynamicArrayType, // tkDynArray
+    TRttiRecordType, // tkRecord
+    TRttiInstanceType, // tkClass
+    TRttiClassRefType, // tkClassRef
+    TRttiType, // tkPointer
+    TRttiType, // tkJSValue
+    TRttiType, // tkRefToProcVar
+    TRttiInterfaceType, // tkInterface
+    TRttiType, // tkHelper
+    TRttiInstanceExternalType // tkExtClass
+  );
+
+  TheType: TTypeInfo absolute ATypeInfo;
+
+  Name: String;
+
+  Parent: TRttiObject;
+
+begin
+  if IsNull(ATypeInfo) or IsUndefined(ATypeInfo) then
+    Exit(nil);
+
+  Name := TheType.Name;
+
+  if isModule(TheType.Module) then
+    Name := TheType.Module.Name + '.' + Name;
+
+  if FTypes.hasOwnProperty(Name) then
+    Result := TRttiType(FTypes[Name])
+  else
+  begin
+    if (TheType.Kind in [tkClass, tkInterface, tkHelper, tkExtClass]) and TJSObject(TheType).hasOwnProperty('ancestor') then
+      Parent := GetType(PTypeInfo(TJSObject(TheType)['ancestor']))
+    else
+      Parent := nil;
+
+    Result := RttiTypeClass[TheType.Kind].Create(Parent, ATypeInfo);
+
+    FTypes[Name] := Result;
+  end;
+end;
+
+function TRttiPoolTypes.GetType(const AClass: TClass): TRTTIType;
+begin
+  if AClass = nil then
+    Exit(nil);
+
+  Result := GetType(TypeInfo(AClass));
+end;
+
+class function TRttiPoolTypes.AcquireContext: TJSObject;
+begin
+  if not Assigned(Pool) then
+    Pool := TRttiPoolTypes.Create;
+
+  Result := Pool.FTypes;
+
+  Inc(Pool.FReferenceCount);
+end;
+
+class procedure TRttiPoolTypes.ReleaseContext;
+var
+  Key: String;
+
+  RttiObject: TRttiType;
+
+begin
+  Dec(Pool.FReferenceCount);
+
+  if Pool.FReferenceCount = 0 then
+    FreeAndNil(Pool);
+end;
+
 { TRttiDynamicArrayType }
 
 function TRttiDynamicArrayType.GetDynArrayTypeInfo: TTypeInfoDynArray;
@@ -519,7 +679,7 @@ end;
 
 function TRttiDynamicArrayType.GetElementType: TRttiType;
 begin
-  Result := GRttiContext.GetType(DynArrayTypeInfo.ElType);
+  Result := Pool.GetType(DynArrayTypeInfo.ElType);
 end;
 
 constructor TRttiDynamicArrayType.Create(AParent: TRttiObject; ATypeInfo: PTypeInfo);
@@ -1300,7 +1460,7 @@ end;
 
 function TRttiInterfaceType.GetAncestorType: TRttiInterfaceType;
 begin
-  Result := GRttiContext.GetType(InterfaceTypeInfo.Ancestor) as TRttiInterfaceType;
+  Result := Pool.GetType(InterfaceTypeInfo.Ancestor) as TRttiInterfaceType;
 end;
 
 { TRttiRecordType }
@@ -1340,7 +1500,7 @@ end;
 
 function TRttiClassRefType.GetInstanceType: TRttiInstanceType;
 begin
-  Result := GRttiContext.GetType(ClassRefTypeInfo.InstanceType) as TRttiInstanceType;
+  Result := Pool.GetType(ClassRefTypeInfo.InstanceType) as TRttiInstanceType;
 end;
 
 function TRttiClassRefType.GetMetaclassType: TClass;
@@ -1352,7 +1512,7 @@ end;
 
 function TRttiInstanceExternalType.GetAncestor: TRttiInstanceExternalType;
 begin
-  Result := GRttiContext.GetType(ExternalClassTypeInfo.Ancestor) as TRttiInstanceExternalType;
+  Result := Pool.GetType(ExternalClassTypeInfo.Ancestor) as TRttiInstanceExternalType;
 end;
 
 function TRttiInstanceExternalType.GetExternalClassTypeInfo: TTypeInfoExtClass;
@@ -1377,122 +1537,27 @@ end;
 
 class function TRTTIContext.Create: TRTTIContext;
 begin
-  if GRttiContext.FPool = Undefined then
-    GRttiContext.FPool := TJSObject.new;
-
-  Inc(GRttiContext.FReferenceCount);
-
-  Result := GRttiContext;
+  Pool.AcquireContext;
 end;
 
 procedure TRTTIContext.Free;
-var
-  key: string;
-  o: TRttiType;
 begin
-  Dec(GRttiContext.FReferenceCount);
-
-  if GRttiContext.FReferenceCount = 0 then
-  begin
-    for key in FPool do
-      if FPool.hasOwnProperty(key) then
-      begin
-        o:=TRttiType(FPool[key]);
-
-        o.Free;
-      end;
-
-    FPool := nil;
-  end;
+  Pool.ReleaseContext;
 end;
 
 function TRTTIContext.GetType(aTypeInfo: PTypeInfo): TRttiType;
-var
-  RttiTypeClass: array[TTypeKind] of TRttiTypeClass = (
-    nil, // tkUnknown
-    TRttiOrdinalType, // tkInteger
-    TRttiOrdinalType, // tkChar
-    TRttiType, // tkString
-    TRttiEnumerationType, // tkEnumeration
-    TRttiType, // tkSet
-    TRttiType, // tkDouble
-    TRttiType, // tkBool
-    TRttiType, // tkProcVar
-    TRttiType, // tkMethod
-    TRttiType, // tkArray
-    TRttiDynamicArrayType, // tkDynArray
-    TRttiRecordType, // tkRecord
-    TRttiInstanceType, // tkClass
-    TRttiClassRefType, // tkClassRef
-    TRttiType, // tkPointer
-    TRttiType, // tkJSValue
-    TRttiType, // tkRefToProcVar
-    TRttiInterfaceType, // tkInterface
-    TRttiType, // tkHelper
-    TRttiInstanceExternalType // tkExtClass
-  );
-  t: TTypeInfo absolute aTypeInfo;
-  Name: String;
-  Parent: TRttiObject;
 begin
-  if IsNull(aTypeInfo) or IsUndefined(aTypeInfo) then
-    Exit(nil);
-
-  Name:=t.Name;
-
-  if isModule(t.Module) then
-    Name:=t.Module.Name+'.'+Name;
-
-  if GRttiContext.FPool.hasOwnProperty(Name) then
-    Result:=TRttiType(GRttiContext.FPool[Name])
-  else
-  begin
-    if (T.Kind in [tkClass, tkInterface, tkHelper, tkExtClass]) and TJSObject(t).hasOwnProperty('ancestor') then
-      Parent := GetType(PTypeInfo(TJSObject(t)['ancestor']))
-    else
-      Parent := nil;
-
-    Result := RttiTypeClass[T.Kind].Create(Parent, ATypeInfo);
-
-    GRttiContext.FPool[Name]:=Result;
-  end;
+  Result := Pool.GetType(aTypeInfo);
 end;
 
 function TRTTIContext.GetType(aClass: TClass): TRTTIType;
 begin
-  if aClass=nil then Exit(nil);
-  Result:=GetType(TypeInfo(aClass));
+  Result := Pool.GetType(aClass);
 end;
 
 function TRTTIContext.FindType(const AQualifiedName: String): TRttiType;
-var
-  ModuleName, TypeName: String;
-
-  Module: TTypeInfoModule;
-
-  TypeFound: PTypeInfo;
-
 begin
-  if GRttiContext.FPool.hasOwnProperty(AQualifiedName) then
-    Result := TRttiType(GRttiContext.FPool[AQualifiedName])
-  else
-  begin
-    Result := nil;
-
-    for ModuleName in TJSObject.Keys(pas) do
-      if AQualifiedName.StartsWith(ModuleName + '.') then
-      begin
-        Module := TTypeInfoModule(pas[ModuleName]);
-        TypeName := Copy(AQualifiedName, Length(ModuleName) + 2, Length(AQualifiedName));
-
-        if Module.RTTI.HasOwnProperty(TypeName) then
-        begin
-          TypeFound := PTypeInfo(Module.RTTI[TypeName]);
-
-          Exit(GetType(TypeFound));
-        end;
-      end;
-  end;
+  Result := Pool.FindType(AQualifiedName);
 end;
 
 function TRTTIContext.GetTypes: specialize TArray<TRttiType>;
@@ -1511,7 +1576,7 @@ begin
         GetType(PTypeInfo(ModuleTypes[ClassName]));
   end;
 
-  Result := specialize TArray<TRttiType>(TJSObject.Values(Self.FPool));
+  Result := specialize TArray<TRttiType>(TJSObject.Values(Pool.FTypes));
 end;
 
 { TRttiObject }
@@ -1604,7 +1669,7 @@ end;
 
 function TRttiField.GetFieldType: TRttiType;
 begin
-  Result := GRttiContext.GetType(FieldTypeInfo.TypeInfo);
+  Result := Pool.GetType(FieldTypeInfo.TypeInfo);
 end;
 
 function TRttiField.GetFieldTypeInfo: TTypeMemberField;
@@ -1707,7 +1772,7 @@ end;
 
 function TRttiMethod.GetReturnType: TRttiType;
 begin
-  Result := GRttiContext.GetType(MethodTypeInfo.ProcSig.ResultType);
+  Result := Pool.GetType(MethodTypeInfo.ProcSig.ResultType);
 end;
 
 procedure TRttiMethod.LoadParameters;
@@ -1736,7 +1801,7 @@ begin
     Param := MethodParams[A];
     RttiParam := TRttiParameter.Create;
     RttiParam.FName := Param.Name;
-    RttiParam.FParamType := GRttiContext.GetType(Param.TypeInfo);
+    RttiParam.FParamType := Pool.GetType(Param.TypeInfo);
 
     for Flag := Low(FLAGS_CONVERSION) to High(FLAGS_CONVERSION) do
       if FLAGS_CONVERSION[Flag] and Param.Flags > 0 then
@@ -1807,7 +1872,7 @@ end;
 
 function TRttiProperty.GetPropertyType: TRttiType;
 begin
-  Result := GRttiContext.GetType(PropertyTypeInfo.TypeInfo);
+  Result := Pool.GetType(PropertyTypeInfo.TypeInfo);
 end;
 
 function TRttiProperty.GetIsWritable: boolean;

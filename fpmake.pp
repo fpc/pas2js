@@ -148,6 +148,7 @@ begin
     P.UnitPath.Add('compiler/packages/fcl-passrc/src');
     P.UnitPath.Add('compiler/packages/fcl-js/src');
     P.UnitPath.Add('compiler/packages/fcl-json/src');
+    {$IF FPC_FULLVERSION>=30301}
     P.UnitPath.Add('compiler/packages/fcl-base/src');
     P.UnitPath.Add('compiler/packages/fcl-web/src/base');
     P.UnitPath.Add('compiler/packages/fcl-net/src');
@@ -158,10 +159,8 @@ begin
     P.IncludePath.Add('compiler/packages/fcl-net/src/$(OS)',AllOSes-AllWindowsOSes-AllUnixOSes-[EMX]);
     P.UnitPath.Add('compiler/packages/fcl-base/src');
     P.IncludePath.Add('compiler/packages/fcl-base/src/dummy');
-{$IFDEF VER3_0}    
-    P.UnitPath.Add('compiler/packages/compat');
-{$ENDIF}    
     P.UnitPath.Add('compiler/packages/webidl/src');
+    {$ENDIF}
     P.IncludePath.Add('compiler/packages/pastojs/src');
     P.Dependencies.Clear;
     Defaults.Options.Add('-Sc');

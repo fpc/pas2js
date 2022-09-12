@@ -165,8 +165,8 @@ begin
     P.Dependencies.Clear;
     Defaults.Options.Add('-Sc');
     P.Targets.AddProgram('pas2js.pp');
+    {$IF FPC_FULLVERSION>=30301}
     P.Targets.AddProgram('webidl2pas.pp');
-    {$IF FPC_FULLVERSION>=30101}
     P.Targets.AddProgram('compileserver.pp');
     P.Targets.AddProgram('makestub.pp');
     T:=P.Targets.AddLibrary('pas2jslib.pp');
@@ -203,10 +203,12 @@ begin
     P.Targets.AddImplicitUnit('pparser',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('pscanner',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('pascodegen.o',False);
+    {$IF FPC_FULLVERSION>=30301}
     P.Targets.AddImplicitUnit('webidldefs',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('webidlscanner',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('webidlparser',False).ResourceStrings:=True;
     P.Targets.AddImplicitUnit('webidltopas',False).ResourceStrings:=True;
+    {$ENDIF}
     P.Targets.AddImplicitUnit('stubcreator',False).ResourceStrings:=True;
     // Determine unit files location
     BD:=IncludeTrailingPathDelimiter(P.GetBinOutputDir(Defaults.BuildCPU,Defaults.BuildOS));

@@ -32,10 +32,13 @@ Type
   private
     FText: String;
     FTextMode: TTextMode;
+    FDisabled: boolean;
     procedure SetText(AValue: String);
     procedure SetTextMode(AValue: TTextMode);
+    procedure SetDisabled(AValue: boolean);
   Protected
     procedure ApplyText(aElement: TJSHTMLElement);
+    procedure ApplyDisabled(aElement: TJSHTMLElement);
     Procedure SetName(const NewName: TComponentName); override;
     Procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
   Public
@@ -44,6 +47,7 @@ Type
   Published
     Property Text : String Read FText Write SetText;
     Property TextMode : TTextMode Read FTextMode Write SetTextMode;
+    Property Disabled : boolean Read FDisabled Write SetDisabled;
   end;
 
   { TViewPort }
@@ -2939,6 +2943,14 @@ begin
      ApplyText(Element)
 end;
 
+procedure TButtonWidget.SetDisabled(AValue: boolean);
+begin
+  if FDisabled=AValue then Exit;
+  FDisabled:=AValue;
+  if IsRendered then
+     ApplyDisabled(Element);
+end;
+
 
 procedure TButtonWidget.SetName(const NewName: TComponentName);
 
@@ -2961,6 +2973,7 @@ procedure TButtonWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 begin
   Inherited;
   ApplyText(aElement);
+  ApplyDisabled(aElement);
 end;
 
 Procedure TButtonWidget.ApplyText(aElement : TJSHTMLElement);
@@ -2970,6 +2983,11 @@ begin
     aElement.InnerText:=FText
   else
     aElement.InnerHTML:=FText;
+end;
+
+procedure TButtonWidget.ApplyDisabled(aElement : TJSHTMLElement);
+begin
+  TJSHTMLButtonElement(aElement).disabled:=FDisabled;
 end;
 
 procedure TButtonWidget.Click;

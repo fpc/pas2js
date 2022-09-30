@@ -4416,18 +4416,18 @@ begin
         Dec(I);
       If I>0 then
         begin
-          if not TryStrToDate(Copy(S,1,I-1),dtdate) then
+          if not TryStrToDate(Copy(S,1,I-1),dtdate,aSettings) then
             exit;
-          if not TryStrToTime(Copy(S,i+1, Length(S)-i),dttime) then
+          if not TryStrToTime(Copy(S,i+1, Length(S)-i),dttime,aSettings) then
             exit;
           Value:=ComposeDateTime(dtdate,dttime);
           result:=true;
         end
       else
-         result:=TryStrToTime(s,Value);
+         result:=TryStrToTime(s,Value,aSettings);
     end
   else
-    result:=TryStrToDate(s,Value);
+    result:=TryStrToDate(s,Value,aSettings);
 end;
 
 

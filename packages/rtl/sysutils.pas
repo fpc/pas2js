@@ -290,6 +290,7 @@ Function SwapEndian(W : Word) : Word;
 Function SwapEndian(C : Cardinal) : Cardinal;
 function IntToStr(const Value: Integer): string;
 Function TryStrToInt(const S : String; Out res : Integer) : Boolean;
+Function TryStrToInt(const S : String; Out res : Integer; Const aSettings : TFormatSettings) : Boolean;
 Function TryStrToInt(const S : String; Out res : NativeInt) : Boolean;
 function TryStrToInt(const S: String; out res: NativeInt; Const aSettings : TFormatSettings): Boolean;
 Function StrToIntDef(const S : String; Const aDef : Integer) : Integer;
@@ -4793,6 +4794,21 @@ function TryStrToInt(const S: String; out res: NativeInt; Const aSettings : TFor
 begin
   Result:=IntTryStrToInt(S,res,aSettings.DecimalSeparator);
 end;
+
+function TryStrToInt(const S: String; out res: Integer; Const aSettings : TFormatSettings): Boolean;
+
+Var
+  N : NativeInt;
+
+begin
+  Result:=IntTryStrToInt(S,N,aSettings.DecimalSeparator);
+  if Result then
+    if (N<=MaxLongint) then
+      Res:=N
+    else
+      Result:=False;
+end;
+
 
 function StrToIntDef(const S: String; const aDef: Integer): Integer;
 

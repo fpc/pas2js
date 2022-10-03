@@ -919,6 +919,10 @@ Type
   TDivWidget = Class(TCustomTagWidget)
   Public
     Constructor Create(aOwner : TComponent); override;
+  Published
+    Property elementTag;
+    Property TextContent;
+    Property TextMode;
   end;
 
   { TParagraphWidget }
@@ -926,6 +930,10 @@ Type
   TParagraphWidget = Class(TCustomTagWidget)
   Public
     Constructor Create(aOwner : TComponent); override;
+  Published
+    Property elementTag;
+    Property TextContent;
+    Property TextMode;
   end;
 
   { TMediaWidget }

@@ -890,15 +890,19 @@ Type
   private
     FElementTag: THTMLElementTag;
     FTextContent: String;
+    FTextMode: TTextMode;
     procedure SetElementTag(AValue: THTMLElementTag);
     procedure SetTextContent(AValue: String);
+    procedure SetTextMode(AValue: TTextMode);
   Protected
     Procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
     Function HTMLTag : String; override;
     // Set tag you wish to use
     Property elementTag : THTMLElementTag Read FElementTag Write SetElementTag;
-    // If set, the text will be set as InnerText of the tag
+    // If set, the text will be set as InnerText or InnerHTML of the tag
     Property TextContent : String Read FTextContent Write SetTextContent;
+    // Use InnerHTML or InnerText when setting TextContent
+    Property TextMode : TTextMode Read FTextMode Write SetTextMode;
   end;
 
   { TTagWidget }
@@ -909,6 +913,7 @@ Type
   Published
     Property elementTag;
     Property TextContent;
+    Property TextMode;
   end;
 
   TDivWidget = Class(TCustomTagWidget)
@@ -3172,11 +3177,20 @@ begin
     Refresh;
 end;
 
+procedure TCustomTagWidget.SetTextMode(AValue: TTextMode);
+begin
+  if FTextMode=AValue then Exit;
+  FTextMode:=AValue;
+  if IsRendered then Refresh;
+end;
+
 procedure TCustomTagWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 begin
   inherited ApplyWidgetSettings(aElement);
-  if FTextContent<>'' then
-    aElement.InnerText:=TextContent;
+  if TextMode=tmText then
+    aElement.InnerText:=TextContent
+  else
+    aElement.InnerHTML:=TextContent
 end;
 
 function TCustomTagWidget.HTMLTag: String;

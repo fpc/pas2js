@@ -3195,10 +3195,11 @@ end;
 procedure TCustomTagWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 begin
   inherited ApplyWidgetSettings(aElement);
-  if TextMode=tmText then
-    aElement.InnerText:=TextContent
-  else
-    aElement.InnerHTML:=TextContent
+  if FTextContent<>'' then
+    if TextMode=tmText then
+      aElement.InnerText:=TextContent
+    else
+      aElement.InnerHTML:=TextContent
 end;
 
 function TCustomTagWidget.HTMLTag: String;

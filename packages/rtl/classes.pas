@@ -8430,7 +8430,7 @@ begin
         vaNil:
           begin
             FDriver.ReadValue;
-            SetOrdProp(Instance, PropInfo, 0)
+            SetObjectProp(Instance, PropInfo, nil)
           end;
         vaCollection:
           begin

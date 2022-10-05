@@ -456,6 +456,8 @@ Type
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
+    // Clear content
+    Procedure ClearContent; virtual;
     // Does this element allow childern ?
     Class Function AllowChildren : Boolean; virtual;
     // Manipulate Classes
@@ -2998,6 +3000,12 @@ begin
   FChildren:=Nil;
   FreeAndNil(FStyles);
   inherited Destroy;
+end;
+
+procedure TCustomWebWidget.ClearContent;
+begin
+  if Assigned(FElement) then
+    FElement.InnerHTML:='';
 end;
 
 class function TCustomWebWidget.AllowChildren: Boolean;

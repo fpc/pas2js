@@ -896,6 +896,8 @@ Type
     procedure SetTextMode(AValue: TTextMode);
   Protected
     Procedure ApplyWidgetSettings(aElement: TJSHTMLElement); override;
+    // Apply TextContent to aElement, ignore empty unless forceEmpty is true.
+    procedure ApplyText(aElement: TJSHTMLElement; aForceEmpty: Boolean);
     Function HTMLTag : String; override;
     // Set tag you wish to use
     Property elementTag : THTMLElementTag Read FElementTag Write SetElementTag;
@@ -903,6 +905,9 @@ Type
     Property TextContent : String Read FTextContent Write SetTextContent;
     // Use InnerHTML or InnerText when setting TextContent
     Property TextMode : TTextMode Read FTextMode Write SetTextMode;
+  Public
+    Procedure ClearContent; override;
+
   end;
 
   { TTagWidget }
@@ -3177,12 +3182,28 @@ begin
     Refresh;
 end;
 
+procedure TCustomTagWidget.ApplyText(aElement : TJSHTMLElement; aForceEmpty : Boolean);
+
+begin
+  if Not Assigned(aElement) then
+    exit;
+  if (TextContent<>'') or aForceEmpty then
+    if TextMode=tmText then
+      aElement.InnerText:=TextContent
+    else
+      aElement.InnerHTML:=TextContent
+end;
+
 procedure TCustomTagWidget.SetTextContent(AValue: String);
 begin
   if FTextContent=AValue then Exit;
   FTextContent:=AValue;
   if IsRendered then
+    begin
+    // ApplyWidgetSettings ignores empty text, so we must clear it here...
+    ApplyText(Element,True);
     Refresh;
+    end;
 end;
 
 procedure TCustomTagWidget.SetTextMode(AValue: TTextMode);
@@ -3195,17 +3216,19 @@ end;
 procedure TCustomTagWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
 begin
   inherited ApplyWidgetSettings(aElement);
-  if FTextContent<>'' then
-    if TextMode=tmText then
-      aElement.InnerText:=TextContent
-    else
-      aElement.InnerHTML:=TextContent
+  ApplyText(aElement,False);
 end;
 
 function TCustomTagWidget.HTMLTag: String;
 
 begin
   Result:=HTMLTagNames[ElementTag];
+end;
+
+procedure TCustomTagWidget.ClearContent;
+begin
+  inherited ClearContent;
+  FTextContent:='';
 end;
 
 { TDivWidget }

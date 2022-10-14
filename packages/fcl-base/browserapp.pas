@@ -68,9 +68,21 @@ end;
 
 procedure ReloadParamStrings;
 
+Var
+  ParsLine : String;
+  Pars : Array of String;
+  I : integer;
+
 begin
-  SetLength(Params,1);
+  ParsLine:=Copy(window.location.hash,2);
+  If ParsLine<>'' then
+    Pars:=ParsLine.Split(['/'])
+  else
+    SetLength(Pars,0);
+  SetLength(Params,1+Length(Pars));
   Params[0]:=Window.location.pathname;
+  For I:=0 to Length(Pars)-1 do
+    Params[1+I]:=Pars[I];
 end;
 
 
@@ -81,7 +93,8 @@ end;
 
 function GetParamStr(Index: longint): String;
 begin
-  Result:=Params[Index]
+  if (Index>=0) and (Index<Length(Params)) then
+    Result:=Params[Index];
 end;
 
 function MyGetEnvironmentVariable(Const EnvVar: String): String;

@@ -435,7 +435,7 @@ procedure Write; varargs; // ToDo: should be compiler built-in function
 procedure Writeln; varargs; // ToDo: should be compiler built-in function
 
 Type
-  TConsoleHandler = Procedure (S : JSValue; NewLine : Boolean);
+  TConsoleHandler = Reference to Procedure (S : JSValue; NewLine : Boolean);
 Function SetWriteCallBack(H : TConsoleHandler) : TConsoleHandler;
 
 function Assigned(const V: JSValue): boolean; assembler; overload;

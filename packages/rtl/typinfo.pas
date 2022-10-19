@@ -335,6 +335,12 @@ type
     HelperFor: TTypeInfo external name 'helperfor';
   end;
 
+  TReferenceVariable = class external name 'Object'
+  public
+    function get: JSValue;
+    procedure &set(const value: JSValue);
+  end;
+
   EPropertyError  = class(Exception);
 
 function GetTypeName(TypeInfo: TTypeInfo): string;

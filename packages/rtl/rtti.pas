@@ -31,8 +31,12 @@ type
   private
     FTypeInfo: TTypeInfo;
     FData: JSValue;
+    FReferenceVariableData: Boolean;
+    function GetData: JSValue;
     function GetIsEmpty: boolean;
     function GetTypeKind: TTypeKind;
+
+    procedure SetData(const Value: JSValue);
   public
     class function Empty: TValue; static;
     generic class function From<T>(const Value: T): TValue; static;
@@ -691,12 +695,12 @@ begin
       AResult.FTypeInfo := ATypeInfo;
 
       case ATypeInfo.Kind of
-        tkBool: AResult.FData := False;
-        tkChar: AResult.FData := #0;
-        tkString: AResult.FData := EmptyStr;
+        tkBool: AResult.SetData(False);
+        tkChar: AResult.SetData(#0);
+        tkString: AResult.SetData(EmptyStr);
         tkDouble,
         tkEnumeration,
-        tkInteger: AResult.FData := 0;
+        tkInteger: AResult.SetData(0);
       end;
 
       Exit(True);
@@ -725,7 +729,7 @@ begin
 
   if Result then
   begin
-    AResult.FData := FData;
+    AResult.SetData(FData);
     AResult.FTypeInfo := ATypeInfo;
   end;
 end;
@@ -791,7 +795,7 @@ begin
   for A := 0 to High(Values) do
     NewArray[A] := Values[A].Cast(ElementType).AsJSValue;
 
-  Result.FData := NewArray;
+  Result.SetData(NewArray);
   Result.FTypeInfo := TypeInfo;
 end;
 
@@ -813,8 +817,8 @@ end;
 
 function TValue.AsObject: TObject;
 begin
-  if IsObject or (IsClass and not js.isObject(FData)) then
-    Result := TObject(FData)
+  if IsObject or (IsClass and not JS.IsObject(GetData)) then
+    Result := TObject(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -838,14 +842,13 @@ var
   k: TTypeKind;
 begin
   k:=Kind;
-  Result :=  (k = tkClassRef)
-         or ((k in [tkClass,tkUnknown]) and not JS.IsObject(FData));
+  Result := (k = tkClassRef) or ((k in [tkClass,tkUnknown]) and not JS.IsObject(GetData));
 end;
 
 function TValue.AsClass: TClass;
 begin
   if IsClass then
-    Result := TClass(FData)
+    Result := TClass(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -858,7 +861,7 @@ end;
 function TValue.AsOrdinal: NativeInt;
 begin
   if IsOrdinal then
-    Result:=NativeInt(FData)
+    Result:=NativeInt(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -866,23 +869,23 @@ end;
 function TValue.AsBoolean: boolean;
 begin
   if (Kind = tkBool) then
-    Result:=boolean(FData)
+    Result:=boolean(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
 
 function TValue.AsInteger: Integer;
 begin
-  if JS.isInteger(FData) then
-    Result:=NativeInt(FData)
+  if JS.isInteger(GetData) then
+    Result:=NativeInt(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
 
 function TValue.AsNativeInt: NativeInt;
 begin
-  if JS.isInteger(FData) then
-    Result:=NativeInt(FData)
+  if JS.isInteger(GetData) then
+    Result:=NativeInt(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -893,8 +896,8 @@ var
 begin
   k:=Kind;
   if k = tkInterface then
-    Result := IInterface(FData)// ToDo
-  else if (k in [tkClass, tkClassRef, tkUnknown]) and not JS.isObject(FData) then
+    Result := IInterface(GetData)// ToDo
+  else if (k in [tkClass, tkClassRef, tkUnknown]) and not JS.isObject(GetData) then
     Result := Nil
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
@@ -902,8 +905,8 @@ end;
 
 function TValue.AsString: string;
 begin
-  if js.isString(FData) then
-    Result:=String(FData)
+  if js.isString(GetData) then
+    Result:=String(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -915,8 +918,8 @@ end;
 
 function TValue.AsExtended: Extended;
 begin
-  if js.isNumber(FData) then
-    Result:=Double(FData)
+  if js.isNumber(GetData) then
+    Result:=Double(GetData)
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -935,7 +938,7 @@ end;
 function TValue.GetArrayLength: SizeInt;
 begin
   if IsArray then
-    Exit(Length(TJSValueDynArray(FData)));
+    Exit(Length(TJSValueDynArray(GetData)));
 
   raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -949,7 +952,7 @@ begin
       tkDynArray: Result.FTypeInfo:=TTypeInfoDynArray(FTypeInfo).ElType;
     end;
 
-    Result.FData:=TJSValueDynArray(FData)[aIndex];
+    Result.SetData(TJSValueDynArray(GetData)[aIndex]);
   end
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
@@ -960,18 +963,18 @@ var
   NewArray: TJSValueDynArray;
 
 begin
-  NewArray := TJSValueDynArray(FData);
+  NewArray := TJSValueDynArray(GetData);
 
   SetLength(NewArray, Size);
 
-  FData := NewArray;
+  SetData(NewArray);
 end;
 
 procedure TValue.SetArrayElement(aIndex: SizeInt; const AValue: TValue);
 
 begin
   if IsArray then
-    TJSValueDynArray(FData)[aIndex] := AValue.AsJSValue
+    TJSValueDynArray(GetData)[aIndex] := AValue.AsJSValue
   else
     raise EInvalidCast.Create(SErrInvalidTypecast);
 end;
@@ -981,13 +984,29 @@ begin
   Result := ATypeInfo = TypeInfo;
 end;
 
+function TValue.GetData: JSValue;
+begin
+  if FReferenceVariableData then
+    Result := TReferenceVariable(FData).Get
+  else
+    Result := FData;
+end;
+
+procedure TValue.SetData(const Value: JSValue);
+begin
+  if FReferenceVariableData then
+    TReferenceVariable(FData).&Set(Value)
+  else
+    FData := Value;
+end;
+
 function TValue.GetIsEmpty: boolean;
 begin
-  if (TypeInfo=nil) or (FData=Undefined) or (FData=nil) then
+  if (TypeInfo=nil) or (GetData=Undefined) or (GetData=nil) then
     exit(true);
   case TypeInfo.Kind of
   tkDynArray:
-    Result:=TJSArray(FData).Length=0;
+    Result:=GetArrayLength=0;
   else
     Result:=false;
   end;
@@ -995,12 +1014,12 @@ end;
 
 function TValue.AsJSValue: JSValue;
 begin
-  Result := FData;
+  Result := GetData;
 end;
 
 class function TValue.Empty: TValue;
 begin
-  Result.FData := nil;
+  Result.SetData(nil);
   Result.FTypeInfo := nil;
 end;
 
@@ -1752,7 +1771,7 @@ begin
   for A := Low(Args) to High(Args) do
     AArgs[A] := Args[A].AsJSValue;
 
-  Result.FData := TJSFunction(TJSObject(Instance.AsJSValue)[Name]).apply(TJSObject(Instance.AsJSValue), AArgs);
+  Result.SetData(TJSFunction(TJSObject(Instance.AsJSValue)[Name]).apply(TJSObject(Instance.AsJSValue), AArgs));
 end;
 
 { TRttiProperty }

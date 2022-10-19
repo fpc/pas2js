@@ -460,20 +460,30 @@ type
 
   EInvoke = EJS;
 
-  TVirtualInterfaceInvokeEvent = function(const aMethodName: string;
-    const Args: TJSValueDynArray): JSValue of object;
+  TVirtualInterfaceInvokeEvent = reference to procedure(Method: TRttiMethod; const Args: specialize TArray<TValue>; out Result: TValue);
+  TVirtualInterfaceInvokeEventJS = reference to function(const aMethodName: String; const Args: TJSValueDynArray): JSValue;
 
   { TVirtualInterface: A class that can implement any IInterface. Any method
     call is handled by the OnInvoke event. }
   TVirtualInterface = class(TInterfacedObject, IInterface)
   private
+    FContext: TRttiContext;
+    FInterfaceType: TRttiInterfaceType;
     FOnInvoke: TVirtualInterfaceInvokeEvent;
+    FOnInvokeJS: TVirtualInterfaceInvokeEventJS;
+
+    function Invoke(const MethodName: String; const Args: TJSValueDynArray): JSValue;
   public
-    constructor Create(InterfaceTypeInfo: Pointer); overload; assembler;
-    constructor Create(InterfaceTypeInfo: Pointer;
-      const InvokeEvent: TVirtualInterfaceInvokeEvent); overload;
+    constructor Create(InterfaceTypeInfo: TTypeInfoInterface); overload;
+    constructor Create(InterfaceTypeInfo: TTypeInfoInterface; const InvokeEvent: TVirtualInterfaceInvokeEvent); overload;
+    constructor Create(InterfaceTypeInfo: TTypeInfoInterface; const InvokeEvent: TVirtualInterfaceInvokeEventJS); overload;
+
+    destructor Destroy; override;
+
     function QueryInterface(const iid: TGuid; out obj): Integer; override;
+
     property OnInvoke: TVirtualInterfaceInvokeEvent read FOnInvoke write FOnInvoke;
+    property OnInvokeJS: TVirtualInterfaceInvokeEventJS read FOnInvokeJS write FOnInvokeJS;
   end;
 
 procedure CreateVirtualCorbaInterface(InterfaceTypeInfo: Pointer;
@@ -2018,51 +2028,117 @@ end;
 
 { TVirtualInterface }
 
-constructor TVirtualInterface.Create(InterfaceTypeInfo: Pointer); assembler;
-asm
-  var IntfType = InterfaceTypeInfo.interface;
-  if (IntfType.$kind !== 'com') rtl.raiseE('EInvalidCast');
-  var guid = IntfType.$guid;
-  var i = Object.create(IntfType); // needed by IntfVar is IntfType
-  i.$o = this;
-  // copy IInterface methods: _AddRef, _Release, QueryInterface
-  var iinterfaceguid = '{00000000-0000-0000-C000-000000000046}';
-  var map = this.$intfmaps[iinterfaceguid];
-  for (var key in map){
-    var v = map[key];
-    if (typeof(v)!=='function') continue;
-    i[key] = map[key];
-  }
-  // all other methods call OnInvoke
-  do {
-    var names = IntfType.$names;
-    if (!names) break;
-    for (var j=0; j<names.length; j++){
-      let fnname = names[j];
-      if (i[fnname]) continue;
-      i[fnname] = function(){ return this.$o.FOnInvoke(fnname,arguments); };
-    }
-    IntfType = Object.getPrototypeOf(IntfType);
-  } while(IntfType!=null);
-  // create a new list of interface map, supporting IInterface and IntfType
-  this.$intfmaps = {};
-  this.$intfmaps[iinterfaceguid] = map;
-  this.$intfmaps[guid] = {};
-  // store the implementation of IntfType (used by the as-operator)
-  this.$interfaces = {};
-  this.$interfaces[guid] = i;
+constructor TVirtualInterface.Create(InterfaceTypeInfo: TTypeInfoInterface);
+var
+  SelfInterfaceObject, InterfaceObject: TInterfaceObject;
+
+  Method: TRttiMethod;
+
+  MethodName: String;
+
+begin
+  FContext := TRttiContext.Create;
+  FInterfaceType := FContext.GetType(InterfaceTypeInfo) as TRttiInterfaceType;
+
+  if FInterfaceType.InterfaceTypeInfo.InterfaceInfo.kind <> 'com' then
+    raise EInvalidCast.Create;
+
+  InterfaceObject := TInterfaceObject(TJSObject.Create(FInterfaceType.InterfaceTypeInfo.InterfaceInfo));
+  InterfaceObject.Obj := Self;
+
+  for Method in FInterfaceType.GetMethods do
+  begin
+    asm
+      let MethodName = Method.GetName();
+    end;
+
+    InterfaceObject[MethodName] :=
+      function: JSValue
+      begin
+        Result := TVirtualInterface(TInterfaceObject(JSThis).Obj).Invoke(MethodName, TJSValueDynArray(JSValue(JSArguments)));
+      end;
+  end;
+
+  InterfaceObject['_AddRef'] := @_AddRef;
+  InterfaceObject['_Release'] := @_Release;
+  InterfaceObject['QueryInterface'] := @QueryInterface;
+
+  SelfInterfaceObject := TInterfaceObject(Self);
+  SelfInterfaceObject.InterfaceMaps := TJSObject.New;
+  SelfInterfaceObject.InterfaceMaps[GUIDToString(IInterface)] := InterfaceObject;
+  SelfInterfaceObject.InterfaceMaps[FInterfaceType.Guid.ToString] := TJSObject.New;
+  SelfInterfaceObject.Interfaces := TJSObject.New;
+  SelfInterfaceObject.Interfaces[FInterfaceType.Guid.ToString] := InterfaceObject;
 end;
 
-constructor TVirtualInterface.Create(InterfaceTypeInfo: Pointer;
-  const InvokeEvent: TVirtualInterfaceInvokeEvent);
+constructor TVirtualInterface.Create(InterfaceTypeInfo: TTypeInfoInterface; const InvokeEvent: TVirtualInterfaceInvokeEvent);
 begin
   Create(InterfaceTypeInfo);
-  OnInvoke:=InvokeEvent;
+
+  OnInvoke := InvokeEvent;
+end;
+
+constructor TVirtualInterface.Create(InterfaceTypeInfo: TTypeInfoInterface; const InvokeEvent: TVirtualInterfaceInvokeEventJS);
+begin
+  Create(InterfaceTypeInfo);
+
+  OnInvokeJS := InvokeEvent;
+end;
+
+destructor TVirtualInterface.Destroy;
+begin
+  FContext.Free;
+
+  inherited;
 end;
 
 function TVirtualInterface.QueryInterface(const iid: TGuid; out obj): Integer;
 begin
   Result := inherited QueryInterface(iid, obj);
+end;
+
+function TVirtualInterface.Invoke(const MethodName: String; const Args: TJSValueDynArray): JSValue;
+var
+  Method: TRttiMethod;
+
+  Return: TValue;
+
+  function GenerateParams: specialize TArray<TValue>;
+  var
+    A: Integer;
+
+    Return: TValue;
+
+    Param: TRttiParameter;
+
+    Parameters: specialize TArray<TRttiParameter>;
+
+  begin
+    Parameters := Method.GetParameters;
+
+    SetLength(Result, Length(Parameters));
+
+    for A := Low(Parameters) to High(Parameters) do
+    begin
+      Param := Parameters[A];
+
+      TValue.Make(Args[A], Param.ParamType.Handle, Result[A]);
+
+      Result[A].FReferenceVariableData := (pfVar in Param.Flags) or (pfOut in Param.Flags);
+    end;
+  end;
+
+begin
+  if Assigned(FOnInvokeJS) then
+    Result := FOnInvokeJS(MethodName, Args)
+  else
+  begin
+    Method := FInterfaceType.GetMethod(MethodName);
+
+    FOnInvoke(Method, GenerateParams, Return);
+
+    Result := Return.AsJSValue;
+  end;
 end;
 
 function Invoke(ACodeAddress: Pointer; const AArgs: TJSValueDynArray;

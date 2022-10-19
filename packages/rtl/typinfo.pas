@@ -352,6 +352,13 @@ type
     procedure &set(const value: JSValue);
   end;
 
+  TInterfaceObject = class external name 'Object' (TJSObject)
+  public
+    InterfaceMaps: TJSObject external name '$intfmaps';
+    Interfaces: TJSObject external name '$interfaces';
+    Obj: TInterfacedObject external name '$o';
+  end;
+
   EPropertyError  = class(Exception);
 
 function GetTypeName(TypeInfo: TTypeInfo): string;

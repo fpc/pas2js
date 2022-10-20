@@ -318,11 +318,22 @@ type
     RefType: TTypeInfo external name 'reftype'; // can be null
   end;
 
+  TInterfaceInfo = class external name 'Object'(TJSObject)
+    FullName: String external name '$FullName';
+    GUID: String external name '$guid';
+    GUIDR: String external name '$guidr';
+    Kind: String external name '$kind';
+    Module: TTypeInfoModule external name '$module'; // can be nil
+    Name: String external name '$name';
+    Names: TStringArray external name '$names';
+    RTTI: TSectionRTTI external name '$rtti';
+  end;
+
   { TTypeInfoInterface - Kind = tkInterface }
 
   TTypeInfoInterface = class external name 'rtl.tTypeInfoInterface'(TTypeInfoStruct)
   public
-    InterfaceType: TJSObject external name 'interface';
+    InterfaceInfo: TInterfaceInfo external name 'interface';
     Ancestor: TTypeInfoInterface external name 'ancestor';
   end;
 

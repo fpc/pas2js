@@ -1435,12 +1435,12 @@ end;
 
 function TRttiInterfaceType.GetGUID: TGUID;
 var
-  Guid: String;
+  GUID: String;
 
 begin
-  Guid := String(InterfaceTypeInfo.InterfaceType['$guid']);
+  GUID := InterfaceTypeInfo.InterfaceInfo.GUID;
 
-  TryStringToGUID(Guid, Result);
+  TryStringToGUID(GUID, Result);
 end;
 
 function TRttiInterfaceType.GetInterfaceTypeInfo: TTypeInfoInterface;
@@ -1455,7 +1455,7 @@ end;
 
 function TRttiInterfaceType.GetBaseType: TRttiType;
 begin
-  Result:=GetAncestorType;
+  Result := GetAncestorType;
 end;
 
 function TRttiInterfaceType.GetAncestorType: TRttiInterfaceType;

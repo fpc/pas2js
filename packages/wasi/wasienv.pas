@@ -3,6 +3,8 @@ unit wasienv;
 
 {$mode ObjFPC}
 {$modeswitch externalclass}
+{$modeswitch functionreferences}
+{$modeswitch anonymousfunctions}
 {$INTERFACES CORBA}
 {$WARN 5024 off}
 {$WARN 4501 off}

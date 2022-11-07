@@ -676,6 +676,7 @@ Type
 //    Class Function Create(A: Integer; B: SmallInt; C: SmallInt; D, E, F, G, H, I, J, K: Byte): TGUID; overload; static;
     Class Function Create(A: Cardinal; B: Word; C: Word; D, E, F, G, H, I, J, K: Byte): TGUID; overload; static;
     Class Function NewGuid: TGUID; static;
+    Class Function Empty: TGUID; static;
     Function ToByteArray(DataEndian: TEndian = CPUEndian): TBytes;
     Function ToString(SkipBrackets: Boolean = False): string;
   end;
@@ -5556,6 +5557,11 @@ class function TGuidHelper.NewGuid: TGUID;
 
 begin
   CreateGUID(Result)
+end;
+
+class function TGuidHelper.Empty: TGUID;
+begin
+  Result:=Default(TGUID);
 end;
 
 function TGuidHelper.ToByteArray(DataEndian: TEndian): TBytes;

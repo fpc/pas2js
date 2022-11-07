@@ -554,8 +554,8 @@ function TryStrToDateTime(const S: String; out Value: TDateTime): Boolean; overl
 function TryStrToDateTime(const S: string; out Value: TDateTime; const aSettings: TFormatSettings): Boolean; overload;
 function StrToDateTimeDef(const S: String; const Defvalue : TDateTime): TDateTime; overload;
 function StrToDateTimeDef(const S: String; const Defvalue : TDateTime; aSettings : TFormatSettings): TDateTime; overload;
-function FormatDateTime(const FormatStr: string; const DateTime: TDateTime): string; overload;
-function FormatDateTime(const FormatStr: string; const DateTime: TDateTime; const aSettings: TFormatSettings): string; overload;
+function FormatDateTime(const aFormatStr: string; const DateTime: TDateTime): string; overload;
+function FormatDateTime(const aFormatStr: string; const DateTime: TDateTime; const aSettings: TFormatSettings): string; overload;
 
 // Local time
 
@@ -4083,19 +4083,14 @@ begin
   end;
 end;
 
-function FormatDateTime(const FormatStr: string; const DateTime: TDateTime): string;
+function FormatDateTime(const aFormatStr: string; const DateTime: TDateTime): string;
 
 begin
-  Result:=FormatDateTime(FormatStr,DateTime,FormatSettings);
+  Result:=FormatDateTime(aFormatStr,DateTime,FormatSettings);
 end;
 
-function FormatDateTime(const FormatStr: string; const DateTime: TDateTime; const aSettings : TFormatSettings): string;
+function FormatDateTime(const aFormatStr: string; const DateTime: TDateTime; const aSettings : TFormatSettings): string;
 
-  procedure StoreStr(APos,Len: Integer);
-  begin
-//    Writeln('StoreStr: ',Result,'+',Copy(FormatStr,APos,Len));
-    Result:=Result+Copy(FormatStr,APos,Len);
-  end;
 
   procedure StoreString(const AStr: string);
 
@@ -4119,6 +4114,13 @@ var
   Year, Month, Day, DayOfWeek, Hour, Minute, Second, MilliSecond: word;
 
   procedure StoreFormat(const FormatStr: string; Nesting: Integer; TimeFlag: Boolean);
+
+    procedure StoreStr(APos,Len: Integer);
+    begin
+  //    Writeln('StoreStr: ',Result,'+',Copy(FormatStr,APos,Len));
+      Result:=Result+Copy(aFormatStr,APos,Len);
+    end;
+
   var
     Token, lastformattoken, prevlasttoken: char;
     Count: integer;
@@ -4324,8 +4326,8 @@ begin
   DecodeDateFully(DateTime, Year, Month, Day, DayOfWeek);
   DecodeTime(DateTime, Hour, Minute, Second, MilliSecond);
   // Writeln(DateTime,'->',Year,',', Month, ',',Day, ',',DayOfWeek,',',Hour, ',',Minute, ',',Second, ',',MilliSecond);
-  if FormatStr <> '' then
-    StoreFormat(FormatStr, 0, False)
+  if aFormatStr <> '' then
+    StoreFormat(aFormatStr, 0, False)
   else
     StoreFormat('C', 0, False);
 end ;

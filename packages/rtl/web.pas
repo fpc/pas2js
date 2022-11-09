@@ -558,6 +558,28 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   end;
 
   TJSXPathResult = class external name 'XPathResult'  (TJSObject)
+  private class var
+    FANY_TYPE : Integer; external name 'ANY_TYPE';
+    FNUMBER_TYPE : Integer; external name 'NUMBER_TYPE';
+    FSTRING_TYPE : Integer; external name 'STRING_TYPE';
+    FBOOLEAN_TYPE : Integer; external name 'BOOLEAN_TYPE';
+    FUNORDERED_NODE_ITERATOR_TYPE : Integer; external name 'UNORDERED_NODE_ITERATOR_TYPE';
+    FORDERED_NODE_ITERATOR_TYPE : Integer; external name 'ORDERED_NODE_ITERATOR_TYPE';
+    FUNORDERED_NODE_SNAPSHOT_TYPE : Integer; external name 'UNORDERED_NODE_SNAPSHOT_TYPE';
+    FORDERED_NODE_SNAPSHOT_TYPE : Integer; external name 'ORDERED_NODE_SNAPSHOT_TYPE';
+    FANY_UNORDERED_NODE_TYPE : Integer; external name 'ANY_UNORDERED_NODE_TYPE';
+    FFIRST_ORDERED_NODE_TYPE : Integer; external name 'FIRST_ORDERED_NODE_TYPE';
+  public
+    class property ANY_TYPE: Integer read FANY_TYPE;
+    class property NUMBER_TYPE: Integer read FNUMBER_TYPE;
+    class property STRING_TYPE: Integer read FSTRING_TYPE;
+    class property BOOLEAN_TYPE: Integer read FBOOLEAN_TYPE;
+    class property UNORDERED_NODE_ITERATOR_TYPE: Integer read FUNORDERED_NODE_ITERATOR_TYPE;
+    class property ORDERED_NODE_ITERATOR_TYPE: Integer read FORDERED_NODE_ITERATOR_TYPE;
+    class property UNORDERED_NODE_SNAPSHOT_TYPE: Integer read FUNORDERED_NODE_SNAPSHOT_TYPE;
+    class property ORDERED_NODE_SNAPSHOT_TYPE: Integer read FORDERED_NODE_SNAPSHOT_TYPE;
+    class property ANY_UNORDERED_NODE_TYPE: Integer read FANY_UNORDERED_NODE_TYPE;
+    class property FIRST_ORDERED_NODE_TYPE: Integer read FFIRST_ORDERED_NODE_TYPE;
   private
     FBooleanValue : Boolean; external name 'booleanValue';
     FNumberValue : Double; external name 'numberValue';

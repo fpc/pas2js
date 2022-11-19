@@ -1657,17 +1657,65 @@ end;
 
 function TryStrToFloat(const S: String; out res: Double; const aSettings : TFormatSettings): Boolean;
 
+Type
+  TDecimalPart = (dpDigit,dpSignificand,dpExp);
+
 Var
   J : JSValue;
+  I,aStart,Len : integer;
   N : String;
+  p : TDecimalPart;
+
 
 begin
+  Result:=False;
   N:=S;
   // Delocalize
   if (aSettings.ThousandSeparator <>'') then
     N:=StringReplace(N,aSettings.ThousandSeparator,'',[rfReplaceAll]);
   if (aSettings.DecimalSeparator<>'.') then
     N:=StringReplace(N,aSettings.DecimalSeparator,'.',[]);
+  p:=dpDigit;
+  I:=1;
+  aStart:=1;
+  Len:=Length(N);
+  While (I<=Len) do
+    begin
+    Case N[i] of
+      '+','-' :
+        Case p of
+          dpSignificand:
+            Exit;
+          dpDigit :
+            if I>aStart then
+              Exit;
+          dpExp :
+            if( I>aStart+1) then
+              Exit;
+        end;
+      '0'..'9' : ;
+      '.' :
+        begin
+        if (p<>dpDigit) then
+          Exit;
+        p:=dpSignificand;
+        aStart:=I;
+        end;
+      'E','e':
+        begin
+        if p=dpExp then
+          Exit
+        else
+          begin
+          p:=dpExp;
+          aStart:=I;
+          end;
+        end;
+    Else
+      Exit;
+    end;
+    inc(I);
+    end;
   J:=parseFloat(N);
   Result:=Not jsIsNaN(J);
   if Result then

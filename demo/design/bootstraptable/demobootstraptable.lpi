@@ -33,14 +33,6 @@
     <RunParams>
       <FormatVersion Value="2"/>
     </RunParams>
-    <RequiredPackages>
-      <Item>
-        <PackageName Value="FCL"/>
-      </Item>
-      <Item>
-        <PackageName Value="pas2jscomponents"/>
-      </Item>
-    </RequiredPackages>
     <Units>
       <Unit>
         <Filename Value="demobootstraptable.lpr"/>

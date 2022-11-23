@@ -14,9 +14,10 @@
       <UseAppBundle Value="False"/>
       <ResourceType Value="res"/>
     </General>
-    <CustomData Count="2">
-      <Item0 Name="PasJSPort" Value="0"/>
-      <Item1 Name="PasJSWebBrowserProject" Value="1"/>
+    <CustomData Count="3">
+      <Item0 Name="Pas2JSProject" Value="1"/>
+      <Item1 Name="PasJSLocation" Value="demobootstraptable"/>
+      <Item2 Name="PasJSWebBrowserProject" Value="1"/>
     </CustomData>
     <BuildModes>
       <Item Name="Default" Default="True"/>
@@ -27,18 +28,24 @@
     </PublishOptions>
     <RunParams>
       <FormatVersion Value="2"/>
-      <Modes Count="0"/>
     </RunParams>
     <Units>
       <Unit>
         <Filename Value="demobootstraptable.lpr"/>
         <IsPartOfProject Value="True"/>
       </Unit>
+      <Unit>
+        <Filename Value="bootstraptable.html"/>
+        <IsPartOfProject Value="True"/>
+        <CustomData Count="1">
+          <Item0 Name="PasJSIsProjectHTMLFile" Value="1"/>
+        </CustomData>
+      </Unit>
     </Units>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="11"/>
-    <Target FileExt=".js">
+    <Target>
       <Filename Value="demobootstraptable"/>
     </Target>
     <SearchPaths>
@@ -67,16 +74,16 @@
     </Other>
   </CompilerOptions>
   <Debugging>
-    <Exceptions Count="3">
-      <Item1>
+    <Exceptions>
+      <Item>
         <Name Value="EAbort"/>
-      </Item1>
-      <Item2>
+      </Item>
+      <Item>
         <Name Value="ECodetoolError"/>
-      </Item2>
-      <Item3>
+      </Item>
+      <Item>
         <Name Value="EFOpenError"/>
-      </Item3>
+      </Item>
     </Exceptions>
   </Debugging>
 </CONFIG>

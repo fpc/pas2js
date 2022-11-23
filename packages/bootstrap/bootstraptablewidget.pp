@@ -748,7 +748,14 @@ begin
   FColumns := TBSTableColumns.Create(TBSTableColumn);
   FStylingClasses:=TStylingClasses.Create;
   FLink:=TTableDataLink.Create(Self);
+  FTableOptions:=DefaultTableOptions;
+  FTablePaginationOptions:=DefaultPaginationOptions;
+  FTableSearchOptions:=DefaultSearchOptions;
+  FTableSortOptions:=DefaultSortOptions;
+  FTableViewOptions:=DefaultViewOptions;
 end;
+
+
 
 procedure TCustomDBBootstrapTableWidget.CreateDefaultColumns(DoClear: Boolean = True);
 var

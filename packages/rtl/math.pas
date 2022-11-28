@@ -142,6 +142,8 @@ function PopNStdDev(const data : array of Double) : double;
 function PopNVariance(const data : array of Double) : double;
 procedure MomentSkewKurtosis(const data : array of Double; out m1,m2,m3,m4,skew,kurtosis : double);
 
+function MaxIntValue(const AData: array of Integer): Integer;
+
 // Financial functions
 
 Type
@@ -881,6 +883,18 @@ begin
   else
    if a<b then
      result:=LessThanValue;
+end;
+
+function MaxIntValue(const AData: array of Integer): Integer;
+var
+  lCount: Integer;
+begin
+  Result := AData[Low(AData)];
+  for lCount := Low(AData) + 1 to High(AData) do
+  begin
+    if Result < AData[lCount] then
+      Result := AData[lCount];
+  end;
 end;
 
 end.

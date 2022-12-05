@@ -8897,7 +8897,7 @@ end;
 
 function GetLocalTimeOffset(const DateTime: TDateTime; const InputIsUTC: Boolean; out Offset: Integer): Boolean;
 begin
-  offset:=DateTimeToJSDate(DateTime).getTimezoneOffset;
+  offset:=DateTimeToJSDate(DateTime, InputIsUTC).getTimezoneOffset;
   Result:=True;
 end;
 

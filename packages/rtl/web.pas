@@ -1716,6 +1716,10 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     onshow : TJSEventHandler;
     onstalled : TJSEventHandler;
     ontimeupdate : TJSEventHandler;
+    ontouchstart: TJSTouchEventHandler;
+    ontouchmove: TJSTouchEventHandler;
+    ontouchcancel: TJSTouchEventHandler;
+    ontouchend: TJSTouchEventHandler;
     ontransitioncancel : TJSEventHandler;
     ontransitionend : TJSEventHandler;
     onvolumechange : TJSEventHandler;
@@ -3283,6 +3287,18 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
   public
     excludeAcceptAllOption: Boolean;
     accept: array of TJSShowSaveFilePickerOptionsAccept;
+  end;
+
+  TJSXSLTProcessor = class external name 'XSLTProcessor' (TJSObject)
+  Public
+    procedure importStylesheet(aStyle: TJSNode);
+    function transformToFragment(aSource: TJSNode; aOutput: TJSDocument): TJSDocumentFragment;
+    function transformToDocument(aSource: TJSNode): TJSDocument;
+    procedure setParameter(aNamespaceURI: String; aLocalName: String; aValue: String);
+    function getParameter(aNamespaceURI: String; aLocalName: String): String;
+    procedure removeParameter(aNamespaceURI: String; aLocalName: String);
+    procedure clearParameters;
+    procedure reset;
   end;
 
 var

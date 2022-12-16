@@ -1809,7 +1809,7 @@ begin
   for A := Low(FParameters) to High(FParameters) do
   begin
     Param := MethodParams[A];
-    RttiParam := TRttiParameter.Create;
+    RttiParam := TRttiParameter.Create(Self, Param);
     RttiParam.FName := Param.Name;
     RttiParam.FParamType := Pool.GetType(Param.TypeInfo);
 

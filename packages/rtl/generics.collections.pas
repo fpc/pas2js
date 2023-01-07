@@ -1091,7 +1091,7 @@ begin
     for i := AIndex to ANewIndex-1 do
       Arr[i] := Arr[i+1]
   else
-    for i := ANewIndex downto AIndex+1 do
+    for i := AIndex downto ANewIndex+1 do
       Arr[i] := Arr[i-1];
   Arr[ANewIndex] := LTemp;
 end;

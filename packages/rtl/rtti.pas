@@ -97,6 +97,9 @@ type
     function GetType(aTypeInfo: PTypeInfo): TRTTIType; overload;
     function GetType(aClass: TClass): TRTTIType; overload;
     function GetTypes: specialize TArray<TRttiType>;
+
+    class procedure KeepContext; static;
+    class procedure DropContext; static;
   end;
 
   { TRttiObject }
@@ -1587,6 +1590,16 @@ begin
   end;
 
   Result := specialize TArray<TRttiType>(TJSObject.Values(Pool.FTypes));
+end;
+
+class procedure TRTTIContext.KeepContext;
+begin
+  Pool.AcquireContext;
+end;
+
+class procedure TRTTIContext.DropContext;
+begin
+  Pool.ReleaseContext;
 end;
 
 { TRttiObject }

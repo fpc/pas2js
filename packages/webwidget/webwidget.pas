@@ -1406,27 +1406,46 @@ end;
 function TCustomLoopTemplateWidget.RenderGroupHeaders(aEnum : TLoopEnumerator) : String;
 
 Var
-  GrpIdx: Integer;
+  ChangeIdx,GrpIdx: Integer;
   grp : TLoopTemplateGroup;
-  StartGroups : Boolean;
   S,V : String;
 
 begin
-//  Writeln('Rendering group headers for row ',aEnum.Index);
+  // Writeln('Rendering group headers for row ',aEnum.Index);
   Result:='';
-  StartGroups:=False;
-  For GrpIdx:=0 to Groups.Count-1 do
+  // Determine level at which there is a change.
+  if aEnum.Index=0 then
+    ChangeIdx:=0
+  else
     begin
-    Grp:=Groups[GrpIdx];
-    aEnum.FGroup:=Grp;
-    V:=GetGroupValue(aEnum,GrpIdx,Grp);
-    if Not StartGroups then
-      StartGroups:=(aEnum.Index=0) or (V<>Grp.FGroupValue);
-    if StartGroups and (aEnum.Index>0) then
-      Result:=Result+RenderGroupFooters(grpIdx,aEnum);
-    Grp.FGroupValue:=V;
-    if StartGroups then
+    ChangeIdx:=-1;
+    GrpIdx:=0;
+    While (ChangeIdx=-1) and (GrpIdx<Groups.Count) do
       begin
+      Grp:=Groups[GrpIdx];
+      V:=GetGroupValue(aEnum,GrpIdx,Grp);
+      if (V<>Grp.FGroupValue)  then
+        ChangeIdx:=GrpIdx;
+      Inc(GrpIdx);
+      end;
+    end;
+  if ChangeIdx>=0 then
+    begin
+    Grp:=Groups[ChangeIdx];
+    // Writeln('Change at group ', ChangeIdx, ' : ',V,'<>',Grp.FGroupValue);
+    if aEnum.Index>0 then
+      begin
+      // Writeln('Closing footers up to ',GrpIdx);
+      aEnum.FGroup:=Grp;
+      Result:=Result+RenderGroupFooters(ChangeIdx,aEnum);
+      end;
+    for GrpIdx:=ChangeIdx to Groups.Count-1 do
+      begin
+      Grp:=Groups[GrpIdx];
+      V:=GetGroupValue(aEnum,GrpIdx,Grp);
+      Grp.FGroupValue:=V;
+      // Writeln('Group ',Grp.Name, ' header for value ',V);
+      aEnum.FGroup:=Grp;
       S:=RenderTemplate(aEnum,Grp.HeaderTemplate);
       // Writeln('Rendering group ',Grp.Name,' (',V,') header template: ',Grp.HeaderTemplate,' : ',S);
       Result:=Result+S;

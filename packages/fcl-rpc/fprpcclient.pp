@@ -63,6 +63,7 @@ Type
     Message : String;
     ErrorClass : String;
     Procedure FromValue(Err : JSValue);
+    Class Function new(aID,aCode : NativeInt; aMessage,aErrorClass : String) : TRPCError; static;
   end;
 
   { TRPCResponse }
@@ -372,6 +373,15 @@ begin
 
 end;
 
+class function TRPCError.new(aID, aCode: NativeInt; aMessage,
+  aErrorClass: String): TRPCError;
+begin
+  Result.ID:=aID;
+  Result.Code:=aCode;
+  Result.Message:=aMessage;
+  Result.ErrorClass:=aErrorClass;
+end;
+
 { TRPCResponse }
 
 procedure TRPCResponse.FromObject(Obj: TJSObject);
@@ -662,6 +672,7 @@ begin
   Headers:=TJSObject.New;
   lheaders:=TStringList.Create;
   try
+    lHeaders.NameValueSeparator:=':';
     GetHeaders(lHeaders);
     for I:=0 to lHeaders.Count-1 do
       begin
@@ -695,6 +706,8 @@ procedure TRPCClient.GetHeaders(Headers: TStrings);
 
 begin
   Headers.AddStrings(FCustomHeaders);
+  if Assigned(FOnCustomHeaders) then
+    FOnCustomHeaders(Self,Headers);
 end;
 
 procedure TRPCClient.ConfigRequest(init : TJSObject);

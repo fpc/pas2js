@@ -1382,7 +1382,8 @@ Var
 begin
   Result:=FilterExpressionClass.Create(Self);
   for I:=0 to Fields.Count-1 do
-    Result.Identifiers.AddVariable(Fields[i].FieldName,FieldTypeToExpressionType(Fields[i].DataType),@GetFilterField);
+    if not (Fields[i].DataType in [ftBlob,ftMemo]) then
+      Result.Identifiers.AddVariable(Fields[i].FieldName,FieldTypeToExpressionType(Fields[i].DataType),@GetFilterField);
   Result.Identifiers.AddFunction('IsNull','B','S',@GetFilterIsNull);
   Result.Expression:=Filter;
 end;

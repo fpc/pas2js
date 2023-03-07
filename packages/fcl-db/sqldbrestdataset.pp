@@ -102,6 +102,8 @@ Type
     FParams: TQueryParams;
     FResourceID: String;
     FResourceName: String;
+    FServerSortDescFields: String;
+    FServerSortFields: String;
     FSQL: TStrings;
     function CleanSQL: String;
     function CustomViewResourceName: String;
@@ -110,6 +112,8 @@ Type
     procedure SetParams(AValue: TQueryParams);
     procedure SetResourceID(AValue: String);
     procedure SetResourceName(AValue: String);
+    procedure SetServerSortDescFields(AValue: String);
+    procedure SetServerSortFields(AValue: String);
     procedure SetSQL(AValue: TStrings);
   Protected
     Procedure DoAfterPost; override;
@@ -148,11 +152,15 @@ Type
     Property OnGetQueryParams : TGetQueryParamsEvent Read FOnGetQueryParams Write FOnGetQueryParams;
     // Always immediatly call ApplyUpdates after post and delete.
     Property AutoApplyUpdates : Boolean Read FAutoApplyUpdates Write FAutoApplyUpdates;
+    // Fields to sort on the server
+    Property ServerSortFields : String Read FServerSortFields Write SetServerSortFields;
+    // Fields in ServerSortFields that must be descending
+    Property ServerSortDescFields : String Read FServerSortDescFields Write SetServerSortDescFields;
   end;
 
 implementation
 
-uses DateUtils;
+uses Types, StrUtils, DateUtils;
 
 Type
 
@@ -437,6 +445,8 @@ function TSQLDBRestDataset.GetURLQueryParams(IsRead :Boolean) : string;
 
 Var
   I : Integer;
+  Sort,S,FN : String;
+  DFN : TStringDynArray;
 
 begin
   Result:='';
@@ -446,6 +456,22 @@ begin
       AddToResult('SQL='+EncodeURIComponent(CleanSQL));
     For I:=0 to Params.Count-1 do
       AddToResult(Params[I].AsQuery);
+    Sort:='';
+    DFN:=StrUtils.SplitString(ServerSortDescFields,',');
+    For S in StrUtils.SplitString(ServerSortFields,',') do
+      begin
+      FN:=Trim(S);
+      if (FN<>'') then
+        begin
+        if Sort<>'' then
+          Sort:=Sort+',';
+        Sort:=Sort+EncodeURIComponent(FN);
+        if TJSArray(DFN).indexOf(FN)<>-1 then
+          Sort:=Sort+EncodeURIComponent(' desc');
+        end;
+      end;
+    if Sort<>'' then
+      AddToResult('sort='+Sort);
     end;
   if Assigned(FOnGetQueryParams) then
     FOnGetQueryParams(Self,IsRead,Result);
@@ -481,6 +507,19 @@ begin
   if Not SameText(aValue,CustomViewResourceName) then
     FSQL.Clear;
   FResourceName:=AValue;
+end;
+
+procedure TSQLDBRestDataset.SetServerSortDescFields(AValue: String);
+begin
+  CheckInactive;
+  if FServerSortDescFields=AValue then Exit;
+  FServerSortDescFields:=AValue;
+end;
+
+procedure TSQLDBRestDataset.SetServerSortFields(AValue: String);
+begin
+  if FServerSortFields=AValue then Exit;
+  FServerSortFields:=AValue;
 end;
 
 function TSQLDBRestDataset.CustomViewResourceName : String;

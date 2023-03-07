@@ -126,6 +126,9 @@ Type
     procedure SetOptions(AValue: TRPCoptions);
     procedure SetURL(AValue: String);
   Protected
+    // Override these for customized behaviour (similar to what happens on FPC's JSON-RPC server)
+    class function RequestClassNameProperty: String;
+    class function RequestMethodProperty: string;
     // Handle unexpected error during callbacks
     procedure HandleUnexpectedError(const aStage: String; E: Exception);
     // Find batch with ID equal to aBatch in list of pending batches. If DoRemove, the record is removed from the list.
@@ -143,7 +146,9 @@ Type
     // Send batch to server
     procedure DoSendBatch(aBatch: TRPCBatch); virtual;
     // Configure FETCH request init object
-    procedure ConfigRequest(init: TJSObject); virtual;
+    function ConfigRequest(Init: TJSObject): TJSObject; virtual;
+    // Configure JSON for single call
+    function ConfigCallJSON(aRequest: TJSObject): TJSObject;
     // Start new request batch. If current batch was not empty, sends it first.
     Procedure StartRequestBatch; virtual;
     // Send started request batch. Will stop timer.
@@ -710,11 +715,30 @@ begin
     FOnCustomHeaders(Self,Headers);
 end;
 
-procedure TRPCClient.ConfigRequest(init : TJSObject);
+function TRPCClient.ConfigRequest(Init: TJSObject): TJSObject;
 
 begin
   if Assigned(FOnConfigRequest) then
     FOnConfigRequest(Self,init);
+end;
+
+class function TRPCClient.RequestMethodProperty : string;
+
+begin
+  Result:='method';
+end;
+
+
+class function TRPCClient.RequestClassNameProperty : String;
+
+begin
+  Result:='class';
+end;
+
+function TRPCClient.ConfigCallJSON(aRequest: TJSObject): TJSObject;
+
+begin
+  Result:=aRequest;
 end;
 
 procedure TRPCClient.DoSendBatch(aBatch : TRPCBatch);
@@ -745,10 +769,10 @@ begin
     else
       begin
       if aRequest.ClassName<>'' then
-        aSerialized['class']:=aRequest.ClassName;
+        aSerialized[RequestClassNameProperty]:=aRequest.ClassName;
       end;
-    aSerialized['method']:=N;
-    aRequests.Push(aSerialized);
+    aSerialized[RequestMethodProperty]:=N;
+    aRequests.Push(ConfigCallJSON(aSerialized));
     end;
   if (aRequests.Length=1) and not (roForceArray in FOptions) then
     aJSON:=TJSJSON.stringify(aRequests[0])

@@ -2162,7 +2162,7 @@ procedure TCustomSelectWidget.SetSize(AValue: Integer);
 begin
   If (AValue=Size) then exit;
   FSize:=aValue;
-  If IsRendered then
+  If IsRendered and (Size<>-1) then
     SelectElement.Size:=FSize;
 end;
 
@@ -2204,6 +2204,7 @@ constructor TCustomSelectWidget.Create(aOWner: TComponent);
 begin
   inherited Create(aOWner);
   FSelectedIndex:=-1;
+  FSize:=-1;
 end;
 
 procedure TCustomSelectWidget.ApplyWidgetSettings(aElement: TJSHTMLElement);
@@ -2214,6 +2215,7 @@ Var
 begin
   inherited ApplyWidgetSettings(aElement);
   el.multiple:=Self.Multiple;
+    if Size<>-1 then
   el.Size:=Self.Size;
   BuildOptions(el);
   // We need to force this.

@@ -75,13 +75,21 @@ Function FormatHTMLTime(aDateTime : TDateTime; ZeroAsEmpty : Boolean = True) : s
 Function AbsoluteURL(aBaseURL,aURL : String) : string;
 
 Type
+  TJSHTMLElementMatcher = Reference to Function(aElement : TJSHTMLElement) : Boolean;
+
+  { TJSHTMLElementHelper }
+
   TJSHTMLElementHelper = Class helper for TJSHTMLElement
   private
     Function GetData(aName: String): String;
-    Procedure SetData(aName, aValue: String);
     function GetInputValue: String;
+    procedure SetData(Index: String; AValue: String);
     procedure SetInputValue(const aValue: String);
   Public
+    Function ParentHTMLElement : TJSHTMLElement;
+    Function FindParent(aMatch : TJSHTMLElementMatcher) : TJSHTMLElement;
+    function FindParentWithClass(const aClass: String): TJSHTMLElement;
+    function FindParentWithOutClass(const aClass: String): TJSHTMLElement;
     procedure AddClass(Const aClass: String); overload;
     procedure RemoveClass(Const aClass: String); overload;
     procedure AddRemoveClass(Const aAddClass, aRemoveClass: String); overload;
@@ -354,7 +362,7 @@ begin
     end;
 end;
 
-Function TJSHTMLElementHelper.GetData(aName: String): string;
+function TJSHTMLElementHelper.GetData(aName: String): String;
 
 begin
   if Assigned(Self) and IsString(Self.Dataset[aName]) then
@@ -366,6 +374,11 @@ end;
 function TJSHTMLElementHelper.GetInputValue: String;
 begin
   Result:=GetElementValue(Self)
+end;
+
+procedure TJSHTMLElementHelper.SetData(Index: String; AValue: String);
+begin
+  Dataset.Map[Index]:=aValue;
 end;
 
 function TJSHTMLElementHelper.HasClass(const aClass: String): Boolean;
@@ -381,15 +394,57 @@ begin
     Self.ClassList.remove(aClass);
 end;
 
-procedure TJSHTMLElementHelper.SetData(aName, aValue: String);
-begin
-  if Assigned(Self) then
-    Self.Dataset[aName]:=aValue;
-end;
 
 procedure TJSHTMLElementHelper.SetInputValue(const aValue: String);
 begin
   SetElementValue(Self,aValue)
+end;
+
+function TJSHTMLElementHelper.ParentHTMLElement: TJSHTMLElement;
+
+Var
+  Par : TJSELement;
+
+begin
+  Par:=Nil;
+  if Assigned(Self) then
+    Par:=Self.ParentElement;
+  While Assigned(Par) and not (Par is TJSHTMLELement) do
+    Par:=Par.ParentElement;
+  Result:=TJSHTMLElement(Par);
+end;
+
+function TJSHTMLElementHelper.FindParent(aMatch: TJSHTMLElementMatcher): TJSHTMLElement;
+
+begin
+  Result:=ParentHTMLElement;
+  While (Result<>Nil) and Not aMatch(Result) do
+    Result:=Result.ParentHTMLElement;
+end;
+
+function TJSHTMLElementHelper.FindParentWithClass(const aClass : String): TJSHTMLElement;
+
+  Function IsMatch(aEl : TJSHTMLElement) : Boolean;
+
+  begin
+    Result:=aEL.ClassList.Contains(aClass);
+  end;
+
+begin
+  Result:=FindParent(@IsMatch);
+end;
+
+function TJSHTMLElementHelper.FindParentWithOutClass(const aClass: String
+  ): TJSHTMLElement;
+
+    Function IsMatch(aEl : TJSHTMLElement) : Boolean;
+
+    begin
+      Result:=not aEL.ClassList.Contains(aClass);
+    end;
+
+begin
+  Result:=FindParent(@IsMatch);
 end;
 
 Function HtmlIze(aString : String) : String;

@@ -118,6 +118,10 @@ type
     destructor Destroy; override;
 
     function GetAttributes: TCustomAttributeArray;
+    generic function GetAttribute<T: TCustomAttribute>: T;
+    function GetAttribute(const Attribute: TCustomAttributeClass): TCustomAttribute;
+    generic function HasAttribute<T: TCustomAttribute>: Boolean;
+    function HasAttribute(const Attribute: TCustomAttributeClass): Boolean;
 
     property Attributes: TCustomAttributeArray read GetAttributes;
     property Handle: Pointer read FHandle;
@@ -1636,6 +1640,34 @@ begin
   end;
 
   Result := FAttributes;
+end;
+
+function TRttiObject.GetAttribute(const Attribute: TCustomAttributeClass): TCustomAttribute;
+var
+  CustomAttribute: TCustomAttribute;
+
+begin
+  Result := nil;
+
+  for CustomAttribute in GetAttributes do
+    if CustomAttribute is Attribute then
+      Exit(CustomAttribute);
+end;
+
+generic function TRttiObject.GetAttribute<T>: T;
+
+begin
+  Result := T(GetAttribute(TCustomAttributeClass(T.ClassType)));
+end;
+
+function TRttiObject.HasAttribute(const Attribute: TCustomAttributeClass): Boolean;
+begin
+  Result := GetAttribute(Attribute) <> nil;
+end;
+
+generic function TRttiObject.HasAttribute<T>: Boolean;
+begin
+  Result := HasAttribute(TCustomAttributeClass(T.ClassType));
 end;
 
 { TRttiNamedObject }

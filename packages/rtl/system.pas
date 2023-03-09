@@ -172,6 +172,7 @@ type
 
   TCustomAttribute = class
   end;
+  TCustomAttributeClass = class of TCustomAttribute;
   TCustomAttributeArray = array of TCustomAttribute;
 
 const

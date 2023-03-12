@@ -5,6 +5,7 @@ interface
 uses sysutils, classes, web, Rtl.HTMLEventNames, Rtl.HTMLActions, db;
 
 Type
+  TDBCustomHTMLElementAction = class;
   TDBCustomHTMLInputElementAction = Class;
   TDBCustomHTMLButtonElementAction = Class;
 
@@ -14,7 +15,7 @@ Type
   private
     FField: TField;
     FFieldName: string;
-    FAction : TDBCustomHTMLInputElementAction;
+    FAction : TDBCustomHTMLElementAction;
     procedure SetFieldName(AValue: string);
   protected
     procedure DatasetChanged; override;
@@ -25,12 +26,12 @@ Type
     procedure UpdateData; override;
     procedure FocusControl(aField: JSValue); Override;
   public
-    constructor Create(aAction : TDBCustomHTMLInputElementAction);
+    constructor Create(aAction : TDBCustomHTMLElementAction);
     function Edit: Boolean; override;
     Function CanModify : Boolean;
     Procedure Bind;
     Procedure UnBind;
-    property Action: TDBCustomHTMLInputElementAction read FAction;
+    property Action: TDBCustomHTMLElementAction read FAction;
     property Field: TField read FField;
     property FieldName: string read FFieldName write SetFieldName;
   end;
@@ -38,37 +39,81 @@ Type
 
   { TDBCustomHTMLInputElementAction }
 
-  TDBCustomHTMLInputElementAction = class(THTMLCustomElementAction)
+  { TDBCustomHTMLElementAction }
+  TFieldTextData = Record
+    Field : TField;
+    Value : String;
+  end;
+
+  TGetFieldTextEvent = procedure(Sender : TObject; var aData : TFieldTextData) of object;
+
+  TDBCustomHTMLElementAction = class(THTMLCustomElementAction)
   Private
     FLink : THTMLActionDataLink;
     FOnEndEditing: TNotifyEvent;
     FOnLayoutChanged: TNotifyEvent;
     FOnStartEditing: TNotifyEvent;
+    FOnGetFieldText: TGetFieldTextEvent;
     function GetDataSource: TDatasource;
     function GetField: TField;
     function GetFieldName: String;
     procedure SetDatasource(AValue: TDatasource);
     procedure SetFieldName(AValue: String);
+    function TransformFieldText(F: TField; const Value: String): String;
   Protected
     procedure DoKeyDown(aEvent: TJSEvent); virtual;
     Procedure ActiveChanged; virtual;
     Procedure StartEditing; virtual;
     Procedure EndEditing; virtual;
     Procedure LayoutChanged; virtual;
+    procedure CheckMaxLength; virtual;
     Property Link : THTMLActionDataLink Read FLink;
   Public
     Constructor Create(aOwner : TComponent); override;
     Destructor Destroy; override;
-    procedure CheckMaxLength;
     Procedure ElementToDataset; virtual;
     Procedure DatasetToElement; virtual;
-    Procedure BindEvents(aEl : TJSElement); override;
     Property Field : TField Read GetField;
     Property Datasource : TDatasource Read GetDataSource Write SetDatasource;
     Property FieldName : String Read GetFieldName Write SetFieldName;
     Property OnStartEditing : TNotifyEvent Read FOnStartEditing Write FOnStartEditing;
     Property OnEndEditing : TNotifyEvent Read FOnEndEditing Write FOnEndEditing;
     Property OnLayoutChanged : TNotifyEvent Read FOnLayoutChanged Write FOnLayoutChanged;
+    Property OnGetFieldText : TGetFieldTextEvent Read FOnGetFieldText Write FOnGetFieldText;
+  end;
+
+  TDBHTMLElementAction = class(TDBCustomHTMLElementAction)
+  Published
+    Property Events;
+    Property CustomEvents;
+    Property ElementID;
+    Property CSSSelector;
+    Property PreventDefault;
+    Property StopPropagation;
+    Property OnExecute;
+    Property BeforeBind;
+    Property AfterBind;
+    Property Datasource;
+    Property FieldName;
+    Property OnStartEditing;
+    Property OnEndEditing;
+    Property OnLayoutChanged;
+    Property OnGetFieldText;
+  end;
+
+  TDBCustomHTMLInputElementAction = class(TDBCustomHTMLElementAction)
+  Private
+    procedure DoKeyDown(aEvent: TJSEvent); virtual;
+    Procedure ActiveChanged; override;
+    Procedure StartEditing; override;
+    Procedure EndEditing; override;
+    Procedure LayoutChanged; override;
+    Property Link : THTMLActionDataLink Read FLink;
+  Public
+    procedure CheckMaxLength; override;
+    Procedure ElementToDataset; override;
+    Procedure DatasetToElement; override;
+    Procedure BindEvents(aEl : TJSElement); override;
   end;
   
   TDBHTMLInputElementAction = class(TDBCustomHTMLInputElementAction)
@@ -87,6 +132,7 @@ Type
     Property OnStartEditing;
     Property OnEndEditing;
     Property OnLayoutChanged;
+    Property OnGetFieldText;
   end;
 
   { TButtonActionDataLink }
@@ -312,35 +358,40 @@ begin
   CheckButtonState;
 end;
 
-{ TDBCustomHTMLInputElementAction }
+{ TDBCustomHTMLElementAction }
 
-function TDBCustomHTMLInputElementAction.GetDataSource: TDatasource;
+function TDBCustomHTMLElementAction.GetDataSource: TDatasource;
 begin
   Result:=Link.DataSource;
 end;
 
-function TDBCustomHTMLInputElementAction.GetField: TField;
+function TDBCustomHTMLElementAction.GetField: TField;
 begin
   Result:=Link.Field;
 end;
 
-function TDBCustomHTMLInputElementAction.GetFieldName: String;
+function TDBCustomHTMLElementAction.GetFieldName: String;
 begin
   Result:=Link.FieldName;
 end;
 
-procedure TDBCustomHTMLInputElementAction.SetDatasource(AValue: TDatasource);
+procedure TDBCustomHTMLElementAction.SetDatasource(AValue: TDatasource);
 begin
   if aValue=Link.DataSource then exit;
   Link.Datasource:=aValue;
 end;
 
-procedure TDBCustomHTMLInputElementAction.SetFieldName(AValue: String);
+procedure TDBCustomHTMLElementAction.SetFieldName(AValue: String);
 begin
   Link.FieldName:=aValue;
 end;
 
-procedure TDBCustomHTMLInputElementAction.ActiveChanged;
+procedure TDBCustomHTMLElementAction.DoKeyDown(aEvent: TJSEvent);
+begin
+
+end;
+
+procedure TDBCustomHTMLElementAction.ActiveChanged;
 begin
   if Link.Active then
     begin
@@ -355,93 +406,86 @@ begin
     EndEditing;
 end;
 
-procedure TDBCustomHTMLInputElementAction.StartEditing;
+procedure TDBCustomHTMLElementAction.StartEditing;
 begin
-  if Element is TJSHTMLInputElement then
-    TJSHTMLInputElement(Element).readOnly:=Link.ReadOnly;
   if Assigned(FOnStartEditing) then
     FOnStartEditing(Self);
 end;
 
-procedure TDBCustomHTMLInputElementAction.EndEditing;
+
+procedure TDBCustomHTMLElementAction.EndEditing;
 begin
-  if Element is TJSHTMLInputElement then
-    TJSHTMLInputElement(Element).readOnly:=Link.ReadOnly;
   if Assigned(FOnEndEditing) then
     FOnEndEditing(Self);
 end;
 
-procedure TDBCustomHTMLInputElementAction.LayoutChanged;
+procedure TDBCustomHTMLElementAction.LayoutChanged;
 begin
   If Assigned(FOnLayoutChanged) then
     FOnLayoutChanged(Self);
 end;
 
 
-constructor TDBCustomHTMLInputElementAction.Create(aOwner: TComponent);
+constructor TDBCustomHTMLElementAction.Create(aOwner: TComponent);
 begin
   inherited Create(aOwner);
   FLink:=THTMLActionDataLink.Create(Self);
 end;
 
-destructor TDBCustomHTMLInputElementAction.Destroy;
+destructor TDBCustomHTMLElementAction.Destroy;
 begin
   FreeAndNil(FLink);
   inherited Destroy;
 end;
 
-procedure TDBCustomHTMLInputElementAction.ElementToDataset;
-
-Var
-  F : TField;
-  E : TJSHTMLElement;
-  EI : TJSHTMLInputElement absolute E;
+procedure TDBCustomHTMLElementAction.ElementToDataset;
 
 begin
-  F:=Field;
-  E:=Element;
-  if Not Assigned(F) then
-    exit;
-  if E is TJSHTMLInputElement then
-    begin
-    if (EI._type='checkbox') then
-      F.AsBoolean:=EI.Checked
-    else if SameText(EI._type,'date')then
-      Field.AsDateTime:=ExtractDate(EI.value)
-    else if SameText(EI._type,'time')then
-      Field.AsDateTime:=ExtractTime(EI.value)
-    else
-      F.AsString:=Value;
-    end
-  else
-    F.AsString:=Value;
+  // Do nothing.
 end;
 
-procedure TDBCustomHTMLInputElementAction.DatasetToElement;
+procedure TDBCustomHTMLElementAction.CheckMaxLength;
+
+begin
+  // Do nothing
+end;
+
+Function TDBCustomHTMLElementAction.TransformFieldText(F : TField; const Value: String) : String;
+
+Var
+  D : TFieldTextData;
+
+begin
+  if not Assigned(FOnGetFieldText) then
+    Result:=Value
+  else
+    begin
+    D.Value:=Value;
+    D.Field:=F;
+    FOnGetFieldText(Self,D);
+    Result:=D.Value;
+    end;
+end;
+
+procedure TDBCustomHTMLElementAction.DatasetToElement;
 
 Var
   F : TField;
   E : TJSHTMLElement;
-  EI : TJSHTMLInputElement absolute E;
 
 begin
   F:=Field;
   E:=Element;
-  if Not Assigned(F) then
+  if Not (Assigned(F) and assigned(E)) then
     Exit;
-  if E is TJSHTMLInputElement then
-    begin
-    if (EI._type='checkbox') then
-      EI.Checked:=F.AsBoolean
-    else if SameText(EI._type,'date') then
-      EI.Value:=FormatHTMLDate(F.AsDateTime)
-    else if SameText(EI._type,'time') then
-      EI.Value:=FormatHTMLTime(F.AsDateTime)
-    else
-      Value:=Field.AsString;
-    end
-  else
-    Self.Value:=Field.AsString;
+  Value:=TransFormFieldText(Field,F.AsString);
+end;
+
+
+procedure TDBCustomHTMLInputElementAction.BindEvents(aEl: TJSElement);
+begin
+  inherited BindEvents(aEl);
+  aEl.addEventListener(sEventKeyDown,@DoKeyDown);
 end;
 
 procedure TDBCustomHTMLInputElementAction.DoKeyDown(aEvent : TJSEvent);
@@ -457,11 +501,31 @@ begin
     end;
 end;
 
-procedure TDBCustomHTMLInputElementAction.BindEvents(aEl: TJSElement);
+procedure TDBCustomHTMLInputElementAction.ActiveChanged;
 begin
-  inherited BindEvents(aEl);
-  aEl.addEventListener(sEventKeyDown,@DoKeyDown);
+  inherited ActiveChanged;
 end;
+
+procedure TDBCustomHTMLInputElementAction.StartEditing;
+
+begin
+  if Element is TJSHTMLInputElement then
+    TJSHTMLInputElement(Element).readOnly:=Link.ReadOnly;
+  Inherited;
+end;
+
+procedure TDBCustomHTMLInputElementAction.EndEditing;
+begin
+  Inherited;
+  if Element is TJSHTMLInputElement then
+    TJSHTMLInputElement(Element).readOnly:=Link.ReadOnly;
+end;
+
+procedure TDBCustomHTMLInputElementAction.LayoutChanged;
+begin
+  inherited LayoutChanged;
+end;
+
 
 { THTMLActionDataLink }
 
@@ -517,7 +581,7 @@ begin
     Action.FocusControl;
 end;
 
-constructor THTMLActionDataLink.Create(aAction: TDBCustomHTMLInputElementAction);
+constructor THTMLActionDataLink.Create(aAction: TDBCustomHTMLElementAction);
 begin
   Inherited Create;
   FAction:=aAction;
@@ -550,6 +614,60 @@ begin
     Exit;
   if (El is TJSHTMLInputElement) and SameText(iEl._type,'text') then
       iel.maxLength:=Field.Size;
+end;
+
+procedure TDBCustomHTMLInputElementAction.ElementToDataset;
+
+Var
+  F : TField;
+  E : TJSHTMLElement;
+  EI : TJSHTMLInputElement absolute E;
+
+begin
+  F:=Field;
+  E:=Element;
+  if Not Assigned(F) then
+    exit;
+  if E is TJSHTMLInputElement then
+    begin
+    if (EI._type='checkbox') then
+      F.AsBoolean:=EI.Checked
+    else if SameText(EI._type,'date')then
+      Field.AsDateTime:=ExtractDate(EI.value)
+    else if SameText(EI._type,'time')then
+      Field.AsDateTime:=ExtractTime(EI.value)
+    else
+      F.AsString:=Value;
+    end
+  else
+    F.AsString:=Value;
+end;
+
+procedure TDBCustomHTMLInputElementAction.DatasetToElement;
+Var
+  F : TField;
+  E : TJSHTMLElement;
+  EI : TJSHTMLInputElement absolute E;
+
+begin
+  F:=Field;
+  E:=Element;
+  if Not (Assigned(F) and Assigned(E)) then
+    Exit;
+  Self.Value:=TransFormFieldText(Field,F.AsString);
+  if E is TJSHTMLInputElement then
+    begin
+    if (EI._type='checkbox') then
+      EI.Checked:=F.AsBoolean
+    else if SameText(EI._type,'date') then
+      EI.Value:=TransFormFieldText(F,FormatHTMLDate(F.AsDateTime))
+    else if SameText(EI._type,'time') then
+      EI.Value:=TransFormFieldText(F,FormatHTMLTime(F.AsDateTime))
+    else
+      Value:=TransFormFieldText(F,F.AsString);
+    end
+  else
+    Inherited
 end;
 
 

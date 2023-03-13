@@ -2083,6 +2083,7 @@ TEventListenerEvent = class external name 'EventListener_Event' (TJSObject)
     autofocus : boolean;
     disabled : boolean;
     maxLength : nativeInt;
+    placeholder: String;
     readOnly : Boolean;
     required : Boolean;
     selectionStart : Cardinal;

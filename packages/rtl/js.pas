@@ -962,6 +962,7 @@ var
   // JSExceptValue can be used in catch blocks to access the JS throw value
   JSExceptValue: JSValue; external name '$e';
 
+  Function JSValueArrayOf(Args : Array of const) : TJSValueDynArray;
 function new(aElements: TJSValueDynArray) : TJSObject; overload;
 function JSDelete(const Obj: JSValue; const PropName: string): boolean; assembler; overload;
 
@@ -1015,6 +1016,18 @@ Const
   Undefined : JSValue; external name 'undefined';
 
 implementation
+
+Function JSValueArrayOf(Args : Array of const) : TJSValueDynArray;
+
+var
+  I : Integer;
+
+begin
+  SetLength(Result,Length(Args));
+  for I:=0 to Length(Args)-1 do
+    Result[i]:=Args[i].VJSValue
+end;
+
 
 function new(aElements: TJSValueDynArray): TJSObject;
 
